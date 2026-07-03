@@ -85,7 +85,8 @@
         "times": "售后次数",
         "daysSuffix": "天"
       },
-      "noData": "暂无数据"
+      "noData": "暂无数据",
+      "trend30": "近 30 天售后趋势"
     },
     "section": {
       "brandCompare": "按品牌对比"
@@ -94,7 +95,9 @@
       "total": "总售后数",
       "pending": "待处理数",
       "returnRate": "综合退货率",
-      "defectRate": "综合不良率"
+      "defectRate": "综合不良率",
+      "monthCount": "本月售后数",
+      "avgHandleDays": "平均处理时长"
     },
     "metric": {
       "avgDays": "平均处理天数",
@@ -115,6 +118,15 @@
     },
     "period": {
       "all": "全部"
+    },
+    "risk": {
+      "pendingApproval": "待审批",
+      "pendingProcess": "待处理",
+      "overdue": "超期未处理",
+      "pendingRma": "待RMA"
+    },
+    "error": {
+      "loadFailed": "概览数据加载失败，已显示空状态"
     }
   },
   "list": {
@@ -130,7 +142,11 @@
       "processStatus": "处理状态",
       "allProcessStatus": "全部处理状态",
       "startDate": "开始日期",
-      "endDate": "结束日期"
+      "endDate": "结束日期",
+      "risk": "风险筛选",
+      "riskAll": "全部风险",
+      "riskPending": "未完成处理",
+      "riskOverdue": "超期未处理"
     },
     "btnSearch": "搜索",
     "btnClear": "清除",
@@ -327,7 +343,8 @@
     "flow": {
       "completed": "已完成",
       "rejected": "已拒绝"
-    }
+    },
+    "level": "审批级别"
   },
   "approvalModal": {
     "title": "售后记录审批",
@@ -962,5 +979,8 @@
   },
   "toast": {
     "close": "关闭"
+  },
+  "date": {
+    "openPicker": "选择日期"
   }
 }

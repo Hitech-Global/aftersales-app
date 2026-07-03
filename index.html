@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.4"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.5"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -99,7 +99,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;font-family:inherit}
 .search-input:focus,.filter-select:focus,.date-input:focus,.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
 .filter-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--card-bg);outline:none;cursor:pointer;font-family:inherit}
-.date-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none}
+.date-picker-wrap{position:relative;display:flex;align-items:center;width:100%}
+.date-input{width:100%;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;background:var(--card-bg);cursor:pointer}
+.date-picker-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-radius:6px;font-size:15px;line-height:1}
+.date-picker-btn:hover{background:var(--primary-light);color:var(--primary)}
+.native-date-input{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
 .filter-actions{display:flex;gap:8px}
 
 .table-container{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
@@ -316,6 +320,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
   .filter-actions{width:100%;justify-content:flex-end}
   .form-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}
   .ov-summary{grid-template-columns:repeat(2,1fr)}
+  .ov-risk-row{grid-template-columns:repeat(2,1fr)}
   .ov-filter-bar{flex-direction:column;align-items:stretch}
   .permission-grid{grid-template-columns:1fr}
 }
@@ -341,6 +346,9 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .ov-process-card .ov-ps-value{font-size:22px;font-weight:700;color:var(--text)}
 .ov-process-card .ov-ps-label{font-size:11px;color:var(--text-secondary)}
 .ov-metric-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.ov-risk-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.ov-click-card{cursor:pointer;transition:transform .18s,box-shadow .18s}
+.ov-click-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
 /* 明细模式表格 */
 .data-table .col-checkbox{width:36px;text-align:center}
 .data-table .col-checkbox input{cursor:pointer}
@@ -404,7 +412,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.4 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.5 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -453,26 +461,20 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             <button class="btn btn-secondary" onclick="resetOverviewFilter()" data-i18n="overview.btnReset"></button>
           </div>
           <div class="ov-summary" id="ov-summary"></div>
-          <div class="ov-process-cards" id="ov-process-cards"></div>
-          <div class="ov-metric-row" id="ov-metric-row"></div>
+          <div class="ov-risk-row" id="ov-risk-row"></div>
+          <div class="chart-container">
+            <div class="ov-section-title" data-i18n="overview.chart.trend30"></div>
+            <div class="chart-wrapper" id="chart-trend-30-wrapper"><canvas id="chart-trend-30"></canvas></div>
+          </div>
           <div class="ov-charts-row">
             <div class="chart-container">
               <div class="ov-section-title" data-i18n="overview.chart.reasonTop5"></div>
-              <div class="chart-wrapper"><canvas id="chart-reason-top5"></canvas></div>
+              <div class="chart-wrapper" id="chart-reason-top5-wrapper"><canvas id="chart-reason-top5"></canvas></div>
             </div>
             <div class="chart-container">
               <div class="ov-section-title" data-i18n="overview.chart.skuTop10"></div>
-              <div class="chart-wrapper"><canvas id="chart-sku-top10"></canvas></div>
+              <div class="chart-wrapper" id="chart-sku-top10-wrapper"><canvas id="chart-sku-top10"></canvas></div>
             </div>
-          </div>
-          <div class="ov-section">
-            <div class="ov-section-title"><span data-i18n="overview.section.brandCompare"></span> <span class="badge" id="ov-period-label"></span></div>
-            <div id="ov-brand-table-area"></div>
-          </div>
-          <div class="ov-action-bar">
-            <button class="btn btn-secondary" onclick="downloadTemplate()" data-i18n="overview.btnDownloadTemplate"></button>
-            <button class="btn btn-primary" id="btn-import-sales" onclick="document.getElementById('sales-file-input').click()" data-i18n="overview.btnImportSales"></button>
-            <input type="file" id="sales-file-input" class="file-input-hidden" accept=".xlsx,.xls" onchange="importSalesData(event)">
           </div>
         </div>
 
@@ -501,6 +503,14 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
               <div class="filter-group">
                 <label data-i18n="list.filter.processStatus"></label>
                 <select class="filter-select" id="process-status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessStatus"></option></select>
+              </div>
+              <div class="filter-group">
+                <label data-i18n="list.filter.risk"></label>
+                <select class="filter-select" id="list-risk-filter" onchange="renderList()">
+                  <option value="" data-i18n="list.filter.riskAll"></option>
+                  <option value="pending" data-i18n="list.filter.riskPending"></option>
+                  <option value="overdue" data-i18n="list.filter.riskOverdue"></option>
+                </select>
               </div>
               <div class="filter-group">
                 <label data-i18n="list.filter.startDate"></label>
@@ -1014,7 +1024,7 @@ async function getRecords(){
       if(!r.platforms) r.platforms=[];
       if(!r.total_quantity) r.total_quantity=(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       return r;
-    }) : data;
+    }) : [];
     if(migrated) await saveRecordsAsync(records);
     return records;
   }catch(e){return[];}
@@ -1026,7 +1036,7 @@ async function saveRecordsAsync(r){ _recordsCache = null;
   }
   localStorage.setItem('aftersales_records',JSON.stringify(r)); }
 async function nextId(){ const r=await getRecords(); return r.length>0?Math.max(...r.map(x=>x.id))+1:1; }
-async function getSalesData(){ return await getSalesAsync(); }
+async function getSalesData(){ return asArray(await getSalesAsync()); }
 async function saveSalesData(d){ _salesCache = null;
   if (await checkDbAvailable()) {
     for (const entry of d) {
@@ -1477,6 +1487,18 @@ function dateToStorage(value){
   const d=parseDateValue(value);
   return d?formatDateLocal(d):'';
 }
+function formatDateInputDisplay(value){
+  const storage=dateToStorage(value);
+  if(!storage) return '';
+  const d=parseDateValue(storage);
+  const locale=window.__i18n&&window.__i18n.getLocale?window.__i18n.getLocale():'zh-CN';
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  const yyyy=d.getFullYear();
+  if(locale==='en-US') return `${mm}/${dd}/${yyyy}`;
+  if(locale==='id-ID') return `${dd}/${mm}/${yyyy}`;
+  return storage;
+}
 function formatDate(value){
   const d=parseDateValue(value);
   if(!d) return value?esc(String(value)):'-';
@@ -1496,21 +1518,64 @@ function formatDateTime(value){
 }
 function normalizeDateInput(input){
   if(!input) return '';
-  const storage=dateToStorage(input.value);
+  const storage=dateToStorage(input.dataset.value || input.value);
   input.dataset.value=storage;
-  if(storage) input.value=storage;
+  input.value=storage?formatDateInputDisplay(storage):'';
+  const picker=input.parentElement&&input.parentElement.querySelector('.native-date-input');
+  if(picker) picker.value=storage;
   return storage;
 }
 function getDateInputValue(id){
   const input=document.getElementById(id);
   if(!input) return '';
-  return normalizeDateInput(input);
+  return input.dataset.value || normalizeDateInput(input);
 }
 function setDateInputValue(id,value){
   const input=document.getElementById(id);
   if(!input) return;
-  input.value=value?dateToStorage(value):'';
-  input.dataset.value=input.value;
+  const storage=value?dateToStorage(value):'';
+  input.dataset.value=storage;
+  input.value=storage?formatDateInputDisplay(storage):'';
+  const picker=input.parentElement&&input.parentElement.querySelector('.native-date-input');
+  if(picker) picker.value=storage;
+}
+function enhanceDateInput(input){
+  if(!input||input.dataset.dateEnhanced==='true') return;
+  input.dataset.dateEnhanced='true';
+  const wrapper=document.createElement('div');
+  wrapper.className='date-picker-wrap';
+  input.parentNode.insertBefore(wrapper,input);
+  wrapper.appendChild(input);
+  const picker=document.createElement('input');
+  picker.type='date';
+  picker.className='native-date-input';
+  picker.tabIndex=-1;
+  picker.value=input.dataset.value||dateToStorage(input.value);
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='date-picker-btn';
+  button.innerHTML='&#x1F4C5;';
+  const openPicker=()=>{
+    picker.value=input.dataset.value||dateToStorage(input.value);
+    try{
+      if(typeof picker.showPicker==='function') picker.showPicker();
+      else { picker.focus(); picker.click(); }
+    }catch(e){
+      picker.focus();
+      picker.click();
+    }
+  };
+  input.addEventListener('click',openPicker);
+  input.addEventListener('input',()=>{ input.dataset.value=''; });
+  button.addEventListener('click',openPicker);
+  picker.addEventListener('change',()=>{
+    input.dataset.value=picker.value;
+    input.value=picker.value?formatDateInputDisplay(picker.value):'';
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  wrapper.appendChild(button);
+  wrapper.appendChild(picker);
+  normalizeDateInput(input);
 }
 function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-bad'; if(rate>=2)return'rate-warn'; return'rate-good'; }
 
@@ -1971,7 +2036,7 @@ function updatePermissionedUI(){
 // ==================== OVERVIEW PAGE ====================
 function initOverview(){
   const now=new Date();
-  const start=new Date(now.getFullYear(), now.getMonth()-2, 1);
+  const start=new Date(now.getFullYear(), now.getMonth(), 1);
   setDateInputValue('ov-start-date',formatDateLocal(start));
   setDateInputValue('ov-end-date',formatDateLocal(now));
   updateOverviewBrandFilter();
@@ -1979,178 +2044,170 @@ function initOverview(){
 }
 
 function resetOverviewFilter(){
-  document.getElementById('ov-start-date').value='';
-  document.getElementById('ov-end-date').value='';
+  setDateInputValue('ov-start-date','');
+  setDateInputValue('ov-end-date','');
   document.getElementById('ov-brand-filter').value='';
   renderOverview();
 }
 
 async function updateOverviewBrandFilter(){
-  const records=await getRecords(), brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
+  const records=asArray(await getRecords()), brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
   const sel=document.getElementById('ov-brand-filter'), cur=sel.value;
-  sel.innerHTML='<option value="">'+t('product.filter.allBrands')+'</option>'+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  sel.innerHTML='<option value="">'+t('overview.filter.allBrands')+'</option>'+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
   sel.value=cur;
 }
 
-let chartReasonTop5=null, chartSkuTop10=null;
+let chartTrend30=null, chartReasonTop5=null, chartSkuTop10=null;
 
-function getPsColor(ps){
-  const colors={'待ERP入库':'#1565c0','待换彩盒':'#e65100','待补配件':'#7b1fa2','待RMA':'#c62828','待报废':'#5d4037','已处理':'#2e7d32'};
-  return colors[ps]||'#2e7d32';
+function asArray(value){ return Array.isArray(value)?value:[]; }
+function recordDateKey(record){ return dateToStorage(record.aftersales_date || record.created_at); }
+function itemProcessStatus(item){ return item.process_status || item.processStatus || ''; }
+function isPendingApproval(record){ return ['待一级审批','待二级审批','待三级审批'].includes(record.status); }
+function isPendingProcessItem(item){ const ps=itemProcessStatus(item); return Boolean(ps) && ps!=='已处理' && ps!=='completed'; }
+function isPendingRmaItem(item){ const ps=itemProcessStatus(item); return ps==='待RMA' || ps==='pending_rma'; }
+function itemAgeStartDate(item, record){ return item.process_status_date || item.process_status_updated_at || record.created_at || record.aftersales_date; }
+function isOverdueItem(item, record, days=7){
+  if(!isPendingProcessItem(item)) return false;
+  const start=parseDateValue(itemAgeStartDate(item, record));
+  if(!start) return false;
+  return (new Date()-start)/86400000>=days;
 }
 
 async function renderOverview(){
-  const startD=getDateInputValue('ov-start-date');
-  const endD=getDateInputValue('ov-end-date');
-  const brandF=document.getElementById('ov-brand-filter').value;
-  const salesData=await getSalesData();
-  let records=await getRecords();
+  try{
+    const startD=getDateInputValue('ov-start-date');
+    const endD=getDateInputValue('ov-end-date');
+    const brandF=document.getElementById('ov-brand-filter').value;
+    const salesData=asArray(await getSalesData());
+    let records=asArray(await getRecords());
 
-  if(startD||endD){
-    records=records.filter(r=>{
-      const d=(r.aftersales_date||r.created_at||'').substring(0,10);
-      if(startD&&d<startD) return false;
-      if(endD&&d>endD) return false;
+    if(startD||endD){
+      records=records.filter(r=>{
+        const d=recordDateKey(r);
+        if(!d) return false;
+        if(startD&&d<startD) return false;
+        if(endD&&d>endD) return false;
+        return true;
+      });
+    }
+    if(brandF) records=records.filter(r=>r.brand===brandF);
+
+    const startMonth=startD?startD.substring(0,7):null;
+    const endMonth=endD?endD.substring(0,7):null;
+    const filteredSales=salesData.filter(d=>{
+      if(brandF&&d.brand!==brandF) return false;
+      if(startMonth&&d.month<startMonth) return false;
+      if(endMonth&&d.month>endMonth) return false;
       return true;
     });
-  }
-  if(brandF) records=records.filter(r=>r.brand===brandF);
+    const shipmentTotal=filteredSales.reduce((s,d)=>s+Number(d.online_shipment||0)+Number(d.offline_shipment||0),0);
+    const salesTotal=filteredSales.reduce((s,d)=>s+Number(d.online_sales||0)+Number(d.offline_sales||0),0);
 
-  const periodLabel=startD&&endD?formatDate(startD)+' ~ '+formatDate(endD):(startD?formatDate(startD):(endD?formatDate(endD):t('overview.period.all')));
-  document.getElementById('ov-period-label').textContent=brandF?periodLabel+' · '+brandF:periodLabel;
-
-  const startMonth=startD?startD.substring(0,7):null;
-  const endMonth=endD?endD.substring(0,7):null;
-  const brandSales={};
-  salesData.forEach(d=>{
-    if(startMonth&&d.month<startMonth) return;
-    if(endMonth&&d.month>endMonth) return;
-    if(!brandSales[d.brand]) brandSales[d.brand]={shipment:0,sales:0};
-    brandSales[d.brand].shipment+=Number(d.online_shipment||0)+Number(d.offline_shipment||0);
-    brandSales[d.brand].sales+=Number(d.online_sales||0)+Number(d.offline_sales||0);
-  });
-
-  // 展开所有 item 作为统计单元
-  const allItems=[];
-  records.forEach(r=>{
-    (r.items||[]).forEach(it=>{
-      allItems.push({...it,record_id:r.id,brand:r.brand||'未分类',created_at:r.created_at});
+    const allItems=[];
+    records.forEach(record=>{
+      const items=asArray(record.items);
+      if(items.length===0) allItems.push({record, item:{process_status:''}});
+      items.forEach(item=>allItems.push({record,item}));
     });
-  });
 
-  const grandTotal=allItems.length;
-  const grandShipment=Object.values(brandSales).reduce((s,v)=>s+v.shipment,0);
-  const grandSales=Object.values(brandSales).reduce((s,v)=>s+v.sales,0);
+    const totalCount=allItems.length;
+    const pendingApprovalCount=records.filter(isPendingApproval).length;
+    const pendingProcessCount=allItems.filter(x=>isPendingProcessItem(x.item)).length;
+    const overdueCount=allItems.filter(x=>isOverdueItem(x.item,x.record)).length;
+    const pendingRmaCount=allItems.filter(x=>isPendingRmaItem(x.item)).length;
+    const completedItems=allItems.filter(x=>itemProcessStatus(x.item)==='已处理'&&x.item.process_completed_date);
+    const avgDays=completedItems.length
+      ?(completedItems.reduce((sum,x)=>{
+        const done=parseDateValue(x.item.process_completed_date);
+        const start=parseDateValue(x.record.created_at || x.record.aftersales_date);
+        return done&&start?sum+Math.max(0,(done-start)/86400000):sum;
+      },0)/completedItems.length).toFixed(1)
+      :'--';
+    const returnRate=salesTotal>0?(totalCount/salesTotal*100):null;
+    const defectRate=shipmentTotal>0?(totalCount/shipmentTotal*100):null;
 
-  // === 汇总卡片 ===
-  const pendingCount=allItems.filter(it=>it.process_status&&it.process_status!=='已处理').length;
-  const overallReturnRate=grandSales>0?(grandTotal/grandSales*100):null;
-  const overallDefectRate=grandShipment>0?(grandTotal/grandShipment*100):null;
-  document.getElementById('ov-summary').innerHTML=`
-    <div class="ov-summary-card card-total"><div class="ov-card-icon">&#x1F4E6;</div><div class="ov-card-value">${grandTotal}</div><div class="ov-card-label">${t('overview.card.total')}</div></div>
-    <div class="ov-summary-card card-return"><div class="ov-card-icon">&#x23F3;</div><div class="ov-card-value">${pendingCount}</div><div class="ov-card-label">${t('overview.card.pending')}</div></div>
-    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x1F4CA;</div><div class="ov-card-value">${overallReturnRate!=null?overallReturnRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.returnRate')}</div></div>
-    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${overallDefectRate!=null?overallDefectRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.defectRate')}</div></div>
-  `;
+    document.getElementById('ov-summary').innerHTML=`
+      <div class="ov-summary-card card-total"><div class="ov-card-icon">&#x1F4E6;</div><div class="ov-card-value">${totalCount}</div><div class="ov-card-label">${t('overview.card.monthCount')}</div></div>
+      <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x1F4CA;</div><div class="ov-card-value">${returnRate!=null?returnRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.returnRate')}</div></div>
+      <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${defectRate!=null?defectRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.defectRate')}</div></div>
+      <div class="ov-summary-card"><div class="ov-card-icon">&#x23F1;</div><div class="ov-card-value">${avgDays}${avgDays!=='--'?t('overview.chart.label.daysSuffix'):''}</div><div class="ov-card-label">${t('overview.card.avgHandleDays')}</div></div>
+    `;
 
-  // === 处理状态分布卡片 ===
-  const psCounts={};
-  PROCESS_STATUSES.forEach(ps=>psCounts[ps]=0);
-  allItems.forEach(it=>{if(it.process_status&&psCounts.hasOwnProperty(it.process_status))psCounts[it.process_status]++;});
-  document.getElementById('ov-process-cards').innerHTML=
-    PROCESS_STATUSES.map(ps=>`<div class="ov-process-card" style="border-top-color:${getPsColor(ps)}"><div class="ov-ps-value">${psCounts[ps]}</div><div class="ov-ps-label">${tProcessStatus(ps)}</div></div>`).join('');
+    document.getElementById('ov-risk-row').innerHTML=`
+      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('pendingApproval')"><div class="ov-card-icon">&#x2705;</div><div class="ov-card-value">${pendingApprovalCount}</div><div class="ov-card-label">${t('overview.risk.pendingApproval')}</div></div>
+      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('pendingProcess')"><div class="ov-card-icon">&#x23F3;</div><div class="ov-card-value">${pendingProcessCount}</div><div class="ov-card-label">${t('overview.risk.pendingProcess')}</div></div>
+      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('overdue')"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${overdueCount}</div><div class="ov-card-label">${t('overview.risk.overdue')}</div></div>
+      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('pendingRma')"><div class="ov-card-icon">&#x1F6E0;</div><div class="ov-card-value">${pendingRmaCount}</div><div class="ov-card-label">${t('overview.risk.pendingRma')}</div></div>
+    `;
 
-  // === 指标行：平均处理天数 + 超期数 ===
-  const completedItems=allItems.filter(it=>it.process_status==='已处理'&&it.process_status_date&&it.process_completed_date);
-  const avgDays=completedItems.length>0
-    ?(completedItems.reduce((s,it)=>s+(new Date(it.process_completed_date)-new Date(it.process_status_date))/(86400000),0)/completedItems.length).toFixed(1)
-    :'--';
-  const now=new Date();
-  const overdueCount=allItems.filter(it=>{
-    if(!it.process_status||it.process_status==='已处理'||!it.process_status_date) return false;
-    return (now-new Date(it.process_status_date))/86400000>=7;
-  }).length;
-  document.getElementById('ov-metric-row').innerHTML=`
-    <div class="ov-summary-card"><div class="ov-card-icon">&#x23F1;</div><div class="ov-card-value">${avgDays}${avgDays!=='--'?t('overview.chart.label.daysSuffix')||'天':''}</div><div class="ov-card-label">${t('overview.metric.avgDays')}</div></div>
-    <div class="ov-summary-card"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value" style="color:${overdueCount>0?'var(--danger)':'var(--text)'}">${overdueCount}</div><div class="ov-card-label">${t('overview.metric.overdue')}</div></div>
-  `;
-
-  // === 退货原因 TOP5 ===
-  const reasonCounts={};
-  allItems.forEach(it=>{const r=it.return_reason;if(r)reasonCounts[r]=(reasonCounts[r]||0)+1;});
-  const reasonSorted=Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  renderReasonTop5Chart(reasonSorted);
-
-  // === SKU 售后 TOP10 ===
-  const skuCounts={};
-  allItems.forEach(it=>{if(it.sku_code)skuCounts[it.sku_code]=(skuCounts[it.sku_code]||0)+1;});
-  const skuSorted=Object.entries(skuCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  renderSkuTop10Chart(skuSorted);
-
-  // === 品牌对比表（增强）===
-  const brandItemStats={};
-  allItems.forEach(it=>{
-    const b=it.brand;
-    if(!brandItemStats[b])brandItemStats[b]={total:0,pending:0,completed:0,overdue:0,processDays:[]};
-    brandItemStats[b].total++;
-    if(it.process_status==='已处理'){
-      brandItemStats[b].completed++;
-      if(it.process_status_date&&it.process_completed_date)
-        brandItemStats[b].processDays.push((new Date(it.process_completed_date)-new Date(it.process_status_date))/86400000);
-    } else if(it.process_status){
-      brandItemStats[b].pending++;
-      if(it.process_status_date&&(now-new Date(it.process_status_date))/86400000>=7) brandItemStats[b].overdue++;
-    }
-  });
-
-  let allBrands=new Set([...Object.keys(brandItemStats),...Object.keys(brandSales)]);
-  const rows=[];
-  allBrands.forEach((brand,i)=>{
-    const s=brandItemStats[brand]||{total:0,pending:0,completed:0,overdue:0,processDays:[]};
-    const sl=brandSales[brand]||{shipment:0,sales:0};
-    const avgD=s.processDays.length>0?(s.processDays.reduce((a,b)=>a+b,0)/s.processDays.length).toFixed(1):null;
-    const returnRate=sl.sales>0?(s.total/sl.sales*100):null;
-    const defectRate=sl.shipment>0?(s.total/sl.shipment*100):null;
-    rows.push({brand,color:BRAND_COLORS[i%BRAND_COLORS.length],...s,avgDays:avgD,shipment:sl.shipment,sales:sl.sales,returnRate,defectRate});
-  });
-
-  if(rows.length===0){
-    document.getElementById('ov-brand-table-area').innerHTML=`<div class="ov-empty"><div class="empty-icon">&#x1F4CA;</div><p>${t('overview.empty')}</p></div>`;
-    return;
+    renderTrend30Chart(buildTrend30(records, endD));
+    const reasonCounts={};
+    allItems.forEach(x=>{const reason=x.item.return_reason;if(reason)reasonCounts[reason]=(reasonCounts[reason]||0)+1;});
+    renderReasonTop5Chart(Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,5));
+    const skuCounts={};
+    allItems.forEach(x=>{const sku=x.item.sku_code;if(sku)skuCounts[sku]=(skuCounts[sku]||0)+1;});
+    renderSkuTop10Chart(Object.entries(skuCounts).sort((a,b)=>b[1]-a[1]).slice(0,10));
+  }catch(e){
+    console.error('[Overview] render failed:', e);
+    document.getElementById('ov-summary').innerHTML='';
+    document.getElementById('ov-risk-row').innerHTML='';
+    renderTrend30Chart([]);
+    renderReasonTop5Chart([]);
+    renderSkuTop10Chart([]);
+    showFlash(t('overview.error.loadFailed'),'warning');
   }
-  let t=`<div style="overflow-x:auto"><table class="ov-brand-table"><thead><tr>
-    <th>${t('overview.col.brand')}</th>
-    <th class="right">${t('overview.col.detailTotal')}</th>
-    <th class="right">${t('overview.col.pending')}</th>
-    <th class="right">${t('overview.col.completed')}</th>
-    <th class="right">${t('overview.col.overdue')}</th>
-    <th class="right">${t('overview.col.avgDays')}</th>
-    <th class="right">${t('overview.col.shipment')}</th>
-    <th class="right">${t('overview.col.sales')}</th>
-    <th class="right">${t('overview.col.returnRate')}</th>
-    <th class="right">${t('overview.col.defectRate')}</th>
-  </tr></thead><tbody>`;
-  rows.forEach(r=>{
-    t+=`<tr><td><div class="ov-brand-name"><span class="ov-brand-dot" style="background:${r.color}"></span>${esc(r.brand)}</div></td>
-      <td class="right"><strong>${r.total}</strong></td>
-      <td class="right">${r.pending}</td>
-      <td class="right">${r.completed}</td>
-      <td class="right" style="color:${r.overdue>0?'var(--danger)':''}">${r.overdue}</td>
-      <td class="right">${r.avgDays||'--'}</td>
-      <td class="right">${r.shipment||'--'}</td>
-      <td class="right">${r.sales||'--'}</td>
-      <td class="right"><span class="rate-indicator ${rateClass(r.returnRate)}">${r.returnRate!=null?r.returnRate.toFixed(2)+'%':'--'}</span></td>
-      <td class="right"><span class="rate-indicator ${rateClass(r.defectRate)}">${r.defectRate!=null?r.defectRate.toFixed(2)+'%':'--'}</span></td></tr>`;
+}
+
+function buildTrend30(records,endDate){
+  const end=parseDateValue(endDate)||new Date();
+  const dates=[];
+  const counts={};
+  for(let i=29;i>=0;i--){
+    const d=new Date(end.getFullYear(),end.getMonth(),end.getDate()-i);
+    const key=formatDateLocal(d);
+    dates.push(key);
+    counts[key]=0;
+  }
+  records.forEach(record=>{
+    const key=recordDateKey(record);
+    if(counts[key]!==undefined) counts[key]+=Math.max(1,asArray(record.items).length);
   });
-  t+=`</tbody></table></div>`;
-  document.getElementById('ov-brand-table-area').innerHTML=t;
+  return dates.map(date=>({date,count:counts[date]}));
+}
+
+function ensureChartCanvas(wrapperId,canvasId){
+  const wrapper=document.getElementById(wrapperId);
+  if(!wrapper) return null;
+  let canvas=document.getElementById(canvasId);
+  if(!canvas){
+    wrapper.innerHTML=`<canvas id="${canvasId}"></canvas>`;
+    canvas=document.getElementById(canvasId);
+  }
+  return canvas;
+}
+
+function renderChartEmpty(wrapperId){
+  const wrapper=document.getElementById(wrapperId);
+  if(wrapper) wrapper.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('overview.chart.noData')}</div>`;
+}
+
+function renderTrend30Chart(data){
+  const ctx=ensureChartCanvas('chart-trend-30-wrapper','chart-trend-30');
+  if(chartTrend30){ chartTrend30.destroy(); chartTrend30=null; }
+  if(!ctx) return;
+  if(!data.length){renderChartEmpty('chart-trend-30-wrapper');return;}
+  chartTrend30=new Chart(ctx,{
+    type:'line',
+    data:{labels:data.map(d=>formatDate(d.date)),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d.count),borderColor:'#2e7d32',backgroundColor:'rgba(46,125,50,.12)',tension:.25,fill:true,pointRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+  });
 }
 
 function renderReasonTop5Chart(data){
-  const ctx=document.getElementById('chart-reason-top5');
-  if(chartReasonTop5) chartReasonTop5.destroy();
+  const ctx=ensureChartCanvas('chart-reason-top5-wrapper','chart-reason-top5');
+  if(chartReasonTop5){ chartReasonTop5.destroy(); chartReasonTop5=null; }
   if(!ctx) return;
-  if(data.length===0){ctx.parentElement.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('overview.chart.noData')}</div>`;return;}
+  if(data.length===0){renderChartEmpty('chart-reason-top5-wrapper');return;}
   chartReasonTop5=new Chart(ctx,{
     type:'bar',
     data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6'],borderRadius:4}]},
@@ -2159,15 +2216,40 @@ function renderReasonTop5Chart(data){
 }
 
 function renderSkuTop10Chart(data){
-  const ctx=document.getElementById('chart-sku-top10');
-  if(chartSkuTop10) chartSkuTop10.destroy();
+  const ctx=ensureChartCanvas('chart-sku-top10-wrapper','chart-sku-top10');
+  if(chartSkuTop10){ chartSkuTop10.destroy(); chartSkuTop10=null; }
   if(!ctx) return;
-  if(data.length===0){ctx.parentElement.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('overview.chart.noData')}</div>`;return;}
+  if(data.length===0){renderChartEmpty('chart-sku-top10-wrapper');return;}
   chartSkuTop10=new Chart(ctx,{
     type:'bar',
     data:{labels:data.map(d=>d[0]),datasets:[{label:t('overview.chart.label.times'),data:data.map(d=>d[1]),backgroundColor:'#2e7d32',borderRadius:4}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}
   });
+}
+
+function jumpFromOverview(type){
+  const startD=getDateInputValue('ov-start-date');
+  const endD=getDateInputValue('ov-end-date');
+  const brandF=document.getElementById('ov-brand-filter').value;
+  if(type==='pendingApproval'){
+    document.getElementById('appr-search').value='';
+    document.getElementById('appr-tab').value='pending';
+    setDateInputValue('appr-start-date',startD);
+    setDateInputValue('appr-end-date',endD);
+    apprPage=1;
+    showPage('approval');
+    return;
+  }
+  document.getElementById('search-input').value='';
+  document.getElementById('status-filter').value='';
+  document.getElementById('process-status-filter').value=type==='pendingRma'?'待RMA':'';
+  document.getElementById('list-risk-filter').value=type==='pendingProcess'?'pending':(type==='overdue'?'overdue':'');
+  document.getElementById('brand-filter').value=brandF;
+  setDateInputValue('list-start-date',startD);
+  setDateInputValue('list-end-date',endD);
+  pendingListPreset={brand:brandF,startD,endD,processStatus:type==='pendingRma'?'待RMA':'',risk:type==='pendingProcess'?'pending':(type==='overdue'?'overdue':'')};
+  listPage=1;
+  showPage('list');
 }
 
 // ==================== LIST PAGE ====================
@@ -2194,6 +2276,7 @@ function updateProcessStatusFilter(){
 }
 
 let listMode='record';
+let pendingListPreset=null;
 
 function switchListMode(mode){
   listMode=mode;
@@ -2206,11 +2289,20 @@ function switchListMode(mode){
 
 async function renderList(){
   await updateBrandFilter(); updateStatusFilter(); updateProcessStatusFilter();
+  if(pendingListPreset){
+    document.getElementById('brand-filter').value=pendingListPreset.brand||'';
+    document.getElementById('process-status-filter').value=pendingListPreset.processStatus||'';
+    document.getElementById('list-risk-filter').value=pendingListPreset.risk||'';
+    setDateInputValue('list-start-date',pendingListPreset.startD||'');
+    setDateInputValue('list-end-date',pendingListPreset.endD||'');
+    pendingListPreset=null;
+  }
   const records=await getRecords();
   const search=(document.getElementById('search-input').value||'').toLowerCase();
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
   const psFilter=document.getElementById('process-status-filter').value;
+  const riskFilter=document.getElementById('list-risk-filter').value;
   const startD=getDateInputValue('list-start-date');
   const endD=getDateInputValue('list-end-date');
   const user=getCurrentUser();
@@ -2219,6 +2311,8 @@ async function renderList(){
   if(status) filtered=filtered.filter(r=>r.status===status);
   if(brand) filtered=filtered.filter(r=>r.brand===brand);
   if(psFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.process_status===psFilter));
+  if(riskFilter==='pending') filtered=filtered.filter(r=>(r.items||[]).some(it=>isPendingProcessItem(it)));
+  if(riskFilter==='overdue') filtered=filtered.filter(r=>(r.items||[]).some(it=>isOverdueItem(it,r)));
   if(startD||endD){
     filtered=filtered.filter(r=>{
       const d=(r.aftersales_date||r.created_at||'').substring(0,10);
@@ -2395,6 +2489,7 @@ function clearListFilter(){
   document.getElementById('search-input').value='';
   document.getElementById('status-filter').value='';
   document.getElementById('process-status-filter').value='';
+  document.getElementById('list-risk-filter').value='';
   document.getElementById('brand-filter').value='';
   setDateInputValue('list-start-date','');
   setDateInputValue('list-end-date','');
@@ -4577,9 +4672,13 @@ function applyDateInputLocale() {
   };
   document.documentElement.lang = langMap[locale] || 'zh-CN';
   document.querySelectorAll('.date-input').forEach(input => {
+    enhanceDateInput(input);
     input.lang = langMap[locale] || 'zh-CN';
     input.placeholder = placeholderMap[locale] || 'YYYY-MM-DD';
     input.title = placeholderMap[locale] || 'YYYY-MM-DD';
+    input.value = input.dataset.value ? formatDateInputDisplay(input.dataset.value) : input.value;
+    const btn=input.parentElement&&input.parentElement.querySelector('.date-picker-btn');
+    if(btn) btn.setAttribute('aria-label', t('date.openPicker'));
   });
 }
 

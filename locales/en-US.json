@@ -85,7 +85,8 @@
         "times": "RMA Count",
         "daysSuffix": "d"
       },
-      "noData": "No data"
+      "noData": "No data",
+      "trend30": "Last 30 Days RMA Trend"
     },
     "section": {
       "brandCompare": "By Brand"
@@ -94,7 +95,9 @@
       "total": "Total RMA Cases",
       "pending": "Pending Items",
       "returnRate": "Overall Return Rate",
-      "defectRate": "Overall Defect Rate"
+      "defectRate": "Overall Defect Rate",
+      "monthCount": "This Month RMA",
+      "avgHandleDays": "Avg. Handling Time"
     },
     "metric": {
       "avgDays": "Avg. Processing Days",
@@ -115,6 +118,15 @@
     },
     "period": {
       "all": "All"
+    },
+    "risk": {
+      "pendingApproval": "Pending Approval",
+      "pendingProcess": "Pending Processing",
+      "overdue": "Overdue",
+      "pendingRma": "Pending RMA"
+    },
+    "error": {
+      "loadFailed": "Overview data failed to load. Empty state is shown."
     }
   },
   "list": {
@@ -130,7 +142,11 @@
       "processStatus": "Processing Status",
       "allProcessStatus": "All Processing Statuses",
       "startDate": "Start Date",
-      "endDate": "End Date"
+      "endDate": "End Date",
+      "risk": "Risk Filter",
+      "riskAll": "All Risks",
+      "riskPending": "Incomplete Processing",
+      "riskOverdue": "Overdue"
     },
     "btnSearch": "Search",
     "btnClear": "Clear",
@@ -327,7 +343,8 @@
     "flow": {
       "completed": "Completed",
       "rejected": "Rejected"
-    }
+    },
+    "level": "Approval Level"
   },
   "approvalModal": {
     "title": "RMA Approvals",
@@ -962,5 +979,8 @@
   },
   "toast": {
     "close": "Close"
+  },
+  "date": {
+    "openPicker": "Select date"
   }
 }

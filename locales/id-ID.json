@@ -85,7 +85,8 @@
         "times": "Jumlah RMA",
         "daysSuffix": "hr"
       },
-      "noData": "Belum ada data"
+      "noData": "Belum ada data",
+      "trend30": "Tren RMA 30 Hari Terakhir"
     },
     "section": {
       "brandCompare": "Perbandingan per Brand"
@@ -94,7 +95,9 @@
       "total": "Total Kasus RMA",
       "pending": "Item Menunggu Proses",
       "returnRate": "Total Return Rate",
-      "defectRate": "Total Defect Rate"
+      "defectRate": "Total Defect Rate",
+      "monthCount": "RMA Bulan Ini",
+      "avgHandleDays": "Rata-rata Waktu Proses"
     },
     "metric": {
       "avgDays": "Rata-rata Hari Proses",
@@ -115,6 +118,15 @@
     },
     "period": {
       "all": "Semua"
+    },
+    "risk": {
+      "pendingApproval": "Menunggu Approval",
+      "pendingProcess": "Menunggu Proses",
+      "overdue": "Terlambat",
+      "pendingRma": "Menunggu RMA"
+    },
+    "error": {
+      "loadFailed": "Data ringkasan gagal dimuat. Status kosong ditampilkan."
     }
   },
   "list": {
@@ -130,7 +142,11 @@
       "processStatus": "Status Proses",
       "allProcessStatus": "Semua Status Proses",
       "startDate": "Tanggal Mulai",
-      "endDate": "Tanggal Selesai"
+      "endDate": "Tanggal Selesai",
+      "risk": "Filter Risiko",
+      "riskAll": "Semua Risiko",
+      "riskPending": "Proses Belum Selesai",
+      "riskOverdue": "Terlambat"
     },
     "btnSearch": "Cari",
     "btnClear": "Bersihkan",
@@ -327,7 +343,8 @@
     "flow": {
       "completed": "Selesai",
       "rejected": "Ditolak"
-    }
+    },
+    "level": "Level Approval"
   },
   "approvalModal": {
     "title": "Persetujuan RMA",
@@ -962,5 +979,8 @@
   },
   "toast": {
     "close": "Tutup"
+  },
+  "date": {
+    "openPicker": "Pilih tanggal"
   }
 }
