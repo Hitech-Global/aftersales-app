@@ -1,0 +1,775 @@
+{
+  "app": {
+    "title": "",
+    "sidebarBrand": "",
+    "mode": {
+      "cloud": "",
+      "local": "",
+      "feishu": ""
+    },
+    "logout": ""
+  },
+  "login": {
+    "subtitle": "",
+    "verifying": "",
+    "localModeHint": "",
+    "localAccountLoginHint": "",
+    "feishuOnlyHint": "",
+    "btnFeishu": "",
+    "btnLocal": "",
+    "usernamePlaceholder": "",
+    "passwordPlaceholder": "",
+    "error": {
+      "connectFeishu": "",
+      "feishuUnavailable": "",
+      "enterCredentials": "",
+      "wrongCredentials": "",
+      "processFailed": "",
+      "missingOpenid": "",
+      "missingCode": "",
+      "invalidState": "",
+      "notConfigured": "",
+      "tokenExchangeFailed": "",
+      "getUserFailed": "",
+      "userInfoInvalid": "",
+      "tokenResponseInvalid": "",
+      "serverError": ""
+    }
+  },
+  "nav": {
+    "group": {
+      "aftersales": "",
+      "approval": "",
+      "data": "",
+      "system": ""
+    },
+    "overview": "",
+    "list": "",
+    "detail": "",
+    "approval": "",
+    "products": "",
+    "users": "",
+    "roles": ""
+  },
+  "page": {
+    "title": {
+      "overview": "",
+      "list": "",
+      "detail": "",
+      "products": "",
+      "approval": "",
+      "users": "",
+      "roles": ""
+    }
+  },
+  "overview": {
+    "filter": {
+      "startDate": "",
+      "endDate": "",
+      "brand": "",
+      "allBrands": ""
+    },
+    "btnReset": "",
+    "btnDownloadTemplate": "",
+    "btnImportSales": "",
+    "chart": {
+      "reasonTop5": "",
+      "skuTop10": "",
+      "label": {
+        "count": "",
+        "times": ""
+      },
+      "noData": ""
+    },
+    "section": {
+      "brandCompare": ""
+    },
+    "card": {
+      "total": "",
+      "pending": "",
+      "returnRate": "",
+      "defectRate": ""
+    },
+    "metric": {
+      "avgDays": "",
+      "overdue": ""
+    },
+    "empty": "",
+    "col": {
+      "detailTotal": "",
+      "pending": "",
+      "completed": "",
+      "overdue": "",
+      "avgDays": "",
+      "shipment": "",
+      "sales": "",
+      "returnRate": "",
+      "defectRate": ""
+    },
+    "period": {
+      "all": ""
+    }
+  },
+  "list": {
+    "title": "",
+    "btnExport": "",
+    "filter": {
+      "keyword": "",
+      "keywordPlaceholder": "",
+      "brand": "",
+      "allBrands": "",
+      "approvalStatus": "",
+      "allApprovalStatus": "",
+      "processStatus": "",
+      "allProcessStatus": "",
+      "startDate": "",
+      "endDate": ""
+    },
+    "btnSearch": "",
+    "btnClear": "",
+    "sectionTitle": "",
+    "mode": {
+      "byRecord": "",
+      "byItem": ""
+    },
+    "btnManual": "",
+    "btnBatchImport": "",
+    "batch": {
+      "selected": "",
+      "selectStatus": "",
+      "btnUpdate": "",
+      "btnCancel": ""
+    },
+    "col": {
+      "id": "",
+      "approvalStatus": "",
+      "processStatus": "",
+      "date": "",
+      "platform": "",
+      "returnReason": "",
+      "sku": "",
+      "orderNo": "",
+      "qty": "",
+      "description": "",
+      "submitter": "",
+      "updatedAt": "",
+      "actions": ""
+    },
+    "empty": {
+      "noRecords": "",
+      "noMatch": "",
+      "createFirst": ""
+    },
+    "action": {
+      "view": "",
+      "approve": "",
+      "delete": ""
+    },
+    "pagination": {
+      "perPage": "",
+      "total": "",
+      "first": "",
+      "prev": "",
+      "next": "",
+      "last": ""
+    }
+  },
+  "status": {
+    "draft": "",
+    "pendingLevel1": "",
+    "level1Approved": "",
+    "pendingLevel2": "",
+    "level2Approved": "",
+    "pendingLevel3": "",
+    "approved": "",
+    "rejected": ""
+  },
+  "process": {
+    "pendingErp": "",
+    "pendingColorBox": "",
+    "pendingParts": "",
+    "pendingRma": "",
+    "pendingScrap": "",
+    "completed": ""
+  },
+  "form": {
+    "titleNew": "",
+    "section": {
+      "basic": "",
+      "details": "",
+      "approvers": ""
+    },
+    "hint": {
+      "minOneItem": "",
+      "approverRule": ""
+    },
+    "col": {
+      "platform": "",
+      "sku": "",
+      "orderNo": "",
+      "qty": "",
+      "returnReason": "",
+      "description": "",
+      "actions": ""
+    },
+    "btnAddRow": "",
+    "totalQty": "",
+    "label": {
+      "date": "",
+      "approverL1": "",
+      "approverL2": "",
+      "approverL3": ""
+    },
+    "option": {
+      "pleaseSelect": ""
+    },
+    "btnSubmit": "",
+    "btnSaveDraft": "",
+    "btnCancel": "",
+    "skuPlaceholder": "",
+    "orderPlaceholder": "",
+    "descPlaceholder": ""
+  },
+  "returnReason": {
+    "resaleable": "",
+    "colorBoxDamage": "",
+    "missingParts": "",
+    "hardwareFault": "",
+    "scrap": ""
+  },
+  "detail": {
+    "btnBack": "",
+    "titlePrefix": "",
+    "section": {
+      "basic": "",
+      "items": "",
+      "approvalHistory": "",
+      "approvalFlow": "",
+      "time": ""
+    },
+    "label": {
+      "date": "",
+      "status": "",
+      "submitter": "",
+      "brand": "",
+      "totalQty": "",
+      "initiator": "",
+      "level1": "",
+      "level2": "",
+      "level3": "",
+      "returnDate": "",
+      "createdAt": "",
+      "updatedAt": ""
+    },
+    "col": {
+      "index": "",
+      "platform": "",
+      "sku": "",
+      "orderNo": "",
+      "qty": "",
+      "returnReason": "",
+      "processStatus": "",
+      "desc": ""
+    },
+    "notSet": "",
+    "approved": "",
+    "rejected": ""
+  },
+  "approval": {
+    "title": "",
+    "filter": {
+      "keyword": "",
+      "keywordPlaceholder": "",
+      "scope": "",
+      "pending": "",
+      "done": "",
+      "all": ""
+    },
+    "btnClear": "",
+    "empty": "",
+    "col": {
+      "createdAt": "",
+      "initiator": "",
+      "approver": "",
+      "status": "",
+      "processStatus": "",
+      "date": "",
+      "platform": "",
+      "totalQty": "",
+      "currentLevel": "",
+      "actions": ""
+    },
+    "levelPrefix": ""
+  },
+  "approvalModal": {
+    "title": "",
+    "section": {
+      "history": "",
+      "operation": ""
+    },
+    "label": {
+      "returnDate": "",
+      "comment": "",
+      "attachments": "",
+      "currentStatus": "",
+      "date": "",
+      "submitter": "",
+      "brand": "",
+      "totalQty": ""
+    },
+    "commentPlaceholder": "",
+    "attachmentHint": "",
+    "storageWarning": "",
+    "btnApprove": "",
+    "btnReject": "",
+    "btnCancel": "",
+    "col": {
+      "index": "",
+      "platform": "",
+      "sku": "",
+      "orderNo": "",
+      "qty": "",
+      "returnReason": "",
+      "processStatus": "",
+      "erpScreenshot": "",
+      "actions": ""
+    },
+    "btnUploadScreenshot": "",
+    "btnMarkProcessed": "",
+    "flowPrefix": "",
+    "noHistory": ""
+  },
+  "products": {
+    "title": "",
+    "btnDownloadTemplate": "",
+    "btnBatchImport": "",
+    "btnBatchExport": "",
+    "btnNew": "",
+    "batch": {
+      "selected": "",
+      "btnDelete": "",
+      "btnCancel": ""
+    },
+    "filter": {
+      "keyword": "",
+      "keywordPlaceholder": "",
+      "brand": "",
+      "allBrands": "",
+      "country": "",
+      "allCountries": "",
+      "status": "",
+      "statusAll": "",
+      "statusActive": "",
+      "statusDisabled": ""
+    },
+    "btnSearch": "",
+    "btnClear": "",
+    "col": {
+      "skuCode": "",
+      "brand": "",
+      "model": "",
+      "category": "",
+      "country": "",
+      "eanCode": "",
+      "status": "",
+      "actions": ""
+    },
+    "empty": "",
+    "emptyCreateFirst": "",
+    "action": {
+      "edit": "",
+      "delete": ""
+    }
+  },
+  "productModal": {
+    "titleNew": "",
+    "titleEdit": "",
+    "label": {
+      "country": "",
+      "brand": "",
+      "skuCode": "",
+      "model": "",
+      "category": "",
+      "eanCode": "",
+      "status": ""
+    },
+    "countryPlaceholder": "",
+    "brandPlaceholder": "",
+    "skuPlaceholder": "",
+    "modelPlaceholder": "",
+    "categoryPlaceholder": "",
+    "eanPlaceholder": "",
+    "statusActive": "",
+    "statusDisabled": "",
+    "btnSave": "",
+    "btnCancel": ""
+  },
+  "productImport": {
+    "title": "",
+    "uploadHint": "",
+    "fileFormat": "",
+    "btnDownloadTemplate": "",
+    "pendingPrefix": "",
+    "btnStart": "",
+    "btnClose": ""
+  },
+  "product": {
+    "template": {
+      "sheetName": "",
+      "col": {
+        "skuCode": "",
+        "productName": "",
+        "brand": "",
+        "model": "",
+        "category": "",
+        "country": "",
+        "eanCode": "",
+        "status": "",
+        "price": ""
+      }
+    },
+    "export": {
+      "sheetName": "",
+      "statusActive": "",
+      "statusDisabled": ""
+    }
+  },
+  "export": {
+    "col": {
+      "id": "",
+      "date": "",
+      "platform": "",
+      "brand": "",
+      "sku": "",
+      "model": "",
+      "qty": "",
+      "orderNo": "",
+      "returnReason": "",
+      "description": "",
+      "approvalStatus": "",
+      "processStatus": "",
+      "submitter": "",
+      "createdAt": "",
+      "updatedAt": ""
+    },
+    "sheet": {
+      "detail": "",
+      "record": ""
+    }
+  },
+  "importRecord": {
+    "title": "",
+    "guide": {
+      "title": "",
+      "csvFormat": "",
+      "requiredCols": "",
+      "optionalCols": "",
+      "draftNote": ""
+    },
+    "btnDownloadTemplate": "",
+    "dropHint": "",
+    "fileFormat": "",
+    "btnClose": ""
+  },
+  "users": {
+    "title": "",
+    "btnNew": "",
+    "col": {
+      "username": "",
+      "name": "",
+      "role": "",
+      "status": "",
+      "feishuBind": "",
+      "createdAt": "",
+      "actions": ""
+    },
+    "empty": "",
+    "feishu": {
+      "bound": "",
+      "unbound": ""
+    },
+    "action": {
+      "edit": "",
+      "delete": ""
+    }
+  },
+  "userModal": {
+    "titleNew": "",
+    "titleEdit": "",
+    "label": {
+      "feishuUser": "",
+      "name": "",
+      "password": "",
+      "role": "",
+      "status": "",
+      "feishuUserLabel": ""
+    },
+    "feishuPlaceholder": "",
+    "namePlaceholder": "",
+    "passwordHint": "",
+    "statusActive": "",
+    "statusDisabled": "",
+    "btnSave": "",
+    "btnCancel": "",
+    "editModeHint": "",
+    "searchLoading": "",
+    "searchEmpty": "",
+    "searchFailed": "",
+    "searchPermHint": ""
+  },
+  "roles": {
+    "title": "",
+    "btnNew": "",
+    "col": {
+      "name": "",
+      "description": "",
+      "permissions": "",
+      "userCount": "",
+      "createdAt": "",
+      "actions": ""
+    },
+    "empty": "",
+    "action": {
+      "edit": "",
+      "delete": ""
+    }
+  },
+  "roleModal": {
+    "titleNew": "",
+    "titleEdit": "",
+    "label": {
+      "name": "",
+      "desc": "",
+      "permissions": ""
+    },
+    "namePlaceholder": "",
+    "descPlaceholder": "",
+    "btnSave": "",
+    "btnCancel": ""
+  },
+  "perm": {
+    "recordView": {
+      "label": "",
+      "desc": ""
+    },
+    "recordCreate": {
+      "label": "",
+      "desc": ""
+    },
+    "recordEdit": {
+      "label": "",
+      "desc": ""
+    },
+    "recordDelete": {
+      "label": "",
+      "desc": ""
+    },
+    "recordImport": {
+      "label": "",
+      "desc": ""
+    },
+    "recordExport": {
+      "label": "",
+      "desc": ""
+    },
+    "productView": {
+      "label": "",
+      "desc": ""
+    },
+    "productCreate": {
+      "label": "",
+      "desc": ""
+    },
+    "productEdit": {
+      "label": "",
+      "desc": ""
+    },
+    "productDelete": {
+      "label": "",
+      "desc": ""
+    },
+    "productImport": {
+      "label": "",
+      "desc": ""
+    },
+    "productExport": {
+      "label": "",
+      "desc": ""
+    },
+    "approvalLevel1": {
+      "label": "",
+      "desc": ""
+    },
+    "approvalLevel2": {
+      "label": "",
+      "desc": ""
+    },
+    "approvalLevel3": {
+      "label": "",
+      "desc": ""
+    },
+    "userManage": {
+      "label": "",
+      "desc": ""
+    },
+    "roleManage": {
+      "label": "",
+      "desc": ""
+    },
+    "systemConfig": {
+      "label": "",
+      "desc": ""
+    }
+  },
+  "flash": {
+    "noPermission": "",
+    "noPagePermission": "",
+    "welcome": "",
+    "adminLogin": "",
+    "submitSuccess": "",
+    "draftSaved": "",
+    "approved": "",
+    "rejected": "",
+    "recordDeleted": "",
+    "userCreated": "",
+    "userUpdated": "",
+    "userDeleted": "",
+    "productCreated": "",
+    "productUpdated": "",
+    "productDeleted": "",
+    "roleCreated": "",
+    "roleUpdated": "",
+    "roleDeleted": "",
+    "batchProcessUpdated": "",
+    "markProcessed": "",
+    "exportSuccess": "",
+    "batchDeleteSuccess": "",
+    "templateDownloaded": "",
+    "importSuccess": "",
+    "importComplete": "",
+    "noExportData": ""
+  },
+  "validation": {
+    "selectDate": "",
+    "minOneItem": "",
+    "rowPlatform": "",
+    "rowSku": "",
+    "rowQty": "",
+    "rowReturnReason": "",
+    "rowDesc": "",
+    "selectApprovers": "",
+    "approversUnique": "",
+    "fillDate": "",
+    "enterComment": "",
+    "brandRequired": "",
+    "skuRequired": "",
+    "skuDuplicate": "",
+    "usernameNameRequired": "",
+    "newUserPassword": "",
+    "usernameDuplicate": "",
+    "feishuDuplicate": "",
+    "selectFeishuUser": "",
+    "roleNameRequired": "",
+    "selectProcessStatus": "",
+    "selectOneItem": ""
+  },
+  "confirm": {
+    "deleteRecord": "",
+    "deleteProduct": "",
+    "deleteUser": "",
+    "deleteRole": "",
+    "batchDeleteProducts": "",
+    "batchDeleteIrreversible": "",
+    "btnCancel": "",
+    "btnOk": "",
+    "title": {
+      "batchDelete": ""
+    }
+  },
+  "error": {
+    "cannotDeleteAdmin": "",
+    "roleHasUsers": "",
+    "productReferenced": "",
+    "approvalNotOwner": "",
+    "approvalNoPerm": "",
+    "onlyCurrentApprover": "",
+    "onlyErpStatus": "",
+    "onlyCurrentApproverUpload": "",
+    "imageSize": "",
+    "notImage": "",
+    "pasteImageSize": "",
+    "selectCsv": "",
+    "fileEmpty": "",
+    "missingRequiredCols": "",
+    "fileEmptyNoHeader": "",
+    "noValidData": "",
+    "fileParseFailed": "",
+    "excelLoadFailed": "",
+    "columnMismatch": "",
+    "formatXlsxCsvOnly": ""
+  },
+  "sales": {
+    "template": {
+      "sheet": "",
+      "col": {
+        "brand": "",
+        "month": "",
+        "onlineShipment": "",
+        "onlineSales": "",
+        "offlineShipment": "",
+        "offlineSales": ""
+      }
+    }
+  },
+  "default": {
+    "roleAdmin": "",
+    "roleAdminDesc": "",
+    "roleOperator": "",
+    "roleOperatorDesc": "",
+    "roleViewer": "",
+    "roleViewerDesc": "",
+    "userAdmin": "",
+    "userOperator": "",
+    "userViewer": "",
+    "feishuUser": ""
+  },
+  "server": {
+    "appName": "",
+    "error": {
+      "notLoggedIn": "",
+      "noPermission": "",
+      "cannotDeleteAdmin": "",
+      "userNotFound": "",
+      "recordNotFound": "",
+      "productNotFound": "",
+      "usernameNameRequired": "",
+      "usernameExists": "",
+      "noFieldsToUpdate": "",
+      "provideProductIds": "",
+      "feishuNotConfigured": "",
+      "missingParams": "",
+      "feishuTokenFailed": "",
+      "databaseNotConfigured": ""
+    },
+    "skuEmpty": "",
+    "brandEmpty": "",
+    "skuNotFoundDelete": "",
+    "feishuPermHint": "",
+    "notifyMock": "",
+    "notifySent": "",
+    "notifyFailed": "",
+    "notifyUnbound": ""
+  },
+  "feishuCard": {
+    "title": "",
+    "recordId": "",
+    "submitter": "",
+    "date": "",
+    "totalQty": "",
+    "skuDetail": "",
+    "processSummary": "",
+    "moreItems": "",
+    "unknown": "",
+    "btnView": ""
+  }
+}

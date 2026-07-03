@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>售后数据管理系统 v3.3.3</title>
+<title>售后数据管理系统 v3.4.0</title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.3.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.4.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -2290,7 +2290,7 @@ async function deleteRecord(id){
 
 // ==================== DETAIL PAGE ====================
 async function renderDetail(id){
-  const records=await getRecords(),r=records.find(x=>x.id===id);
+  const records=await getRecords(),r=records.find(x=>String(x.id)===String(id));
   if(!r){ showPage('list'); return; }
   document.getElementById('detail-title').textContent='售后记录 #'+id;
 

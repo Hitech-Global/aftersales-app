@@ -1,0 +1,775 @@
+{
+  "app": {
+    "title": "售后数据管理系统",
+    "sidebarBrand": "售后管理系统",
+    "mode": {
+      "cloud": "云端模式",
+      "local": "本地模式",
+      "feishu": "飞书模式"
+    },
+    "logout": "退出"
+  },
+  "login": {
+    "subtitle": "请使用公司飞书账号登录",
+    "verifying": "正在验证身份...",
+    "localModeHint": "当前为本地登录模式",
+    "localAccountLoginHint": "可使用本地账号登录。",
+    "feishuOnlyHint": "仅限公司飞书组织成员登录。",
+    "btnFeishu": "飞书登录",
+    "btnLocal": "本地账号登录",
+    "usernamePlaceholder": "用户名",
+    "passwordPlaceholder": "密码",
+    "error": {
+      "connectFeishu": "无法连接飞书服务，请使用本地账号登录",
+      "feishuUnavailable": "飞书登录暂不可用",
+      "enterCredentials": "请输入用户名和密码",
+      "wrongCredentials": "用户名或密码错误，或账号已被禁用",
+      "processFailed": "登录处理失败，请重试",
+      "missingOpenid": "飞书返回的用户信息缺少 OpenID",
+      "missingCode": "飞书授权失败：缺少授权码",
+      "invalidState": "飞书登录状态已过期，请重新发起登录",
+      "notConfigured": "当前为本地登录模式，请使用本地账号登录",
+      "tokenExchangeFailed": "飞书令牌交换失败",
+      "getUserFailed": "获取飞书用户信息失败",
+      "userInfoInvalid": "飞书返回的用户信息不完整",
+      "tokenResponseInvalid": "飞书令牌响应无效",
+      "serverError": "服务器处理错误"
+    }
+  },
+  "nav": {
+    "group": {
+      "aftersales": "售后管理",
+      "approval": "审批管理",
+      "data": "基础数据",
+      "system": "系统管理"
+    },
+    "overview": "售后概览",
+    "list": "售后列表",
+    "detail": "售后记录详情",
+    "approval": "售后记录审批",
+    "products": "商品管理",
+    "users": "用户管理",
+    "roles": "角色管理"
+  },
+  "page": {
+    "title": {
+      "overview": "售后概览",
+      "list": "售后列表",
+      "detail": "售后记录详情",
+      "products": "商品管理",
+      "approval": "售后记录审批",
+      "users": "用户管理",
+      "roles": "角色管理"
+    }
+  },
+  "overview": {
+    "filter": {
+      "startDate": "开始日期",
+      "endDate": "结束日期",
+      "brand": "品牌",
+      "allBrands": "全部品牌"
+    },
+    "btnReset": "重置",
+    "btnDownloadTemplate": "下载销量模板",
+    "btnImportSales": "导入销量数据",
+    "chart": {
+      "reasonTop5": "退货原因 TOP5",
+      "skuTop10": "SKU 售后 TOP10",
+      "label": {
+        "count": "数量",
+        "times": "售后次数"
+      },
+      "noData": "暂无数据"
+    },
+    "section": {
+      "brandCompare": "按品牌对比"
+    },
+    "card": {
+      "total": "总售后数",
+      "pending": "待处理数",
+      "returnRate": "综合退货率",
+      "defectRate": "综合不良率"
+    },
+    "metric": {
+      "avgDays": "平均处理天数",
+      "overdue": "超期未处理数 (7天+)"
+    },
+    "empty": "暂无数据。请先创建售后记录或导入销量数据。",
+    "col": {
+      "detailTotal": "明细总数",
+      "pending": "待处理",
+      "completed": "已处理",
+      "overdue": "超期",
+      "avgDays": "平均处理天数",
+      "shipment": "总出货量",
+      "sales": "总销量",
+      "returnRate": "退货率",
+      "defectRate": "不良率"
+    },
+    "period": {
+      "all": "全部"
+    }
+  },
+  "list": {
+    "title": "售后记录列表",
+    "btnExport": "导出Excel",
+    "filter": {
+      "keyword": "关键词",
+      "keywordPlaceholder": "搜索订单号、SKU、品牌、型号…",
+      "brand": "品牌",
+      "allBrands": "全部品牌",
+      "approvalStatus": "审批状态",
+      "allApprovalStatus": "全部审批状态",
+      "processStatus": "处理状态",
+      "allProcessStatus": "全部处理状态",
+      "startDate": "开始日期",
+      "endDate": "结束日期"
+    },
+    "btnSearch": "搜索",
+    "btnClear": "清除",
+    "sectionTitle": "售后记录",
+    "mode": {
+      "byRecord": "按售后单",
+      "byItem": "按售后明细"
+    },
+    "btnManual": "📝 手动填写",
+    "btnBatchImport": "📥 批量导入",
+    "batch": {
+      "selected": "已选 {count} 项明细",
+      "selectStatus": "选择处理状态...",
+      "btnUpdate": "批量更新",
+      "btnCancel": "取消"
+    },
+    "col": {
+      "id": "ID",
+      "approvalStatus": "审批状态",
+      "processStatus": "处理状态",
+      "date": "售后日期",
+      "platform": "平台",
+      "returnReason": "退货原因",
+      "sku": "SKU",
+      "orderNo": "订单号",
+      "qty": "数量",
+      "description": "问题说明",
+      "submitter": "提交人",
+      "updatedAt": "更新时间",
+      "actions": "操作"
+    },
+    "empty": {
+      "noRecords": "暂无售后记录",
+      "noMatch": "没有找到匹配的结果",
+      "createFirst": "创建第一条记录"
+    },
+    "action": {
+      "view": "查看",
+      "approve": "审批",
+      "delete": "删除"
+    },
+    "pagination": {
+      "perPage": "条/页",
+      "total": "共 {count} 条",
+      "first": "首页",
+      "prev": "上一页",
+      "next": "下一页",
+      "last": "末页"
+    }
+  },
+  "status": {
+    "draft": "草稿",
+    "pendingLevel1": "待一级审批",
+    "level1Approved": "一级审批通过",
+    "pendingLevel2": "待二级审批",
+    "level2Approved": "二级审批通过",
+    "pendingLevel3": "待三级审批",
+    "approved": "审批通过",
+    "rejected": "审批拒绝"
+  },
+  "process": {
+    "pendingErp": "待ERP入库",
+    "pendingColorBox": "待换彩盒",
+    "pendingParts": "待补配件",
+    "pendingRma": "待RMA",
+    "pendingScrap": "待报废",
+    "completed": "已处理"
+  },
+  "form": {
+    "titleNew": "新建售后记录",
+    "section": {
+      "basic": "基本信息",
+      "details": "售后明细",
+      "approvers": "审批人设置"
+    },
+    "hint": {
+      "minOneItem": "（至少添加一条明细）",
+      "approverRule": "审批人需具有对应审批级别的权限，同一人仅能担任一个审批级别。"
+    },
+    "col": {
+      "platform": "平台",
+      "sku": "SKU",
+      "orderNo": "订单号",
+      "qty": "数量",
+      "returnReason": "退货原因",
+      "description": "问题说明/备注",
+      "actions": "操作"
+    },
+    "btnAddRow": "+ 添加明细行",
+    "totalQty": "合计数量：",
+    "label": {
+      "date": "售后日期",
+      "approverL1": "一级审批人",
+      "approverL2": "二级审批人",
+      "approverL3": "三级审批人"
+    },
+    "option": {
+      "pleaseSelect": "请选择"
+    },
+    "btnSubmit": "📤 提交审批",
+    "btnSaveDraft": "💾 保存草稿",
+    "btnCancel": "取消",
+    "skuPlaceholder": "输入SKU…",
+    "orderPlaceholder": "订单号",
+    "descPlaceholder": "问题说明/备注"
+  },
+  "returnReason": {
+    "resaleable": "可二次销售",
+    "colorBoxDamage": "彩盒损坏",
+    "missingParts": "配件缺失",
+    "hardwareFault": "硬件故障",
+    "scrap": "报废"
+  },
+  "detail": {
+    "btnBack": "返回列表",
+    "titlePrefix": "售后记录 #",
+    "section": {
+      "basic": "基本信息",
+      "items": "售后明细",
+      "approvalHistory": "审批记录",
+      "approvalFlow": "审批流程",
+      "time": "时间信息"
+    },
+    "label": {
+      "date": "售后日期",
+      "status": "审批状态",
+      "submitter": "提交人",
+      "brand": "品牌",
+      "totalQty": "合计数量",
+      "initiator": "发起人",
+      "level1": "一级",
+      "level2": "二级",
+      "level3": "三级",
+      "returnDate": "退货入库日期：",
+      "createdAt": "创建时间",
+      "updatedAt": "最后更新"
+    },
+    "col": {
+      "index": "#",
+      "platform": "平台",
+      "sku": "SKU",
+      "orderNo": "订单号",
+      "qty": "数量",
+      "returnReason": "退货原因",
+      "processStatus": "处理状态",
+      "desc": "问题说明/备注"
+    },
+    "notSet": "未设置",
+    "approved": "✅ 审批通过",
+    "rejected": "❌ 审批拒绝"
+  },
+  "approval": {
+    "title": "售后记录审批",
+    "filter": {
+      "keyword": "关键词",
+      "keywordPlaceholder": "搜索订单号、SKU、品牌、型号…",
+      "scope": "范围",
+      "pending": "待我审批",
+      "done": "已审批",
+      "all": "全部"
+    },
+    "btnClear": "清除",
+    "empty": "暂无审批记录",
+    "col": {
+      "createdAt": "流程发起时间",
+      "initiator": "发起人",
+      "approver": "审批人",
+      "status": "审批状态",
+      "processStatus": "处理状态",
+      "date": "售后日期",
+      "platform": "平台",
+      "totalQty": "合计数量",
+      "currentLevel": "当前级别",
+      "actions": "操作"
+    },
+    "levelPrefix": "第{level}级"
+  },
+  "approvalModal": {
+    "title": "售后记录审批",
+    "section": {
+      "history": "审批记录",
+      "operation": "审批操作"
+    },
+    "label": {
+      "returnDate": "退货入库日期",
+      "comment": "审批意见",
+      "attachments": "附件",
+      "currentStatus": "当前审批状态",
+      "date": "售后日期",
+      "submitter": "提交人",
+      "brand": "品牌",
+      "totalQty": "合计数量"
+    },
+    "commentPlaceholder": "请输入审批意见…",
+    "attachmentHint": "点击选择文件 或 在此区域粘贴图片 (Ctrl+V)",
+    "storageWarning": "注意：图片以Base64格式存储在本地浏览器中，建议控制总大小在2MB以内。",
+    "btnApprove": "✅ 审批通过",
+    "btnReject": "❌ 审批拒绝",
+    "btnCancel": "取消",
+    "col": {
+      "index": "#",
+      "platform": "平台",
+      "sku": "SKU",
+      "orderNo": "订单号",
+      "qty": "数量",
+      "returnReason": "退货原因",
+      "processStatus": "处理状态",
+      "erpScreenshot": "ERP入库截图",
+      "actions": "操作"
+    },
+    "btnUploadScreenshot": "上传截图",
+    "btnMarkProcessed": "标记已处理",
+    "flowPrefix": "审批流程：",
+    "noHistory": "暂无审批记录"
+  },
+  "products": {
+    "title": "商品管理",
+    "btnDownloadTemplate": "下载导入模板",
+    "btnBatchImport": "批量导入",
+    "btnBatchExport": "批量导出",
+    "btnNew": "+ 新建商品",
+    "batch": {
+      "selected": "已选 {count} 项",
+      "btnDelete": "批量删除",
+      "btnCancel": "取消选择"
+    },
+    "filter": {
+      "keyword": "关键词",
+      "keywordPlaceholder": "搜索SKU、品牌、型号、品类…",
+      "brand": "品牌",
+      "allBrands": "全部品牌",
+      "country": "国家",
+      "allCountries": "全部国家",
+      "status": "状态",
+      "statusAll": "全部",
+      "statusActive": "启用",
+      "statusDisabled": "禁用"
+    },
+    "btnSearch": "搜索",
+    "btnClear": "清除",
+    "col": {
+      "skuCode": "SKU编码",
+      "brand": "品牌",
+      "model": "型号",
+      "category": "品类",
+      "country": "国家",
+      "eanCode": "EAN编码",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "empty": "暂无商品",
+    "emptyCreateFirst": "新建第一个商品",
+    "action": {
+      "edit": "编辑",
+      "delete": "删除"
+    }
+  },
+  "productModal": {
+    "titleNew": "新建商品",
+    "titleEdit": "编辑商品",
+    "label": {
+      "country": "国家",
+      "brand": "品牌",
+      "skuCode": "SKU编码",
+      "model": "型号",
+      "category": "品类",
+      "eanCode": "EAN编码",
+      "status": "状态"
+    },
+    "countryPlaceholder": "如：中国",
+    "brandPlaceholder": "如：Apple",
+    "skuPlaceholder": "如：IPHONE15-PRO-128",
+    "modelPlaceholder": "如：iPhone 15 Pro",
+    "categoryPlaceholder": "如：智能手机",
+    "eanPlaceholder": "如：195949015726",
+    "statusActive": "启用",
+    "statusDisabled": "禁用",
+    "btnSave": "保存",
+    "btnCancel": "取消"
+  },
+  "productImport": {
+    "title": "批量导入商品",
+    "uploadHint": "点击上传或拖拽文件到此处",
+    "fileFormat": "支持 .xlsx / .csv 格式",
+    "btnDownloadTemplate": "下载模板",
+    "pendingPrefix": "待导入 {count} 条商品",
+    "btnStart": "开始导入",
+    "btnClose": "关闭"
+  },
+  "product": {
+    "template": {
+      "sheetName": "商品导入模板",
+      "col": {
+        "skuCode": "SKU编码",
+        "productName": "商品名称",
+        "brand": "品牌",
+        "model": "型号",
+        "category": "品类",
+        "country": "国家",
+        "eanCode": "EAN编码",
+        "status": "状态",
+        "price": "价格"
+      }
+    },
+    "export": {
+      "sheetName": "商品列表",
+      "statusActive": "启用",
+      "statusDisabled": "禁用"
+    }
+  },
+  "export": {
+    "col": {
+      "id": "售后单号",
+      "date": "售后日期",
+      "platform": "平台",
+      "brand": "品牌",
+      "sku": "SKU",
+      "model": "型号",
+      "qty": "数量",
+      "orderNo": "订单号",
+      "returnReason": "问题类型",
+      "description": "问题说明",
+      "approvalStatus": "审批状态",
+      "processStatus": "处理状态",
+      "submitter": "提交人",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间"
+    },
+    "sheet": {
+      "detail": "售后明细",
+      "record": "售后记录"
+    }
+  },
+  "importRecord": {
+    "title": "批量导入售后记录",
+    "guide": {
+      "title": "导入说明",
+      "csvFormat": "支持 CSV 文件（UTF-8 编码）",
+      "requiredCols": "必填列：售后日期, 平台, SKU, 数量",
+      "optionalCols": "可选列：订单号, 退货原因, 问题说明/备注",
+      "draftNote": "导入的记录将自动保存为草稿状态，请到列表中编辑并提交审批"
+    },
+    "btnDownloadTemplate": "下载导入模板",
+    "dropHint": "点击选择文件或拖拽 CSV 文件到此处",
+    "fileFormat": "支持 .csv 格式",
+    "btnClose": "关闭"
+  },
+  "users": {
+    "title": "用户管理",
+    "btnNew": "+ 新建用户",
+    "col": {
+      "username": "用户名",
+      "name": "姓名",
+      "role": "角色",
+      "status": "状态",
+      "feishuBind": "飞书绑定",
+      "createdAt": "创建时间",
+      "actions": "操作"
+    },
+    "empty": "暂无用户",
+    "feishu": {
+      "bound": "已绑定",
+      "unbound": "未绑定"
+    },
+    "action": {
+      "edit": "编辑",
+      "delete": "删除"
+    }
+  },
+  "userModal": {
+    "titleNew": "新建用户",
+    "titleEdit": "编辑用户",
+    "label": {
+      "feishuUser": "飞书用户",
+      "name": "姓名",
+      "password": "密码",
+      "role": "角色",
+      "status": "状态",
+      "feishuUserLabel": "飞书用户"
+    },
+    "feishuPlaceholder": "输入姓名/英文名/邮箱搜索飞书成员...",
+    "namePlaceholder": "显示名称",
+    "passwordHint": "新建时必填，编辑时留空不修改",
+    "statusActive": "启用",
+    "statusDisabled": "禁用",
+    "btnSave": "保存",
+    "btnCancel": "取消",
+    "editModeHint": "飞书绑定用户（不可修改）",
+    "searchLoading": "搜索中...",
+    "searchEmpty": "未找到匹配的飞书用户",
+    "searchFailed": "搜索失败，请检查飞书集成状态",
+    "searchPermHint": "请在飞书开发者后台启用\"通讯录\"相关权限"
+  },
+  "roles": {
+    "title": "角色管理",
+    "btnNew": "+ 新建角色",
+    "col": {
+      "name": "角色名称",
+      "description": "角色描述",
+      "permissions": "权限",
+      "userCount": "关联用户数",
+      "createdAt": "创建时间",
+      "actions": "操作"
+    },
+    "empty": "暂无角色",
+    "action": {
+      "edit": "编辑",
+      "delete": "删除"
+    }
+  },
+  "roleModal": {
+    "titleNew": "新建角色",
+    "titleEdit": "编辑角色",
+    "label": {
+      "name": "角色名称",
+      "desc": "角色描述",
+      "permissions": "权限配置"
+    },
+    "namePlaceholder": "如：运营人员",
+    "descPlaceholder": "描述该角色的职责范围",
+    "btnSave": "保存",
+    "btnCancel": "取消"
+  },
+  "perm": {
+    "recordView": {
+      "label": "查看售后记录",
+      "desc": "查看概览和售后列表"
+    },
+    "recordCreate": {
+      "label": "新建售后记录",
+      "desc": "创建售后记录"
+    },
+    "recordEdit": {
+      "label": "编辑售后记录",
+      "desc": "修改售后记录"
+    },
+    "recordDelete": {
+      "label": "删除售后记录",
+      "desc": "删除售后记录"
+    },
+    "recordImport": {
+      "label": "导入售后记录",
+      "desc": "批量导入售后数据"
+    },
+    "recordExport": {
+      "label": "导出售后记录",
+      "desc": "导出Excel给工厂分析"
+    },
+    "productView": {
+      "label": "查看商品",
+      "desc": "查看商品目录"
+    },
+    "productCreate": {
+      "label": "新增商品",
+      "desc": "新建商品信息"
+    },
+    "productEdit": {
+      "label": "编辑商品",
+      "desc": "修改商品信息"
+    },
+    "productDelete": {
+      "label": "删除商品",
+      "desc": "删除商品"
+    },
+    "productImport": {
+      "label": "导入商品",
+      "desc": "批量导入商品数据"
+    },
+    "productExport": {
+      "label": "导出商品",
+      "desc": "导出商品Excel"
+    },
+    "approvalLevel1": {
+      "label": "一级审批",
+      "desc": "作为一级审批人处理审批"
+    },
+    "approvalLevel2": {
+      "label": "二级审批",
+      "desc": "作为二级审批人处理审批"
+    },
+    "approvalLevel3": {
+      "label": "三级审批",
+      "desc": "作为三级审批人处理审批"
+    },
+    "userManage": {
+      "label": "用户管理",
+      "desc": "管理系统用户"
+    },
+    "roleManage": {
+      "label": "角色管理",
+      "desc": "管理系统角色和权限"
+    },
+    "systemConfig": {
+      "label": "系统配置",
+      "desc": "修改系统设置"
+    }
+  },
+  "flash": {
+    "noPermission": "你没有该操作的权限",
+    "noPagePermission": "你没有该页面的访问权限",
+    "welcome": "欢迎，{name}！",
+    "adminLogin": "管理员 {name} 已登录",
+    "submitSuccess": "审批已提交，等待一级审批",
+    "draftSaved": "草稿已保存",
+    "approved": "审批通过",
+    "rejected": "已拒绝",
+    "recordDeleted": "记录已删除",
+    "userCreated": "用户已创建",
+    "userUpdated": "用户已更新",
+    "userDeleted": "用户已删除",
+    "productCreated": "商品已创建",
+    "productUpdated": "商品已更新",
+    "productDeleted": "商品已删除",
+    "roleCreated": "角色已创建",
+    "roleUpdated": "角色已更新",
+    "roleDeleted": "角色已删除",
+    "batchProcessUpdated": "已更新 {count} 个明细的处理状态",
+    "markProcessed": "已标记为已处理",
+    "exportSuccess": "已导出 {count} 条记录",
+    "batchDeleteSuccess": "成功删除 {count} 个商品",
+    "templateDownloaded": "模板已下载",
+    "importSuccess": "导入完成：新增{added}/更新{updated}/删除{deleted}/失败{failed}",
+    "importComplete": "共读取 {total} 行，成功导入 {imported} 条草稿记录",
+    "noExportData": "当前筛选条件下没有可导出的数据"
+  },
+  "validation": {
+    "selectDate": "请选择售后日期",
+    "minOneItem": "请至少添加一条售后明细",
+    "rowPlatform": "第{row}行：请选择平台",
+    "rowSku": "第{row}行：请填写SKU",
+    "rowQty": "第{row}行：数量必须大于0",
+    "rowReturnReason": "第{row}行：请选择退货原因",
+    "rowDesc": "第{row}行：请填写问题说明",
+    "selectApprovers": "请选择三位审批人",
+    "approversUnique": "三位审批人不能相同",
+    "fillDate": "请至少填写售后日期",
+    "enterComment": "请输入审批意见",
+    "brandRequired": "品牌不能为空",
+    "skuRequired": "SKU编码不能为空",
+    "skuDuplicate": "SKU编码已存在",
+    "usernameNameRequired": "用户名和姓名不能为空",
+    "newUserPassword": "新建用户必须设置密码",
+    "usernameDuplicate": "用户名已存在",
+    "feishuDuplicate": "该飞书用户已被绑定，请选择其他用户",
+    "selectFeishuUser": "请通过搜索选择飞书用户",
+    "roleNameRequired": "角色名称不能为空",
+    "selectProcessStatus": "请选择要设置的处理状态",
+    "selectOneItem": "请至少选择一条明细"
+  },
+  "confirm": {
+    "deleteRecord": "确定要删除这条记录吗？此操作不可撤销。",
+    "deleteProduct": "确定要删除该商品吗？",
+    "deleteUser": "确定要删除该用户吗？",
+    "deleteRole": "确定要删除该角色吗？",
+    "batchDeleteProducts": "确定要删除选中的 {count} 个商品吗？",
+    "batchDeleteIrreversible": "此操作不可恢复！",
+    "btnCancel": "取消",
+    "btnOk": "确认删除",
+    "title": {
+      "batchDelete": "确认批量删除"
+    }
+  },
+  "error": {
+    "cannotDeleteAdmin": "不能删除超级管理员",
+    "roleHasUsers": "该角色下还有用户，无法删除",
+    "productReferenced": "该商品被 {count} 条售后记录引用，无法删除",
+    "approvalNotOwner": "你不是该级别的审批人",
+    "approvalNoPerm": "你没有该级别的审批权限",
+    "onlyCurrentApprover": "只有当前级别审批人可以处理该审批",
+    "onlyErpStatus": "仅\"待ERP入库\"状态可标记为已处理",
+    "onlyCurrentApproverUpload": "只有当前级别审批人可以上传处理截图",
+    "imageSize": "图片超过2MB，请压缩后上传",
+    "notImage": "文件 {filename} 不是图片，已跳过",
+    "pasteImageSize": "粘贴的图片超过2MB，已跳过",
+    "selectCsv": "请选择 CSV 格式的文件",
+    "fileEmpty": "文件为空或格式不正确",
+    "missingRequiredCols": "缺少必填列：售后日期、平台、SKU、数量。当前表头：{headers}",
+    "fileEmptyNoHeader": "文件为空或缺少表头",
+    "noValidData": "未解析到有效商品数据",
+    "fileParseFailed": "文件解析失败：{message}",
+    "excelLoadFailed": "Excel库加载失败，请刷新页面重试",
+    "columnMismatch": "列名不匹配，请使用下载的模板格式",
+    "formatXlsxCsvOnly": "仅支持 .xlsx / .csv 文件"
+  },
+  "sales": {
+    "template": {
+      "sheet": "销量数据模板",
+      "col": {
+        "brand": "品牌",
+        "month": "月份",
+        "onlineShipment": "线上出货量",
+        "onlineSales": "线上销量",
+        "offlineShipment": "线下出货量",
+        "offlineSales": "线下销量"
+      }
+    }
+  },
+  "default": {
+    "roleAdmin": "超级管理员",
+    "roleAdminDesc": "拥有系统全部管理权限",
+    "roleOperator": "运营人员",
+    "roleOperatorDesc": "业务操作权限，含审批与导入导出",
+    "roleViewer": "普通用户",
+    "roleViewerDesc": "查看与新建权限",
+    "userAdmin": "超级管理员",
+    "userOperator": "运营人员",
+    "userViewer": "普通用户",
+    "feishuUser": "飞书用户"
+  },
+  "server": {
+    "appName": "售后数据管理系统",
+    "error": {
+      "notLoggedIn": "未登录",
+      "noPermission": "没有该操作的权限",
+      "cannotDeleteAdmin": "不能删除超级管理员",
+      "userNotFound": "用户不存在",
+      "recordNotFound": "记录不存在",
+      "productNotFound": "商品不存在",
+      "usernameNameRequired": "用户名和姓名不能为空",
+      "usernameExists": "用户名已存在",
+      "noFieldsToUpdate": "没有需要更新的字段",
+      "provideProductIds": "请提供要删除的商品ID列表",
+      "feishuNotConfigured": "飞书未配置",
+      "missingParams": "缺少必要参数",
+      "feishuTokenFailed": "获取飞书 token 失败",
+      "databaseNotConfigured": "数据库未配置"
+    },
+    "skuEmpty": "SKU编码为空",
+    "brandEmpty": "品牌为空",
+    "skuNotFoundDelete": "要删除/禁用的 SKU 不存在",
+    "feishuPermHint": "飞书应用缺少通讯录权限。请在飞书开发者后台 > 权限管理中开通\"获取通讯录基本信息\"或\"以应用身份访问通讯录\"权限",
+    "notifyMock": "模拟模式：通知已记录（飞书未配置时使用）",
+    "notifySent": "已通知 {name}",
+    "notifyFailed": "通知发送失败",
+    "notifyUnbound": "未绑定飞书账号"
+  },
+  "feishuCard": {
+    "title": "📋 售后审批通知",
+    "recordId": "售后单号",
+    "submitter": "提交人",
+    "date": "售后日期",
+    "totalQty": "总数量",
+    "skuDetail": "SKU 明细",
+    "processSummary": "处理状态分布",
+    "moreItems": "... 共 {count} 条明细",
+    "unknown": "未知",
+    "btnView": "查看/审批"
+  }
+}

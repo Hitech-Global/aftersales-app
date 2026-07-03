@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.3.3-render-latest';
+const APP_VERSION = '3.4.0-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -361,15 +361,21 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
 
 app.post('/api/records', requireApiPermission('record_create'), async (req, res) => {
   try {
-    const { id, submitter_id, submitter_name, aftersales_date, status, brand, platforms, items,
-      approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name } = req.body;
+    const { id, submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
+      total_quantity, current_approval_level,
+      approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
+      approver_level3_id, approver_level3_name, approval_history } = req.body;
 
     const result = await query(
-      `INSERT INTO aftersales_records (id, submitter_id, submitter_name, aftersales_date, status, brand, platforms, items,
-        approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [id, submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', platforms || '', JSON.stringify(items || []),
-       approver_level1_id || '', approver_level1_name || '', approver_level2_id || '', approver_level2_name || '']
+      `INSERT INTO aftersales_records (id, submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
+        total_quantity, current_approval_level,
+        approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
+        approver_level3_id, approver_level3_name, approval_history)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
+      [id, submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []),
+       total_quantity || 0, current_approval_level || 0,
+       approver_level1_id || '', approver_level1_name || '', approver_level2_id || '', approver_level2_name || '',
+       approver_level3_id || '', approver_level3_name || '', JSON.stringify(approval_history || [])]
     );
     res.json(result.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -377,9 +383,11 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
 
 app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res) => {
   try {
-    const { submitter_name, aftersales_date, status, brand, platforms, items,
+    const { submitter_name, aftersales_date, status, brand, model, category, platforms, items,
+      total_quantity, current_approval_level,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
-      approval_level1_status, approval_level2_status } = req.body;
+      approver_level3_id, approver_level3_name,
+      approval_level1_status, approval_level2_status, approval_history } = req.body;
 
     const fields = ['updated_at = NOW()'];
     const values = [];
@@ -392,14 +400,21 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     add('aftersales_date', aftersales_date);
     add('status', status);
     add('brand', brand);
+    add('model', model);
+    add('category', category);
     add('platforms', platforms);
     add('items', items !== undefined ? JSON.stringify(items) : undefined);
+    add('total_quantity', total_quantity);
+    add('current_approval_level', current_approval_level);
     add('approver_level1_id', approver_level1_id);
     add('approver_level1_name', approver_level1_name);
     add('approver_level2_id', approver_level2_id);
     add('approver_level2_name', approver_level2_name);
+    add('approver_level3_id', approver_level3_id);
+    add('approver_level3_name', approver_level3_name);
     add('approval_level1_status', approval_level1_status);
     add('approval_level2_status', approval_level2_status);
+    add('approval_history', approval_history !== undefined ? JSON.stringify(approval_history) : undefined);
 
     values.push(req.params.id);
     const result = await query(

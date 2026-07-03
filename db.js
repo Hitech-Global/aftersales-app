@@ -140,14 +140,21 @@ async function initDatabase() {
         aftersales_date DATE,
         status VARCHAR(32) DEFAULT 'draft',
         brand TEXT DEFAULT '',
+        model VARCHAR(128) DEFAULT '',
+        category VARCHAR(64) DEFAULT '',
         platforms TEXT DEFAULT '',
         items JSONB DEFAULT '[]',
+        total_quantity INTEGER DEFAULT 0,
+        current_approval_level INTEGER DEFAULT 0,
         approver_level1_id VARCHAR(64) DEFAULT '',
         approver_level1_name VARCHAR(128) DEFAULT '',
         approver_level2_id VARCHAR(64) DEFAULT '',
         approver_level2_name VARCHAR(128) DEFAULT '',
+        approver_level3_id VARCHAR(64) DEFAULT '',
+        approver_level3_name VARCHAR(128) DEFAULT '',
         approval_level1_status VARCHAR(32) DEFAULT 'pending',
         approval_level2_status VARCHAR(32) DEFAULT 'pending',
+        approval_history JSONB DEFAULT '[]',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
@@ -173,6 +180,20 @@ async function initDatabase() {
     await query(`CREATE INDEX IF NOT EXISTS idx_records_status ON aftersales_records(status)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver1 ON aftersales_records(approver_level1_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver2 ON aftersales_records(approver_level2_id)`);
+
+    // 迁移：为已有的表添加缺失列
+    const migrationColumns = [
+      { name: 'model', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'category', type: 'VARCHAR(64) DEFAULT \'\'' },
+      { name: 'total_quantity', type: 'INTEGER DEFAULT 0' },
+      { name: 'current_approval_level', type: 'INTEGER DEFAULT 0' },
+      { name: 'approver_level3_id', type: 'VARCHAR(64) DEFAULT \'\'' },
+      { name: 'approver_level3_name', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'approval_history', type: 'JSONB DEFAULT \'[]\'' },
+    ];
+    for (const col of migrationColumns) {
+      await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
+    }
 
     console.log('[DB] 数据库表初始化完成');
 
