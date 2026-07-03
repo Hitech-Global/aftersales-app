@@ -25,6 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
+const APP_VERSION = '3.2.0-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -115,6 +116,7 @@ function getFeishuAvatar(userInfo) {
 console.log('========================================');
 console.log(`  售后数据管理系统 - 后端服务`);
 console.log('========================================');
+console.log(`  版本: ${APP_VERSION}`);
 console.log(`  端口: ${PORT}`);
 console.log(`  飞书集成: ${FEISHU_ENABLED ? '启用' : '未启用 (Mock 模式)'}`);
 if (FEISHU_ENABLED && feishuConfigured) {
@@ -156,6 +158,18 @@ app.use(express.static(path.join(__dirname), {
     }
   }
 }));
+
+app.get('/api/version', (req, res) => {
+  res.json({
+    version: APP_VERSION,
+    app: 'aftersales-node-spa',
+    entry: 'server.js',
+    frontend: 'index.html',
+    baseUrl: APP_BASE_URL,
+    nodeEnv: NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // ==================== API 认证中间件 ====================
 function apiAuth(req, res, next) {

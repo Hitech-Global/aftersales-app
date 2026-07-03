@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: aftersales-app
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BASE_URL
+        value: https://aftersales-app.onrender.com
+      - key: FEISHU_ENABLED
+        value: "true"
+      - key: FEISHU_APP_NAME
+        value: 售后数据管理系统
+      - key: FEISHU_APP_ID
+        sync: false
+      - key: FEISHU_APP_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
