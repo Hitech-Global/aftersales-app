@@ -88,7 +88,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .stat-number{font-size:24px;font-weight:700;color:var(--primary)}
 .stat-label{font-size:12px;color:var(--text-secondary);margin-top:2px}
 
-.filter-bar{margin-bottom:20px;background:var(--card-bg);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.filter-bar{margin-bottom:20px;background:var(--card-bg);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow);position:relative;z-index:1}
+.prod-batch-bar{margin-bottom:20px;background:#fff3e0;border:1px solid #ffb74d;padding:12px 16px;border-radius:var(--radius);box-shadow:var(--shadow);display:none;position:relative;z-index:2}
+.prod-batch-bar .batch-inner{display:flex;align-items:center;gap:16px;width:100%}
+.prod-batch-bar .batch-count{font-weight:600;color:#e65100}
+.filter-bar .btn,.prod-batch-bar .btn{pointer-events:auto}
 .filter-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
 .filter-group label{font-size:12px;color:var(--text-secondary);font-weight:500}
@@ -389,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.3.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.3.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -628,17 +632,17 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
           <div class="page-header">
             <h2>商品管理</h2>
             <div style="display:flex;gap:10px;align-items:center">
-              <button class="btn btn-secondary" id="btn-import-products" onclick="downloadProductTemplate()">下载导入模板</button>
+              <button class="btn btn-secondary" id="btn-template-products" onclick="downloadProductTemplate()">下载导入模板</button>
               <button class="btn btn-secondary" id="btn-import-products" onclick="openProductImportModal()">批量导入</button>
               <button class="btn btn-secondary" id="btn-export-products" onclick="exportProducts()">批量导出</button>
               <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()">+ 新建商品</button>
             </div>
           </div>
-          <div id="prod-batch-bar" class="filter-bar" style="display:none;background:#fff3e0;border:1px solid #ffb74d">
-            <div style="display:flex;align-items:center;gap:16px;width:100%">
-              <span id="prod-selected-count" style="font-weight:600;color:#e65100">已选 0 项</span>
+          <div id="prod-batch-bar" class="prod-batch-bar">
+            <div class="batch-inner">
+              <span id="prod-selected-count" class="batch-count">已选 0 项</span>
               <button class="btn btn-danger" id="btn-batch-delete" onclick="batchDeleteProducts()">批量删除</button>
-              <button class="btn btn-clear" onclick="clearProductSelection()">取消选择</button>
+              <button class="btn btn-clear" id="btn-clear-selection" onclick="clearProductSelection()">取消选择</button>
             </div>
           </div>
           <div class="filter-bar">
@@ -3471,7 +3475,8 @@ function clearProductFilter(){
   document.getElementById('prod-brand-filter').value='';
   document.getElementById('prod-country-filter').value='';
   document.getElementById('prod-status-filter').value='';
-  prodPage=1; renderProducts();
+  prodPage=1;
+  clearProductSelection();
 }
 
 // 商品批量选择
@@ -3497,7 +3502,7 @@ function updateProdBatchBar(){
   const bar = document.getElementById('prod-batch-bar');
   const count = document.getElementById('prod-selected-count');
   if(bar && count){
-    bar.style.display = prodSelected.size > 0 ? '' : 'none';
+    bar.style.display = prodSelected.size > 0 ? 'block' : 'none';
     count.textContent = `已选 ${prodSelected.size} 项`;
   }
 }
