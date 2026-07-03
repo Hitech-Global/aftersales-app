@@ -273,7 +273,8 @@
       "level3": "三级",
       "returnDate": "退货入库日期：",
       "createdAt": "创建时间",
-      "updatedAt": "最后更新"
+      "updatedAt": "最后更新",
+      "pendingErpQty": "待ERP入库数量"
     },
     "col": {
       "index": "#",
@@ -284,7 +285,8 @@
       "returnReason": "退货原因",
       "processStatus": "处理状态",
       "desc": "问题说明/备注",
-      "actions": "操作"
+      "actions": "操作",
+      "brand": "品牌"
     },
     "notSet": "未设置",
     "approved": "✅ 审批通过",
@@ -298,7 +300,9 @@
       "scope": "范围",
       "pending": "待我审批",
       "done": "已审批",
-      "all": "全部"
+      "all": "全部",
+      "startDate": "开始日期",
+      "endDate": "结束日期"
     },
     "btnClear": "清除",
     "empty": "暂无审批记录",
@@ -312,13 +316,18 @@
       "platform": "平台",
       "totalQty": "合计数量",
       "currentLevel": "当前级别",
-      "actions": "操作"
+      "actions": "操作",
+      "currentApprover": "当前审批人"
     },
     "levelPrefix": "第{level}级",
     "level1": "一级",
     "level2": "二级",
     "level3": "三级",
-    "levelSuffix": "审批"
+    "levelSuffix": "审批",
+    "flow": {
+      "completed": "已完成",
+      "rejected": "已拒绝"
+    }
   },
   "approvalModal": {
     "title": "售后记录审批",
@@ -794,7 +803,8 @@
     "platformRequired": "第{row}行：请选择平台",
     "quantityMustBePositive": "第{row}行：数量必须大于0",
     "returnReasonRequired": "第{row}行：请选择退货原因",
-    "faultDescriptionRequired": "第{row}行：请填写问题说明"
+    "faultDescriptionRequired": "第{row}行：请填写问题说明",
+    "enterReturnDate": "请填写退货入库日期"
   },
   "confirm": {
     "deleteRecord": "确定要删除这条记录吗？此操作不可撤销。",
@@ -949,5 +959,8 @@
       "editUser": "编辑用户",
       "newUser": "新建用户"
     }
+  },
+  "toast": {
+    "close": "关闭"
   }
 }

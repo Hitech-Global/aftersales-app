@@ -273,7 +273,8 @@
       "level3": "Level 3",
       "returnDate": "Return Stock-In Date:",
       "createdAt": "Created At",
-      "updatedAt": "Last Updated"
+      "updatedAt": "Last Updated",
+      "pendingErpQty": "Pending ERP Qty"
     },
     "col": {
       "index": "#",
@@ -284,7 +285,8 @@
       "returnReason": "Return Reason",
       "processStatus": "Processing Status",
       "desc": "Issue Description / Notes",
-      "actions": "Actions"
+      "actions": "Actions",
+      "brand": "Brand"
     },
     "notSet": "Not Set",
     "approved": "Approved",
@@ -298,7 +300,9 @@
       "scope": "Scope",
       "pending": "Pending My Approval",
       "done": "Reviewed",
-      "all": "All"
+      "all": "All",
+      "startDate": "Start Date",
+      "endDate": "End Date"
     },
     "btnClear": "Clear",
     "empty": "No approval history",
@@ -312,13 +316,18 @@
       "platform": "Platform",
       "totalQty": "Total Qty",
       "currentLevel": "Current Level",
-      "actions": "Actions"
+      "actions": "Actions",
+      "currentApprover": "Current Approver"
     },
     "levelPrefix": "Level {level}",
     "level1": "Level 1",
     "level2": "Level 2",
     "level3": "Level 3",
-    "levelSuffix": "Approval"
+    "levelSuffix": "Approval",
+    "flow": {
+      "completed": "Completed",
+      "rejected": "Rejected"
+    }
   },
   "approvalModal": {
     "title": "RMA Approvals",
@@ -794,7 +803,8 @@
     "platformRequired": "Row {row}: Please select platform",
     "quantityMustBePositive": "Row {row}: Quantity must be > 0",
     "returnReasonRequired": "Row {row}: Please select return reason",
-    "faultDescriptionRequired": "Row {row}: Please fill in fault description"
+    "faultDescriptionRequired": "Row {row}: Please fill in fault description",
+    "enterReturnDate": "Enter the return stock-in date"
   },
   "confirm": {
     "deleteRecord": "Are you sure you want to delete this record? This action cannot be undone.",
@@ -949,5 +959,8 @@
       "editUser": "Edit User",
       "newUser": "New User"
     }
+  },
+  "toast": {
+    "close": "Close"
   }
 }

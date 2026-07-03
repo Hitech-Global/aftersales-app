@@ -273,7 +273,8 @@
       "level3": "Level 3",
       "returnDate": "Tanggal Stock-In Retur:",
       "createdAt": "Dibuat pada",
-      "updatedAt": "Update Terakhir"
+      "updatedAt": "Update Terakhir",
+      "pendingErpQty": "Qty Menunggu ERP"
     },
     "col": {
       "index": "#",
@@ -284,7 +285,8 @@
       "returnReason": "Alasan Retur",
       "processStatus": "Status Proses",
       "desc": "Deskripsi Masalah / Catatan",
-      "actions": "Aksi"
+      "actions": "Aksi",
+      "brand": "Brand"
     },
     "notSet": "Belum Diatur",
     "approved": "Disetujui",
@@ -298,7 +300,9 @@
       "scope": "Scope",
       "pending": "Menunggu Approval Saya",
       "done": "Sudah Diproses",
-      "all": "Semua"
+      "all": "Semua",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Selesai"
     },
     "btnClear": "Bersihkan",
     "empty": "Belum ada riwayat approval",
@@ -312,13 +316,18 @@
       "platform": "Platform",
       "totalQty": "Total Qty",
       "currentLevel": "Level Saat Ini",
-      "actions": "Aksi"
+      "actions": "Aksi",
+      "currentApprover": "Approver Saat Ini"
     },
     "levelPrefix": "Level {level}",
     "level1": "Level 1",
     "level2": "Level 2",
     "level3": "Level 3",
-    "levelSuffix": "Persetujuan"
+    "levelSuffix": "Persetujuan",
+    "flow": {
+      "completed": "Selesai",
+      "rejected": "Ditolak"
+    }
   },
   "approvalModal": {
     "title": "Persetujuan RMA",
@@ -794,7 +803,8 @@
     "platformRequired": "Baris {row}: Silakan pilih platform",
     "quantityMustBePositive": "Baris {row}: Jumlah harus > 0",
     "returnReasonRequired": "Baris {row}: Silakan pilih alasan pengembalian",
-    "faultDescriptionRequired": "Baris {row}: Silakan isi deskripsi kerusakan"
+    "faultDescriptionRequired": "Baris {row}: Silakan isi deskripsi kerusakan",
+    "enterReturnDate": "Masukkan tanggal stock-in retur"
   },
   "confirm": {
     "deleteRecord": "Yakin ingin menghapus catatan ini? Aksi ini tidak dapat dibatalkan.",
@@ -949,5 +959,8 @@
       "editUser": "Edit Pengguna",
       "newUser": "Pengguna Baru"
     }
+  },
+  "toast": {
+    "close": "Tutup"
   }
 }

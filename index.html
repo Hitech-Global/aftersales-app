@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.3"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.4"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -108,6 +108,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .data-table th{padding:10px 12px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
 .data-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
 .data-table tbody tr:hover{background:#f8f9ff}
+.data-table tbody tr.row-clickable{cursor:pointer}
+.data-table tbody tr.row-clickable:hover{background:#eef5ff}
 .data-table tbody tr:last-child td{border-bottom:none}
 .cell-id{color:var(--text-muted);font-family:monospace;font-size:12px}
 .cell-name{font-weight:500}
@@ -117,6 +119,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .action-btn{background:none;border:none;cursor:pointer;padding:4px 6px;font-size:16px;opacity:.6;transition:opacity .2s;font-family:inherit}
 .action-btn:hover{opacity:1}
 .action-delete:hover{color:var(--danger)}
+.toast-container{position:fixed;top:72px;right:20px;z-index:500;display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:min(420px,calc(100vw - 32px))}
+.toast{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);background:var(--card-bg);border-left:4px solid var(--primary);font-size:13px;line-height:1.45;color:var(--text);pointer-events:auto;animation:toastIn .18s ease-out}
+.toast-success{border-left-color:var(--success)}
+.toast-danger{border-left-color:var(--danger)}
+.toast-warning{border-left-color:var(--warning)}
+.toast-info{border-left-color:var(--primary)}
+.toast-message{flex:1}
+.toast-close{border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 8px}
+@keyframes toastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;white-space:nowrap}
 .status-草稿{background:#f5f5f5;color:#757575}
 .status-待一级审批{background:#fff3e0;color:#e65100}
@@ -393,7 +404,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.4 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -422,18 +433,18 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 
     <div class="content">
       <div class="content-inner">
-        <div id="flash-msg" class="flash"></div>
+        <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
 
         <!-- 售后概览 -->
         <div id="page-overview" class="page">
           <div class="ov-filter-bar">
             <div class="ov-filter-group">
               <label data-i18n="overview.filter.startDate"></label>
-              <input type="date" class="date-input" id="ov-start-date" onchange="renderOverview()">
+              <input type="text" class="date-input" id="ov-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderOverview()" onchange="normalizeDateInput(this);renderOverview()">
             </div>
             <div class="ov-filter-group">
               <label data-i18n="overview.filter.endDate"></label>
-              <input type="date" class="date-input" id="ov-end-date" onchange="renderOverview()">
+              <input type="text" class="date-input" id="ov-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderOverview()" onchange="normalizeDateInput(this);renderOverview()">
             </div>
             <div class="ov-filter-group">
               <label data-i18n="overview.filter.brand"></label>
@@ -493,11 +504,11 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
               </div>
               <div class="filter-group">
                 <label data-i18n="list.filter.startDate"></label>
-                <input type="date" class="date-input" id="list-start-date" onchange="renderList()">
+                <input type="text" class="date-input" id="list-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
               </div>
               <div class="filter-group">
                 <label data-i18n="list.filter.endDate"></label>
-                <input type="date" class="date-input" id="list-end-date" onchange="renderList()">
+                <input type="text" class="date-input" id="list-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
               </div>
               <div class="filter-actions">
                 <button class="btn btn-search" onclick="renderList()" data-i18n="list.btnSearch"></button>
@@ -552,7 +563,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                 <fieldset class="form-section">
                   <legend data-i18n="form.section.basic"></legend>
                   <div class="form-grid">
-                    <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="date" class="date-input" id="f-aftersales-date" required></div>
+                    <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="text" class="date-input" id="f-aftersales-date" inputmode="numeric" required onblur="normalizeDateInput(this)"></div>
                   </div>
                 </fieldset>
                 <fieldset class="form-section">
@@ -624,6 +635,14 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                   <option value="done" data-i18n="approval.filter.done"></option>
                   <option value="all" data-i18n="approval.filter.all"></option>
                 </select>
+              </div>
+              <div class="filter-group">
+                <label data-i18n="approval.filter.startDate"></label>
+                <input type="text" class="date-input" id="appr-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderApproval()" onchange="normalizeDateInput(this);renderApproval()">
+              </div>
+              <div class="filter-group">
+                <label data-i18n="approval.filter.endDate"></label>
+                <input type="text" class="date-input" id="appr-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderApproval()" onchange="normalizeDateInput(this);renderApproval()">
               </div>
               <div class="filter-actions">
                 <button class="btn btn-clear" onclick="clearApprovalFilter()" data-i18n="approval.btnClear"></button>
@@ -838,7 +857,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <div class="detail-section" id="approval-form-section">
         <h3 data-i18n="approvalModal.section.operation"></h3>
         <div class="form-grid">
-          <div class="form-group"><label data-i18n="approvalModal.label.returnDate"></label><input type="date" class="date-input" id="appr-return-date"></div>
+          <div class="form-group"><label data-i18n="approvalModal.label.returnDate"></label><input type="text" class="date-input" id="appr-return-date" inputmode="numeric" onblur="normalizeDateInput(this)"></div>
           <div class="form-group form-group-full"><label data-i18n="approvalModal.label.comment"></label> <span class="required">*</span><textarea id="appr-comment" rows="3" required data-i18n-placeholder="approvalModal.commentPlaceholder"></textarea></div>
         </div>
         <div style="margin-top:12px">
@@ -1424,14 +1443,75 @@ function getDefaultAccessiblePage(){
 
 // ==================== UTILITIES ====================
 function showFlash(msg,type='info'){
-  const el=document.getElementById('flash-msg');
-  el.className='flash flash-'+type+' show';
-  el.textContent=msg;
-  setTimeout(()=>el.classList.remove('show'),3000);
+  const container=document.getElementById('toast-container');
+  if(!container){ console.log('[Toast]', type, msg); return; }
+  const toast=document.createElement('div');
+  toast.className='toast toast-'+(type||'info');
+  const closeLabel=(typeof t==='function')?t('toast.close'):'Close';
+  toast.innerHTML=`<div class="toast-message">${esc(msg)}</div><button type="button" class="toast-close" aria-label="${escAttr(closeLabel)}">&times;</button>`;
+  const remove=()=>{ if(toast.parentNode) toast.parentNode.removeChild(toast); };
+  toast.querySelector('.toast-close').onclick=remove;
+  container.appendChild(toast);
+  setTimeout(remove,3000);
 }
 function esc(s){ if(!s)return''; const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 function escAttr(s){ return esc(s).replace(/'/g,"&#39;").replace(/"/g,"&quot;"); }
 function formatDateLocal(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+function parseDateValue(value){
+  if(!value) return null;
+  if(value instanceof Date) return isNaN(value.getTime())?null:value;
+  const raw=String(value).trim();
+  if(!raw) return null;
+  const iso=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso) return new Date(Number(iso[1]), Number(iso[2])-1, Number(iso[3]));
+  const slash=raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if(slash){
+    const locale=window.__i18n&&window.__i18n.getLocale?window.__i18n.getLocale():'zh-CN';
+    const a=Number(slash[1]),b=Number(slash[2]),y=Number(slash[3]);
+    return locale==='en-US'?new Date(y,a-1,b):new Date(y,b-1,a);
+  }
+  const d=new Date(raw);
+  return isNaN(d.getTime())?null:d;
+}
+function dateToStorage(value){
+  const d=parseDateValue(value);
+  return d?formatDateLocal(d):'';
+}
+function formatDate(value){
+  const d=parseDateValue(value);
+  if(!d) return value?esc(String(value)):'-';
+  const locale=window.__i18n&&window.__i18n.getLocale?window.__i18n.getLocale():'zh-CN';
+  if(locale==='en-US') return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  if(locale==='id-ID') return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+  return formatDateLocal(d);
+}
+function formatDateTime(value){
+  const d=parseDateValue(value);
+  if(!d) return value?esc(String(value)):'-';
+  const locale=window.__i18n&&window.__i18n.getLocale?window.__i18n.getLocale():'zh-CN';
+  const opts={month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'};
+  if(locale==='en-US') return d.toLocaleString('en-US',opts);
+  if(locale==='id-ID') return d.toLocaleString('id-ID',opts);
+  return `${formatDateLocal(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function normalizeDateInput(input){
+  if(!input) return '';
+  const storage=dateToStorage(input.value);
+  input.dataset.value=storage;
+  if(storage) input.value=storage;
+  return storage;
+}
+function getDateInputValue(id){
+  const input=document.getElementById(id);
+  if(!input) return '';
+  return normalizeDateInput(input);
+}
+function setDateInputValue(id,value){
+  const input=document.getElementById(id);
+  if(!input) return;
+  input.value=value?dateToStorage(value):'';
+  input.dataset.value=input.value;
+}
 function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-bad'; if(rate>=2)return'rate-warn'; return'rate-good'; }
 
 // ==================== FEISHU NOTIFICATION ====================
@@ -1440,29 +1520,29 @@ function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-b
  * @param {Object} record - 售后记录
  */
 async function sendApprovalNotification(record) {
-  if (!record || !record.id) return;
+  if (!record || !record.id) return {success:false, error:'missing_record'};
 
   const level = record.current_approval_level;
-  if (level <= 0) return; // 无需通知
+  if (level <= 0) return {success:true, skipped:true, reason:'flow_finished'}; // 无需通知
 
   const users = await getUsers();
   const approverId = record['approver_level'+level+'_id'];
   if (!approverId) {
-    console.log('[Notify] 当前审批级别无审批人，跳过通知');
-    return;
+    console.warn('[Notify] 当前审批级别无审批人，跳过通知');
+    return {success:false, error:'missing_approver_id', level};
   }
 
   const approver = users.find(u => u.id === approverId);
   if (!approver) {
-    console.log('[Notify] 审批人未在用户列表中找到:', approverId);
-    return;
+    console.error('[Notify] 审批人未在用户列表中找到:', approverId);
+    return {success:false, error:'approver_not_found', approverId, level};
   }
 
   // 检查飞书绑定
   if (!approver.feishu_open_id) {
     console.warn('[Notify] 审批人 ' + approver.name + ' 未绑定飞书账号，无法发送通知');
     showFlash(t('flash.approvalSubmitFeishuNotBound', {name: approver.name}), 'warning');
-    return;
+    return {success:false, error:'approver_not_bound', approverId, approverName:approver.name, level};
   }
 
   try {
@@ -1474,8 +1554,11 @@ async function sendApprovalNotification(record) {
         record: record,
         approvalLevel: level,
         approvers: [{
+          id: approver.id,
           name: approver.name,
-          feishu_open_id: approver.feishu_open_id
+          feishu_open_id: approver.feishu_open_id,
+          feishu_union_id: approver.feishu_union_id || '',
+          feishu_user_id: approver.feishu_user_id || ''
         }]
       })
     });
@@ -1490,12 +1573,14 @@ async function sendApprovalNotification(record) {
     } else {
       const detail = (result.results && result.results.failed && result.results.failed[0] && result.results.failed[0].reason)
                     || result.error || result.message || '';
-      console.warn('[Notify] 通知发送失败:', result.message || result.error, detail);
-      showFlash(t('flash.feishuNotifyFailed') + (detail ? ' 原因：' + detail : ''), 'warning');
+      console.error('[Notify] 通知发送失败:', result.message || result.error, detail, result);
+      showFlash(t('flash.feishuNotifyFailed') + (detail ? ' ' + detail : ''), 'warning');
     }
+    return result;
   } catch (e) {
     console.error('[Notify] 后端不可用，飞书通知发送失败:', e.message);
     showFlash(t('flash.feishuServiceUnavailable'), 'warning');
+    return {success:false, error:e.message};
   }
 }
 
@@ -1531,7 +1616,16 @@ function handleHashRoute() {
     return;
   }
 
-  showPage(page);
+  if (page === 'detail' && params.id) {
+    const recordId = parseInt(params.id);
+    if (recordId > 0) {
+      showPage('detail', recordId);
+    } else {
+      showPage(page);
+    }
+  } else {
+    showPage(page);
+  }
 
   // 如果是审批页面且有 record 参数，跳转到售后详情完成审批
   if (page === 'approval' && params.record) {
@@ -1878,8 +1972,8 @@ function updatePermissionedUI(){
 function initOverview(){
   const now=new Date();
   const start=new Date(now.getFullYear(), now.getMonth()-2, 1);
-  document.getElementById('ov-start-date').value=formatDateLocal(start);
-  document.getElementById('ov-end-date').value=formatDateLocal(now);
+  setDateInputValue('ov-start-date',formatDateLocal(start));
+  setDateInputValue('ov-end-date',formatDateLocal(now));
   updateOverviewBrandFilter();
   renderOverview();
 }
@@ -1906,8 +2000,8 @@ function getPsColor(ps){
 }
 
 async function renderOverview(){
-  const startD=document.getElementById('ov-start-date').value;
-  const endD=document.getElementById('ov-end-date').value;
+  const startD=getDateInputValue('ov-start-date');
+  const endD=getDateInputValue('ov-end-date');
   const brandF=document.getElementById('ov-brand-filter').value;
   const salesData=await getSalesData();
   let records=await getRecords();
@@ -1922,7 +2016,7 @@ async function renderOverview(){
   }
   if(brandF) records=records.filter(r=>r.brand===brandF);
 
-  const periodLabel=startD&&endD?startD+' ~ '+endD:(startD||endD||t('overview.period.all'));
+  const periodLabel=startD&&endD?formatDate(startD)+' ~ '+formatDate(endD):(startD?formatDate(startD):(endD?formatDate(endD):t('overview.period.all')));
   document.getElementById('ov-period-label').textContent=brandF?periodLabel+' · '+brandF:periodLabel;
 
   const startMonth=startD?startD.substring(0,7):null;
@@ -2117,8 +2211,8 @@ async function renderList(){
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
   const psFilter=document.getElementById('process-status-filter').value;
-  const startD=document.getElementById('list-start-date').value;
-  const endD=document.getElementById('list-end-date').value;
+  const startD=getDateInputValue('list-start-date');
+  const endD=getDateInputValue('list-end-date');
   const user=getCurrentUser();
 
   let filtered=records;
@@ -2176,7 +2270,7 @@ async function renderList(){
           <td class="cell-id">${r.id}</td>
           <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
           <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
-          <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
+          <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(it.platform||'-')}</td>
           <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
@@ -2211,7 +2305,7 @@ async function renderList(){
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
         <td>${psCell}</td>
-        <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
+        <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||r.platform||'-')}</td>
         <td>${returnReasons||'-'}</td>
         <td class="cell-desc" title="${esc(skus)}">${esc(skus||'-')}</td>
@@ -2219,7 +2313,7 @@ async function renderList(){
         <td>${totalQty}</td>
         <td class="cell-desc" title="${esc(faultDescs)}">${esc(faultDescs||'-').substring(0,25)}${faultDescs.length>25?'...':''}</td>
         <td>${esc(r.submitter_name||'-')}</td>
-        <td class="cell-date">${(r.updated_at||'').substring(0,10)}</td>
+        <td class="cell-date">${formatDateTime(r.updated_at)}</td>
         <td class="cell-actions">
           <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button>
           ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord(${r.id})">&#x1F5D1;</button>`:''}
@@ -2302,8 +2396,8 @@ function clearListFilter(){
   document.getElementById('status-filter').value='';
   document.getElementById('process-status-filter').value='';
   document.getElementById('brand-filter').value='';
-  document.getElementById('list-start-date').value='';
-  document.getElementById('list-end-date').value='';
+  setDateInputValue('list-start-date','');
+  setDateInputValue('list-end-date','');
   listPage=1; renderList();
 }
 
@@ -2323,6 +2417,9 @@ async function deleteRecord(id){
 async function renderDetail(id){
   const records=await getRecords(),r=records.find(x=>String(x.id)===String(id));
   if(!r){ showPage('list'); return; }
+  const products=await getProducts();
+  const productBySku=new Map(products.map(p=>[String(p.sku_code||'').toLowerCase(),p]));
+  const pendingErpQty=(r.items||[]).reduce((sum,it)=>sum+(it.process_status==='待ERP入库'?(Number(it.quantity)||0):0),0);
   currentApprovalRecordId=r.id;
   approvalAttachmentTarget='detail';
   pendingAttachments=[];
@@ -2340,7 +2437,7 @@ async function renderDetail(id){
             <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
               <div style="font-size:13px;font-weight:600">${h.action==='approve'?t('detail.approved'):t('detail.rejected')} - ${esc(h.operator_name)} (${t('approval.levelPrefix', {level: h.level})})</div>
               ${h.comment?`<div style="font-size:13px;margin-top:4px">${esc(h.comment)}</div>`:''}
-              ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('detail.label.returnDate')}${esc(h.return_date)}</div>`:''}
+              ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('detail.label.returnDate')}${formatDate(h.return_date)}</div>`:''}
               ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
               <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
             </div>
@@ -2369,13 +2466,13 @@ async function renderDetail(id){
     <div class="detail-section" id="detail-approval-action">
       <h3>${t('detail.section.approvalAction')}</h3>
       <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group" id="detail-return-date-group" style="${pendingErpQty>0?'':'display:none'}">
           <label>${t('approvalModal.label.returnDate')}</label>
-          <input type="date" class="date-input" id="detail-appr-return-date" onfocus="setApprovalAttachmentTarget('detail')">
+          <input type="text" class="date-input" id="detail-appr-return-date" inputmode="numeric" onfocus="setApprovalAttachmentTarget('detail')" onblur="normalizeDateInput(this)">
         </div>
         <div class="form-group form-group-full">
-          <label>${t('approvalModal.label.comment')}</label> <span class="required">*</span>
-          <textarea id="detail-appr-comment" rows="3" required placeholder="${esc(t('approvalModal.commentPlaceholder'))}" onfocus="setApprovalAttachmentTarget('detail')" onpaste="handleApprovalPaste(event,'detail')"></textarea>
+          <label>${t('approvalModal.label.comment')}</label>
+          <textarea id="detail-appr-comment" rows="3" placeholder="${esc(t('approvalModal.commentPlaceholder'))}" onfocus="setApprovalAttachmentTarget('detail')" onpaste="handleApprovalPaste(event,'detail')"></textarea>
         </div>
       </div>
       <div style="margin-top:12px">
@@ -2398,19 +2495,20 @@ async function renderDetail(id){
   document.getElementById('detail-content').innerHTML=`
     <div class="detail-section"><h3>${t('detail.section.basic')}</h3>
       <div class="detail-grid">
-        <div class="detail-item"><span class="detail-label">${t('detail.label.date')}</span><span class="detail-value">${esc(r.aftersales_date||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.date')}</span><span class="detail-value">${formatDate(r.aftersales_date)}</span></div>
         <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></span></div>
         <div class="detail-item"><span class="detail-label">${t('detail.label.submitter')}</span><span class="detail-value">${esc(r.submitter_name||'-')}</span></div>
-        <div class="detail-item"><span class="detail-label">${t('detail.label.brand')}</span><span class="detail-value">${esc(r.brand||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.pendingErpQty')}</span><span class="detail-value">${pendingErpQty}</span></div>
         <div class="detail-item"><span class="detail-label">${t('detail.label.totalQty')}</span><span class="detail-value" style="font-size:18px;font-weight:700;color:var(--primary)">${r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
       </div>
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processStatus')}</th><th>${t('detail.col.desc')}</th></tr></thead>
+        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processStatus')}</th><th>${t('detail.col.desc')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
             <td>${esc(it.platform||'-')}</td>
+            <td>${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
@@ -2426,8 +2524,8 @@ async function renderDetail(id){
     ${historyHTML}
     <div class="detail-section"><h3>${t('detail.section.time')}</h3>
       <div class="detail-grid">
-        <div class="detail-item"><span class="detail-label">${t('detail.label.createdAt')}</span><span class="detail-value">${esc(r.created_at||'')}</span></div>
-        <div class="detail-item"><span class="detail-label">${t('detail.label.updatedAt')}</span><span class="detail-value">${esc(r.updated_at||'')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.createdAt')}</span><span class="detail-value">${formatDateTime(r.created_at)}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.updatedAt')}</span><span class="detail-value">${formatDateTime(r.updated_at)}</span></div>
       </div>
     </div>
   `;
@@ -2535,7 +2633,7 @@ function resetForm(){
   document.getElementById('form-title').textContent=t('form.titleNew');
   document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
   const today=formatDateLocal(new Date());
-  document.getElementById('f-aftersales-date').value=today;
+  setDateInputValue('f-aftersales-date',today);
   document.getElementById('detail-items-tbody').innerHTML='';
   updateSkuDatalist();
   populateApproverSelects();
@@ -2581,7 +2679,7 @@ async function submitForApproval(e){
   e.preventDefault();
   if(!requirePermission('record_create')) return;
 
-  const aftersalesDate=document.getElementById('f-aftersales-date').value;
+  const aftersalesDate=getDateInputValue('f-aftersales-date');
   const a1=document.getElementById('f-approver-level1').value;
   const a2=document.getElementById('f-approver-level2').value;
   const a3=document.getElementById('f-approver-level3').value;
@@ -2651,14 +2749,14 @@ async function submitForApproval(e){
   await saveRecordsAsync(records);
   showFlash(t('flash.approvalSubmitted') + t('approval.level' + firstLevel) + t('flash.approval'),'success');
   // 发送飞书审批通知
-  sendApprovalNotification(record);
+  await sendApprovalNotification(record);
   closeRecordForm();
   renderList();
 }
 
 async function saveAsDraft(){
   if(!requirePermission('record_create')) return;
-  const aftersalesDate=document.getElementById('f-aftersales-date').value;
+  const aftersalesDate=getDateInputValue('f-aftersales-date');
   if(!aftersalesDate){ showFlash(t('flash.fillAftersalesDate'),'warning'); return; }
 
   const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
@@ -2781,7 +2879,7 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
   await saveRecordsAsync(records);
   // 如果审批通过且流转到下一级，发送飞书通知给下一级审批人
   if(action==='approve'&&record.current_approval_level>0){
-    sendApprovalNotification(record);
+    await sendApprovalNotification(record);
   }
   return true;
 }
@@ -2791,6 +2889,8 @@ async function renderApproval(){
   const tab=document.getElementById('appr-tab').value;
   const user=getCurrentUser();
   const records=await getRecords();
+  const startD=getDateInputValue('appr-start-date');
+  const endD=getDateInputValue('appr-end-date');
 
   let filtered=records;
   if(tab==='pending'){
@@ -2811,6 +2911,14 @@ async function renderApproval(){
       return itemSearch||(r.brand||'').toLowerCase().includes(search)||(r.model||'').toLowerCase().includes(search)||(r.submitter_name||'').toLowerCase().includes(search);
     });
   }
+  if(startD||endD){
+    filtered=filtered.filter(r=>{
+      const d=(r.aftersales_date||r.created_at||'').substring(0,10);
+      if(startD&&d<startD) return false;
+      if(endD&&d>endD) return false;
+      return true;
+    });
+  }
   filtered.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 
   const total=filtered.length;
@@ -2821,32 +2929,41 @@ async function renderApproval(){
   if(pageRecords.length===0){
     area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('approval.empty')}</p></div>`;
   }else{
-    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('list.col.id')}</th><th>${t('approval.col.createdAt')}</th><th>${t('approval.col.initiator')}</th><th>${t('approval.col.approver')}</th><th>${t('approval.col.status')}</th><th>${t('approval.col.processStatus')}</th><th>${t('approval.col.date')}</th><th>${t('approval.col.platform')}</th><th>${t('approval.col.totalQty')}</th><th>${t('approval.col.currentLevel')}</th><th>${t('approval.col.actions')}</th></tr></thead><tbody>`;
+    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('list.col.id')}</th><th>${t('approval.col.createdAt')}</th><th>${t('approval.col.initiator')}</th><th>${t('approval.col.approver')}</th><th>${t('approval.col.status')}</th><th>${t('approval.col.processStatus')}</th><th>${t('approval.col.date')}</th><th>${t('approval.col.platform')}</th><th>${t('approval.col.totalQty')}</th><th>${t('approval.col.currentApprover')}</th><th>${t('approval.col.actions')}</th></tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
       const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
       const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
       const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
-      html+=`<tr>
+      const currentApprover=getCurrentApproverText(r);
+      html+=`<tr class="row-clickable" onclick="showPage('detail',${r.id})">
         <td class="cell-id">${r.id}</td>
-        <td class="cell-date">${(r.created_at||'').substring(0,16)}</td>
+        <td class="cell-date">${formatDateTime(r.created_at)}</td>
         <td>${esc(r.submitter_name||'-')}</td>
         <td><span style="font-size:12px;color:var(--text-muted)">${esc(r.approver_level1_name||'-')} / ${esc(r.approver_level2_name||'-')} / ${esc(r.approver_level3_name||'-')}</span></td>
         <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
         <td>${psCell}</td>
-        <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
+        <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||r.platform||'-')}</td>
         <td><strong>${totalQty}</strong></td>
-        <td>${r.current_approval_level>0?t('approval.levelPrefix', {level: r.current_approval_level}):'-'}</td>
+        <td>${esc(currentApprover)}</td>
         <td class="cell-actions">
-          <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button>
+          <button class="action-btn" title="${t('list.action.view')}" onclick="event.stopPropagation();showPage('detail',${r.id})">&#x1F441;</button>
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
     area.innerHTML=html;
   }
   renderApprPagination(total);
+}
+
+function getCurrentApproverText(record){
+  if(!record) return '-';
+  if(record.status==='审批拒绝') return t('approval.flow.rejected');
+  if(record.status==='审批通过'||record.current_approval_level<=0) return t('approval.flow.completed');
+  const level=record.current_approval_level;
+  return record['approver_level'+level+'_name'] || t('approval.levelPrefix', {level});
 }
 
 function renderApprPagination(total){
@@ -2865,6 +2982,8 @@ function renderApprPagination(total){
 function clearApprovalFilter(){
   document.getElementById('appr-search').value='';
   document.getElementById('appr-tab').value='pending';
+  setDateInputValue('appr-start-date','');
+  setDateInputValue('appr-end-date','');
   apprPage=1; renderApproval();
 }
 
@@ -2890,7 +3009,7 @@ async function openLegacyApprovalModal(recordId){
 
   document.getElementById('approval-record-summary').innerHTML=`
     <div class="detail-grid">
-      <div class="detail-item"><span class="detail-label">${t('detail.label.date')}</span><span class="detail-value">${esc(record.aftersales_date||'-')}</span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.date')}</span><span class="detail-value">${formatDate(record.aftersales_date)}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.submitter')}</span><span class="detail-value">${esc(record.submitter_name)}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.brand')}</span><span class="detail-value">${esc(record.brand||'-')}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.totalQty')}</span><span class="detail-value" style="font-weight:700;color:var(--primary);font-size:16px">${record.total_quantity||(record.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
@@ -2964,12 +3083,15 @@ async function doApproval(action, source='modal'){
   const commentEl=document.getElementById(prefix+'-comment');
   const returnDateEl=document.getElementById(prefix+'-return-date');
   const comment=commentEl ? commentEl.value.trim() : '';
-  if(!comment) return showFlash(t('validation.enterComment'),'warning');
-  const returnDate=returnDateEl ? returnDateEl.value : '';
+  const recordsForValidation=await getRecords();
+  const recordForValidation=recordsForValidation.find(r=>r.id===currentApprovalRecordId);
+  const pendingErpQty=(recordForValidation?.items||[]).reduce((sum,it)=>sum+(it.process_status==='待ERP入库'?(Number(it.quantity)||0):0),0);
+  const returnDate=returnDateEl ? normalizeDateInput(returnDateEl) : '';
+  if(pendingErpQty>0 && !returnDate) return showFlash(t('validation.enterReturnDate'),'warning');
   // Save pending ERP screenshots before approval
   if(Object.keys(pendingErpScreenshots).length>0){
-    const records=await getRecords();
-    const record=records.find(r=>r.id===currentApprovalRecordId);
+    const records=recordsForValidation;
+    const record=recordForValidation;
     if(record){
       Object.entries(pendingErpScreenshots).forEach(([idx,shots])=>{
         if(shots&&record.items[parseInt(idx)]){
@@ -3483,8 +3605,8 @@ async function exportAftersalesExcel(){
   const brandF = document.getElementById('brand-filter').value;
   const statusF = document.getElementById('status-filter').value;
   const processStatusF = document.getElementById('process-status-filter').value;
-  const startDate = document.getElementById('list-start-date').value;
-  const endDate = document.getElementById('list-end-date').value;
+  const startDate = getDateInputValue('list-start-date');
+  const endDate = getDateInputValue('list-end-date');
 
   // 应用筛选
   let filtered = records;
@@ -3526,7 +3648,7 @@ async function exportAftersalesExcel(){
       items.forEach(it => {
         rows.push([
           r.id,
-          r.aftersales_date || '',
+          formatDate(r.aftersales_date),
           (it.platform || platforms[0] || ''),
           r.brand || '',
           it.sku_code || '',
@@ -3538,8 +3660,8 @@ async function exportAftersalesExcel(){
           r.status || '',
           it.process_status || '',
           r.submitter_name || '',
-          r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '',
-          r.updated_at ? new Date(r.updated_at).toLocaleString('zh-CN') : ''
+          formatDateTime(r.created_at),
+          formatDateTime(r.updated_at)
         ]);
       });
     });
@@ -3551,7 +3673,7 @@ async function exportAftersalesExcel(){
       const totalQty = r.total_quantity || items.reduce((s,it) => s + (it.quantity||0), 0);
       rows.push([
         r.id,
-        r.aftersales_date || '',
+        formatDate(r.aftersales_date),
         platforms.join('、'),
         r.brand || '',
         items.map(it => it.sku_code||'').join('、'),
@@ -3563,8 +3685,8 @@ async function exportAftersalesExcel(){
         r.status || '',
         [...new Set(items.map(it => it.process_status||'').filter(Boolean))].join('、'),
         r.submitter_name || '',
-        r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '',
-        r.updated_at ? new Date(r.updated_at).toLocaleString('zh-CN') : ''
+        formatDateTime(r.created_at),
+        formatDateTime(r.updated_at)
       ]);
     });
   }
@@ -3851,7 +3973,7 @@ async function renderUsers(){
       <td><span class="role-badge">${esc(role?role.name:'-')}</span></td>
       <td><span class="user-status ${statusClass}">${u.status==='active'?t('userModal.statusActive'):t('userModal.statusDisabled')}</span></td>
       <td style="font-size:12px;color:${u.feishu_open_id?'var(--primary)':'var(--text-muted)'}">${feishuBound}</td>
-      <td class="cell-date">${(u.created_at||'').substring(0,10)}</td>
+      <td class="cell-date">${formatDate(u.created_at)}</td>
       <td class="cell-actions">
         <button class="action-btn" title="编辑" onclick="openUserModal('${u.id}')">&#x270F;</button>
         ${u.id!=='user_admin'?`<button class="action-btn action-delete" title="删除" onclick="deleteUser('${u.id}')">&#x1F5D1;</button>`:''}
@@ -4171,7 +4293,7 @@ async function renderRoles(){
     const perms=normalizePermissions(r.permissions).map(k=>{ const p=ALL_PERMISSIONS.find(x=>x.key===k); return p?p.label:k; }).join('、');
     html+=`<tr><td class="cell-name">${esc(r.name)}</td><td>${esc(r.description||'-')}</td>
       <td style="max-width:260px" class="cell-desc" title="${esc(perms)}">${esc(perms)||'-'}</td>
-      <td>${userCount}</td><td class="cell-date">${(r.created_at||'').substring(0,10)}</td>
+      <td>${userCount}</td><td class="cell-date">${formatDate(r.created_at)}</td>
       <td class="cell-actions">
         <button class="action-btn" title="编辑" onclick="openRoleModal('${r.id}')">&#x270F;</button>
         ${!r.system?`<button class="action-btn action-delete" title="删除" onclick="deleteRole('${r.id}')">&#x1F5D1;</button>`:''}
@@ -4449,12 +4571,12 @@ function applyDateInputLocale() {
   const locale = window.__i18n && window.__i18n.getLocale ? window.__i18n.getLocale() : 'zh-CN';
   const langMap = {'zh-CN': 'zh-CN', 'en-US': 'en-US', 'id-ID': 'id-ID'};
   const placeholderMap = {
-    'zh-CN': '年/月/日',
-    'en-US': 'YYYY-MM-DD',
-    'id-ID': 'YYYY-MM-DD'
+    'zh-CN': 'YYYY-MM-DD',
+    'en-US': 'MM/DD/YYYY',
+    'id-ID': 'DD/MM/YYYY'
   };
   document.documentElement.lang = langMap[locale] || 'zh-CN';
-  document.querySelectorAll('input[type="date"]').forEach(input => {
+  document.querySelectorAll('.date-input').forEach(input => {
     input.lang = langMap[locale] || 'zh-CN';
     input.placeholder = placeholderMap[locale] || 'YYYY-MM-DD';
     input.title = placeholderMap[locale] || 'YYYY-MM-DD';

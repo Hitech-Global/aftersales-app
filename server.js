@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.5.3-render-latest';
+const APP_VERSION = '3.5.4-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -1083,7 +1083,26 @@ app.post('/api/notify/approval', async (req, res) => {
   }
 
   // ========== 生产模式 ==========
-  console.log(`[Feishu] 开始发送审批通知 - 单号: ${recordId}, 级别: ${levelNames[currentLevel]}, 目标: ${approvers.map(a=>a.name).join(',')}`);
+  const resolvedApprovers = [];
+  for (const approver of approvers) {
+    const resolved = { ...approver };
+    if ((!resolved.feishu_open_id || !resolved.name) && resolved.id) {
+      try {
+        const userResult = await query('SELECT id, name, feishu_open_id, feishu_union_id FROM users WHERE id = $1', [resolved.id]);
+        const dbUser = userResult.rows[0];
+        if (dbUser) {
+          resolved.name = resolved.name || dbUser.name;
+          resolved.feishu_open_id = resolved.feishu_open_id || dbUser.feishu_open_id;
+          resolved.feishu_union_id = resolved.feishu_union_id || dbUser.feishu_union_id;
+        }
+      } catch (e) {
+        console.error(`[Feishu] 查询审批人飞书绑定失败 id=${resolved.id}:`, e.message);
+      }
+    }
+    resolvedApprovers.push(resolved);
+  }
+
+  console.log(`[Feishu] 开始发送审批通知 - 单号: ${recordId}, 级别: ${levelNames[currentLevel]}, 目标: ${resolvedApprovers.map(a=>a.name || a.id || '-').join(',')}`);
 
   const tokenResult = await getTenantAccessToken();
   if (tokenResult.error) {
@@ -1094,14 +1113,20 @@ app.post('/api/notify/approval', async (req, res) => {
 
   const results = { success: [], failed: [] };
   const recordDisplayId = `AS${String(recordId).padStart(4, '0')}`;
-  const detailUrl = `${APP_BASE_URL}/#page=approval&record=${recordId}`;
+  const detailUrl = `${APP_BASE_URL}/#page=detail&id=${recordId}`;
 
-  for (const approver of approvers) {
+  const sentReceivers = new Set();
+  for (const approver of resolvedApprovers) {
     if (!approver.feishu_open_id) {
       console.warn(`[Feishu] 审批人 ${approver.name} 未绑定飞书 open_id，跳过`);
       results.failed.push({ name: approver.name, reason: '未绑定飞书账号（feishu_open_id 为空）' });
       continue;
     }
+    if (sentReceivers.has(approver.feishu_open_id)) {
+      console.log(`[Feishu] 当前级别已向 ${approver.name} 发送过通知，跳过重复接收人`);
+      continue;
+    }
+    sentReceivers.add(approver.feishu_open_id);
 
     console.log(`[Feishu] 准备发送消息给 ${approver.name} (open_id: ${approver.feishu_open_id})`);
 
