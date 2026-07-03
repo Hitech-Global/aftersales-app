@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.0"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.2"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -3601,11 +3601,13 @@ function clearProductSelection(){
 async function batchDeleteProducts(){
   if(prodSelected.size === 0){ showFlash(t('validation.selectOneItem'),'warning'); return; }
   const ids = Array.from(prodSelected);
+  const previewIds = ids.slice(0,10).map(id => '• ' + id).join('<br>');
+  const moreText = ids.length > 10 ? `<br>...${t('confirm.moreItems', {count: ids.length - 10})}` : '';
   const proceed = await showConfirmDialog(
     t('confirm.title.batchDelete'),
-    `${t('confirm.batchDeleteProducts', {count: ids.length})}<br><br>
-    ${t('confirm.batchDeleteProductsHint', {ids: ids.slice(0,10).map(id => '• ' + id).join('<br>')}${ids.length > 10 ? `<br>...${t('confirm.moreItems', {count: ids.length - 10})}` : ''}
-    <br><br><span style="color:#ff3b30">${t('confirm.batchDeleteIrreversible')}</span>`
+    `${t('confirm.batchDeleteProducts', {count: ids.length})}<br><br>` +
+    `${t('confirm.batchDeleteProductsHint', {ids: previewIds + moreText})}` +
+    `<br><br><span style="color:#ff3b30">${t('confirm.batchDeleteIrreversible')}</span>`
   );
   if(!proceed) return;
   try{
