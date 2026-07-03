@@ -2558,11 +2558,11 @@ async function submitForApproval(e){
   if(items.length===0){ showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
   for(let i=0;i<items.length;i++){
     const it=items[i];
-    if(!it.platform){ showFlash(`${t('flash.validation.platformRequired', {row: i+1})`,'warning'); return; }
-    if(!it.sku_code){ showFlash(`${t('flash.validation.skuRequired', {row: i+1})`,'warning'); return; }
-    if(!it.quantity||it.quantity<1){ showFlash(`${t('flash.validation.quantityMustBePositive', {row: i+1})`,'warning'); return; }
-    if(!it.return_reason){ showFlash(`${t('flash.validation.returnReasonRequired', {row: i+1})`,'warning'); return; }
-    if(!it.fault_description){ showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})`,'warning'); return; }
+    if(!it.platform){ showFlash(`${t('flash.validation.platformRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.sku_code){ showFlash(`${t('flash.validation.skuRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.quantity||it.quantity<1){ showFlash(`${t('flash.validation.quantityMustBePositive', {row: i+1})}`,'warning'); return; }
+    if(!it.return_reason){ showFlash(`${t('flash.validation.returnReasonRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.fault_description){ showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})}`,'warning'); return; }
   }
 
   // 至少选择一个审批人
@@ -3324,7 +3324,7 @@ async function confirmProductImport(){
     html += `</div>`;
     document.getElementById('import-result-area').innerHTML = html;
     document.getElementById('import-result-area').style.display = 'block';
-    showFlash(`${t('flash.import.complete', {created: result.created, updated: result.updated, deleted: result.deleted, failed: result.failed})`,'success');
+    showFlash(`${t('flash.import.complete', {created: result.created, updated: result.updated, deleted: result.deleted, failed: result.failed})}`,'success');
     renderProducts();
   }catch(err){
     showFlash(t('flash.import.parseError') + err.message,'danger');
@@ -3483,7 +3483,7 @@ async function exportAftersalesExcel(){
   XLSX.utils.book_append_sheet(wb, ws, isDetailView ? '售后明细' : '售后记录');
   const filename = `aftersales_export_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
   XLSX.writeFile(wb, filename);
-  showFlash(`${t('flash.export.success', {count: rows.length})`,'success');
+  showFlash(`${t('flash.export.success', {count: rows.length})}`,'success');
 }
 
 // ==================== PRODUCT MANAGEMENT ====================
@@ -3604,7 +3604,7 @@ async function batchDeleteProducts(){
   const proceed = await showConfirmDialog(
     t('confirm.title.batchDelete'),
     `${t('confirm.batchDeleteProducts', {count: ids.length})}<br><br>
-    ${t('confirm.batchDeleteProductsHint', {ids: ids.slice(0,10).map(id => '• ' + id).join('<br>')}${ids.length > 10 ? `<br>...${t('confirm.moreItems', {count: ids.length - 10})` : ''}
+    ${t('confirm.batchDeleteProductsHint', {ids: ids.slice(0,10).map(id => '• ' + id).join('<br>')}${ids.length > 10 ? `<br>...${t('confirm.moreItems', {count: ids.length - 10})}` : ''}
     <br><br><span style="color:#ff3b30">${t('confirm.batchDeleteIrreversible')}</span>`
   );
   if(!proceed) return;
@@ -3616,7 +3616,7 @@ async function batchDeleteProducts(){
     });
     const result = await resp.json();
     if(result.error){ showFlash(result.error,'danger'); return; }
-    showFlash(`${t('flash.product.batchDeleteSuccess', {count: result.deleted})`,'success');
+    showFlash(`${t('flash.product.batchDeleteSuccess', {count: result.deleted})}`,'success');
     prodSelected.clear();
     renderProducts();
   }catch(err){
@@ -3723,7 +3723,7 @@ async function deleteProduct(id){
   if(!product) return;
   const records=await getRecords();
   const refCount=records.filter(r=>(r.items||[]).some(it=>it.sku_code===product.sku_code)).length;
-  if(refCount>0) return showFlash(`${t('flash.product.deleteReferenced', {count: refCount})`,'danger');
+  if(refCount>0) return showFlash(`${t('flash.product.deleteReferenced', {count: refCount})}`,'danger');
   if(!confirm(t('confirm.message.deleteProduct'))) return;
   try{
     await deleteProductAsync(id);
@@ -4191,7 +4191,7 @@ function importSalesData(event){
         success++;
       });
       await saveSalesData(salesData);
-      showFlash(`${t('flash.import.summary', {success: success})`+(errors>0?t('flash.import.skipped', {errors: errors}):''),errors>0?'warning':'success');
+      showFlash(`${t('flash.import.summary', {success: success})}`+(errors>0?t('flash.import.skipped', {errors: errors}):''),errors>0?'warning':'success');
       renderOverview();
     }catch(err){ showFlash(t('flash.excel.parseError')+err.message,'danger'); }
   };
