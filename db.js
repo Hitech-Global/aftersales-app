@@ -179,11 +179,22 @@ async function initDatabase() {
     // 插入默认角色（如果不存在）
     const { rows: roleRows } = await query('SELECT COUNT(*) as cnt FROM roles');
     if (parseInt(roleRows[0].cnt) === 0) {
+      // 超级管理员：全部权限
       const allPerms = JSON.stringify([
-        'record_view', 'record_create', 'record_delete', 'record_edit',
-        'sales_import', 'product_view', 'product_manage',
-        'approval_submit', 'approval_level1', 'approval_level2',
-        'user_manage', 'role_manage'
+        'record_view', 'record_create', 'record_edit', 'record_delete', 'record_import', 'record_export',
+        'product_view', 'product_create', 'product_edit', 'product_delete', 'product_import', 'product_export',
+        'approval_level1', 'approval_level2', 'approval_level3',
+        'user_manage', 'role_manage', 'system_config'
+      ]);
+      // 运营人员：业务操作 + 审批 + 导入导出，无系统管理
+      const operatorPerms = JSON.stringify([
+        'record_view', 'record_create', 'record_edit', 'record_import', 'record_export',
+        'product_view', 'product_import', 'product_export',
+        'approval_level1', 'approval_level2', 'approval_level3'
+      ]);
+      // 普通用户：只看不操作
+      const viewerPerms = JSON.stringify([
+        'record_view', 'record_create', 'product_view'
       ]);
       await query(
         `INSERT INTO roles (id, name, description, permissions, system) VALUES 
@@ -193,10 +204,10 @@ async function initDatabase() {
          ON CONFLICT (id) DO NOTHING`,
         [
           'role_admin', '超级管理员', '拥有系统全部管理权限', allPerms,
-          'role_operator', '运营人员', '业务操作权限，含一级审批和系统管理',
-            JSON.stringify(['record_view','record_create','record_delete','sales_import','product_view','approval_submit','approval_level1','user_manage','role_manage']),
-          'role_viewer', '普通用户', '只读权限',
-            JSON.stringify(['record_view','product_view'])
+          'role_operator', '运营人员', '业务操作权限，含审批与导入导出',
+            operatorPerms,
+          'role_viewer', '普通用户', '查看与新建权限',
+            viewerPerms
         ]
       );
 

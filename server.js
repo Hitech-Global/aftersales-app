@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.2.2-render-latest';
+const APP_VERSION = '3.3.0-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -171,16 +171,32 @@ app.get('/api/version', (req, res) => {
   });
 });
 
-// ==================== API 认证中间件 ====================
+// ==================== API 认证与权限中间件 ====================
 function apiAuth(req, res, next) {
   // 从 header 获取当前用户信息（前端在每次请求时传入）
   const userId = req.headers['x-user-id'];
   const userRole = req.headers['x-user-role'];
+  const userPerms = req.headers['x-user-permissions'] || '';
   if (userId) {
     req.currentUserId = userId;
     req.currentUserRole = userRole || '';
+    req.currentUserPermissions = userPerms ? userPerms.split(',').map(s => s.trim()).filter(Boolean) : [];
   }
   next();
+}
+
+// 权限校验中间件工厂函数
+function requireApiPermission(...perms) {
+  return (req, res, next) => {
+    if (!req.currentUserId) {
+      return res.status(401).json({ error: '未登录' });
+    }
+    const hasPerm = perms.some(p => (req.currentUserPermissions || []).includes(p));
+    if (!hasPerm) {
+      return res.status(403).json({ error: '没有该操作的权限' });
+    }
+    next();
+  };
 }
 
 app.use('/api/users', apiAuth);
@@ -202,14 +218,14 @@ app.post('/api/db/init', async (req, res) => {
 });
 
 // ---- 用户 API ----
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', requireApiPermission('user_manage'), async (req, res) => {
   try {
     const result = await query('SELECT * FROM users ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/users', async (req, res) => {
+app.post('/api/users', requireApiPermission('user_manage'), async (req, res) => {
   try {
     const { id, username, name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name } = req.body;
     if (!username || !name) return res.status(400).json({ error: '用户名和姓名不能为空' });
@@ -228,7 +244,7 @@ app.post('/api/users', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/users/:id', async (req, res) => {
+app.put('/api/users/:id', requireApiPermission('user_manage'), async (req, res) => {
   try {
     const { id } = req.params;
     const { username, name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name } = req.body;
@@ -264,7 +280,7 @@ app.put('/api/users/:id', async (req, res) => {
 });
 
 // 删除用户
-app.delete('/api/users/:id', async (req, res) => {
+app.delete('/api/users/:id', requireApiPermission('user_manage'), async (req, res) => {
   try {
     if (req.params.id === 'user_admin') return res.status(400).json({ error: '不能删除超级管理员' });
     const result = await query('DELETE FROM users WHERE id = $1 RETURNING id', [req.params.id]);
@@ -296,7 +312,7 @@ app.get('/api/roles', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/roles', async (req, res) => {
+app.post('/api/roles', requireApiPermission('role_manage'), async (req, res) => {
   try {
     const { id, name, description, permissions, system } = req.body;
     const result = await query(
@@ -309,7 +325,7 @@ app.post('/api/roles', async (req, res) => {
 });
 
 // ---- 售后记录 API ----
-app.get('/api/records', async (req, res) => {
+app.get('/api/records', requireApiPermission('record_view'), async (req, res) => {
   try {
     const { status, submitter_id, page, pageSize } = req.query;
     let sql = 'SELECT * FROM aftersales_records';
@@ -334,7 +350,7 @@ app.get('/api/records', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/records', async (req, res) => {
+app.post('/api/records', requireApiPermission('record_create'), async (req, res) => {
   try {
     const { id, submitter_id, submitter_name, aftersales_date, status, brand, platforms, items,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name } = req.body;
@@ -350,7 +366,7 @@ app.post('/api/records', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/records/:id', async (req, res) => {
+app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res) => {
   try {
     const { submitter_name, aftersales_date, status, brand, platforms, items,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
@@ -386,7 +402,7 @@ app.put('/api/records/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/records/:id', async (req, res) => {
+app.delete('/api/records/:id', requireApiPermission('record_delete'), async (req, res) => {
   try {
     const result = await query('DELETE FROM aftersales_records WHERE id = $1 RETURNING id', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: '记录不存在' });
@@ -395,14 +411,14 @@ app.delete('/api/records/:id', async (req, res) => {
 });
 
 // ---- 商品 API ----
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', requireApiPermission('product_view'), async (req, res) => {
   try {
     const result = await query('SELECT * FROM products ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', requireApiPermission('product_create'), async (req, res) => {
   try {
     const { id, sku_code, product_name, brand, model, category, country, ean_code, status, price } = req.body;
     const result = await query(
@@ -414,7 +430,7 @@ app.post('/api/products', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', requireApiPermission('product_edit'), async (req, res) => {
   try {
     const { sku_code, product_name, brand, model, category, country, ean_code, status, price } = req.body;
     const fields = [];
@@ -443,7 +459,7 @@ app.put('/api/products/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', requireApiPermission('product_delete'), async (req, res) => {
   try {
     const result = await query('DELETE FROM products WHERE id = $1 RETURNING id', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: '商品不存在' });
@@ -452,7 +468,7 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // 批量导入商品
-app.post('/api/products/bulk-import', async (req, res) => {
+app.post('/api/products/bulk-import', requireApiPermission('product_import'), async (req, res) => {
   try {
     const items = req.body.items || [];
     const result = { created: 0, updated: 0, deleted: 0, failed: 0, errors: [] };
@@ -530,6 +546,22 @@ app.post('/api/products/bulk-import', async (req, res) => {
     }
 
     res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 批量删除商品
+app.post('/api/products/batch-delete', requireApiPermission('product_delete'), async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: '请提供要删除的商品ID列表' });
+    }
+    const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+    const result = await query(
+      `DELETE FROM products WHERE id IN (${placeholders}) RETURNING id`,
+      ids
+    );
+    res.json({ deleted: result.rows.length, ids: result.rows.map(r => r.id) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

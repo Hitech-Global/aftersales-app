@@ -389,7 +389,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.2.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.3.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -458,6 +458,9 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <div id="page-list" class="page">
           <div class="page-header">
             <h2>售后记录列表</h2>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()">导出Excel</button>
+            </div>
           </div>
           <div class="filter-bar">
             <div class="filter-form">
@@ -625,10 +628,17 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
           <div class="page-header">
             <h2>商品管理</h2>
             <div style="display:flex;gap:10px;align-items:center">
-              <button class="btn btn-secondary" onclick="downloadProductTemplate()">下载导入模板</button>
-              <button class="btn btn-secondary" onclick="openProductImportModal()">批量导入</button>
-              <button class="btn btn-secondary" onclick="exportProducts()">批量导出</button>
+              <button class="btn btn-secondary" id="btn-import-products" onclick="downloadProductTemplate()">下载导入模板</button>
+              <button class="btn btn-secondary" id="btn-import-products" onclick="openProductImportModal()">批量导入</button>
+              <button class="btn btn-secondary" id="btn-export-products" onclick="exportProducts()">批量导出</button>
               <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()">+ 新建商品</button>
+            </div>
+          </div>
+          <div id="prod-batch-bar" class="filter-bar" style="display:none;background:#fff3e0;border:1px solid #ffb74d">
+            <div style="display:flex;align-items:center;gap:16px;width:100%">
+              <span id="prod-selected-count" style="font-weight:600;color:#e65100">已选 0 项</span>
+              <button class="btn btn-danger" id="btn-batch-delete" onclick="batchDeleteProducts()">批量删除</button>
+              <button class="btn btn-clear" onclick="clearProductSelection()">取消选择</button>
             </div>
           </div>
           <div class="filter-bar">
@@ -890,17 +900,23 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 const APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
 const ALL_PERMISSIONS = [
   {key:'record_view', label:'查看售后记录', desc:'查看概览和售后列表'},
-  {key:'record_create', label:'新建/编辑记录', desc:'创建和修改售后记录'},
-  {key:'record_delete', label:'删除记录', desc:'删除售后记录'},
-  {key:'sales_import', label:'导入销量数据', desc:'下载模板并导入销量数据'},
+  {key:'record_create', label:'新建售后记录', desc:'创建售后记录'},
+  {key:'record_edit', label:'编辑售后记录', desc:'修改售后记录'},
+  {key:'record_delete', label:'删除售后记录', desc:'删除售后记录'},
+  {key:'record_import', label:'导入售后记录', desc:'批量导入售后数据'},
+  {key:'record_export', label:'导出售后记录', desc:'导出Excel给工厂分析'},
   {key:'product_view', label:'查看商品', desc:'查看商品目录'},
-  {key:'product_create', label:'管理商品', desc:'创建/编辑/删除商品'},
-  {key:'approval_submit', label:'提交审批', desc:'创建售后记录并提交审批'},
+  {key:'product_create', label:'新增商品', desc:'新建商品信息'},
+  {key:'product_edit', label:'编辑商品', desc:'修改商品信息'},
+  {key:'product_delete', label:'删除商品', desc:'删除商品'},
+  {key:'product_import', label:'导入商品', desc:'批量导入商品数据'},
+  {key:'product_export', label:'导出商品', desc:'导出商品Excel'},
   {key:'approval_level1', label:'一级审批', desc:'作为一级审批人处理审批'},
   {key:'approval_level2', label:'二级审批', desc:'作为二级审批人处理审批'},
   {key:'approval_level3', label:'三级审批', desc:'作为三级审批人处理审批'},
   {key:'user_manage', label:'用户管理', desc:'管理系统用户'},
-  {key:'role_manage', label:'角色管理', desc:'管理系统角色和权限'}
+  {key:'role_manage', label:'角色管理', desc:'管理系统角色和权限'},
+  {key:'system_config', label:'系统配置', desc:'修改系统设置'}
 ];
 const BRAND_COLORS=['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6','#007aff','#ff2d55','#af52de','#5ac8fa','#ffcc00'];
 
@@ -992,10 +1008,18 @@ const CACHE_TTL = 5000; // 5秒缓存
 
 function getAuthHeaders() {
   const user = getCurrentUser();
+  let perms = '';
+  if (user) {
+    const role = getUserRole(user);
+    if (role && role.permissions) {
+      perms = Array.isArray(role.permissions) ? role.permissions.join(',') : normalizePermissions(role.permissions).join(',');
+    }
+  }
   return {
     'Content-Type': 'application/json',
     'X-User-Id': user ? user.id : '',
-    'X-User-Role': user ? user.role_id : ''
+    'X-User-Role': user ? user.role_id : '',
+    'X-User-Permissions': perms
   };
 }
 
@@ -1270,8 +1294,8 @@ async function initDefaultData(){
   if(roles.length===0){
     roles=[
       {id:'role_admin', name:'超级管理员', description:'拥有系统全部管理权限', permissions:ALL_PERMISSIONS.map(p=>p.key), created_at:new Date().toISOString(), system:true},
-      {id:'role_operator', name:'运营人员', description:'业务操作权限，含一级审批和系统管理', permissions:['record_view','record_create','record_delete','sales_import','product_view','approval_submit','approval_level1','user_manage','role_manage'], created_at:new Date().toISOString(), system:true},
-      {id:'role_viewer', name:'普通用户', description:'只读权限', permissions:['record_view','product_view'], created_at:new Date().toISOString(), system:true}
+      {id:'role_operator', name:'运营人员', description:'业务操作权限，含审批与导入导出', permissions:['record_view','record_create','record_edit','record_import','record_export','product_view','product_import','product_export','approval_level1','approval_level2','approval_level3'], created_at:new Date().toISOString(), system:true},
+      {id:'role_viewer', name:'普通用户', description:'查看与新建权限', permissions:['record_view','record_create','product_view'], created_at:new Date().toISOString(), system:true}
     ];
     await saveRoles(roles);
   }
@@ -1731,7 +1755,7 @@ function enterApp() {
 function renderSidebar(){
   const nav=document.getElementById('sidebar-nav');
   const groups=[
-    {title:'业务数据', items:[
+    {title:'售后管理', items:[
       {id:'overview', icon:'&#x1F4CA;', label:'售后概览', perm:'record_view'},
       {id:'list', icon:'&#x1F4CB;', label:'售后列表', perm:'record_view'},
     ]},
@@ -1796,11 +1820,17 @@ function updatePermissionedUI(){
   const btnNewTable=document.getElementById('btn-new-record-table');
   if(btnNewTable) btnNewTable.style.display=hasPermission('record_create')?'inline-flex':'none';
   const btnImportRecs=document.getElementById('btn-import-records');
-  if(btnImportRecs) btnImportRecs.style.display=hasPermission('record_create')?'inline-flex':'none';
-  const btnImport=document.getElementById('btn-import-sales');
-  if(btnImport) btnImport.style.display=hasPermission('sales_import')?'inline-flex':'none';
+  if(btnImportRecs) btnImportRecs.style.display=hasPermission('record_import')?'inline-flex':'none';
+  const btnExportRecs=document.getElementById('btn-export-list');
+  if(btnExportRecs) btnExportRecs.style.display=hasPermission('record_export')?'inline-flex':'none';
   const btnNewProd=document.getElementById('btn-new-product');
   if(btnNewProd) btnNewProd.style.display=hasPermission('product_create')?'inline-flex':'none';
+  const btnImportProd=document.getElementById('btn-import-products');
+  if(btnImportProd) btnImportProd.style.display=hasPermission('product_import')?'inline-flex':'none';
+  const btnExportProd=document.getElementById('btn-export-products');
+  if(btnExportProd) btnExportProd.style.display=hasPermission('product_export')?'inline-flex':'none';
+  const btnBatchDel=document.getElementById('btn-batch-delete');
+  if(btnBatchDel) btnBatchDel.style.display=hasPermission('product_delete')?'inline-flex':'none';
 }
 
 // ==================== OVERVIEW PAGE ====================
@@ -2315,7 +2345,7 @@ async function renderDetail(id){
 
 // ==================== RECORD FORM MODAL ====================
 function openRecordForm(){
-  if(!hasPermission('approval_submit')){ showFlash('您没有提交审批的权限','warning'); return; }
+  if(!hasPermission('record_create')){ showFlash('您没有提交审批的权限','warning'); return; }
   resetForm();
   document.getElementById('record-form-modal').classList.remove('hidden');
 }
@@ -2451,7 +2481,7 @@ function getApproverName(selId){
 
 async function submitForApproval(e){
   e.preventDefault();
-  if(!requirePermission('approval_submit')) return;
+  if(!requirePermission('record_create')) return;
 
   const aftersalesDate=document.getElementById('f-aftersales-date').value;
   const a1=document.getElementById('f-approver-level1').value;
@@ -2524,7 +2554,7 @@ async function submitForApproval(e){
 }
 
 async function saveAsDraft(){
-  if(!requirePermission('approval_submit')) return;
+  if(!requirePermission('record_create')) return;
   const aftersalesDate=document.getElementById('f-aftersales-date').value;
   if(!aftersalesDate){ showFlash('请至少填写售后日期','warning'); return; }
 
@@ -3253,6 +3283,117 @@ async function exportProducts(){
   XLSX.writeFile(wb, `商品列表_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
+// ==================== AFTERSALES EXPORT ====================
+async function exportAftersalesExcel(){
+  if(!requirePermission('record_export')) return;
+  const records = await getRecords();
+
+  // 获取筛选条件
+  const search = (document.getElementById('search-input').value||'').toLowerCase();
+  const brandF = document.getElementById('brand-filter').value;
+  const statusF = document.getElementById('status-filter').value;
+  const processStatusF = document.getElementById('process-status-filter').value;
+  const startDate = document.getElementById('list-start-date').value;
+  const endDate = document.getElementById('list-end-date').value;
+
+  // 应用筛选
+  let filtered = records;
+  if(brandF) filtered = filtered.filter(r => r.brand === brandF);
+  if(statusF) filtered = filtered.filter(r => r.status === statusF);
+  if(startDate) filtered = filtered.filter(r => r.aftersales_date >= startDate);
+  if(endDate) filtered = filtered.filter(r => r.aftersales_date <= endDate);
+  if(search) filtered = filtered.filter(r => {
+    const items = r.items || [];
+    return (r.id||'').toLowerCase().includes(search) ||
+      (r.brand||'').toLowerCase().includes(search) ||
+      (r.submitter_name||'').toLowerCase().includes(search) ||
+      items.some(it => (it.order_no||'').toLowerCase().includes(search) || (it.sku_code||'').toLowerCase().includes(search) || (it.model||'').toLowerCase().includes(search));
+  });
+
+  // 按处理状态筛选（明细级别）
+  if(processStatusF){
+    filtered = filtered.filter(r => {
+      const items = r.items || [];
+      return items.some(it => it.process_status === processStatusF);
+    });
+  }
+
+  // 判断当前视图模式：按售后单 or 按明细
+  const isDetailView = listMode === 'item';
+
+  const headers = [
+    '售后单号','售后日期','平台','品牌','SKU','型号','数量','订单号',
+    '问题类型','问题说明','审批状态','处理状态','提交人','创建时间','更新时间'
+  ];
+
+  let rows = [];
+
+  if(isDetailView){
+    // 按明细导出：每条明细一行
+    filtered.forEach(r => {
+      const items = r.items || [];
+      const platforms = Array.isArray(r.platforms) ? r.platforms : (typeof r.platforms === 'string' ? [r.platforms] : []);
+      items.forEach(it => {
+        rows.push([
+          r.id,
+          r.aftersales_date || '',
+          (it.platform || platforms[0] || ''),
+          r.brand || '',
+          it.sku_code || '',
+          it.model || '',
+          it.quantity || 1,
+          it.order_no || '',
+          it.return_reason || '',
+          it.fault_description || '',
+          r.status || '',
+          it.process_status || '',
+          r.submitter_name || '',
+          r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '',
+          r.updated_at ? new Date(r.updated_at).toLocaleString('zh-CN') : ''
+        ]);
+      });
+    });
+  } else {
+    // 按售后单导出：每条记录一行
+    filtered.forEach(r => {
+      const items = r.items || [];
+      const platforms = Array.isArray(r.platforms) ? r.platforms : (typeof r.platforms === 'string' ? [r.platforms] : []);
+      const totalQty = r.total_quantity || items.reduce((s,it) => s + (it.quantity||0), 0);
+      rows.push([
+        r.id,
+        r.aftersales_date || '',
+        platforms.join('、'),
+        r.brand || '',
+        items.map(it => it.sku_code||'').join('、'),
+        items.map(it => it.model||'').filter(Boolean).join('、') || items[0]?.model || '',
+        totalQty,
+        items.map(it => it.order_no||'').filter(Boolean).join('、'),
+        items.map(it => it.return_reason||'').filter(Boolean).join('、'),
+        items.map(it => it.fault_description||'').filter(Boolean).join('；') || items[0]?.fault_description || '',
+        r.status || '',
+        [...new Set(items.map(it => it.process_status||'').filter(Boolean))].join('、'),
+        r.submitter_name || '',
+        r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '',
+        r.updated_at ? new Date(r.updated_at).toLocaleString('zh-CN') : ''
+      ]);
+    });
+  }
+
+  if(rows.length === 0){
+    showFlash('当前筛选条件下没有可导出的数据','warning');
+    return;
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  // 设置列宽
+  ws['!cols'] = headers.map(() => ({ wch: 18 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, isDetailView ? '售后明细' : '售后记录');
+  const filename = `aftersales_export_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  showFlash(`已导出 ${rows.length} 条记录`,'success');
+}
+
 // ==================== PRODUCT MANAGEMENT ====================
 async function renderProducts(){
   const products=await getProducts();
@@ -3277,14 +3418,22 @@ async function renderProducts(){
   const total=filtered.length;
   const start=(prodPage-1)*prodPageSize;
   const pageRecords=filtered.slice(start,start+prodPageSize);
+  prodCurrentPageIds = pageRecords.map(p => p.id);
   const area=document.getElementById('products-table-area');
 
   if(pageRecords.length===0){
     area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4E6;</div><p>暂无商品</p>${hasPermission('product_create')?`<button class="btn btn-primary" onclick="openProductModal()">新建第一个商品</button>`:''}</div>`;
+    document.getElementById('prod-batch-bar').style.display='none';
   }else{
-    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>SKU编码</th><th>品牌</th><th>型号</th><th>品类</th><th>国家</th><th>EAN编码</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+    const currentPageIds = pageRecords.map(p => p.id);
+    const allOnPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => prodSelected.has(id));
+    let html=`<div class="table-container"><table class="data-table"><thead><tr>
+      <th style="width:40px;text-align:center"><input type="checkbox" id="prod-select-all" ${allOnPageSelected?'checked':''} onchange="toggleSelectAllProducts(this.checked)"></th>
+      <th>SKU编码</th><th>品牌</th><th>型号</th><th>品类</th><th>国家</th><th>EAN编码</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
     pageRecords.forEach(p=>{
+      const isChecked = prodSelected.has(p.id);
       html+=`<tr>
+        <td style="text-align:center"><input type="checkbox" class="prod-checkbox" ${isChecked?'checked':''} onchange="onProductSelect('${p.id}', this.checked)"></td>
         <td class="cell-id">${esc(p.sku_code)}</td>
         <td class="cell-name">${esc(p.brand)}</td>
         <td>${esc(p.model||'-')}</td>
@@ -3293,12 +3442,13 @@ async function renderProducts(){
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.ean_code||'-')}</td>
         <td><span class="prod-status prod-status-${p.status}">${p.status==='active'?'启用':'禁用'}</span></td>
         <td class="cell-actions">
-          ${hasPermission('product_create')?`<button class="action-btn" title="编辑" onclick="openProductModal('${p.id}')">&#x270F;</button>`:''}
-          ${hasPermission('product_create')?`<button class="action-btn action-delete" title="删除" onclick="deleteProduct('${p.id}')">&#x1F5D1;</button>`:''}
+          ${hasPermission('product_edit')?`<button class="action-btn" title="编辑" onclick="openProductModal('${p.id}')">&#x270F;</button>`:''}
+          ${hasPermission('product_delete')?`<button class="action-btn action-delete" title="删除" onclick="deleteProduct('${p.id}')">&#x1F5D1;</button>`:''}
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
     area.innerHTML=html;
+    updateProdBatchBar();
   }
   renderProdPagination(total);
 }
@@ -3324,8 +3474,87 @@ function clearProductFilter(){
   prodPage=1; renderProducts();
 }
 
+// 商品批量选择
+let prodSelected = new Set();
+let prodCurrentPageIds = [];
+function onProductSelect(id, checked){
+  if(checked) prodSelected.add(id); else prodSelected.delete(id);
+  updateProdBatchBar();
+  // 同步全选框状态
+  const allBox = document.getElementById('prod-select-all');
+  if(allBox) { allBox.checked = prodCurrentPageIds.length > 0 && prodCurrentPageIds.every(id => prodSelected.has(id)); }
+}
+function toggleSelectAllProducts(checked){
+  if(checked){
+    prodCurrentPageIds.forEach(id => prodSelected.add(id));
+  } else {
+    prodCurrentPageIds.forEach(id => prodSelected.delete(id));
+  }
+  updateProdBatchBar();
+  renderProducts(); // re-render to sync checkboxes
+}
+function updateProdBatchBar(){
+  const bar = document.getElementById('prod-batch-bar');
+  const count = document.getElementById('prod-selected-count');
+  if(bar && count){
+    bar.style.display = prodSelected.size > 0 ? '' : 'none';
+    count.textContent = `已选 ${prodSelected.size} 项`;
+  }
+}
+function clearProductSelection(){
+  prodSelected.clear();
+  renderProducts();
+}
+async function batchDeleteProducts(){
+  if(prodSelected.size === 0){ showFlash('请先勾选要删除的商品','warning'); return; }
+  const ids = Array.from(prodSelected);
+  const proceed = await showConfirmDialog(
+    '确认批量删除',
+    `确定要删除选中的 <b>${ids.length}</b> 个商品吗？<br><br>
+    将删除以下 SKU 编码：<br>
+    ${ids.slice(0,10).map(id => '• ' + id).join('<br>')}
+    ${ids.length > 10 ? `<br>...还有 ${ids.length - 10} 个` : ''}
+    <br><br><span style="color:#ff3b30">此操作不可恢复！</span>`
+  );
+  if(!proceed) return;
+  try{
+    const resp = await fetch('/api/products/batch-delete', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ ids })
+    });
+    const result = await resp.json();
+    if(result.error){ showFlash(result.error,'danger'); return; }
+    showFlash(`成功删除 ${result.deleted} 个商品`,'success');
+    prodSelected.clear();
+    renderProducts();
+  }catch(err){
+    showFlash('批量删除失败: ' + err.message,'danger');
+  }
+}
+
+// 确认对话框
+function showConfirmDialog(title, message){
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `<div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <h3 style="margin:0 0 12px 0">${title}</h3>
+      <div style="color:#666;margin-bottom:20px;line-height:1.6">${message}</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" id="confirm-cancel">取消</button>
+        <button class="btn btn-danger" id="confirm-ok">确认删除</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#confirm-cancel').onclick = () => { document.body.removeChild(overlay); resolve(false); };
+    overlay.querySelector('#confirm-ok').onclick = () => { document.body.removeChild(overlay); resolve(true); };
+  });
+}
+
 async function openProductModal(productId){
-  if(!requirePermission('product_create')) return;
+  if(productId && !requirePermission('product_edit')) return;
+  if(!productId && !requirePermission('product_create')) return;
   document.getElementById('product-modal').classList.remove('hidden');
   const products=await getProducts();
   if(productId){
@@ -3357,8 +3586,9 @@ function closeProductModal(){ document.getElementById('product-modal').classList
 
 async function saveProduct(e){
   e.preventDefault();
-  if(!requirePermission('product_create')) return;
   const editId=document.getElementById('prod-edit-id').value;
+  if(editId && !requirePermission('product_edit')) return;
+  if(!editId && !requirePermission('product_create')) return;
   const brand=document.getElementById('p-brand').value.trim();
   const skuCode=document.getElementById('p-sku-code').value.trim();
   if(!brand) return showFlash('品牌不能为空','warning');
@@ -3395,7 +3625,7 @@ async function saveProduct(e){
 }
 
 async function deleteProduct(id){
-  if(!requirePermission('product_create')) return;
+  if(!requirePermission('product_delete')) return;
   // Check if referenced in records
   const productsList=await getProducts();
   const product=productsList.find(p=>p.id===id);
