@@ -3512,8 +3512,20 @@ async function deleteUser(userId){
   if(!requirePermission('user_manage')) return;
   if(userId==='user_admin') return showFlash('不能删除超级管理员','danger');
   if(!confirm('确定要删除该用户吗？')) return;
-  const users=await getUsers();
-  await saveUsers(users.filter(u=>u.id!==userId));
+  if (await checkDbAvailable()) {
+    const resp = await fetch(`/api/users/${userId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!resp.ok) {
+      const result = await resp.json().catch(() => ({}));
+      return showFlash(result.error || '删除失败', 'danger');
+    }
+  } else {
+    const users = await getUsers();
+    localStorage.setItem('aftersales_users', JSON.stringify(users.filter(u => u.id !== userId)));
+  }
+  _usersCache = null;
   showFlash('用户已删除','info');
   renderUsers();
 }

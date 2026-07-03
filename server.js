@@ -230,33 +230,46 @@ app.post('/api/users', async (req, res) => {
 
 app.put('/api/users/:id', async (req, res) => {
   try {
-    const { name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name } = req.body;
-    const fields = [];
-    const values = [];
-    let idx = 1;
+    const { id } = req.params;
+    const { username, name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name } = req.body;
+    if (!username || !name) return res.status(400).json({ error: '用户名和姓名不能为空' });
 
-    if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name); }
-    if (password !== undefined && password !== '') { fields.push(`password = $${idx++}`); values.push(password); }
-    if (role_id !== undefined) { fields.push(`role_id = $${idx++}`); values.push(role_id); }
-    if (status !== undefined) { fields.push(`status = $${idx++}`); values.push(status); }
-    if (feishu_open_id !== undefined) { fields.push(`feishu_open_id = $${idx++}`); values.push(feishu_open_id); }
-    if (feishu_union_id !== undefined) { fields.push(`feishu_union_id = $${idx++}`); values.push(feishu_union_id); }
-    if (feishu_name !== undefined) { fields.push(`feishu_name = $${idx++}`); values.push(feishu_name); }
-    if (feishu_email !== undefined) { fields.push(`feishu_email = $${idx++}`); values.push(feishu_email); }
-    if (feishu_avatar !== undefined) { fields.push(`feishu_avatar = $${idx++}`); values.push(feishu_avatar); }
-    if (feishu_tenant_key !== undefined) { fields.push(`feishu_tenant_key = $${idx++}`); values.push(feishu_tenant_key); }
-    if (feishu_raw_name !== undefined) { fields.push(`feishu_raw_name = $${idx++}`); values.push(feishu_raw_name); }
-    if (feishu_en_name !== undefined) { fields.push(`feishu_en_name = $${idx++}`); values.push(feishu_en_name); }
+    // 检查用户名重复（排除当前 ID 自己）
+    const exist = await query('SELECT id FROM users WHERE username = $1 AND id <> $2', [username, id]);
+    if (exist.rows.length > 0) return res.status(400).json({ error: '用户名已存在' });
 
-    if (fields.length === 0) return res.json({ message: '没有需要更新的字段' });
-
-    values.push(req.params.id);
     const result = await query(
-      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
+      `INSERT INTO users (id, username, name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+       ON CONFLICT (id) DO UPDATE SET
+         username = EXCLUDED.username,
+         name = EXCLUDED.name,
+         password = CASE WHEN EXCLUDED.password <> '' THEN EXCLUDED.password ELSE users.password END,
+         role_id = EXCLUDED.role_id,
+         status = EXCLUDED.status,
+         feishu_open_id = EXCLUDED.feishu_open_id,
+         feishu_union_id = EXCLUDED.feishu_union_id,
+         feishu_name = EXCLUDED.feishu_name,
+         feishu_email = EXCLUDED.feishu_email,
+         feishu_avatar = EXCLUDED.feishu_avatar,
+         feishu_tenant_key = EXCLUDED.feishu_tenant_key,
+         feishu_raw_name = EXCLUDED.feishu_raw_name,
+         feishu_en_name = EXCLUDED.feishu_en_name
+       RETURNING *`,
+      [id, username, name, password || '', role_id || 'role_viewer', status || 'active',
+       feishu_open_id || '', feishu_union_id || '', feishu_name || '', feishu_email || '', feishu_avatar || '', feishu_tenant_key || '', feishu_raw_name || '', feishu_en_name || '']
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: '用户不存在' });
     res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 删除用户
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    if (req.params.id === 'user_admin') return res.status(400).json({ error: '不能删除超级管理员' });
+    const result = await query('DELETE FROM users WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: '用户不存在' });
+    res.json({ success: true, id: req.params.id });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
