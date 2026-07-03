@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1488,8 +1488,10 @@ async function sendApprovalNotification(record) {
         console.log('[Notify] 通知已发送给 ' + approver.name + ':', result.message);
       }
     } else {
-      console.warn('[Notify] 通知发送失败:', result.message || result.error);
-      showFlash(t('flash.feishuNotifyFailed'), 'warning');
+      const detail = (result.results && result.results.failed && result.results.failed[0] && result.results.failed[0].reason)
+                    || result.error || result.message || '';
+      console.warn('[Notify] 通知发送失败:', result.message || result.error, detail);
+      showFlash(t('flash.feishuNotifyFailed') + (detail ? ' 原因：' + detail : ''), 'warning');
     }
   } catch (e) {
     console.error('[Notify] 后端不可用，飞书通知发送失败:', e.message);

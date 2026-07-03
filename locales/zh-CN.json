@@ -690,7 +690,7 @@
     "statusNotPendingErp": "仅\"待ERP入库\"状态可标记为已处理",
     "pleaseEnterComment": "请输入审批意见",
     "selectProductsFirst": "请先勾选要删除的商品",
-    "approvalSubmitFeishuNotBound": "审批已提交，但审批人 ",
+    "approvalSubmitFeishuNotBound": "审批已提交，但审批人 {name} 未绑定飞书账号，无法发送飞书通知。请联系管理员绑定。",
     "feishuServiceUnavailable": "审批已提交，但飞书通知服务暂时不可用。",
     "admin": "管理员",
     "deleteFailed": "删除失败: ",
