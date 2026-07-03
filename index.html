@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>售后数据管理系统 v3.4.0</title>
+<title>售后数据管理系统 v3.4.1</title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.4.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.4.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -402,6 +402,13 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <h1 class="page-title" id="topbar-title">&#x540E; 售概览</h1>
       </div>
       <div class="topbar-right">
+        <div class="lang-switcher" style="position:relative;margin-right:4px">
+          <select id="lang-select" onchange="switchLanguage(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg);cursor:pointer;font-family:inherit;outline:none">
+            <option value="zh-CN">🇨🇳 中文</option>
+            <option value="en-US">🇺🇸 English</option>
+            <option value="id-ID">🇮🇩 Bahasa</option>
+          </select>
+        </div>
         <div class="user-menu">
           <div class="user-avatar" id="user-avatar">U</div>
           <div class="user-info">
@@ -409,7 +416,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             <span class="user-role" id="user-role">--</span>
           </div>
         </div>
-        <button class="logout-btn" onclick="logout()">&#x9000; 出</button>
+        <button class="logout-btn" onclick="logout()" id="btn-logout">退出</button>
       </div>
     </header>
 
@@ -899,29 +906,46 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
   </div>
 </div>
 
+<script src="locales/i18n.js"></script>
 <script>
 // ==================== DATA LAYER ====================
-const APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
-const ALL_PERMISSIONS = [
-  {key:'record_view', label:'查看售后记录', desc:'查看概览和售后列表'},
-  {key:'record_create', label:'新建售后记录', desc:'创建售后记录'},
-  {key:'record_edit', label:'编辑售后记录', desc:'修改售后记录'},
-  {key:'record_delete', label:'删除售后记录', desc:'删除售后记录'},
-  {key:'record_import', label:'导入售后记录', desc:'批量导入售后数据'},
-  {key:'record_export', label:'导出售后记录', desc:'导出Excel给工厂分析'},
-  {key:'product_view', label:'查看商品', desc:'查看商品目录'},
-  {key:'product_create', label:'新增商品', desc:'新建商品信息'},
-  {key:'product_edit', label:'编辑商品', desc:'修改商品信息'},
-  {key:'product_delete', label:'删除商品', desc:'删除商品'},
-  {key:'product_import', label:'导入商品', desc:'批量导入商品数据'},
-  {key:'product_export', label:'导出商品', desc:'导出商品Excel'},
-  {key:'approval_level1', label:'一级审批', desc:'作为一级审批人处理审批'},
-  {key:'approval_level2', label:'二级审批', desc:'作为二级审批人处理审批'},
-  {key:'approval_level3', label:'三级审批', desc:'作为三级审批人处理审批'},
-  {key:'user_manage', label:'用户管理', desc:'管理系统用户'},
-  {key:'role_manage', label:'角色管理', desc:'管理系统角色和权限'},
-  {key:'system_config', label:'系统配置', desc:'修改系统设置'}
+let APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
+function refreshApprovalStatuses() {
+  APPROVAL_STATUSES = [
+    t('status.draft'), t('status.pendingLevel1'), t('status.level1Approved'),
+    t('status.pendingLevel2'), t('status.level2Approved'), t('status.pendingLevel3'),
+    t('status.approved'), t('status.rejected')
+  ];
+}
+const _PERM_CONFIG = [
+  {key:'record_view', path:'perm.recordView'},
+  {key:'record_create', path:'perm.recordCreate'},
+  {key:'record_edit', path:'perm.recordEdit'},
+  {key:'record_delete', path:'perm.recordDelete'},
+  {key:'record_import', path:'perm.recordImport'},
+  {key:'record_export', path:'perm.recordExport'},
+  {key:'product_view', path:'perm.productView'},
+  {key:'product_create', path:'perm.productCreate'},
+  {key:'product_edit', path:'perm.productEdit'},
+  {key:'product_delete', path:'perm.productDelete'},
+  {key:'product_import', path:'perm.productImport'},
+  {key:'product_export', path:'perm.productExport'},
+  {key:'approval_level1', path:'perm.approvalLevel1'},
+  {key:'approval_level2', path:'perm.approvalLevel2'},
+  {key:'approval_level3', path:'perm.approvalLevel3'},
+  {key:'user_manage', path:'perm.userManage'},
+  {key:'role_manage', path:'perm.roleManage'},
+  {key:'system_config', path:'perm.systemConfig'}
 ];
+function getAllPermissions() {
+  return _PERM_CONFIG.map(p => ({
+    key: p.key,
+    label: t(p.path + '.label'),
+    desc: t(p.path + '.desc')
+  }));
+}
+let ALL_PERMISSIONS = getAllPermissions();
+function refreshAllPermissions() { ALL_PERMISSIONS = getAllPermissions(); }
 const BRAND_COLORS=['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6','#007aff','#ff2d55','#af52de','#5ac8fa','#ffcc00'];
 
 async function getRecords(){
@@ -1758,7 +1782,7 @@ function enterApp() {
   avatarEl.style.backgroundSize = '';
   avatarEl.textContent = (user.name || 'U').charAt(0);
   const role = getUserRole(user);
-  document.getElementById('user-role').textContent = role ? role.name : '未分配角色';
+  document.getElementById('user-role').textContent = role ? role.name : t('detail.notSet');
   
   // 更新用户头像：飞书用户使用飞书头像
   if (user.feishu_avatar) {
@@ -1770,6 +1794,7 @@ function enterApp() {
   renderSidebar();
   updatePermissionedUI();
   updateFeishuStatusBadge();
+  document.getElementById('btn-logout').textContent = t('app.logout');
   
   // 检查 URL hash，决定初始页面
   handleHashRoute();
@@ -1779,19 +1804,19 @@ function enterApp() {
 function renderSidebar(){
   const nav=document.getElementById('sidebar-nav');
   const groups=[
-    {title:'售后管理', items:[
-      {id:'overview', icon:'&#x1F4CA;', label:'售后概览', perm:'record_view'},
-      {id:'list', icon:'&#x1F4CB;', label:'售后列表', perm:'record_view'},
+    {id:'aftersales', title:t('nav.group.aftersales'), items:[
+      {id:'overview', icon:'&#x1F4CA;', label:t('nav.overview'), perm:'record_view'},
+      {id:'list', icon:'&#x1F4CB;', label:t('nav.list'), perm:'record_view'},
     ]},
-    {title:'审批管理', items:[
-      {id:'approval', icon:'&#x2705;', label:'售后记录审批', perm:['approval_level1','approval_level2','approval_level3','record_view']},
+    {id:'approval', title:t('nav.group.approval'), items:[
+      {id:'approval', icon:'&#x2705;', label:t('nav.approval'), perm:['approval_level1','approval_level2','approval_level3','record_view']},
     ]},
-    {title:'基础数据', items:[
-      {id:'products', icon:'&#x1F4E6;', label:'商品管理', perm:'product_view'},
+    {id:'data', title:t('nav.group.data'), items:[
+      {id:'products', icon:'&#x1F4E6;', label:t('nav.products'), perm:'product_view'},
     ]},
-    {title:'系统管理', items:[
-      {id:'users', icon:'&#x1F464;', label:'用户管理', perm:'user_manage'},
-      {id:'roles', icon:'&#x1F6E1;', label:'角色管理', perm:'role_manage'},
+    {id:'system', title:t('nav.group.system'), items:[
+      {id:'users', icon:'&#x1F464;', label:t('nav.users'), perm:'user_manage'},
+      {id:'roles', icon:'&#x1F6E1;', label:t('nav.roles'), perm:'role_manage'},
     ]}
   ];
   let html='';
@@ -1825,7 +1850,7 @@ function showPage(page, recordId=null){
   }
   setSidebarActive(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const titles={overview:'售后概览', list:'售后列表', detail:'售后记录详情', products:'商品管理', approval:'售后记录审批', users:'用户管理', roles:'角色管理'};
+  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
@@ -2282,10 +2307,13 @@ function clearListFilter(){
 async function deleteRecord(id){
   if(!requirePermission('record_delete')) return;
   if(!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
-  const records=(await getRecords()).filter(r=>r.id!==id);
-  await saveRecordsAsync(records);
-  showFlash('记录已删除','info');
-  renderList();
+  try{
+    await deleteRecordAsync(id);
+    showFlash('记录已删除','info');
+    renderList();
+  }catch(e){
+    showFlash('删除失败: ' + e.message,'danger');
+  }
 }
 
 // ==================== DETAIL PAGE ====================
@@ -2380,7 +2408,13 @@ function closeRecordForm(){
 
 // ==================== DETAIL ITEMS TABLE ====================
 const RETURN_REASONS=['可二次销售','彩盒损坏','配件缺失','硬件故障','报废'];
-const PROCESS_STATUSES=['待ERP入库','待换彩盒','待补配件','待RMA','待报废','已处理'];
+let PROCESS_STATUSES = ['待ERP入库','待换彩盒','待补配件','待RMA','待报废','已处理'];
+function refreshProcessStatuses() {
+  PROCESS_STATUSES = [
+    t('process.pendingErp'), t('process.pendingColorBox'), t('process.pendingParts'),
+    t('process.pendingRma'), t('process.pendingScrap'), t('process.completed')
+  ];
+}
 const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废'};
 
 function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
@@ -3659,10 +3693,13 @@ async function deleteProduct(id){
   const refCount=records.filter(r=>(r.items||[]).some(it=>it.sku_code===product.sku_code)).length;
   if(refCount>0) return showFlash(`该商品被 ${refCount} 条售后记录引用，无法删除`,'danger');
   if(!confirm('确定要删除该商品吗？')) return;
-  const products=productsList.filter(p=>p.id!==id);
-  await saveProducts(products);
-  showFlash('商品已删除','info');
-  renderProducts();
+  try{
+    await deleteProductAsync(id);
+    showFlash('商品已删除','info');
+    renderProducts();
+  }catch(e){
+    showFlash('删除失败: ' + e.message,'danger');
+  }
 }
 
 // ==================== USER MANAGEMENT ====================
@@ -4234,7 +4271,104 @@ function resolveColumns(headers){
     }, 100);
     localStorage.removeItem('aftersales_login_error');
   }
+
+  // ==================== i18n 初始化 ====================
+  await window.__i18n.init();
+  refreshApprovalStatuses();
+  refreshProcessStatuses();
+
+  // 初始化语言选择器
+  const langSelect = document.getElementById('lang-select');
+  if (langSelect) langSelect.value = window.__i18n.getLocale();
 })();
+
+// ==================== i18n 语言切换 ====================
+async function switchLanguage(locale) {
+  await window.__i18n.setLocale(locale);
+  refreshApprovalStatuses();
+  refreshProcessStatuses();
+  // 更新静态 UI 元素
+  document.getElementById('btn-logout').textContent = t('app.logout');
+  // 重新渲染当前页面
+  const user = getCurrentUser();
+  if (user) {
+    renderSidebar();
+    updatePermissionedUI();
+    // 重新渲染当前活跃页面
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+      const pageId = activePage.id.replace('page-', '');
+      if (typeof showPage === 'function') {
+        if (pageId === 'detail' && typeof currentDetailId !== 'undefined') {
+          showPage(pageId, currentDetailId);
+        } else {
+          showPage(pageId);
+        }
+      }
+    }
+  }
+}
+
+// ==================== i18n 验证工具（开发调试用） ====================
+// 在浏览器控制台执行: __i18n_validate() 检查所有 key
+window.__i18n_validate = async function() {
+  // 确保所有语言包已加载
+  for (const loc of window.__i18n.SUPPORTED_LOCALES) {
+    await window.__i18n.loadBundle(loc);
+  }
+  const result = window.__i18n.validate();
+  console.log('%c📊 i18n 验证报告', 'font-size:16px;font-weight:bold');
+  console.log(`%c总 key 数: %c${result.total}`, 'color:#333', 'color:#2e7d32;font-weight:bold');
+  const missingKeys = Object.keys(result.missing);
+  if (missingKeys.length === 0) {
+    console.log('%c✅ 所有语言包 key 完整，无缺失！', 'color:#2e7d32;font-size:14px');
+  } else {
+    console.log('%c⚠️ 发现缺失 key：', 'color:#e65100;font-size:14px');
+    for (const loc of missingKeys) {
+      console.group(`${window.__i18n.LOCALE_FLAGS[loc]} ${loc} 缺失 ${result.missing[loc].length} 个 key`);
+      result.missing[loc].slice(0, 50).forEach(k => console.log(`  - ${k}`));
+      if (result.missing[loc].length > 50) console.log(`  ... 还有 ${result.missing[loc].length - 50} 个`);
+      console.groupEnd();
+    }
+  }
+  return result;
+};
+
+// 在控制台执行: __i18n_test() 测试所有 key 解析
+window.__i18n_test = async function() {
+  await window.__i18n.init();
+  const zh = window.__i18n._bundles ? window.__i18n._bundles['zh-CN'] || {} : {};
+  let total = 0, errors = 0;
+  const errorList = [];
+
+  function test(obj, prefix) {
+    for (const key of Object.keys(obj)) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (typeof obj[key] === 'string') {
+        total++;
+        for (const loc of window.__i18n.SUPPORTED_LOCALES) {
+          const val = window.__i18n.t(fullKey);
+          if (val === fullKey || val === undefined || val === '') {
+            errors++;
+            errorList.push({ key: fullKey, locale: loc, value: val });
+          }
+        }
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        test(obj[key], fullKey);
+      }
+    }
+  }
+  test(zh, '');
+  console.log(`%c📊 i18n Key 解析测试`, 'font-size:16px;font-weight:bold');
+  console.log(`总 key: ${total}, 错误: ${errors}`);
+  if (errors === 0) {
+    console.log('%c✅ 所有 key 解析正常！', 'color:#2e7d32');
+  } else {
+    console.log(`%c❌ ${errors} 个 key 解析异常`, 'color:#ff3b30');
+    errorList.slice(0, 20).forEach(e => console.log(`  ${e.locale}: ${e.key} → "${e.value}"`));
+  }
+  return { total, errors, errorList };
+};
 </script>
 </body>
 </html>
