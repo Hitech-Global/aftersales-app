@@ -102,14 +102,35 @@ async function initDatabase() {
     await query(`
       CREATE TABLE IF NOT EXISTS products (
         id VARCHAR(64) PRIMARY KEY,
-        sku_code VARCHAR(128) NOT NULL,
+        sku_code VARCHAR(128) NOT NULL UNIQUE,
         product_name VARCHAR(255) DEFAULT '',
         brand VARCHAR(128) DEFAULT '',
         model VARCHAR(128) DEFAULT '',
+        category VARCHAR(128) DEFAULT '',
+        country VARCHAR(128) DEFAULT '',
+        ean_code VARCHAR(128) DEFAULT '',
+        status VARCHAR(32) DEFAULT 'active',
         price DECIMAL(12,2) DEFAULT 0,
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
+
+    // 兼容旧表：动态添加缺失的列
+    const requiredProductCols = [
+      { name: 'category', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'country', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'ean_code', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'status', type: 'VARCHAR(32) DEFAULT \'active\'' },
+      { name: 'updated_at', type: 'TIMESTAMP DEFAULT NOW()' }
+    ];
+    for (const col of requiredProductCols) {
+      try {
+        await query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`);
+      } catch (err) {
+        console.warn(`[DB] 添加列 ${col.name} 失败或已存在:`, err.message);
+      }
+    }
 
     await query(`
       CREATE TABLE IF NOT EXISTS aftersales_records (

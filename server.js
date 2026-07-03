@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.2.1-render-latest';
+const APP_VERSION = '3.2.2-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -288,7 +288,11 @@ app.get('/api/users/find-by-feishu/:openId', async (req, res) => {
 app.get('/api/roles', async (req, res) => {
   try {
     const result = await query('SELECT * FROM roles ORDER BY created_at');
-    res.json(result.rows);
+    const rows = result.rows.map(r => ({
+      ...r,
+      permissions: typeof r.permissions === 'string' ? JSON.parse(r.permissions || '[]') : r.permissions
+    }));
+    res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -400,10 +404,11 @@ app.get('/api/products', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
-    const { id, sku_code, product_name, brand, model, price } = req.body;
+    const { id, sku_code, product_name, brand, model, category, country, ean_code, status, price } = req.body;
     const result = await query(
-      `INSERT INTO products (id, sku_code, product_name, brand, model, price) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [id, sku_code, product_name || '', brand || '', model || '', price || 0]
+      `INSERT INTO products (id, sku_code, product_name, brand, model, category, country, ean_code, status, price, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *`,
+      [id, sku_code, product_name || '', brand || '', model || '', category || '', country || '', ean_code || '', status || 'active', price || 0]
     );
     res.json(result.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -411,7 +416,7 @@ app.post('/api/products', async (req, res) => {
 
 app.put('/api/products/:id', async (req, res) => {
   try {
-    const { sku_code, product_name, brand, model, price } = req.body;
+    const { sku_code, product_name, brand, model, category, country, ean_code, status, price } = req.body;
     const fields = [];
     const values = [];
     let idx = 1;
@@ -420,7 +425,12 @@ app.put('/api/products/:id', async (req, res) => {
     add('product_name', product_name);
     add('brand', brand);
     add('model', model);
+    add('category', category);
+    add('country', country);
+    add('ean_code', ean_code);
+    add('status', status);
     add('price', price);
+    fields.push(`updated_at = NOW()`);
 
     if (fields.length === 0) return res.json({ message: '没有需要更新的字段' });
     values.push(req.params.id);
@@ -438,6 +448,88 @@ app.delete('/api/products/:id', async (req, res) => {
     const result = await query('DELETE FROM products WHERE id = $1 RETURNING id', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: '商品不存在' });
     res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 批量导入商品
+app.post('/api/products/bulk-import', async (req, res) => {
+  try {
+    const items = req.body.items || [];
+    const result = { created: 0, updated: 0, deleted: 0, failed: 0, errors: [] };
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const rowNum = item.__rowNum || (i + 2);
+      try {
+        const sku = String(item.sku_code || '').trim();
+        if (!sku) {
+          result.failed++;
+          result.errors.push({ row: rowNum, reason: 'SKU编码为空' });
+          continue;
+        }
+        const brand = String(item.brand || '').trim();
+        if (!brand) {
+          result.failed++;
+          result.errors.push({ row: rowNum, reason: '品牌为空' });
+          continue;
+        }
+
+        const statusVal = String(item.status || 'active').trim().toLowerCase();
+        const isDeleteMark = statusVal === 'delete' || statusVal === 'disabled' || statusVal === '删除' || statusVal === '禁用';
+
+        const existing = await query('SELECT id FROM products WHERE sku_code = $1', [sku]);
+        const exists = existing.rows.length > 0;
+
+        if (isDeleteMark) {
+          if (exists) {
+            await query('DELETE FROM products WHERE sku_code = $1', [sku]);
+            result.deleted++;
+          } else {
+            result.failed++;
+            result.errors.push({ row: rowNum, reason: '要删除/禁用的 SKU 不存在' });
+          }
+          continue;
+        }
+
+        const productData = {
+          id: exists ? existing.rows[0].id : ('prod_' + Date.now() + '_' + i),
+          sku_code: sku,
+          product_name: String(item.product_name || item.model || '').trim(),
+          brand,
+          model: String(item.model || '').trim(),
+          category: String(item.category || '').trim(),
+          country: String(item.country || '').trim(),
+          ean_code: String(item.ean_code || '').trim(),
+          status: 'active',
+          price: parseFloat(item.price) || 0
+        };
+
+        if (exists) {
+          await query(
+            `UPDATE products SET
+              product_name = $1, brand = $2, model = $3, category = $4,
+              country = $5, ean_code = $6, status = $7, price = $8, updated_at = NOW()
+             WHERE sku_code = $9`,
+            [productData.product_name, productData.brand, productData.model, productData.category,
+             productData.country, productData.ean_code, productData.status, productData.price, sku]
+          );
+          result.updated++;
+        } else {
+          await query(
+            `INSERT INTO products (id, sku_code, product_name, brand, model, category, country, ean_code, status, price, created_at, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())`,
+            [productData.id, productData.sku_code, productData.product_name, productData.brand, productData.model,
+             productData.category, productData.country, productData.ean_code, productData.status, productData.price]
+          );
+          result.created++;
+        }
+      } catch (err) {
+        result.failed++;
+        result.errors.push({ row: rowNum, reason: err.message });
+      }
+    }
+
+    res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

@@ -389,7 +389,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.2.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.2.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -624,7 +624,12 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <div id="page-products" class="page">
           <div class="page-header">
             <h2>商品管理</h2>
-            <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()">+ 新建商品</button>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-secondary" onclick="downloadProductTemplate()">下载导入模板</button>
+              <button class="btn btn-secondary" onclick="openProductImportModal()">批量导入</button>
+              <button class="btn btn-secondary" onclick="exportProducts()">批量导出</button>
+              <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()">+ 新建商品</button>
+            </div>
           </div>
           <div class="filter-bar">
             <div class="filter-form">
@@ -761,6 +766,38 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <button type="button" class="btn btn-secondary" onclick="closeProductModal()">取消</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- 商品批量导入弹窗 -->
+<div id="product-import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:210;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:17px">批量导入商品</h3>
+      <button class="action-btn" onclick="closeProductImportModal()" style="font-size:20px">&times;</button>
+    </div>
+    <div style="padding:24px">
+      <div id="import-upload-area" style="border:2px dashed var(--border);border-radius:10px;padding:32px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)" ondragover="event.preventDefault();this.style.borderColor='var(--primary)';this.style.background='var(--primary-light)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--bg)'" ondrop="handleProductImportDrop(event)" onclick="document.getElementById('product-import-file-input').click()">
+        <div style="font-size:36px;margin-bottom:10px">&#x1F4E4;</div>
+        <p style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:6px">点击上传或拖拽文件到此处</p>
+        <p style="font-size:12px;color:var(--text-muted)">支持 .xlsx / .csv 格式</p>
+        <input type="file" id="product-import-file-input" style="display:none" accept=".xlsx,.csv" onchange="handleProductImportFile(this.files[0])">
+      </div>
+      <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+        <button type="button" class="btn btn-secondary" onclick="downloadProductTemplate()">下载模板</button>
+        <span id="import-file-name" style="font-size:13px;color:var(--text-muted)"></span>
+      </div>
+      <div id="import-preview-area" style="margin-top:16px;display:none">
+        <div style="background:var(--primary-light);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--text)">
+          待导入 <strong id="import-preview-count">0</strong> 条商品
+        </div>
+      </div>
+      <div id="import-result-area" style="margin-top:16px;display:none"></div>
+      <div class="form-actions" style="margin-top:24px">
+        <button type="button" class="btn btn-primary" id="btn-confirm-import" onclick="confirmProductImport()" disabled>开始导入</button>
+        <button type="button" class="btn btn-secondary" onclick="closeProductImportModal()">关闭</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1038,6 +1075,8 @@ async function getRolesAsync() {
     if (!_rolesCache || !cacheValid()) {
       const resp = await fetch('/api/roles', { headers: getAuthHeaders() });
       _rolesCache = await resp.json();
+      // 后端可能把 permissions 存成 JSON 字符串，统一解析成数组
+      _rolesCache = _rolesCache.map(r => ({ ...r, permissions: normalizePermissions(r.permissions) }));
       _cacheTimestamp = Date.now();
     }
     return _rolesCache;
@@ -1259,11 +1298,23 @@ async function initDefaultData(){
   }
 }
 
+function normalizePermissions(permissions){
+  if(Array.isArray(permissions)) return permissions;
+  if(typeof permissions==='string' && permissions.trim()){
+    try{ return JSON.parse(permissions); }catch(e){ return permissions.split(',').map(s=>s.trim()).filter(Boolean); }
+  }
+  return [];
+}
+
 function getUserRole(user){
   if(!user) return null;
   // 优先使用缓存（由 API 层或 initDefaultData 填充），否则从 localStorage 读取
   const roles = _rolesCache || (function(){ try{return JSON.parse(localStorage.getItem('aftersales_roles')||'[]');}catch(e){return[];} })();
-  return roles.find(r=>r.id===user.role_id)||null;
+  const role = roles.find(r=>r.id===user.role_id)||null;
+  if(role && !Array.isArray(role.permissions)){
+    role.permissions = normalizePermissions(role.permissions);
+  }
+  return role;
 }
 
 function hasPermission(perm){
@@ -1271,7 +1322,7 @@ function hasPermission(perm){
   if(!user) return false;
   const role=getUserRole(user);
   if(!role) return false;
-  return (role.permissions||[]).includes(perm);
+  return normalizePermissions(role.permissions).includes(perm);
 }
 
 function requirePermission(perm){
@@ -3047,6 +3098,161 @@ function removePendingAttachment(index){
   renderPendingAttachments();
 }
 
+// ==================== PRODUCT IMPORT/EXPORT ====================
+let pendingImportProducts = [];
+
+function openProductImportModal(){
+  pendingImportProducts = [];
+  document.getElementById('import-file-name').textContent = '';
+  document.getElementById('import-preview-area').style.display = 'none';
+  document.getElementById('import-result-area').style.display = 'none';
+  document.getElementById('import-result-area').innerHTML = '';
+  document.getElementById('btn-confirm-import').disabled = true;
+  document.getElementById('product-import-modal').classList.remove('hidden');
+}
+function closeProductImportModal(){ document.getElementById('product-import-modal').classList.add('hidden'); pendingImportProducts = []; }
+
+function handleProductImportDrop(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor = 'var(--border)';
+  e.currentTarget.style.background = 'var(--bg)';
+  const files = e.dataTransfer.files;
+  if(files && files.length > 0) handleProductImportFile(files[0]);
+}
+
+function handleProductImportFile(file){
+  if(!file) return;
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(!['xlsx','csv'].includes(ext)){
+    showFlash('仅支持 .xlsx / .csv 文件','warning');
+    return;
+  }
+  document.getElementById('import-file-name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = e.target.result;
+      let workbook;
+      if(ext === 'csv'){
+        workbook = XLSX.read(data, { type: 'string', codepage: 65001 });
+      }else{
+        workbook = XLSX.read(data, { type: 'array' });
+      }
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+      if(json.length < 2){ showFlash('文件为空或缺少表头','warning'); return; }
+      const headers = json[0].map(h => String(h).trim().toLowerCase());
+      const rows = json.slice(1);
+      pendingImportProducts = rows.map((row, idx) => {
+        const obj = { __rowNum: idx + 2 };
+        headers.forEach((h, i) => { obj[h] = row[i]; });
+        return {
+          __rowNum: idx + 2,
+          sku_code: obj['sku编码'] || obj['sku_code'] || obj['sku'] || '',
+          product_name: obj['商品名称'] || obj['product_name'] || obj['型号'] || obj['model'] || '',
+          brand: obj['品牌'] || obj['brand'] || '',
+          model: obj['型号'] || obj['model'] || obj['product_name'] || '',
+          category: obj['品类'] || obj['category'] || '',
+          country: obj['国家'] || obj['country'] || '',
+          ean_code: obj['ean编码'] || obj['ean_code'] || obj['ean'] || '',
+          status: obj['状态'] || obj['status'] || 'active',
+          price: obj['价格'] || obj['price'] || 0
+        };
+      }).filter(r => String(r.sku_code).trim() || String(r.brand).trim());
+
+      document.getElementById('import-preview-count').textContent = pendingImportProducts.length;
+      document.getElementById('import-preview-area').style.display = 'block';
+      document.getElementById('btn-confirm-import').disabled = pendingImportProducts.length === 0;
+      if(pendingImportProducts.length === 0) showFlash('未解析到有效商品数据','warning');
+    }catch(err){
+      console.error(err);
+      showFlash('文件解析失败: ' + err.message,'danger');
+    }
+  };
+  if(ext === 'csv') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+async function confirmProductImport(){
+  if(pendingImportProducts.length === 0) return;
+  document.getElementById('btn-confirm-import').disabled = true;
+  try{
+    const resp = await fetch('/api/products/bulk-import', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ items: pendingImportProducts })
+    });
+    const result = await resp.json();
+    if(result.error){ showFlash(result.error,'danger'); return; }
+    lastImportErrors = result.errors || [];
+    let html = `<div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:14px 16px;font-size:13px">
+      <div style="font-weight:600;margin-bottom:8px">导入完成</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <span>已新增：${result.created} 条</span>
+        <span>已更新：${result.updated} 条</span>
+        <span>已删除/禁用：${result.deleted} 条</span>
+        <span>失败：${result.failed} 条</span>
+      </div>`;
+    if(lastImportErrors.length > 0){
+      html += `<div style="margin-top:10px"><div style="font-weight:600;color:#ff3b30;margin-bottom:6px">失败明细</div>`;
+      html += lastImportErrors.slice(0,20).map(e => `<div style="color:#666">第 ${e.row} 行：${esc(e.reason)}</div>`).join('');
+      if(lastImportErrors.length > 20) html += `<div style="color:#999">还有 ${lastImportErrors.length - 20} 条失败...</div>`;
+      html += `<button type="button" class="btn btn-secondary" style="margin-top:10px" onclick="downloadImportErrors()">下载失败明细</button></div>`;
+    }
+    html += `</div>`;
+    document.getElementById('import-result-area').innerHTML = html;
+    document.getElementById('import-result-area').style.display = 'block';
+    showFlash(`导入完成：新增${result.created} / 更新${result.updated} / 删除${result.deleted} / 失败${result.failed}`,'success');
+    renderProducts();
+  }catch(err){
+    showFlash('导入失败: ' + err.message,'danger');
+    document.getElementById('btn-confirm-import').disabled = false;
+  }
+}
+
+let lastImportErrors = [];
+async function downloadImportErrors(){
+  if(!lastImportErrors || lastImportErrors.length === 0) return;
+  const ws = XLSX.utils.aoa_to_sheet([['行号','失败原因'], ...lastImportErrors.map(e => [e.row, e.reason])]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '失败明细');
+  XLSX.writeFile(wb, '商品导入失败明细.xlsx');
+}
+
+function downloadProductTemplate(){
+  const headers = ['SKU编码','商品名称','品牌','型号','品类','国家','EAN编码','状态','价格'];
+  const sample = [
+    ['IPHONE15-PRO-128','iPhone 15 Pro','Apple','iPhone 15 Pro','智能手机','中国','195949015726','active',''],
+    ['MATE60-512','Mate 60 Pro','华为','Mate 60 Pro','智能手机','中国','6901443374456','active','']
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sample]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '商品导入模板');
+  XLSX.writeFile(wb, '商品导入模板.xlsx');
+}
+
+async function exportProducts(){
+  const products = await getProducts();
+  const search=(document.getElementById('prod-search').value||'').toLowerCase();
+  const brandF=document.getElementById('prod-brand-filter').value;
+  const countryF=document.getElementById('prod-country-filter').value;
+  const statusF=document.getElementById('prod-status-filter').value;
+  let filtered=products;
+  if(brandF) filtered=filtered.filter(p=>p.brand===brandF);
+  if(countryF) filtered=filtered.filter(p=>p.country===countryF);
+  if(statusF) filtered=filtered.filter(p=>p.status===statusF);
+  if(search) filtered=filtered.filter(p=>(p.sku_code||'').toLowerCase().includes(search)||(p.brand||'').toLowerCase().includes(search)||(p.model||'').toLowerCase().includes(search)||(p.category||'').toLowerCase().includes(search)||(p.ean_code||'').toLowerCase().includes(search));
+
+  const rows = filtered.map(p => [
+    p.sku_code, p.product_name, p.brand, p.model, p.category, p.country, p.ean_code,
+    p.status==='active'?'启用':'禁用', p.price
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([['SKU编码','商品名称','品牌','型号','品类','国家','EAN编码','状态','价格'], ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '商品列表');
+  XLSX.writeFile(wb, `商品列表_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
 // ==================== PRODUCT MANAGEMENT ====================
 async function renderProducts(){
   const products=await getProducts();
@@ -3538,7 +3744,7 @@ async function renderRoles(){
   let html=`<div class="table-container"><table class="data-table"><thead><tr><th>角色名称</th><th>角色描述</th><th>权限</th><th>关联用户数</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
   roles.forEach(r=>{
     const userCount=users.filter(u=>u.role_id===r.id).length;
-    const perms=(r.permissions||[]).map(k=>{ const p=ALL_PERMISSIONS.find(x=>x.key===k); return p?p.label:k; }).join('、');
+    const perms=normalizePermissions(r.permissions).map(k=>{ const p=ALL_PERMISSIONS.find(x=>x.key===k); return p?p.label:k; }).join('、');
     html+=`<tr><td class="cell-name">${esc(r.name)}</td><td>${esc(r.description||'-')}</td>
       <td style="max-width:260px" class="cell-desc" title="${esc(perms)}">${esc(perms)||'-'}</td>
       <td>${userCount}</td><td class="cell-date">${(r.created_at||'').substring(0,10)}</td>
@@ -3565,7 +3771,7 @@ async function openRoleModal(roleId){
     document.getElementById('role-edit-id').value=r.id;
     document.getElementById('r-name').value=r.name;
     document.getElementById('r-desc').value=r.description||'';
-    document.querySelectorAll('input[name="r-perm"]').forEach(cb=>{ cb.checked=(r.permissions||[]).includes(cb.value); });
+    document.querySelectorAll('input[name="r-perm"]').forEach(cb=>{ cb.checked=normalizePermissions(r.permissions).includes(cb.value); });
   }else{
     document.getElementById('role-modal-title').textContent='新建角色';
     document.getElementById('role-edit-id').value='';
