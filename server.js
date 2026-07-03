@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.3.2-render-latest';
+const APP_VERSION = '3.3.3-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -199,6 +199,14 @@ function requireApiPermission(...perms) {
   };
 }
 
+// 仅要求已登录（不校验具体权限）
+function requireLogin(req, res, next) {
+  if (!req.currentUserId) {
+    return res.status(401).json({ error: '未登录' });
+  }
+  next();
+}
+
 app.use('/api/users', apiAuth);
 app.use('/api/roles', apiAuth);
 app.use('/api/records', apiAuth);
@@ -218,7 +226,8 @@ app.post('/api/db/init', async (req, res) => {
 });
 
 // ---- 用户 API ----
-app.get('/api/users', requireApiPermission('user_manage'), async (req, res) => {
+// 用户列表允许所有已登录用户读取（用于审批人选择、提交人显示等），增删改仍需 user_manage
+app.get('/api/users', requireLogin, async (req, res) => {
   try {
     const result = await query('SELECT * FROM users ORDER BY created_at DESC');
     res.json(result.rows);

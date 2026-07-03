@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>售后数据管理系统 v3.3.2</title>
+<title>售后数据管理系统 v3.3.3</title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.3.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.3.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -1046,9 +1046,19 @@ function cacheValid() { return Date.now() - _cacheTimestamp < CACHE_TTL; }
 async function getUsersAsync() {
   if (await checkDbAvailable()) {
     if (!_usersCache || !cacheValid()) {
-      const resp = await fetch('/api/users', { headers: getAuthHeaders() });
-      _usersCache = await resp.json();
-      _cacheTimestamp = Date.now();
+      try {
+        const resp = await fetch('/api/users', { headers: getAuthHeaders() });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          console.warn('[getUsersAsync] API error:', resp.status, err.error || resp.statusText);
+          return _usersCache || [];
+        }
+        _usersCache = await resp.json();
+        _cacheTimestamp = Date.now();
+      } catch (e) {
+        console.warn('[getUsersAsync] fetch error:', e);
+        return _usersCache || [];
+      }
     }
     return _usersCache;
   }
@@ -1101,11 +1111,21 @@ async function findUserByFeishuAsync(openId, unionId) {
 async function getRolesAsync() {
   if (await checkDbAvailable()) {
     if (!_rolesCache || !cacheValid()) {
-      const resp = await fetch('/api/roles', { headers: getAuthHeaders() });
-      _rolesCache = await resp.json();
-      // 后端可能把 permissions 存成 JSON 字符串，统一解析成数组
-      _rolesCache = _rolesCache.map(r => ({ ...r, permissions: normalizePermissions(r.permissions) }));
-      _cacheTimestamp = Date.now();
+      try {
+        const resp = await fetch('/api/roles', { headers: getAuthHeaders() });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          console.warn('[getRolesAsync] API error:', resp.status, err.error || resp.statusText);
+          return _rolesCache || [];
+        }
+        _rolesCache = await resp.json();
+        // 后端可能把 permissions 存成 JSON 字符串，统一解析成数组
+        _rolesCache = _rolesCache.map(r => ({ ...r, permissions: normalizePermissions(r.permissions) }));
+        _cacheTimestamp = Date.now();
+      } catch (e) {
+        console.warn('[getRolesAsync] fetch error:', e);
+        return _rolesCache || [];
+      }
     }
     return _rolesCache;
   }
@@ -4174,9 +4194,14 @@ function resolveColumns(headers){
   // 检查本地已登录用户
   const user = getCurrentUser();
   if (user) {
-    const fresh = (await getUsers()).find(u => u.id === user.id && u.status === 'active');
-    if (fresh) { setCurrentUser(fresh); enterApp(); }
-    else { localStorage.removeItem('aftersales_current_user'); }
+    try {
+      const fresh = (await getUsers()).find(u => u.id === user.id && u.status === 'active');
+      if (fresh) { setCurrentUser(fresh); enterApp(); }
+      else { localStorage.removeItem('aftersales_current_user'); }
+    } catch (e) {
+      console.warn('[init] 验证本地用户失败:', e);
+      localStorage.removeItem('aftersales_current_user');
+    }
   }
 
   // 登录页初始化
