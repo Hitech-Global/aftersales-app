@@ -4,7 +4,8 @@
     "sidebarBrand": "Portal Purna Jual",
     "mode": {
       "feishu": "Mode Feishu",
-      "local": "Mode Lokal"
+      "local": "Mode Lokal",
+      "cloud": "Mode Cloud"
     },
     "logout": "Keluar",
     "language": {
@@ -256,6 +257,7 @@
       "basic": "Informasi Dasar",
       "items": "Item RMA",
       "approvalHistory": "Riwayat Approval",
+      "approvalAction": "Aksi Approval",
       "approvalFlow": "Alur Approval",
       "time": "Info Waktu"
     },
@@ -281,7 +283,8 @@
       "qty": "Qty",
       "returnReason": "Alasan Retur",
       "processStatus": "Status Proses",
-      "desc": "Deskripsi Masalah / Catatan"
+      "desc": "Deskripsi Masalah / Catatan",
+      "actions": "Aksi"
     },
     "notSet": "Belum Diatur",
     "approved": "Disetujui",
@@ -715,7 +718,55 @@
     "searchFeishuUser": "Silakan cari dan pilih pengguna Feishu",
     "usernameAndNameRequired": "Username dan nama wajib diisi",
     "approval": "Persetujuan",
-    "adminLoggedIn": " sudah login"
+    "adminLoggedIn": " sudah login",
+    "validation": {
+      "platformRequired": "Pilih platform pada baris {row}",
+      "skuRequired": "Masukkan SKU pada baris {row}",
+      "quantityMustBePositive": "Qty pada baris {row} harus lebih dari 0",
+      "returnReasonRequired": "Pilih alasan retur pada baris {row}",
+      "faultDescriptionRequired": "Masukkan deskripsi masalah pada baris {row}"
+    },
+    "excel": {
+      "parseError": "Gagal membaca Excel: ",
+      "libraryLoadFailed": "Komponen Excel gagal dimuat. Refresh lalu coba lagi.",
+      "templateDownloaded": "Template berhasil diunduh",
+      "fileEmpty": "File kosong",
+      "columnMismatch": "Header kolom tidak sesuai. Gunakan template sistem."
+    },
+    "import": {
+      "complete": "Impor selesai: {created} dibuat, {updated} diperbarui, {deleted} dihapus, {failed} gagal",
+      "parseError": "Gagal membaca impor: ",
+      "summary": "Berhasil mengimpor {success} data",
+      "skipped": ", melewati {errors}"
+    },
+    "export": {
+      "success": "Berhasil mengekspor {count} data"
+    },
+    "product": {
+      "batchDeleteSuccess": "Berhasil menghapus {count} produk",
+      "createSuccess": "Produk dibuat",
+      "updateSuccess": "Produk diperbarui",
+      "deleteReferenced": "Produk ini digunakan oleh {count} item RMA dan tidak dapat dihapus"
+    },
+    "user": {
+      "passwordRequired": "Masukkan password",
+      "feishuAlreadyBound": "Pengguna Lark ini sudah terhubung ke akun lain",
+      "usernameExists": "Username sudah ada",
+      "createSuccess": "Pengguna dibuat",
+      "updateSuccess": "Pengguna diperbarui",
+      "deleteAdmin": "Super admin tidak dapat dihapus",
+      "deleteFailed": "Gagal menghapus pengguna",
+      "deleted": "Pengguna dihapus"
+    },
+    "role": {
+      "createSuccess": "Role dibuat",
+      "updateSuccess": "Role diperbarui",
+      "deleteReferenced": "Role ini masih digunakan oleh pengguna dan tidak dapat dihapus",
+      "deleted": "Role dihapus"
+    },
+    "form": {
+      "roleNameRequired": "Masukkan nama role"
+    }
   },
   "validation": {
     "selectDate": "Pilih tanggal RMA",
@@ -762,7 +813,8 @@
       "deleteRecord": "Yakin ingin menghapus catatan ini? Aksi ini tidak dapat dibatalkan.",
       "deleteProduct": "Yakin ingin menghapus produk ini?",
       "deleteUser": "Yakin ingin menghapus pengguna ini?"
-    }
+    },
+    "batchDeleteProductsHint": "Produk berikut akan dihapus: {ids}"
   },
   "error": {
     "cannotDeleteAdmin": "Super admin tidak dapat dihapus",

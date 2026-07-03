@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.2"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.3"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -376,8 +376,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         </div>
       </div>
 
-      <!-- 本地登录（飞书未配置时自动显示，也可通过 ?admin 参数访问） -->
-      <div id="login-panel-admin" style="display:none; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border)">
+      <!-- 本地登录 -->
+      <div id="login-panel-admin" style="display:block; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border)">
         <input type="text" id="login-username" data-i18n-placeholder="login.usernamePlaceholder" autofocus>
         <input type="password" id="login-password" data-i18n-placeholder="login.passwordPlaceholder" onkeydown="if(event.key==='Enter')adminLogin()">
         <button onclick="adminLogin()" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit" data-i18n="login.btnLocal"></button>
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -404,9 +404,9 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <div class="topbar-right">
         <div class="lang-switcher" style="position:relative;margin-right:4px">
           <select id="lang-select" onchange="switchLanguage(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg);cursor:pointer;font-family:inherit;outline:none">
-            <option value="zh-CN" data-i18n="app.language.zh">中文</option>
-            <option value="en-US" data-i18n="app.language.en">English</option>
-            <option value="id-ID" data-i18n="app.language.id">Bahasa Indonesia</option>
+            <option value="zh-CN">中文</option>
+            <option value="en-US">English</option>
+            <option value="id-ID">Bahasa Indonesia</option>
           </select>
         </div>
         <div class="user-menu">
@@ -1533,13 +1533,12 @@ function handleHashRoute() {
 
   showPage(page);
 
-  // 如果是审批页面且有 record 参数，打开审批详情
+  // 如果是审批页面且有 record 参数，跳转到售后详情完成审批
   if (page === 'approval' && params.record) {
     const recordId = parseInt(params.record);
     if (recordId > 0) {
-      // 等待页面渲染后打开审批模态框
       setTimeout(() => {
-        openApprovalModal(recordId);
+        showPage('detail', recordId);
       }, 300);
     }
   }
@@ -1585,7 +1584,7 @@ async function checkFeishuStatus() {
         if (hint) hint.style.display = 'none';
         if (ready) ready.style.display = 'block';
         if (btnLogin) btnLogin.style.display = 'block';
-        setLocalLoginVisible(new URLSearchParams(window.location.search).has('admin'));
+        setLocalLoginVisible(true);
       } else {
         if (statusEl) statusEl.innerHTML = '';
         if (hint) hint.style.display = 'block';
@@ -1751,14 +1750,14 @@ function logout() {
   checkFeishuStatus();
 }
 
-// 管理员本地登录（仅通过 ?admin 参数访问）
+// 本地账号登录
 async function adminLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
-  if (!username || !password) { showLoginError('请输入用户名和密码'); return; }
+  if (!username || !password) { showLoginError(t('login.error.enterCredentials')); return; }
   const users = await getUsers();
   const user = users.find(u => u.username === username && u.password === password && u.status === 'active');
-  if (!user) { showLoginError('用户名或密码错误，或账号已被禁用'); return; }
+  if (!user) { showLoginError(t('login.error.wrongCredentials')); return; }
   setCurrentUser(user);
   enterApp();
   showFlash(t('flash.admin') + ' ' + user.name + t('flash.adminLoggedIn'), 'success');
@@ -2208,7 +2207,6 @@ async function renderList(){
       const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
       const psCell=psSet.length===0?'<span style="color:var(--text-muted)">-</span>'
         :psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
-      const canApprove=r.current_approval_level>0&&r[`approver_level${r.current_approval_level}_id`]===user.id&&['待一级审批','待二级审批','待三级审批'].includes(r.status);
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
@@ -2224,7 +2222,6 @@ async function renderList(){
         <td class="cell-date">${(r.updated_at||'').substring(0,10)}</td>
         <td class="cell-actions">
           <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button>
-          ${canApprove?`<button class="action-btn action-approve" title="${t('list.action.approve')}" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
           ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord(${r.id})">&#x1F5D1;</button>`:''}
         </td></tr>`;
     });
@@ -2326,6 +2323,10 @@ async function deleteRecord(id){
 async function renderDetail(id){
   const records=await getRecords(),r=records.find(x=>String(x.id)===String(id));
   if(!r){ showPage('list'); return; }
+  currentApprovalRecordId=r.id;
+  approvalAttachmentTarget='detail';
+  pendingAttachments=[];
+  pendingErpScreenshots={};
   document.getElementById('detail-title').textContent=t('detail.titlePrefix')+id;
 
   // Approval history timeline
@@ -2364,6 +2365,36 @@ async function renderDetail(id){
     </div>`;
   }
 
+  const approvalActionHTML=canApproveRecord(r)?`
+    <div class="detail-section" id="detail-approval-action">
+      <h3>${t('detail.section.approvalAction')}</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>${t('approvalModal.label.returnDate')}</label>
+          <input type="date" class="date-input" id="detail-appr-return-date" onfocus="setApprovalAttachmentTarget('detail')">
+        </div>
+        <div class="form-group form-group-full">
+          <label>${t('approvalModal.label.comment')}</label> <span class="required">*</span>
+          <textarea id="detail-appr-comment" rows="3" required placeholder="${esc(t('approvalModal.commentPlaceholder'))}" onfocus="setApprovalAttachmentTarget('detail')" onpaste="handleApprovalPaste(event,'detail')"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label style="font-size:14px;font-weight:500;color:var(--text-secondary)">${t('approvalModal.label.attachments')}</label>
+        <div id="detail-appr-attachments" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+        <div class="attachment-upload-area" style="margin-top:8px" onclick="triggerAttachmentUpload('detail')" ondragover="handleApprovalDragOver(event)" ondragleave="handleApprovalDragLeave(event)" ondrop="handleApprovalDrop(event,'detail')">
+          <span style="color:var(--text-muted)">&#x1F4CE; ${t('approvalModal.attachmentHint')}</span>
+        </div>
+        <input type="file" id="detail-appr-file-input" class="file-input-hidden" accept="image/*" multiple onchange="handleFileSelect(event,'detail')">
+      </div>
+      <div id="detail-appr-storage-warning" style="margin-top:8px;font-size:11px;color:var(--warning);display:none">
+        &#x26A0; ${t('approvalModal.storageWarning')}
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-primary btn-lg" onclick="doApproval('approve','detail')">${t('approvalModal.btnApprove')}</button>
+        <button type="button" class="btn btn-danger btn-lg" onclick="doApproval('reject','detail')">${t('approvalModal.btnReject')}</button>
+      </div>
+    </div>`:'';
+
   document.getElementById('detail-content').innerHTML=`
     <div class="detail-section"><h3>${t('detail.section.basic')}</h3>
       <div class="detail-grid">
@@ -2391,6 +2422,7 @@ async function renderDetail(id){
       </div>
     </div>
     ${approversHTML}
+    ${approvalActionHTML}
     ${historyHTML}
     <div class="detail-section"><h3>${t('detail.section.time')}</h3>
       <div class="detail-grid">
@@ -2399,6 +2431,8 @@ async function renderDetail(id){
       </div>
     </div>
   `;
+  applyDateInputLocale();
+  renderPendingAttachments();
 }
 
 // ==================== RECORD FORM MODAL ====================
@@ -2793,7 +2827,6 @@ async function renderApproval(){
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
       const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
       const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
-      const canApprove=canApproveRecord(r);
       const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
@@ -2807,8 +2840,7 @@ async function renderApproval(){
         <td><strong>${totalQty}</strong></td>
         <td>${r.current_approval_level>0?t('approval.levelPrefix', {level: r.current_approval_level}):'-'}</td>
         <td class="cell-actions">
-          <button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button>
-          ${canApprove?`<button class="action-btn" title="审批" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
+          <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button>
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -2823,7 +2855,7 @@ function renderApprPagination(total){
   if(totalPages<=1&&total<=apprPageSize){ container.innerHTML=''; return; }
   container.innerHTML=`
     <select class="page-size-select" onchange="apprPageSize=parseInt(this.value);apprPage=1;renderApproval();"><option value="10" ${apprPageSize===10?'selected':''}>${t('list.pagination.perPage')}</option><option value="20" ${apprPageSize===20?'selected':''}>${t('list.pagination.perPage')}</option><option value="50" ${apprPageSize===50?'selected':''}>${t('list.pagination.perPage')}</option></select>
-    <span class="pagination-info">共 ${total} 条，${apprPage}/${totalPages} 页</span>
+    <span class="pagination-info">${t('list.pagination.info', {count: total, current: apprPage, totalPages})}</span>
     <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage=1;renderApproval()">${t('list.pagination.first')}</button>
     <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage--;renderApproval()">${t('list.pagination.prev')}</button>
     <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage++;renderApproval()">${t('list.pagination.next')}</button>
@@ -2838,9 +2870,15 @@ function clearApprovalFilter(){
 
 // ==================== APPROVAL MODAL ====================
 let pendingErpScreenshots={};
+let approvalAttachmentTarget='modal';
 
 async function openApprovalModal(recordId){
+  showPage('detail', recordId);
+}
+
+async function openLegacyApprovalModal(recordId){
   currentApprovalRecordId=recordId;
+  approvalAttachmentTarget='modal';
   pendingErpScreenshots={};
   const records=await getRecords();
   const record=records.find(r=>r.id===recordId);
@@ -2920,10 +2958,14 @@ function closeApprovalModal(){
   pendingErpScreenshots={};
 }
 
-async function doApproval(action){
-  const comment=document.getElementById('appr-comment').value.trim();
+async function doApproval(action, source='modal'){
+  const prefix=source==='detail'?'detail-appr':'appr';
+  approvalAttachmentTarget=source;
+  const commentEl=document.getElementById(prefix+'-comment');
+  const returnDateEl=document.getElementById(prefix+'-return-date');
+  const comment=commentEl ? commentEl.value.trim() : '';
   if(!comment) return showFlash(t('validation.enterComment'),'warning');
-  const returnDate=document.getElementById('appr-return-date').value;
+  const returnDate=returnDateEl ? returnDateEl.value : '';
   // Save pending ERP screenshots before approval
   if(Object.keys(pendingErpScreenshots).length>0){
     const records=await getRecords();
@@ -2940,7 +2982,11 @@ async function doApproval(action){
   const success=await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
   if(success){
     showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
-    closeApprovalModal();
+    if(source==='modal') closeApprovalModal();
+    else {
+      pendingAttachments=[];
+      pendingErpScreenshots={};
+    }
     renderApproval();
     if(document.getElementById('page-list').classList.contains('active')) renderList();
     if(document.getElementById('page-detail').classList.contains('active')&&currentDetailId===currentApprovalRecordId) renderDetail(currentDetailId);
@@ -3007,11 +3053,30 @@ async function markItemProcessed(itemIndex){
 }
 
 // ==================== ATTACHMENTS ====================
-function triggerAttachmentUpload(){ document.getElementById('appr-file-input').click(); }
+function setApprovalAttachmentTarget(target){
+  approvalAttachmentTarget=target||'modal';
+}
 
-function handleFileSelect(event){
+function getApprovalEl(baseId, target){
+  const activeTarget=target||approvalAttachmentTarget||'modal';
+  return document.getElementById(activeTarget==='detail'?'detail-'+baseId:baseId);
+}
+
+function triggerAttachmentUpload(target='modal'){
+  setApprovalAttachmentTarget(target);
+  const input=getApprovalEl('appr-file-input', target);
+  if(input) input.click();
+}
+
+function handleFileSelect(event, target='modal'){
   const files=event.target.files;
   if(!files||files.length===0) return;
+  addApprovalFiles(files, target);
+  event.target.value='';
+}
+
+function addApprovalFiles(files, target='modal'){
+  setApprovalAttachmentTarget(target);
   Array.from(files).forEach(file=>{
     if(!file.type.startsWith('image/')){ showFlash(t('error.notImage', {filename: file.name}),'warning'); return; }
     if(file.size>2*1024*1024){ showFlash(t('error.imageSize'),'warning'); return; }
@@ -3022,35 +3087,67 @@ function handleFileSelect(event){
     };
     reader.readAsDataURL(file);
   });
-  event.target.value='';
+}
+
+function handleApprovalDragOver(event){
+  event.preventDefault();
+  event.currentTarget.style.borderColor='var(--primary)';
+  event.currentTarget.style.background='var(--primary-light)';
+}
+
+function handleApprovalDragLeave(event){
+  event.preventDefault();
+  event.currentTarget.style.borderColor='var(--border)';
+  event.currentTarget.style.background='transparent';
+}
+
+function handleApprovalDrop(event, target='modal'){
+  event.preventDefault();
+  event.currentTarget.style.borderColor='var(--border)';
+  event.currentTarget.style.background='transparent';
+  if(event.dataTransfer&&event.dataTransfer.files&&event.dataTransfer.files.length){
+    addApprovalFiles(event.dataTransfer.files, target);
+  }
+}
+
+function handleApprovalPaste(event, target='modal'){
+  setApprovalAttachmentTarget(target);
+  return handleApprovalPasteEvent(event, target);
 }
 
 function setupPasteHandler(){
   document.addEventListener('paste',function(e){
-    const modal=document.getElementById('approval-modal');
-    if(modal.classList.contains('hidden')) return;
-    const items=(e.clipboardData||window.clipboardData).items;
-    if(!items) return;
-    let handled=false;
-    Array.from(items).forEach(item=>{
-      if(item.type.indexOf('image')!==-1){
-        const blob=item.getAsFile();
-        if(!blob||blob.size>2*1024*1024){ showFlash(t('flash.pasteImageTooLarge'),'warning'); return; }
-        const reader=new FileReader();
-        reader.onload=function(ev){
-          pendingAttachments.push({name:'paste_'+Date.now()+'.png', type:blob.type||'image/png', data:ev.target.result});
-          renderPendingAttachments();
-        };
-        reader.readAsDataURL(blob);
-        handled=true;
-      }
-    });
-    if(handled){ e.preventDefault(); e.stopPropagation(); }
+    const active=document.activeElement;
+    if(!active||!['appr-comment','detail-appr-comment'].includes(active.id)) return;
+    handleApprovalPasteEvent(e, active.id==='detail-appr-comment'?'detail':'modal');
   });
 }
 
+function handleApprovalPasteEvent(e, target='modal'){
+  const items=(e.clipboardData||window.clipboardData).items;
+  if(!items) return false;
+  let handled=false;
+  Array.from(items).forEach(item=>{
+    if(item.type.indexOf('image')!==-1){
+      const blob=item.getAsFile();
+      if(!blob||blob.size>2*1024*1024){ showFlash(t('flash.pasteImageTooLarge'),'warning'); return; }
+      const reader=new FileReader();
+      reader.onload=function(ev){
+        pendingAttachments.push({name:'paste_'+Date.now()+'.png', type:blob.type||'image/png', data:ev.target.result});
+        setApprovalAttachmentTarget(target);
+        renderPendingAttachments();
+      };
+      reader.readAsDataURL(blob);
+      handled=true;
+    }
+  });
+  if(handled){ e.preventDefault(); e.stopPropagation(); }
+  return handled;
+}
+
 function renderPendingAttachments(){
-  const container=document.getElementById('appr-attachments');
+  const container=getApprovalEl('appr-attachments');
+  if(!container) return;
   const sizeMB=pendingAttachments.reduce((sum,a)=>sum+(a.data.length*0.75/1024/1024),0);
   container.innerHTML=pendingAttachments.map((att,i)=>`
     <div style="position:relative;display:inline-block;width:72px;height:72px;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0">
@@ -3058,7 +3155,8 @@ function renderPendingAttachments(){
       <button type="button" onclick="event.stopPropagation();removePendingAttachment(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1">&times;</button>
     </div>
   `).join('');
-  document.getElementById('appr-storage-warning').style.display=sizeMB>0.5?'block':'none';
+  const warning=getApprovalEl('appr-storage-warning');
+  if(warning) warning.style.display=sizeMB>0.5?'block':'none';
 }
 
 function renderAttachmentsHTML(attachments){
@@ -4222,6 +4320,13 @@ function resolveColumns(headers){
 
 // ==================== INITIALIZATION ====================
 (async function(){
+  // i18n must be ready before any page, login, or callback render.
+  await window.__i18n.init();
+  applyStaticI18n();
+  applyDateInputLocale();
+  const langSelect = document.getElementById('lang-select');
+  if (langSelect) langSelect.value = window.__i18n.getLocale();
+
   await runMigration();
   await initDefaultData();
   setupPasteHandler();
@@ -4306,15 +4411,10 @@ function resolveColumns(headers){
     localStorage.removeItem('aftersales_login_error');
   }
 
-  // ==================== i18n 初始化 ====================
-  await window.__i18n.init();
   refreshApprovalStatuses();
   refreshProcessStatuses();
   applyStaticI18n();
-
-  // 初始化语言选择器
-  const langSelect = document.getElementById('lang-select');
-  if (langSelect) langSelect.value = window.__i18n.getLocale();
+  applyDateInputLocale();
 })();
 
 // ==================== 静态元素 i18n ====================
@@ -4345,6 +4445,22 @@ function applyStaticI18n() {
   });
 }
 
+function applyDateInputLocale() {
+  const locale = window.__i18n && window.__i18n.getLocale ? window.__i18n.getLocale() : 'zh-CN';
+  const langMap = {'zh-CN': 'zh-CN', 'en-US': 'en-US', 'id-ID': 'id-ID'};
+  const placeholderMap = {
+    'zh-CN': '年/月/日',
+    'en-US': 'YYYY-MM-DD',
+    'id-ID': 'YYYY-MM-DD'
+  };
+  document.documentElement.lang = langMap[locale] || 'zh-CN';
+  document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.lang = langMap[locale] || 'zh-CN';
+    input.placeholder = placeholderMap[locale] || 'YYYY-MM-DD';
+    input.title = placeholderMap[locale] || 'YYYY-MM-DD';
+  });
+}
+
 // ==================== i18n 语言切换 ====================
 async function switchLanguage(locale) {
   await window.__i18n.setLocale(locale);
@@ -4352,6 +4468,7 @@ async function switchLanguage(locale) {
   refreshProcessStatuses();
   refreshAllPermissions();
   applyStaticI18n();
+  applyDateInputLocale();
   // 重新渲染当前页面
   const user = getCurrentUser();
   if (user) {

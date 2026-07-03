@@ -4,7 +4,8 @@
     "sidebarBrand": "售后管理系统",
     "mode": {
       "feishu": "飞书模式",
-      "local": "本地模式"
+      "local": "本地模式",
+      "cloud": "云端模式"
     },
     "logout": "退出",
     "language": {
@@ -256,6 +257,7 @@
       "basic": "基本信息",
       "items": "售后明细",
       "approvalHistory": "审批记录",
+      "approvalAction": "审批操作",
       "approvalFlow": "审批流程",
       "time": "时间信息"
     },
@@ -281,7 +283,8 @@
       "qty": "数量",
       "returnReason": "退货原因",
       "processStatus": "处理状态",
-      "desc": "问题说明/备注"
+      "desc": "问题说明/备注",
+      "actions": "操作"
     },
     "notSet": "未设置",
     "approved": "✅ 审批通过",
@@ -715,7 +718,55 @@
     "searchFeishuUser": "请通过搜索选择飞书用户",
     "usernameAndNameRequired": "用户名和姓名不能为空",
     "approval": "审批",
-    "adminLoggedIn": " 已登录"
+    "adminLoggedIn": " 已登录",
+    "validation": {
+      "platformRequired": "第 {row} 行请选择平台",
+      "skuRequired": "第 {row} 行请输入 SKU",
+      "quantityMustBePositive": "第 {row} 行数量必须大于 0",
+      "returnReasonRequired": "第 {row} 行请选择退货原因",
+      "faultDescriptionRequired": "第 {row} 行请输入问题说明"
+    },
+    "excel": {
+      "parseError": "Excel 解析失败：",
+      "libraryLoadFailed": "Excel 组件加载失败，请刷新页面后重试",
+      "templateDownloaded": "模板已下载",
+      "fileEmpty": "文件为空",
+      "columnMismatch": "表头不匹配，请使用系统模板"
+    },
+    "import": {
+      "complete": "导入完成：新增 {created} 条，更新 {updated} 条，删除 {deleted} 条，失败 {failed} 条",
+      "parseError": "导入解析失败：",
+      "summary": "成功导入 {success} 条记录",
+      "skipped": "，跳过 {errors} 条"
+    },
+    "export": {
+      "success": "已导出 {count} 条记录"
+    },
+    "product": {
+      "batchDeleteSuccess": "已删除 {count} 个商品",
+      "createSuccess": "商品已创建",
+      "updateSuccess": "商品已更新",
+      "deleteReferenced": "该商品被 {count} 条售后明细引用，不能删除"
+    },
+    "user": {
+      "passwordRequired": "请输入密码",
+      "feishuAlreadyBound": "该飞书用户已绑定其他账号",
+      "usernameExists": "用户名已存在",
+      "createSuccess": "用户已创建",
+      "updateSuccess": "用户已更新",
+      "deleteAdmin": "不能删除超级管理员",
+      "deleteFailed": "删除用户失败",
+      "deleted": "用户已删除"
+    },
+    "role": {
+      "createSuccess": "角色已创建",
+      "updateSuccess": "角色已更新",
+      "deleteReferenced": "该角色仍有用户使用，不能删除",
+      "deleted": "角色已删除"
+    },
+    "form": {
+      "roleNameRequired": "请输入角色名称"
+    }
   },
   "validation": {
     "selectDate": "请选择售后日期",
@@ -762,7 +813,8 @@
       "deleteRecord": "确定要删除这条记录吗？此操作不可撤销。",
       "deleteProduct": "确定要删除该商品吗？",
       "deleteUser": "确定要删除该用户吗？"
-    }
+    },
+    "batchDeleteProductsHint": "将删除以下商品：{ids}"
   },
   "error": {
     "cannotDeleteAdmin": "不能删除超级管理员",

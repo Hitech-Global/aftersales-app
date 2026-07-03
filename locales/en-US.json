@@ -4,7 +4,8 @@
     "sidebarBrand": "RMA Management",
     "mode": {
       "feishu": "Feishu Mode",
-      "local": "Local Mode"
+      "local": "Local Mode",
+      "cloud": "Cloud Mode"
     },
     "logout": "Log out",
     "language": {
@@ -256,6 +257,7 @@
       "basic": "Basic Information",
       "items": "RMA Items",
       "approvalHistory": "Approval History",
+      "approvalAction": "Approval Decision",
       "approvalFlow": "Approval Flow",
       "time": "Time Info"
     },
@@ -281,7 +283,8 @@
       "qty": "Qty",
       "returnReason": "Return Reason",
       "processStatus": "Processing Status",
-      "desc": "Issue Description / Notes"
+      "desc": "Issue Description / Notes",
+      "actions": "Actions"
     },
     "notSet": "Not Set",
     "approved": "Approved",
@@ -336,8 +339,8 @@
     "commentPlaceholder": "Enter approval comments...",
     "attachmentHint": "Click to choose files or paste images here (Ctrl+V)",
     "storageWarning": "Note: Images are stored as Base64 in the browser. Keep total size under 2 MB.",
-    "btnApprove": "Approved",
-    "btnReject": "Rejected",
+    "btnApprove": "Approve",
+    "btnReject": "Reject",
     "btnCancel": "Cancel",
     "col": {
       "index": "#",
@@ -715,7 +718,55 @@
     "searchFeishuUser": "Please search and select Feishu user",
     "usernameAndNameRequired": "Username and name are required",
     "approval": "Approval",
-    "adminLoggedIn": " logged in"
+    "adminLoggedIn": " logged in",
+    "validation": {
+      "platformRequired": "Select a platform on row {row}",
+      "skuRequired": "Enter SKU on row {row}",
+      "quantityMustBePositive": "Quantity on row {row} must be greater than 0",
+      "returnReasonRequired": "Select a return reason on row {row}",
+      "faultDescriptionRequired": "Enter issue description on row {row}"
+    },
+    "excel": {
+      "parseError": "Excel parsing failed: ",
+      "libraryLoadFailed": "Excel component failed to load. Refresh and try again.",
+      "templateDownloaded": "Template downloaded",
+      "fileEmpty": "The file is empty",
+      "columnMismatch": "Column headers do not match. Please use the system template."
+    },
+    "import": {
+      "complete": "Import complete: {created} created, {updated} updated, {deleted} deleted, {failed} failed",
+      "parseError": "Import parsing failed: ",
+      "summary": "Successfully imported {success} records",
+      "skipped": ", skipped {errors}"
+    },
+    "export": {
+      "success": "Exported {count} records"
+    },
+    "product": {
+      "batchDeleteSuccess": "Deleted {count} products",
+      "createSuccess": "Product created",
+      "updateSuccess": "Product updated",
+      "deleteReferenced": "This product is used by {count} RMA items and cannot be deleted"
+    },
+    "user": {
+      "passwordRequired": "Enter a password",
+      "feishuAlreadyBound": "This Lark user is already bound to another account",
+      "usernameExists": "Username already exists",
+      "createSuccess": "User created",
+      "updateSuccess": "User updated",
+      "deleteAdmin": "The super admin cannot be deleted",
+      "deleteFailed": "Failed to delete user",
+      "deleted": "User deleted"
+    },
+    "role": {
+      "createSuccess": "Role created",
+      "updateSuccess": "Role updated",
+      "deleteReferenced": "This role is still assigned to users and cannot be deleted",
+      "deleted": "Role deleted"
+    },
+    "form": {
+      "roleNameRequired": "Enter a role name"
+    }
   },
   "validation": {
     "selectDate": "Select an RMA date",
@@ -762,7 +813,8 @@
       "deleteRecord": "Are you sure you want to delete this record? This action cannot be undone.",
       "deleteProduct": "Are you sure you want to delete this product?",
       "deleteUser": "Are you sure you want to delete this user?"
-    }
+    },
+    "batchDeleteProductsHint": "The following products will be deleted: {ids}"
   },
   "error": {
     "cannotDeleteAdmin": "The super admin cannot be deleted",
