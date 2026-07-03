@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>售后数据管理系统 v3.5.0</title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.0"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -348,12 +348,12 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="page-login" class="login-page">
   <div class="login-container">
     <div class="login-card">
-      <h1>&#x1F4CB; 售后数据管理系统</h1>
-      <p>请使用公司飞书账号登录</p>
+      <h1>&#x1F4CB; <span data-i18n="app.title"></span></h1>
+      <p data-i18n="login.subtitle"></p>
 
       <!-- 加载中 -->
       <div class="login-loading" id="login-loading">
-        <span class="spinner"></span> 正在验证身份...
+        <span class="spinner"></span> <span data-i18n="login.verifying"></span>
       </div>
 
       <!-- 错误提示 -->
@@ -365,22 +365,22 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
           <!-- 动态填充：飞书配置状态 -->
         </div>
         <button class="login-feishu-btn" id="btn-feishu-login" onclick="initiateFeishuLogin()" style="display:none">
-          <span class="feishu-icon">&#x1F4E8;</span> 飞书登录
+          <span class="feishu-icon">&#x1F4E8;</span> <span data-i18n="login.btnFeishu"></span>
         </button>
         <div id="login-feishu-hint" class="login-feishu-info" style="display:none">
-          <strong>&#x26A0; 当前为本地登录模式</strong>
-          可使用本地账号登录。
+          <strong>&#x26A0; <span data-i18n="login.localModeHint"></span></strong>
+          <span data-i18n="login.localAccountLoginHint"></span>
         </div>
         <div id="login-feishu-ready" class="login-feishu-info" style="display:none">
-          仅限公司飞书组织成员登录。
+          <span data-i18n="login.feishuOnlyHint"></span>
         </div>
       </div>
 
       <!-- 本地登录（飞书未配置时自动显示，也可通过 ?admin 参数访问） -->
       <div id="login-panel-admin" style="display:none; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border)">
-        <input type="text" id="login-username" placeholder="用户名" autofocus>
-        <input type="password" id="login-password" placeholder="密码" onkeydown="if(event.key==='Enter')adminLogin()">
-        <button onclick="adminLogin()" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit">本地账号登录</button>
+        <input type="text" id="login-username" data-i18n-placeholder="login.usernamePlaceholder" autofocus>
+        <input type="password" id="login-password" data-i18n-placeholder="login.passwordPlaceholder" onkeydown="if(event.key==='Enter')adminLogin()">
+        <button onclick="adminLogin()" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit" data-i18n="login.btnLocal"></button>
       </div>
     </div>
   </div>
@@ -390,23 +390,23 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="app-shell" class="app-shell hidden">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
+      <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div class="topbar-left">
-        <h1 class="page-title" id="topbar-title">&#x540E; 售概览</h1>
+        <h1 class="page-title" id="topbar-title" data-i18n="page.title.overview"></h1>
       </div>
       <div class="topbar-right">
         <div class="lang-switcher" style="position:relative;margin-right:4px">
           <select id="lang-select" onchange="switchLanguage(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg);cursor:pointer;font-family:inherit;outline:none">
-            <option value="zh-CN">🇨🇳 中文</option>
-            <option value="en-US">🇺🇸 English</option>
-            <option value="id-ID">🇮🇩 Bahasa</option>
+            <option value="zh-CN" data-i18n="app.language.zh">中文</option>
+            <option value="en-US" data-i18n="app.language.en">English</option>
+            <option value="id-ID" data-i18n="app.language.id">Bahasa Indonesia</option>
           </select>
         </div>
         <div class="user-menu">
@@ -416,7 +416,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             <span class="user-role" id="user-role">--</span>
           </div>
         </div>
-        <button class="logout-btn" onclick="logout()" id="btn-logout">退出</button>
+        <button class="logout-btn" onclick="logout()" id="btn-logout" data-i18n="app.logout"></button>
       </div>
     </header>
 
@@ -428,39 +428,39 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <div id="page-overview" class="page">
           <div class="ov-filter-bar">
             <div class="ov-filter-group">
-              <label>开始日期</label>
+              <label data-i18n="overview.filter.startDate"></label>
               <input type="date" class="date-input" id="ov-start-date" onchange="renderOverview()">
             </div>
             <div class="ov-filter-group">
-              <label>结束日期</label>
+              <label data-i18n="overview.filter.endDate"></label>
               <input type="date" class="date-input" id="ov-end-date" onchange="renderOverview()">
             </div>
             <div class="ov-filter-group">
-              <label>品牌</label>
-              <select class="filter-select" id="ov-brand-filter" onchange="renderOverview()"><option value="">全部品牌</option></select>
+              <label data-i18n="overview.filter.brand"></label>
+              <select class="filter-select" id="ov-brand-filter" onchange="renderOverview()"><option value="" data-i18n="overview.filter.allBrands"></option></select>
             </div>
-            <button class="btn btn-secondary" onclick="resetOverviewFilter()">重置</button>
+            <button class="btn btn-secondary" onclick="resetOverviewFilter()" data-i18n="overview.btnReset"></button>
           </div>
           <div class="ov-summary" id="ov-summary"></div>
           <div class="ov-process-cards" id="ov-process-cards"></div>
           <div class="ov-metric-row" id="ov-metric-row"></div>
           <div class="ov-charts-row">
             <div class="chart-container">
-              <div class="ov-section-title">退货原因 TOP5</div>
+              <div class="ov-section-title" data-i18n="overview.chart.reasonTop5"></div>
               <div class="chart-wrapper"><canvas id="chart-reason-top5"></canvas></div>
             </div>
             <div class="chart-container">
-              <div class="ov-section-title">SKU 售后 TOP10</div>
+              <div class="ov-section-title" data-i18n="overview.chart.skuTop10"></div>
               <div class="chart-wrapper"><canvas id="chart-sku-top10"></canvas></div>
             </div>
           </div>
           <div class="ov-section">
-            <div class="ov-section-title">按品牌对比 <span class="badge" id="ov-period-label"></span></div>
+            <div class="ov-section-title"><span data-i18n="overview.section.brandCompare"></span> <span class="badge" id="ov-period-label"></span></div>
             <div id="ov-brand-table-area"></div>
           </div>
           <div class="ov-action-bar">
-            <button class="btn btn-secondary" onclick="downloadTemplate()">下载销量模板</button>
-            <button class="btn btn-primary" id="btn-import-sales" onclick="document.getElementById('sales-file-input').click()">导入销量数据</button>
+            <button class="btn btn-secondary" onclick="downloadTemplate()" data-i18n="overview.btnDownloadTemplate"></button>
+            <button class="btn btn-primary" id="btn-import-sales" onclick="document.getElementById('sales-file-input').click()" data-i18n="overview.btnImportSales"></button>
             <input type="file" id="sales-file-input" class="file-input-hidden" accept=".xlsx,.xls" onchange="importSalesData(event)">
           </div>
         </div>
@@ -468,40 +468,40 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <!-- 售后列表 -->
         <div id="page-list" class="page">
           <div class="page-header">
-            <h2>售后记录列表</h2>
+            <h2 data-i18n="list.title"></h2>
             <div style="display:flex;gap:10px;align-items:center">
-              <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()">导出Excel</button>
+              <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()" data-i18n="list.btnExport"></button>
             </div>
           </div>
           <div class="filter-bar">
             <div class="filter-form">
               <div class="filter-group" style="flex:2">
-                <label>关键词</label>
-                <input type="text" class="search-input" id="search-input" placeholder="搜索订单号、SKU、品牌、型号…" oninput="renderList()">
+                <label data-i18n="list.filter.keyword"></label>
+                <input type="text" class="search-input" id="search-input" data-i18n-placeholder="list.filter.keywordPlaceholder" oninput="renderList()">
               </div>
               <div class="filter-group">
-                <label>品牌</label>
-                <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="">全部品牌</option></select>
+                <label data-i18n="list.filter.brand"></label>
+                <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allBrands"></option></select>
               </div>
               <div class="filter-group">
-                <label>审批状态</label>
-                <select class="filter-select" id="status-filter" onchange="renderList()"><option value="">全部审批状态</option></select>
+                <label data-i18n="list.filter.approvalStatus"></label>
+                <select class="filter-select" id="status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allApprovalStatus"></option></select>
               </div>
               <div class="filter-group">
-                <label>处理状态</label>
-                <select class="filter-select" id="process-status-filter" onchange="renderList()"><option value="">全部处理状态</option></select>
+                <label data-i18n="list.filter.processStatus"></label>
+                <select class="filter-select" id="process-status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessStatus"></option></select>
               </div>
               <div class="filter-group">
-                <label>开始日期</label>
+                <label data-i18n="list.filter.startDate"></label>
                 <input type="date" class="date-input" id="list-start-date" onchange="renderList()">
               </div>
               <div class="filter-group">
-                <label>结束日期</label>
+                <label data-i18n="list.filter.endDate"></label>
                 <input type="date" class="date-input" id="list-end-date" onchange="renderList()">
               </div>
               <div class="filter-actions">
-                <button class="btn btn-search" onclick="renderList()">搜索</button>
-                <button class="btn btn-clear" onclick="clearListFilter()">清除</button>
+                <button class="btn btn-search" onclick="renderList()" data-i18n="list.btnSearch"></button>
+                <button class="btn btn-clear" onclick="clearListFilter()" data-i18n="list.btnClear"></button>
               </div>
             </div>
           </div>
@@ -509,30 +509,30 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             <div class="table-section-title">
               <div class="table-section-title-left">
                 <span class="table-section-icon">📝</span>
-                <span>售后记录</span>
+                <span data-i18n="list.sectionTitle"></span>
                 <div class="view-mode-toggle" style="margin-left:12px">
-                  <button id="mode-by-record" class="active" onclick="switchListMode('record')">按售后单</button>
-                  <button id="mode-by-item" onclick="switchListMode('item')">按售后明细</button>
+                  <button id="mode-by-record" class="active" onclick="switchListMode('record')" data-i18n="list.mode.byRecord"></button>
+                  <button id="mode-by-item" onclick="switchListMode('item')" data-i18n="list.mode.byItem"></button>
                 </div>
               </div>
               <div class="table-section-actions" id="list-actions">
-                <button class="btn btn-primary" id="btn-new-record-table" onclick="openRecordForm()">📝 手动填写</button>
-                <button class="btn btn-success" id="btn-import-records" onclick="openImportDialog()">📥 批量导入</button>
+                <button class="btn btn-primary" id="btn-new-record-table" onclick="openRecordForm()" data-i18n="list.btnManual"></button>
+                <button class="btn btn-success" id="btn-import-records" onclick="openImportDialog()" data-i18n="list.btnBatchImport"></button>
               </div>
             </div>
             <div class="batch-bar" id="batch-bar">
-              <span class="batch-info">已选 <span id="batch-count">0</span> 项明细</span>
+              <span class="batch-info"><span data-i18n="list.batch.selected" data-i18n-params='{"count":0}'></span></span>
               <select class="filter-select" id="batch-process-status" style="width:auto">
-                <option value="">选择处理状态...</option>
-                <option value="待ERP入库">待ERP入库</option>
-                <option value="待换彩盒">待换彩盒</option>
-                <option value="待补配件">待补配件</option>
-                <option value="待RMA">待RMA</option>
-                <option value="待报废">待报废</option>
-                <option value="已处理">已处理</option>
+                <option value="" data-i18n="list.batch.selectStatus"></option>
+                <option value="待ERP入库" data-i18n="process.pendingErp"></option>
+                <option value="待换彩盒" data-i18n="process.pendingColorBox"></option>
+                <option value="待补配件" data-i18n="process.pendingParts"></option>
+                <option value="待RMA" data-i18n="process.pendingRma"></option>
+                <option value="待报废" data-i18n="process.pendingScrap"></option>
+                <option value="已处理" data-i18n="process.completed"></option>
               </select>
-              <button class="btn btn-primary btn-sm" onclick="batchUpdateProcessStatus()">批量更新</button>
-              <button class="btn btn-secondary btn-sm" onclick="clearBatchSelection()">取消</button>
+              <button class="btn btn-primary btn-sm" onclick="batchUpdateProcessStatus()" data-i18n="list.batch.btnUpdate"></button>
+              <button class="btn btn-secondary btn-sm" onclick="clearBatchSelection()" data-i18n="list.batch.btnCancel"></button>
             </div>
             <div id="table-area"></div>
           </div>
@@ -543,52 +543,52 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <div id="record-form-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeRecordForm()">
           <div class="modal-panel modal-xlarge">
             <div class="modal-header">
-              <h3 id="form-title">新建售后记录</h3>
+              <h3 id="form-title" data-i18n="form.titleNew"></h3>
               <button type="button" class="modal-close" onclick="closeRecordForm()">&times;</button>
             </div>
             <div class="modal-body">
               <form class="record-form" onsubmit="submitForApproval(event)">
                 <datalist id="sku-datalist"></datalist>
                 <fieldset class="form-section">
-                  <legend>基本信息</legend>
+                  <legend data-i18n="form.section.basic"></legend>
                   <div class="form-grid">
-                    <div class="form-group"><label>售后日期 <span class="required">*</span></label><input type="date" class="date-input" id="f-aftersales-date" required></div>
+                    <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="date" class="date-input" id="f-aftersales-date" required></div>
                   </div>
                 </fieldset>
                 <fieldset class="form-section">
-                  <legend>售后明细 <span style="font-size:12px;color:var(--text-muted);font-weight:400">（至少添加一条明细）</span></legend>
+                  <legend><span data-i18n="form.section.details"></span> <span style="font-size:12px;color:var(--text-muted);font-weight:400" data-i18n="form.hint.minOneItem"></span></legend>
                   <div class="detail-items-table-wrapper">
                     <table class="detail-items-table" id="detail-items-table">
                       <thead><tr>
-                        <th style="width:11%">平台 <span class="required">*</span></th>
-                        <th style="width:13%">SKU <span class="required">*</span></th>
-                        <th style="width:14%">订单号</th>
-                        <th style="width:7%">数量 <span class="required">*</span></th>
-                        <th style="width:10%">退货原因 <span class="required">*</span></th>
-                        <th style="width:33%">问题说明/备注 <span class="required">*</span></th>
-                        <th style="width:5%">操作</th>
+                        <th style="width:11%"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
+                        <th style="width:13%"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
+                        <th style="width:14%" data-i18n="form.col.orderNo"></th>
+                        <th style="width:7%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
+                        <th style="width:10%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
+                        <th style="width:33%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
+                        <th style="width:5%" data-i18n="form.col.actions"></th>
                       </tr></thead>
                       <tbody id="detail-items-tbody"></tbody>
                     </table>
                   </div>
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addDetailItem()">+ 添加明细行</button>
-                    <span style="font-size:14px;font-weight:600">合计数量：<span id="detail-total-qty" style="color:var(--primary);font-size:16px">0</span></span>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addDetailItem()" data-i18n="form.btnAddRow"></button>
+                    <span style="font-size:14px;font-weight:600"><span data-i18n="form.totalQty"></span><span id="detail-total-qty" style="color:var(--primary);font-size:16px">0</span></span>
                   </div>
                 </fieldset>
                 <fieldset class="form-section">
-                  <legend>审批人设置</legend>
+                  <legend data-i18n="form.section.approvers"></legend>
                   <div class="form-grid">
-                    <div class="form-group"><label>一级审批人</label><select id="f-approver-level1"><option value="">请选择（可选）</option></select></div>
-                    <div class="form-group"><label>二级审批人</label><select id="f-approver-level2"><option value="">请选择（可选）</option></select></div>
-                    <div class="form-group"><label>三级审批人</label><select id="f-approver-level3"><option value="">请选择（可选）</option></select></div>
+                    <div class="form-group"><label data-i18n="form.label.approverL1"></label><select id="f-approver-level1"><option value="" data-i18n="form.option.pleaseSelect"></option></select></div>
+                    <div class="form-group"><label data-i18n="form.label.approverL2"></label><select id="f-approver-level2"><option value="" data-i18n="form.option.pleaseSelect"></option></select></div>
+                    <div class="form-group"><label data-i18n="form.label.approverL3"></label><select id="f-approver-level3"><option value="" data-i18n="form.option.pleaseSelect"></option></select></div>
                   </div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px">至少选择一位审批人即可提交。审批将按填写顺序依次进行，各级可为同一人。</div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px" data-i18n="form.hint.approverRule"></div>
                 </fieldset>
                 <div class="form-actions" style="margin-top:8px">
-                  <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn">&#x1F4E4; 提交审批</button>
-                  <button type="button" class="btn btn-secondary btn-lg" onclick="saveAsDraft()">&#x1F4BE; 保存草稿</button>
-                  <button type="button" class="btn btn-secondary btn-lg" onclick="closeRecordForm()">取消</button>
+                  <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn" data-i18n="form.btnSubmit"></button>
+                  <button type="button" class="btn btn-secondary btn-lg" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
+                  <button type="button" class="btn btn-secondary btn-lg" onclick="closeRecordForm()" data-i18n="form.btnCancel"></button>
                 </div>
               </form>
             </div>
@@ -600,7 +600,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
           <div class="page-header">
             <div><h2 id="detail-title"></h2></div>
             <div style="display:flex;gap:12px">
-              <button class="btn btn-secondary" onclick="showPage('list')">返回列表</button>
+              <button class="btn btn-secondary" onclick="showPage('list')" data-i18n="detail.btnBack"></button>
             </div>
           </div>
           <div class="detail-card" id="detail-content"></div>
@@ -609,24 +609,24 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <!-- 售后记录审批 -->
         <div id="page-approval" class="page">
           <div class="page-header">
-            <h2>售后记录审批</h2>
+            <h2 data-i18n="approval.title"></h2>
           </div>
           <div class="filter-bar">
             <div class="filter-form">
               <div class="filter-group" style="flex:2">
-                <label>关键词</label>
-                <input type="text" class="search-input" id="appr-search" placeholder="搜索订单号、SKU、品牌、型号…" oninput="renderApproval()">
+                <label data-i18n="approval.filter.keyword"></label>
+                <input type="text" class="search-input" id="appr-search" data-i18n-placeholder="approval.filter.keywordPlaceholder" oninput="renderApproval()">
               </div>
               <div class="filter-group">
-                <label>范围</label>
+                <label data-i18n="approval.filter.scope"></label>
                 <select class="filter-select" id="appr-tab" onchange="renderApproval()">
-                  <option value="pending">待我审批</option>
-                  <option value="done">已审批</option>
-                  <option value="all">全部</option>
+                  <option value="pending" data-i18n="approval.filter.pending"></option>
+                  <option value="done" data-i18n="approval.filter.done"></option>
+                  <option value="all" data-i18n="approval.filter.all"></option>
                 </select>
               </div>
               <div class="filter-actions">
-                <button class="btn btn-clear" onclick="clearApprovalFilter()">清除</button>
+                <button class="btn btn-clear" onclick="clearApprovalFilter()" data-i18n="approval.btnClear"></button>
               </div>
             </div>
           </div>
@@ -637,44 +637,44 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <!-- 商品管理 -->
         <div id="page-products" class="page">
           <div class="page-header">
-            <h2>商品管理</h2>
+            <h2 data-i18n="products.title"></h2>
             <div style="display:flex;gap:10px;align-items:center">
-              <button class="btn btn-secondary" id="btn-template-products" onclick="downloadProductTemplate()">下载导入模板</button>
-              <button class="btn btn-secondary" id="btn-import-products" onclick="openProductImportModal()">批量导入</button>
-              <button class="btn btn-secondary" id="btn-export-products" onclick="exportProducts()">批量导出</button>
-              <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()">+ 新建商品</button>
+              <button class="btn btn-secondary" id="btn-template-products" onclick="downloadProductTemplate()" data-i18n="products.btnDownloadTemplate"></button>
+              <button class="btn btn-secondary" id="btn-import-products" onclick="openProductImportModal()" data-i18n="products.btnBatchImport"></button>
+              <button class="btn btn-secondary" id="btn-export-products" onclick="exportProducts()" data-i18n="products.btnBatchExport"></button>
+              <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()" data-i18n="products.btnNew"></button>
             </div>
           </div>
           <div id="prod-batch-bar" class="prod-batch-bar">
             <div class="batch-inner">
-              <span id="prod-selected-count" class="batch-count">已选 0 项</span>
-              <button class="btn btn-danger" id="btn-batch-delete" onclick="batchDeleteProducts()">批量删除</button>
-              <button class="btn btn-clear" id="btn-clear-selection" onclick="clearProductSelection()">取消选择</button>
+              <span id="prod-selected-count" class="batch-count" data-i18n="products.batch.selected" data-i18n-params='{"count":0}'></span>
+              <button class="btn btn-danger" id="btn-batch-delete" onclick="batchDeleteProducts()" data-i18n="products.batch.btnDelete"></button>
+              <button class="btn btn-clear" id="btn-clear-selection" onclick="clearProductSelection()" data-i18n="products.batch.btnCancel"></button>
             </div>
           </div>
           <div class="filter-bar">
             <div class="filter-form">
               <div class="filter-group" style="flex:2">
-                <label>关键词</label>
-                <input type="text" class="search-input" id="prod-search" placeholder="搜索SKU、品牌、型号、品类…" oninput="renderProducts()">
+                <label data-i18n="products.filter.keyword"></label>
+                <input type="text" class="search-input" id="prod-search" data-i18n-placeholder="products.filter.keywordPlaceholder" oninput="renderProducts()">
               </div>
               <div class="filter-group">
-                <label>品牌</label>
-                <select class="filter-select" id="prod-brand-filter" onchange="renderProducts()"><option value="">全部品牌</option></select>
+                <label data-i18n="products.filter.brand"></label>
+                <select class="filter-select" id="prod-brand-filter" onchange="renderProducts()"><option value="" data-i18n="products.filter.allBrands"></option></select>
               </div>
               <div class="filter-group">
-                <label>国家</label>
-                <select class="filter-select" id="prod-country-filter" onchange="renderProducts()"><option value="">全部国家</option></select>
+                <label data-i18n="products.filter.country"></label>
+                <select class="filter-select" id="prod-country-filter" onchange="renderProducts()"><option value="" data-i18n="products.filter.allCountries"></option></select>
               </div>
               <div class="filter-group">
-                <label>状态</label>
+                <label data-i18n="products.filter.status"></label>
                 <select class="filter-select" id="prod-status-filter" onchange="renderProducts()">
-                  <option value="">全部</option><option value="active">启用</option><option value="disabled">禁用</option>
+                  <option value="" data-i18n="products.filter.statusAll"></option><option value="active" data-i18n="products.filter.statusActive"></option><option value="disabled" data-i18n="products.filter.statusDisabled"></option>
                 </select>
               </div>
               <div class="filter-actions">
-                <button class="btn btn-search" onclick="renderProducts()">搜索</button>
-                <button class="btn btn-clear" onclick="clearProductFilter()">清除</button>
+                <button class="btn btn-search" onclick="renderProducts()" data-i18n="products.btnSearch"></button>
+                <button class="btn btn-clear" onclick="clearProductFilter()" data-i18n="products.btnClear"></button>
               </div>
             </div>
           </div>
@@ -685,8 +685,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <!-- 用户管理 -->
         <div id="page-users" class="page">
           <div class="page-header">
-            <h2>用户管理</h2>
-            <button class="btn btn-primary" onclick="openUserModal()">+ 新建用户</button>
+            <h2 data-i18n="users.title"></h2>
+            <button class="btn btn-primary" onclick="openUserModal()" data-i18n="users.btnNew"></button>
           </div>
           <div id="users-table-area"></div>
         </div>
@@ -694,8 +694,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <!-- 角色管理 -->
         <div id="page-roles" class="page">
           <div class="page-header">
-            <h2>角色管理</h2>
-            <button class="btn btn-primary" onclick="openRoleModal()">+ 新建角色</button>
+            <h2 data-i18n="roles.title"></h2>
+            <button class="btn btn-primary" onclick="openRoleModal()" data-i18n="roles.btnNew"></button>
           </div>
           <div id="roles-table-area"></div>
         </div>
@@ -710,16 +710,16 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="user-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:480px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="user-modal-title" style="font-size:17px">新建用户</h3>
+      <h3 id="user-modal-title" style="font-size:17px" data-i18n="userModal.titleNew"></h3>
       <button class="action-btn" onclick="closeUserModal()" style="font-size:20px">&times;</button>
     </div>
     <form onsubmit="saveUser(event)" style="padding:24px">
       <input type="hidden" id="user-edit-id">
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="form-group">
-          <label>飞书用户 <span class="required">*</span></label>
+          <label data-i18n="userModal.label.feishuUser"></label> <span class="required">*</span>
           <div class="feishu-contact-search">
-            <input type="text" id="u-username" required placeholder="输入姓名/英文名/邮箱搜索飞书成员..." autocomplete="off" oninput="searchFeishuContacts(this.value)" onfocus="searchFeishuContacts(this.value)">
+            <input type="text" id="u-username" required data-i18n-placeholder="userModal.feishuPlaceholder" autocomplete="off" oninput="searchFeishuContacts(this.value)" onfocus="searchFeishuContacts(this.value)">
             <div class="feishu-search-dropdown" id="feishu-search-dropdown" style="display:none"></div>
           </div>
           <input type="hidden" id="u-feishu-openid">
@@ -729,14 +729,14 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             <button type="button" onclick="clearFeishuSelection()" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px">&times;</button>
           </div>
         </div>
-        <div class="form-group"><label>姓名 <span class="required">*</span></label><input type="text" id="u-name" required placeholder="显示名称" readonly></div>
-        <div class="form-group"><label>密码 <span id="u-pwd-required" class="required">*</span></label><input type="password" id="u-password" placeholder="新建时必填，编辑时留空不修改"></div>
-        <div class="form-group"><label>角色 <span class="required">*</span></label><select id="u-role" required></select></div>
-        <div class="form-group"><label>状态</label><select id="u-status"><option value="active">启用</option><option value="disabled">禁用</option></select></div>
+        <div class="form-group"><label data-i18n="userModal.label.name"></label> <span class="required">*</span><input type="text" id="u-name" required data-i18n-placeholder="userModal.namePlaceholder" readonly></div>
+        <div class="form-group"><label data-i18n="userModal.label.password"></label> <span id="u-pwd-required" class="required">*</span><input type="password" id="u-password" data-i18n-placeholder="userModal.passwordHint"></div>
+        <div class="form-group"><label data-i18n="userModal.label.role"></label> <span class="required">*</span><select id="u-role" required></select></div>
+        <div class="form-group"><label data-i18n="userModal.label.status"></label><select id="u-status"><option value="active" data-i18n="userModal.statusActive"></option><option value="disabled" data-i18n="userModal.statusDisabled"></option></select></div>
       </div>
       <div class="form-actions" style="margin-top:24px">
-        <button type="submit" class="btn btn-primary">保存</button>
-        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">取消</button>
+        <button type="submit" class="btn btn-primary" data-i18n="userModal.btnSave"></button>
+        <button type="button" class="btn btn-secondary" onclick="closeUserModal()" data-i18n="userModal.btnCancel"></button>
       </div>
     </form>
   </div>
@@ -746,19 +746,19 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="role-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:520px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="role-modal-title" style="font-size:17px">新建角色</h3>
+      <h3 id="role-modal-title" style="font-size:17px" data-i18n="roleModal.titleNew"></h3>
       <button class="action-btn" onclick="closeRoleModal()" style="font-size:20px">&times;</button>
     </div>
     <form onsubmit="saveRole(event)" style="padding:24px">
       <input type="hidden" id="role-edit-id">
       <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="form-group"><label>角色名称 <span class="required">*</span></label><input type="text" id="r-name" required placeholder="如：运营人员"></div>
-        <div class="form-group"><label>角色描述</label><textarea id="r-desc" rows="2" placeholder="描述该角色的职责范围"></textarea></div>
-        <div class="form-group"><label>权限配置</label><div class="permission-grid" id="r-permissions"></div></div>
+        <div class="form-group"><label data-i18n="roleModal.label.name"></label> <span class="required">*</span><input type="text" id="r-name" required data-i18n-placeholder="roleModal.namePlaceholder"></div>
+        <div class="form-group"><label data-i18n="roleModal.label.desc"></label><textarea id="r-desc" rows="2" data-i18n-placeholder="roleModal.descPlaceholder"></textarea></div>
+        <div class="form-group"><label data-i18n="roleModal.label.permissions"></label><div class="permission-grid" id="r-permissions"></div></div>
       </div>
       <div class="form-actions" style="margin-top:24px">
-        <button type="submit" class="btn btn-primary">保存</button>
-        <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">取消</button>
+        <button type="submit" class="btn btn-primary" data-i18n="roleModal.btnSave"></button>
+        <button type="button" class="btn btn-secondary" onclick="closeRoleModal()" data-i18n="roleModal.btnCancel"></button>
       </div>
     </form>
   </div>
@@ -768,23 +768,23 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="product-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:560px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="product-modal-title" style="font-size:17px">新建商品</h3>
+      <h3 id="product-modal-title" style="font-size:17px" data-i18n="productModal.titleNew"></h3>
       <button class="action-btn" onclick="closeProductModal()" style="font-size:20px">&times;</button>
     </div>
     <form onsubmit="saveProduct(event)" style="padding:24px">
       <input type="hidden" id="prod-edit-id">
       <div class="form-grid">
-        <div class="form-group"><label>国家</label><input type="text" id="p-country" placeholder="如：中国"></div>
-        <div class="form-group"><label>品牌 <span class="required">*</span></label><input type="text" id="p-brand" required placeholder="如：Apple"></div>
-        <div class="form-group"><label>SKU编码 <span class="required">*</span></label><input type="text" id="p-sku-code" required placeholder="如：IPHONE15-PRO-128"></div>
-        <div class="form-group"><label>型号</label><input type="text" id="p-model" placeholder="如：iPhone 15 Pro"></div>
-        <div class="form-group"><label>品类</label><input type="text" id="p-category" placeholder="如：智能手机"></div>
-        <div class="form-group"><label>EAN编码</label><input type="text" id="p-ean-code" placeholder="如：195949015726"></div>
-        <div class="form-group"><label>状态</label><select id="p-status"><option value="active">启用</option><option value="disabled">禁用</option></select></div>
+        <div class="form-group"><label data-i18n="productModal.label.country"></label><input type="text" id="p-country" data-i18n-placeholder="productModal.countryPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.brand"></label> <span class="required">*</span><input type="text" id="p-brand" required data-i18n-placeholder="productModal.brandPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.skuCode"></label> <span class="required">*</span><input type="text" id="p-sku-code" required data-i18n-placeholder="productModal.skuPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.model"></label><input type="text" id="p-model" data-i18n-placeholder="productModal.modelPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.category"></label><input type="text" id="p-category" data-i18n-placeholder="productModal.categoryPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.eanCode"></label><input type="text" id="p-ean-code" data-i18n-placeholder="productModal.eanPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.status"></label><select id="p-status"><option value="active" data-i18n="productModal.statusActive"></option><option value="disabled" data-i18n="productModal.statusDisabled"></option></select></div>
       </div>
       <div class="form-actions" style="margin-top:24px">
-        <button type="submit" class="btn btn-primary">保存</button>
-        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">取消</button>
+        <button type="submit" class="btn btn-primary" data-i18n="productModal.btnSave"></button>
+        <button type="button" class="btn btn-secondary" onclick="closeProductModal()" data-i18n="productModal.btnCancel"></button>
       </div>
     </form>
   </div>
@@ -794,29 +794,29 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="product-import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:210;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:560px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 style="font-size:17px">批量导入商品</h3>
+      <h3 style="font-size:17px" data-i18n="productImport.title"></h3>
       <button class="action-btn" onclick="closeProductImportModal()" style="font-size:20px">&times;</button>
     </div>
     <div style="padding:24px">
       <div id="import-upload-area" style="border:2px dashed var(--border);border-radius:10px;padding:32px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)" ondragover="event.preventDefault();this.style.borderColor='var(--primary)';this.style.background='var(--primary-light)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--bg)'" ondrop="handleProductImportDrop(event)" onclick="document.getElementById('product-import-file-input').click()">
         <div style="font-size:36px;margin-bottom:10px">&#x1F4E4;</div>
-        <p style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:6px">点击上传或拖拽文件到此处</p>
-        <p style="font-size:12px;color:var(--text-muted)">支持 .xlsx / .csv 格式</p>
+        <p style="font-size:14px;color:var(--text);font-weight:500;margin-bottom:6px" data-i18n="productImport.uploadHint"></p>
+        <p style="font-size:12px;color:var(--text-muted)" data-i18n="productImport.fileFormat"></p>
         <input type="file" id="product-import-file-input" style="display:none" accept=".xlsx,.csv" onchange="handleProductImportFile(this.files[0])">
       </div>
       <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
-        <button type="button" class="btn btn-secondary" onclick="downloadProductTemplate()">下载模板</button>
+        <button type="button" class="btn btn-secondary" onclick="downloadProductTemplate()" data-i18n="productImport.btnDownloadTemplate"></button>
         <span id="import-file-name" style="font-size:13px;color:var(--text-muted)"></span>
       </div>
       <div id="import-preview-area" style="margin-top:16px;display:none">
         <div style="background:var(--primary-light);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--text)">
-          待导入 <strong id="import-preview-count">0</strong> 条商品
+          <span data-i18n="productImport.pendingPrefix" data-i18n-params='{"count":0}'></span>
         </div>
       </div>
       <div id="import-result-area" style="margin-top:16px;display:none"></div>
       <div class="form-actions" style="margin-top:24px">
-        <button type="button" class="btn btn-primary" id="btn-confirm-import" onclick="confirmProductImport()" disabled>开始导入</button>
-        <button type="button" class="btn btn-secondary" onclick="closeProductImportModal()">关闭</button>
+        <button type="button" class="btn btn-primary" id="btn-confirm-import" onclick="confirmProductImport()" disabled data-i18n="productImport.btnStart"></button>
+        <button type="button" class="btn btn-secondary" onclick="closeProductImportModal()" data-i18n="productImport.btnClose"></button>
       </div>
     </div>
   </div>
@@ -826,37 +826,37 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="approval-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:880px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="approval-modal-title" style="font-size:17px">售后记录审批</h3>
+      <h3 id="approval-modal-title" style="font-size:17px" data-i18n="approvalModal.title"></h3>
       <button class="action-btn" onclick="closeApprovalModal()" style="font-size:20px">&times;</button>
     </div>
     <div style="padding:24px">
       <div class="detail-section" id="approval-record-summary"></div>
       <div class="detail-section">
-        <h3>审批记录</h3>
+        <h3 data-i18n="approvalModal.section.history"></h3>
         <div id="approval-history"></div>
       </div>
       <div class="detail-section" id="approval-form-section">
-        <h3>审批操作</h3>
+        <h3 data-i18n="approvalModal.section.operation"></h3>
         <div class="form-grid">
-          <div class="form-group"><label>退货入库日期</label><input type="date" class="date-input" id="appr-return-date"></div>
-          <div class="form-group form-group-full"><label>审批意见 <span class="required">*</span></label><textarea id="appr-comment" rows="3" required placeholder="请输入审批意见…"></textarea></div>
+          <div class="form-group"><label data-i18n="approvalModal.label.returnDate"></label><input type="date" class="date-input" id="appr-return-date"></div>
+          <div class="form-group form-group-full"><label data-i18n="approvalModal.label.comment"></label> <span class="required">*</span><textarea id="appr-comment" rows="3" required data-i18n-placeholder="approvalModal.commentPlaceholder"></textarea></div>
         </div>
         <div style="margin-top:12px">
-          <label style="font-size:14px;font-weight:500;color:var(--text-secondary)">附件</label>
+          <label style="font-size:14px;font-weight:500;color:var(--text-secondary)" data-i18n="approvalModal.label.attachments"></label>
           <div id="appr-attachments" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
           <div class="attachment-upload-area" style="margin-top:8px" onclick="triggerAttachmentUpload()">
-            <span style="color:var(--text-muted)">&#x1F4CE; 点击选择文件 或 在此区域粘贴图片 (Ctrl+V)</span>
+            <span style="color:var(--text-muted)">&#x1F4CE; <span data-i18n="approvalModal.attachmentHint"></span></span>
           </div>
           <input type="file" id="appr-file-input" class="file-input-hidden" accept="image/*" multiple onchange="handleFileSelect(event)">
         </div>
         <div id="appr-storage-warning" style="margin-top:8px;font-size:11px;color:var(--warning);display:none">
-          &#x26A0; 注意：图片以Base64格式存储在本地浏览器中，建议控制总大小在2MB以内。
+          &#x26A0; <span data-i18n="approvalModal.storageWarning"></span>
         </div>
       </div>
       <div class="form-actions" style="margin-top:16px">
-        <button type="button" class="btn btn-primary btn-lg" id="btn-approve" onclick="doApproval('approve')">&#x2705; 审批通过</button>
-        <button type="button" class="btn btn-danger btn-lg" id="btn-reject" onclick="doApproval('reject')">&#x274C; 审批拒绝</button>
-        <button type="button" class="btn btn-secondary btn-lg" onclick="closeApprovalModal()">取消</button>
+        <button type="button" class="btn btn-primary btn-lg" id="btn-approve" onclick="doApproval('approve')" data-i18n="approvalModal.btnApprove"></button>
+        <button type="button" class="btn btn-danger btn-lg" id="btn-reject" onclick="doApproval('reject')" data-i18n="approvalModal.btnReject"></button>
+        <button type="button" class="btn btn-secondary btn-lg" onclick="closeApprovalModal()" data-i18n="approvalModal.btnCancel"></button>
       </div>
     </div>
   </div>
@@ -871,21 +871,21 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <div id="import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:600px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 style="font-size:17px">批量导入售后记录</h3>
+      <h3 style="font-size:17px" data-i18n="importRecord.title"></h3>
       <button class="action-btn" onclick="closeImportDialog()" style="font-size:20px">&times;</button>
     </div>
     <div style="padding:24px">
       <div style="margin-bottom:20px;padding:16px;background:#f0f7ff;border-radius:8px;border-left:4px solid var(--primary)">
-        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">导入说明</div>
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)" data-i18n="importRecord.guide.title"></div>
         <ul style="margin:0;padding-left:16px;font-size:13px;color:var(--text-secondary);line-height:1.8">
-          <li>支持 CSV 文件（UTF-8 编码）</li>
-          <li>必填列：<b>售后日期, 平台, SKU, 数量</b></li>
-          <li>可选列：订单号, 退货原因, 问题说明/备注</li>
-          <li>导入的记录将自动保存为<b>草稿</b>状态，请到列表中编辑并提交审批</li>
+          <li data-i18n="importRecord.guide.csvFormat"></li>
+          <li data-i18n="importRecord.guide.requiredCols"></li>
+          <li data-i18n="importRecord.guide.optionalCols"></li>
+          <li data-i18n="importRecord.guide.draftNote"></li>
         </ul>
       </div>
       <div style="margin-bottom:16px">
-        <button class="btn btn-secondary" onclick="downloadImportTemplate()">📄 下载导入模板</button>
+        <button class="btn btn-secondary" onclick="downloadImportTemplate()" data-i18n="importRecord.btnDownloadTemplate"></button>
       </div>
       <div style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all .2s"
            id="import-drop-zone"
@@ -894,13 +894,13 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
            ondragleave="this.style.borderColor='var(--border)';this.style.background='transparent'"
            ondrop="handleImportDrop(event)">
         <div style="font-size:32px;margin-bottom:8px">📂</div>
-        <div style="font-weight:500;margin-bottom:4px">点击选择文件或拖拽 CSV 文件到此处</div>
-        <div style="font-size:12px;color:var(--text-muted)">支持 .csv 格式</div>
+        <div style="font-weight:500;margin-bottom:4px" data-i18n="importRecord.dropHint"></div>
+        <div style="font-size:12px;color:var(--text-muted)" data-i18n="importRecord.fileFormat"></div>
       </div>
       <input type="file" id="import-file-input" class="file-input-hidden" accept=".csv" onchange="handleImportFile(event)">
       <div id="import-result" style="margin-top:16px"></div>
       <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
-        <button class="btn btn-secondary" onclick="closeImportDialog()">关闭</button>
+        <button class="btn btn-secondary" onclick="closeImportDialog()" data-i18n="importRecord.btnClose"></button>
       </div>
     </div>
   </div>
@@ -909,14 +909,16 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 <script src="locales/i18n.js"></script>
 <script>
 // ==================== DATA LAYER ====================
-let APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
+const APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
 function refreshApprovalStatuses() {
-  APPROVAL_STATUSES = [
-    t('status.draft'), t('status.pendingLevel1'), t('status.level1Approved'),
-    t('status.pendingLevel2'), t('status.level2Approved'), t('status.pendingLevel3'),
-    t('status.approved'), t('status.rejected')
-  ];
+  // 保持内部值为中文不变，仅提供显示层翻译映射
 }
+const APPROVAL_STATUS_KEY_MAP = {
+  '草稿':'status.draft','待一级审批':'status.pendingLevel1','一级审批通过':'status.level1Approved',
+  '待二级审批':'status.pendingLevel2','二级审批通过':'status.level2Approved','待三级审批':'status.pendingLevel3',
+  '审批通过':'status.approved','审批拒绝':'status.rejected'
+};
+function tApprovalStatus(zh){ return t(APPROVAL_STATUS_KEY_MAP[zh] || zh); }
 const _PERM_CONFIG = [
   {key:'record_view', path:'perm.recordView'},
   {key:'record_create', path:'perm.recordCreate'},
@@ -1271,7 +1273,7 @@ async function deleteRecordAsync(id) {
 
 function hasValue(v){ return typeof v === 'string' && v.trim() !== ''; }
 function makeUniqueUsername(base, users){
-  const raw = String(base || '飞书用户').trim() || '飞书用户';
+  const raw = String(base || t('user.feishuDefaultName')).trim() || t('user.feishuDefaultName');
   let username = raw;
   let suffix = 2;
   while(users.some(u => u.username === username)){
@@ -1398,7 +1400,7 @@ function hasPermission(perm){
 }
 
 function requirePermission(perm){
-  if(!hasPermission(perm)){ showFlash('你没有该操作的权限','danger'); return false; }
+  if(!hasPermission(perm)){ showFlash(t('flash.noPermission'),'danger'); return false; }
   return true;
 }
 const PAGE_PERMISSIONS = {
@@ -1459,7 +1461,7 @@ async function sendApprovalNotification(record) {
   // 检查飞书绑定
   if (!approver.feishu_open_id) {
     console.warn('[Notify] 审批人 ' + approver.name + ' 未绑定飞书账号，无法发送通知');
-    showFlash('审批已提交，但审批人 ' + approver.name + ' 未绑定飞书账号，无法发送飞书通知。请联系管理员绑定。', 'warning');
+    showFlash(t('flash.approvalSubmitFeishuNotBound', {name: approver.name}), 'warning');
     return;
   }
 
@@ -1487,11 +1489,11 @@ async function sendApprovalNotification(record) {
       }
     } else {
       console.warn('[Notify] 通知发送失败:', result.message || result.error);
-      showFlash('审批已提交，但飞书通知发送失败。请检查审批人飞书绑定或应用权限。', 'warning');
+      showFlash(t('flash.feishuNotifyFailed'), 'warning');
     }
   } catch (e) {
     console.error('[Notify] 后端不可用，飞书通知发送失败:', e.message);
-    showFlash('审批已提交，但飞书通知服务暂时不可用。', 'warning');
+    showFlash(t('flash.feishuServiceUnavailable'), 'warning');
   }
 }
 
@@ -1521,7 +1523,7 @@ function handleHashRoute() {
   if (!user) return;
 
   if (!canAccessPage(page)) {
-    showFlash('你没有该页面的访问权限', 'danger');
+    showFlash(t('flash.noPagePermission'), 'danger');
     const fallback = getDefaultAccessiblePage();
     if (fallback) showPage(fallback);
     return;
@@ -1609,10 +1611,10 @@ function updateFeishuStatusBadge() {
   if (!dot || !txt) return;
   if (feishuConfig.configured) {
     dot.style.color = '#4caf50';
-    txt.textContent = '飞书模式';
+    txt.textContent = t('app.mode.feishu');
   } else {
     dot.style.color = '#ff9500';
-    txt.textContent = '本地模式';
+    txt.textContent = t('app.mode.local');
   }
 }
 
@@ -1720,7 +1722,7 @@ async function handleFeishuCallback(encodedUserData) {
     
     setCurrentUser(localUser);
     enterApp();
-    showFlash('欢迎，' + localUser.name + '！', 'success');
+    showFlash(t('flash.welcome') + localUser.name,'success');
     
   } catch (e) {
     console.error('[Feishu] 回调处理失败:', e);
@@ -1757,7 +1759,7 @@ async function adminLogin() {
   if (!user) { showLoginError('用户名或密码错误，或账号已被禁用'); return; }
   setCurrentUser(user);
   enterApp();
-  showFlash('管理员 ' + user.name + ' 已登录', 'success');
+  showFlash(t('flash.admin') + ' ' + user.name + t('flash.adminLoggedIn'), 'success');
 }
 
 function enterApp() {
@@ -1832,7 +1834,7 @@ function setSidebarActive(page){
 // ==================== PAGE ROUTING ====================
 function showPage(page, recordId=null){
   if(!canAccessPage(page)){
-    showFlash('你没有该页面的访问权限','danger');
+    showFlash(t('flash.noPagePermission'),'danger');
     const fallback=getDefaultAccessiblePage();
     if(fallback&&fallback!==page) return showPage(fallback);
     return;
@@ -1891,7 +1893,7 @@ function resetOverviewFilter(){
 async function updateOverviewBrandFilter(){
   const records=await getRecords(), brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
   const sel=document.getElementById('ov-brand-filter'), cur=sel.value;
-  sel.innerHTML='<option value="">全部品牌</option>'+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  sel.innerHTML='<option value="">'+t('product.filter.allBrands')+'</option>'+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
   sel.value=cur;
 }
 
@@ -1919,7 +1921,7 @@ async function renderOverview(){
   }
   if(brandF) records=records.filter(r=>r.brand===brandF);
 
-  const periodLabel=startD&&endD?startD+' ~ '+endD:(startD||endD||'全部');
+  const periodLabel=startD&&endD?startD+' ~ '+endD:(startD||endD||t('overview.period.all'));
   document.getElementById('ov-period-label').textContent=brandF?periodLabel+' · '+brandF:periodLabel;
 
   const startMonth=startD?startD.substring(0,7):null;
@@ -1950,10 +1952,10 @@ async function renderOverview(){
   const overallReturnRate=grandSales>0?(grandTotal/grandSales*100):null;
   const overallDefectRate=grandShipment>0?(grandTotal/grandShipment*100):null;
   document.getElementById('ov-summary').innerHTML=`
-    <div class="ov-summary-card card-total"><div class="ov-card-icon">&#x1F4E6;</div><div class="ov-card-value">${grandTotal}</div><div class="ov-card-label">总售后数</div></div>
-    <div class="ov-summary-card card-return"><div class="ov-card-icon">&#x23F3;</div><div class="ov-card-value">${pendingCount}</div><div class="ov-card-label">待处理数</div></div>
-    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x1F4CA;</div><div class="ov-card-value">${overallReturnRate!=null?overallReturnRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">综合退货率</div></div>
-    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${overallDefectRate!=null?overallDefectRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">综合不良率</div></div>
+    <div class="ov-summary-card card-total"><div class="ov-card-icon">&#x1F4E6;</div><div class="ov-card-value">${grandTotal}</div><div class="ov-card-label">${t('overview.card.total')}</div></div>
+    <div class="ov-summary-card card-return"><div class="ov-card-icon">&#x23F3;</div><div class="ov-card-value">${pendingCount}</div><div class="ov-card-label">${t('overview.card.pending')}</div></div>
+    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x1F4CA;</div><div class="ov-card-value">${overallReturnRate!=null?overallReturnRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.returnRate')}</div></div>
+    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${overallDefectRate!=null?overallDefectRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.defectRate')}</div></div>
   `;
 
   // === 处理状态分布卡片 ===
@@ -1961,7 +1963,7 @@ async function renderOverview(){
   PROCESS_STATUSES.forEach(ps=>psCounts[ps]=0);
   allItems.forEach(it=>{if(it.process_status&&psCounts.hasOwnProperty(it.process_status))psCounts[it.process_status]++;});
   document.getElementById('ov-process-cards').innerHTML=
-    PROCESS_STATUSES.map(ps=>`<div class="ov-process-card" style="border-top-color:${getPsColor(ps)}"><div class="ov-ps-value">${psCounts[ps]}</div><div class="ov-ps-label">${ps}</div></div>`).join('');
+    PROCESS_STATUSES.map(ps=>`<div class="ov-process-card" style="border-top-color:${getPsColor(ps)}"><div class="ov-ps-value">${psCounts[ps]}</div><div class="ov-ps-label">${tProcessStatus(ps)}</div></div>`).join('');
 
   // === 指标行：平均处理天数 + 超期数 ===
   const completedItems=allItems.filter(it=>it.process_status==='已处理'&&it.process_status_date&&it.process_completed_date);
@@ -1974,8 +1976,8 @@ async function renderOverview(){
     return (now-new Date(it.process_status_date))/86400000>=7;
   }).length;
   document.getElementById('ov-metric-row').innerHTML=`
-    <div class="ov-summary-card"><div class="ov-card-icon">&#x23F1;</div><div class="ov-card-value">${avgDays}${avgDays!=='--'?'天':''}</div><div class="ov-card-label">平均处理天数</div></div>
-    <div class="ov-summary-card"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value" style="color:${overdueCount>0?'var(--danger)':'var(--text)'}">${overdueCount}</div><div class="ov-card-label">超期未处理数 (7天+)</div></div>
+    <div class="ov-summary-card"><div class="ov-card-icon">&#x23F1;</div><div class="ov-card-value">${avgDays}${avgDays!=='--'?t('overview.chart.label.daysSuffix')||'天':''}</div><div class="ov-card-label">${t('overview.metric.avgDays')}</div></div>
+    <div class="ov-summary-card"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value" style="color:${overdueCount>0?'var(--danger)':'var(--text)'}">${overdueCount}</div><div class="ov-card-label">${t('overview.metric.overdue')}</div></div>
   `;
 
   // === 退货原因 TOP5 ===
@@ -2018,10 +2020,21 @@ async function renderOverview(){
   });
 
   if(rows.length===0){
-    document.getElementById('ov-brand-table-area').innerHTML=`<div class="ov-empty"><div class="empty-icon">&#x1F4CA;</div><p>暂无数据。请先创建售后记录或导入销量数据。</p></div>`;
+    document.getElementById('ov-brand-table-area').innerHTML=`<div class="ov-empty"><div class="empty-icon">&#x1F4CA;</div><p>${t('overview.empty')}</p></div>`;
     return;
   }
-  let t=`<div style="overflow-x:auto"><table class="ov-brand-table"><thead><tr><th>品牌</th><th class="right">明细总数</th><th class="right">待处理</th><th class="right">已处理</th><th class="right">超期</th><th class="right">平均处理天数</th><th class="right">总出货量</th><th class="right">总销量</th><th class="right">退货率</th><th class="right">不良率</th></tr></thead><tbody>`;
+  let t=`<div style="overflow-x:auto"><table class="ov-brand-table"><thead><tr>
+    <th>${t('overview.col.brand')}</th>
+    <th class="right">${t('overview.col.detailTotal')}</th>
+    <th class="right">${t('overview.col.pending')}</th>
+    <th class="right">${t('overview.col.completed')}</th>
+    <th class="right">${t('overview.col.overdue')}</th>
+    <th class="right">${t('overview.col.avgDays')}</th>
+    <th class="right">${t('overview.col.shipment')}</th>
+    <th class="right">${t('overview.col.sales')}</th>
+    <th class="right">${t('overview.col.returnRate')}</th>
+    <th class="right">${t('overview.col.defectRate')}</th>
+  </tr></thead><tbody>`;
   rows.forEach(r=>{
     t+=`<tr><td><div class="ov-brand-name"><span class="ov-brand-dot" style="background:${r.color}"></span>${esc(r.brand)}</div></td>
       <td class="right"><strong>${r.total}</strong></td>
@@ -2042,10 +2055,10 @@ function renderReasonTop5Chart(data){
   const ctx=document.getElementById('chart-reason-top5');
   if(chartReasonTop5) chartReasonTop5.destroy();
   if(!ctx) return;
-  if(data.length===0){ctx.parentElement.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)">暂无数据</div>';return;}
+  if(data.length===0){ctx.parentElement.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('overview.chart.noData')}</div>`;return;}
   chartReasonTop5=new Chart(ctx,{
     type:'bar',
-    data:{labels:data.map(d=>d[0]),datasets:[{label:'数量',data:data.map(d=>d[1]),backgroundColor:['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6'],borderRadius:4}]},
+    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6'],borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
   });
 }
@@ -2054,10 +2067,10 @@ function renderSkuTop10Chart(data){
   const ctx=document.getElementById('chart-sku-top10');
   if(chartSkuTop10) chartSkuTop10.destroy();
   if(!ctx) return;
-  if(data.length===0){ctx.parentElement.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)">暂无数据</div>';return;}
+  if(data.length===0){ctx.parentElement.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('overview.chart.noData')}</div>`;return;}
   chartSkuTop10=new Chart(ctx,{
     type:'bar',
-    data:{labels:data.map(d=>d[0]),datasets:[{label:'售后次数',data:data.map(d=>d[1]),backgroundColor:'#2e7d32',borderRadius:4}]},
+    data:{labels:data.map(d=>d[0]),datasets:[{label:t('overview.chart.label.times'),data:data.map(d=>d[1]),backgroundColor:'#2e7d32',borderRadius:4}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}
   });
 }
@@ -2067,7 +2080,7 @@ async function updateBrandFilter(){
   const records=await getRecords();
   const brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
   const current=document.getElementById('brand-filter').value;
-  let html='<option value="">全部品牌</option>';
+  let html=`<option value="">${t('list.filter.allBrands')}</option>`;
   brands.forEach(b=>html+=`<option value="${esc(b)}">${esc(b)}</option>`);
   document.getElementById('brand-filter').innerHTML=html;
   document.getElementById('brand-filter').value=current;
@@ -2075,13 +2088,13 @@ async function updateBrandFilter(){
 
 function updateStatusFilter(){
   const sel=document.getElementById('status-filter'), cur=sel.value;
-  sel.innerHTML='<option value="">全部审批状态</option>'+APPROVAL_STATUSES.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.innerHTML=`<option value="">${t('list.filter.allApprovalStatus')}</option>`+APPROVAL_STATUSES.map(s=>`<option value="${s}">${tApprovalStatus(s)}</option>`).join('');
   sel.value=cur;
 }
 
 function updateProcessStatusFilter(){
   const sel=document.getElementById('process-status-filter'), cur=sel.value;
-  sel.innerHTML='<option value="">全部处理状态</option>'+PROCESS_STATUSES.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.innerHTML=`<option value="">${t('list.filter.allProcessStatus')}</option>`+PROCESS_STATUSES.map(s=>`<option value="${s}">${tProcessStatus(s)}</option>`).join('');
   sel.value=cur;
 }
 
@@ -2142,7 +2155,7 @@ async function renderList(){
   const area=document.getElementById('table-area');
 
   if(pageRecords.length===0){
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${records.length===0?'暂无售后记录':'没有找到匹配的结果'}</p>${records.length===0&&hasPermission('record_create')?`<button class="btn btn-primary" onclick="openRecordForm()">创建第一条记录</button>`:''}</div>`;
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${records.length===0?t('list.empty.noRecords'):t('list.empty.noMatch')}</p>${records.length===0&&hasPermission('record_create')?`<button class="btn btn-primary" onclick="openRecordForm()">${t('list.empty.createFirst')}</button>`:''}</div>`;
     renderListPagination(total);
     return;
   }
@@ -2151,7 +2164,7 @@ async function renderList(){
     // ===== 按售后明细模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
-      <th>ID</th><th>审批状态</th><th>处理状态</th><th>售后日期</th><th>平台</th><th>退货原因</th><th>SKU</th><th>订单号</th><th>数量</th><th>问题说明</th><th>提交人</th><th>操作</th>
+      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processStatus')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
@@ -2160,17 +2173,17 @@ async function renderList(){
         html+=`<tr>
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${r.id}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
-          <td><span class="status-badge status-${r.status}">${r.status}</span></td>
-          <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${it.process_status}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
+          <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
+          <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
           <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
           <td>${esc(it.platform||'-')}</td>
-          <td>${esc(it.return_reason||'-')}</td>
+          <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
           <td>${esc(it.order_no||'-')}</td>
           <td>${it.quantity||0}</td>
           <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
           <td>${esc(r.submitter_name||'-')}</td>
-          <td class="cell-actions"><button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button></td>
+          <td class="cell-actions"><button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button></td>
         </tr>`;
       });
     });
@@ -2178,11 +2191,13 @@ async function renderList(){
     area.innerHTML=html;
   } else {
     // ===== 按售后单模式 =====
-    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>ID</th><th>审批状态</th><th>处理状态</th><th>售后日期</th><th>平台</th><th>退货原因</th><th>SKU</th><th>订单号</th><th>数量</th><th>问题说明</th><th>提交人</th><th>更新时间</th><th>操作</th></tr></thead><tbody>`;
+    let html=`<div class="table-container"><table class="data-table"><thead><tr>
+      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processStatus')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.updatedAt')}</th><th>${t('list.col.actions')}</th>
+    </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
-      const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].join(',');
+      const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].map(rr=>tReturnReason(rr)).join(', ');
       const skus=items.map(it=>it.sku_code).filter(Boolean).join(', ');
       const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
       const faultDescs=items.map(it=>(it.fault_description||'').substring(0,30)).join('; ');
@@ -2190,11 +2205,11 @@ async function renderList(){
       // Process status distribution
       const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
       const psCell=psSet.length===0?'<span style="color:var(--text-muted)">-</span>'
-        :psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${ps}${c>1?'('+c+')':''}</span>`;}).join(' ');
+        :psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
       const canApprove=r.current_approval_level>0&&r[`approver_level${r.current_approval_level}_id`]===user.id&&['待一级审批','待二级审批','待三级审批'].includes(r.status);
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
-        <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+        <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
         <td>${psCell}</td>
         <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
         <td>${esc(platforms.join(',')||r.platform||'-')}</td>
@@ -2206,9 +2221,9 @@ async function renderList(){
         <td>${esc(r.submitter_name||'-')}</td>
         <td class="cell-date">${(r.updated_at||'').substring(0,10)}</td>
         <td class="cell-actions">
-          <button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button>
-          ${canApprove?`<button class="action-btn action-approve" title="审批" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
-          ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="删除" onclick="deleteRecord(${r.id})">&#x1F5D1;</button>`:''}
+          <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button>
+          ${canApprove?`<button class="action-btn action-approve" title="${t('list.action.approve')}" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
+          ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord(${r.id})">&#x1F5D1;</button>`:''}
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -2246,9 +2261,9 @@ function clearBatchSelection(){
 
 async function batchUpdateProcessStatus(){
   const newStatus=document.getElementById('batch-process-status').value;
-  if(!newStatus){ showFlash('请选择要设置的处理状态','warning'); return; }
+  if(!newStatus){ showFlash(t('validation.selectProcessStatus'),'warning'); return; }
   const checked=document.querySelectorAll('.item-checkbox:checked');
-  if(checked.length===0){ showFlash('请至少选择一条明细','warning'); return; }
+  if(checked.length===0){ showFlash(t('validation.selectOneItem'),'warning'); return; }
   const records=await getRecords();
   const now=new Date().toISOString();
   let updated=0;
@@ -2265,7 +2280,7 @@ async function batchUpdateProcessStatus(){
     }
   });
   await saveRecordsAsync(records);
-  showFlash(`已更新 ${updated} 个明细的处理状态`,'success');
+  showFlash(t('flash.batchProcessUpdated',{count:updated}),'success');
   clearBatchSelection();
   renderList();
 }
@@ -2275,12 +2290,12 @@ function renderListPagination(total){
   const totalPages=Math.max(1,Math.ceil(total/listPageSize));
   if(totalPages<=1&&total<=listPageSize){ container.innerHTML=''; return; }
   container.innerHTML=`
-    <select class="page-size-select" onchange="listPageSize=parseInt(this.value);listPage=1;renderList();"><option value="10" ${listPageSize===10?'selected':''}>10 条/页</option><option value="20" ${listPageSize===20?'selected':''}>20 条/页</option><option value="50" ${listPageSize===50?'selected':''}>50 条/页</option></select>
-    <span class="pagination-info">共 ${total} 条，${listPage}/${totalPages} 页</span>
-    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage=1;renderList()">首页</button>
-    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage--;renderList()">上一页</button>
-    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage++;renderList()">下一页</button>
-    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage=totalPages;renderList()">末页</button>`;
+    <select class="page-size-select" onchange="listPageSize=parseInt(this.value);listPage=1;renderList();"><option value="10" ${listPageSize===10?'selected':''}>10 ${t('list.pagination.perPage')}</option><option value="20" ${listPageSize===20?'selected':''}>20 ${t('list.pagination.perPage')}</option><option value="50" ${listPageSize===50?'selected':''}>50 ${t('list.pagination.perPage')}</option></select>
+    <span class="pagination-info">${t('list.pagination.total',{count:total})}，${listPage}/${totalPages}</span>
+    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage=1;renderList()">${t('list.pagination.first')}</button>
+    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage--;renderList()">${t('list.pagination.prev')}</button>
+    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage++;renderList()">${t('list.pagination.next')}</button>
+    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage=totalPages;renderList()">${t('list.pagination.last')}</button>`;
 }
 
 function clearListFilter(){
@@ -2295,13 +2310,13 @@ function clearListFilter(){
 
 async function deleteRecord(id){
   if(!requirePermission('record_delete')) return;
-  if(!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
+  if(!confirm(t('confirm.message.deleteRecord'))) return;
   try{
     await deleteRecordAsync(id);
-    showFlash('记录已删除','info');
+    showFlash(t('flash.recordDeleted'),'info');
     renderList();
   }catch(e){
-    showFlash('删除失败: ' + e.message,'danger');
+    showFlash(t('flash.deleteFailed') + e.message,'danger');
   }
 }
 
@@ -2309,20 +2324,20 @@ async function deleteRecord(id){
 async function renderDetail(id){
   const records=await getRecords(),r=records.find(x=>String(x.id)===String(id));
   if(!r){ showPage('list'); return; }
-  document.getElementById('detail-title').textContent='售后记录 #'+id;
+  document.getElementById('detail-title').textContent=t('detail.titlePrefix')+id;
 
   // Approval history timeline
   let historyHTML='';
   const ah=r.approval_history||[];
   if(ah.length>0){
     historyHTML=`
-      <div class="detail-section"><h3>审批记录</h3>
+      <div class="detail-section"><h3>${t('detail.section.approvalHistory')}</h3>
         <div class="approval-timeline">
           ${ah.map(h=>`
             <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
-              <div style="font-size:13px;font-weight:600">${h.action==='approve'?'&#x2705; 审批通过':'&#x274C; 审批拒绝'} - ${esc(h.operator_name)} (第${h.level}级)</div>
+              <div style="font-size:13px;font-weight:600">${h.action==='approve'?t('detail.approved'):t('detail.rejected')} - ${esc(h.operator_name)} (${t('approval.levelPrefix', {level: h.level})})</div>
               ${h.comment?`<div style="font-size:13px;margin-top:4px">${esc(h.comment)}</div>`:''}
-              ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">退货入库日期：${esc(h.return_date)}</div>`:''}
+              ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('detail.label.returnDate')}${esc(h.return_date)}</div>`:''}
               ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
               <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
             </div>
@@ -2334,40 +2349,40 @@ async function renderDetail(id){
   // Approvers info
   let approversHTML='';
   if(r.approver_level1_name||r.approver_level2_name||r.approver_level3_name){
-    approversHTML=`<div class="detail-section"><h3>审批流程</h3>
+    approversHTML=`<div class="detail-section"><h3>${t('detail.section.approvalFlow')}</h3>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px">
-        <span>发起人：<strong>${esc(r.submitter_name||'-')}</strong></span>
+        <span>${t('detail.label.initiator')}：<strong>${esc(r.submitter_name||'-')}</strong></span>
         <span style="color:var(--text-muted)">&#x2192;</span>
-        <span>一级：<strong>${esc(r.approver_level1_name||'未设置')}</strong></span>
+        <span>${t('detail.label.level1')}：<strong>${esc(r.approver_level1_name||t('detail.notSet'))}</strong></span>
         <span style="color:var(--text-muted)">&#x2192;</span>
-        <span>二级：<strong>${esc(r.approver_level2_name||'未设置')}</strong></span>
+        <span>${t('detail.label.level2')}：<strong>${esc(r.approver_level2_name||t('detail.notSet'))}</strong></span>
         <span style="color:var(--text-muted)">&#x2192;</span>
-        <span>三级：<strong>${esc(r.approver_level3_name||'未设置')}</strong></span>
+        <span>${t('detail.label.level3')}：<strong>${esc(r.approver_level3_name||t('detail.notSet'))}</strong></span>
       </div>
     </div>`;
   }
 
   document.getElementById('detail-content').innerHTML=`
-    <div class="detail-section"><h3>基本信息</h3>
+    <div class="detail-section"><h3>${t('detail.section.basic')}</h3>
       <div class="detail-grid">
-        <div class="detail-item"><span class="detail-label">售后日期</span><span class="detail-value">${esc(r.aftersales_date||'-')}</span></div>
-        <div class="detail-item"><span class="detail-label">审批状态</span><span class="detail-value"><span class="status-badge status-${r.status}">${r.status}</span></span></div>
-        <div class="detail-item"><span class="detail-label">提交人</span><span class="detail-value">${esc(r.submitter_name||'-')}</span></div>
-        <div class="detail-item"><span class="detail-label">品牌</span><span class="detail-value">${esc(r.brand||'-')}</span></div>
-        <div class="detail-item"><span class="detail-label">合计数量</span><span class="detail-value" style="font-size:18px;font-weight:700;color:var(--primary)">${r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.date')}</span><span class="detail-value">${esc(r.aftersales_date||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.submitter')}</span><span class="detail-value">${esc(r.submitter_name||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.brand')}</span><span class="detail-value">${esc(r.brand||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.totalQty')}</span><span class="detail-value" style="font-size:18px;font-weight:700;color:var(--primary)">${r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
       </div>
     </div>
-    <div class="detail-section"><h3>售后明细</h3>
+    <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table"><thead><tr><th>#</th><th>平台</th><th>SKU</th><th>订单号</th><th>数量</th><th>退货原因</th><th>处理状态</th><th>问题说明/备注</th></tr></thead>
+        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processStatus')}</th><th>${t('detail.col.desc')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
             <td>${esc(it.platform||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
-            <td>${esc(it.return_reason||'-')}</td>
-            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${it.process_status}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
+            <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
+            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
             <td>${esc(it.fault_description||'-')}</td>
           </tr>`).join('')}</tbody>
         </table>
@@ -2375,10 +2390,10 @@ async function renderDetail(id){
     </div>
     ${approversHTML}
     ${historyHTML}
-    <div class="detail-section"><h3>时间信息</h3>
+    <div class="detail-section"><h3>${t('detail.section.time')}</h3>
       <div class="detail-grid">
-        <div class="detail-item"><span class="detail-label">创建时间</span><span class="detail-value">${esc(r.created_at||'')}</span></div>
-        <div class="detail-item"><span class="detail-label">最后更新</span><span class="detail-value">${esc(r.updated_at||'')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.createdAt')}</span><span class="detail-value">${esc(r.created_at||'')}</span></div>
+        <div class="detail-item"><span class="detail-label">${t('detail.label.updatedAt')}</span><span class="detail-value">${esc(r.updated_at||'')}</span></div>
       </div>
     </div>
   `;
@@ -2386,7 +2401,7 @@ async function renderDetail(id){
 
 // ==================== RECORD FORM MODAL ====================
 function openRecordForm(){
-  if(!hasPermission('record_create')){ showFlash('您没有提交审批的权限','warning'); return; }
+  if(!hasPermission('record_create')){ showFlash(t('flash.noPermissionCreate'),'warning'); return; }
   resetForm();
   document.getElementById('record-form-modal').classList.remove('hidden');
 }
@@ -2397,13 +2412,20 @@ function closeRecordForm(){
 
 // ==================== DETAIL ITEMS TABLE ====================
 const RETURN_REASONS=['可二次销售','彩盒损坏','配件缺失','硬件故障','报废'];
-let PROCESS_STATUSES = ['待ERP入库','待换彩盒','待补配件','待RMA','待报废','已处理'];
+const PROCESS_STATUSES = ['待ERP入库','待换彩盒','待补配件','待RMA','待报废','已处理'];
 function refreshProcessStatuses() {
-  PROCESS_STATUSES = [
-    t('process.pendingErp'), t('process.pendingColorBox'), t('process.pendingParts'),
-    t('process.pendingRma'), t('process.pendingScrap'), t('process.completed')
-  ];
+  // 保持内部值为中文不变
 }
+const PROCESS_STATUS_KEY_MAP = {
+  '待ERP入库':'process.pendingErp','待换彩盒':'process.pendingColorBox','待补配件':'process.pendingParts',
+  '待RMA':'process.pendingRma','待报废':'process.pendingScrap','已处理':'process.completed'
+};
+function tProcessStatus(zh){ return t(PROCESS_STATUS_KEY_MAP[zh] || zh); }
+const RETURN_REASON_KEY_MAP = {
+  '可二次销售':'returnReason.resaleable','彩盒损坏':'returnReason.colorBoxDamage','配件缺失':'returnReason.missingParts',
+  '硬件故障':'returnReason.hardwareFault','报废':'returnReason.scrap'
+};
+function tReturnReason(zh){ return t(RETURN_REASON_KEY_MAP[zh] || zh); }
 const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废'};
 
 function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
@@ -2412,20 +2434,20 @@ function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
   const tr=document.createElement('tr');
   tr.innerHTML=`
     <td><select class="platform-select">
-      <option value="">请选择</option>
+      <option value="">${t('form.option.pleaseSelect')}</option>
       <option value="Shopee" ${platform==='Shopee'?'selected':''}>Shopee</option>
       <option value="TikTok" ${platform==='TikTok'?'selected':''}>TikTok</option>
       <option value="Offline Store" ${platform==='Offline Store'?'selected':''}>Offline Store</option>
     </select></td>
-    <td><input type="text" class="sku-input" list="sku-datalist" placeholder="输入SKU…" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
-    <td><input type="text" class="order-input" placeholder="订单号" value="${esc(orderNo||'')}"></td>
+    <td><input type="text" class="sku-input" list="sku-datalist" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
+    <td><input type="text" class="order-input" placeholder="${t('form.col.orderNo')}" value="${esc(orderNo||'')}"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
     <td><select class="type-select" onchange="updateDetailTotalQty()">
-      <option value="">请选择</option>
-      ${RETURN_REASONS.map(t=>`<option value="${t}" ${returnReason===t?'selected':''}>${t}</option>`).join('')}
+      <option value="">${t('form.option.pleaseSelect')}</option>
+      ${RETURN_REASONS.map(r=>`<option value="${r}" ${returnReason===r?'selected':''}>${tReturnReason(r)}</option>`).join('')}
     </select></td>
-    <td><input type="text" class="fault-input" placeholder="问题说明/备注" value="${esc(faultDesc||'')}"></td>
-    <td><button type="button" class="btn-delete-row" title="删除" onclick="removeDetailItem(this)">&times;</button></td>`;
+    <td><input type="text" class="fault-input" placeholder="${t('form.descPlaceholder')}" value="${esc(faultDesc||'')}"></td>
+    <td><button type="button" class="btn-delete-row" title="${t('list.action.delete')}" onclick="removeDetailItem(this)">&times;</button></td>`;
   tr.dataset.index=idx;
   tbody.appendChild(tr);
   updateDetailTotalQty();
@@ -2474,8 +2496,8 @@ async function onSkuChanged(input){
 }
 
 function resetForm(){
-  document.getElementById('form-title').textContent='新建售后记录';
-  document.getElementById('form-submit-btn').textContent='&#x1F4E4; 提交审批';
+  document.getElementById('form-title').textContent=t('form.titleNew');
+  document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
   const today=formatDateLocal(new Date());
   document.getElementById('f-aftersales-date').value=today;
   document.getElementById('detail-items-tbody').innerHTML='';
@@ -2506,7 +2528,7 @@ async function populateApproverSelects(){
 
 function renderApproverSelect(id, users){
   const sel=document.getElementById(id), cur=sel.value;
-  sel.innerHTML='<option value="">请选择</option>'+users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} (${esc(u.username)})</option>`).join('');
+  sel.innerHTML='<option value="">'+t('form.option.pleaseSelect')+'</option>'+users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} (${esc(u.username)})</option>`).join('');
   sel.value=cur;
 }
 
@@ -2528,21 +2550,21 @@ async function submitForApproval(e){
   const a2=document.getElementById('f-approver-level2').value;
   const a3=document.getElementById('f-approver-level3').value;
 
-  if(!aftersalesDate){ showFlash('请选择售后日期','warning'); return; }
+  if(!aftersalesDate){ showFlash(t('flash.selectAftersalesDate'),'warning'); return; }
 
   const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
-  if(items.length===0){ showFlash('请至少添加一条售后明细','warning'); return; }
+  if(items.length===0){ showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
   for(let i=0;i<items.length;i++){
     const it=items[i];
-    if(!it.platform){ showFlash(`第${i+1}行：请选择平台`,'warning'); return; }
-    if(!it.sku_code){ showFlash(`第${i+1}行：请填写SKU`,'warning'); return; }
-    if(!it.quantity||it.quantity<1){ showFlash(`第${i+1}行：数量必须大于0`,'warning'); return; }
-    if(!it.return_reason){ showFlash(`第${i+1}行：请选择退货原因`,'warning'); return; }
-    if(!it.fault_description){ showFlash(`第${i+1}行：请填写问题说明`,'warning'); return; }
+    if(!it.platform){ showFlash(`${t('flash.validation.platformRequired', {row: i+1})`,'warning'); return; }
+    if(!it.sku_code){ showFlash(`${t('flash.validation.skuRequired', {row: i+1})`,'warning'); return; }
+    if(!it.quantity||it.quantity<1){ showFlash(`${t('flash.validation.quantityMustBePositive', {row: i+1})`,'warning'); return; }
+    if(!it.return_reason){ showFlash(`${t('flash.validation.returnReasonRequired', {row: i+1})`,'warning'); return; }
+    if(!it.fault_description){ showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})`,'warning'); return; }
   }
 
   // 至少选择一个审批人
-  if(!a1&&!a2&&!a3){ showFlash('请至少选择一位审批人','warning'); return; }
+  if(!a1&&!a2&&!a3){ showFlash(t('flash.selectAtLeastOneApprover'),'warning'); return; }
 
   // 找到第一个有值的审批级别
   const firstLevel = a1 ? 1 : (a2 ? 2 : 3);
@@ -2591,7 +2613,7 @@ async function submitForApproval(e){
   const records=await getRecords();
   records.push(record);
   await saveRecordsAsync(records);
-  showFlash('审批已提交，等待'+levelNames[firstLevel]+'审批','success');
+  showFlash(t('flash.approvalSubmitted') + t('approval.level' + firstLevel) + t('flash.approval'),'success');
   // 发送飞书审批通知
   sendApprovalNotification(record);
   closeRecordForm();
@@ -2601,10 +2623,10 @@ async function submitForApproval(e){
 async function saveAsDraft(){
   if(!requirePermission('record_create')) return;
   const aftersalesDate=document.getElementById('f-aftersales-date').value;
-  if(!aftersalesDate){ showFlash('请至少填写售后日期','warning'); return; }
+  if(!aftersalesDate){ showFlash(t('flash.fillAftersalesDate'),'warning'); return; }
 
   const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
-  if(items.length===0){ showFlash('请至少添加一条售后明细','warning'); return; }
+  if(items.length===0){ showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
   // Basic validation for quantities
   for(let i=0;i<items.length;i++){
     if(!items[i].quantity||items[i].quantity<1) items[i].quantity=1;
@@ -2645,7 +2667,7 @@ async function saveAsDraft(){
   const records=await getRecords();
   records.push(record);
   await saveRecordsAsync(records);
-  showFlash('草稿已保存','success');
+  showFlash(t('flash.draftSaved'),'success');
   closeRecordForm();
   renderList();
 }
@@ -2688,10 +2710,10 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
   const level=record.current_approval_level;
 
   const permKey='approval_level'+level;
-  if(!hasPermission(permKey)){ showFlash('你没有该级别的审批权限','danger'); return false; }
+  if(!hasPermission(permKey)){ showFlash(t('flash.noLevelPermission'),'danger'); return false; }
 
   const approverIdField='approver_level'+level+'_id';
-  if(record[approverIdField]!==user.id){ showFlash('你不是该级别的审批人','danger'); return false; }
+  if(record[approverIdField]!==user.id){ showFlash(t('flash.notLevelApprover'),'danger'); return false; }
 
   const now=new Date().toISOString();
   record.approval_history.push({
@@ -2761,14 +2783,14 @@ async function renderApproval(){
   const area=document.getElementById('approval-table-area');
 
   if(pageRecords.length===0){
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>暂无审批记录</p></div>`;
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('approval.empty')}</p></div>`;
   }else{
-    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>ID</th><th>流程发起时间</th><th>发起人</th><th>审批人</th><th>审批状态</th><th>处理状态</th><th>售后日期</th><th>平台</th><th>合计数量</th><th>当前级别</th><th>操作</th></tr></thead><tbody>`;
+    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('list.col.id')}</th><th>${t('approval.col.createdAt')}</th><th>${t('approval.col.initiator')}</th><th>${t('approval.col.approver')}</th><th>${t('approval.col.status')}</th><th>${t('approval.col.processStatus')}</th><th>${t('approval.col.date')}</th><th>${t('approval.col.platform')}</th><th>${t('approval.col.totalQty')}</th><th>${t('approval.col.currentLevel')}</th><th>${t('approval.col.actions')}</th></tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
       const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
-      const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${ps}${c>1?'('+c+')':''}</span>`;}).join(' ');
+      const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
       const canApprove=canApproveRecord(r);
       const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       html+=`<tr>
@@ -2776,12 +2798,12 @@ async function renderApproval(){
         <td class="cell-date">${(r.created_at||'').substring(0,16)}</td>
         <td>${esc(r.submitter_name||'-')}</td>
         <td><span style="font-size:12px;color:var(--text-muted)">${esc(r.approver_level1_name||'-')} / ${esc(r.approver_level2_name||'-')} / ${esc(r.approver_level3_name||'-')}</span></td>
-        <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+        <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
         <td>${psCell}</td>
         <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
         <td>${esc(platforms.join(',')||r.platform||'-')}</td>
         <td><strong>${totalQty}</strong></td>
-        <td>${r.current_approval_level>0?'第'+r.current_approval_level+'级':'-'}</td>
+        <td>${r.current_approval_level>0?t('approval.levelPrefix', {level: r.current_approval_level}):'-'}</td>
         <td class="cell-actions">
           <button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button>
           ${canApprove?`<button class="action-btn" title="审批" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
@@ -2798,12 +2820,12 @@ function renderApprPagination(total){
   const totalPages=Math.max(1,Math.ceil(total/apprPageSize));
   if(totalPages<=1&&total<=apprPageSize){ container.innerHTML=''; return; }
   container.innerHTML=`
-    <select class="page-size-select" onchange="apprPageSize=parseInt(this.value);apprPage=1;renderApproval();"><option value="10" ${apprPageSize===10?'selected':''}>10 条/页</option><option value="20" ${apprPageSize===20?'selected':''}>20 条/页</option><option value="50" ${apprPageSize===50?'selected':''}>50 条/页</option></select>
+    <select class="page-size-select" onchange="apprPageSize=parseInt(this.value);apprPage=1;renderApproval();"><option value="10" ${apprPageSize===10?'selected':''}>${t('list.pagination.perPage')}</option><option value="20" ${apprPageSize===20?'selected':''}>${t('list.pagination.perPage')}</option><option value="50" ${apprPageSize===50?'selected':''}>${t('list.pagination.perPage')}</option></select>
     <span class="pagination-info">共 ${total} 条，${apprPage}/${totalPages} 页</span>
-    <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage=1;renderApproval()">首页</button>
-    <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage--;renderApproval()">上一页</button>
-    <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage++;renderApproval()">下一页</button>
-    <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage=totalPages;renderApproval()">末页</button>`;
+    <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage=1;renderApproval()">${t('list.pagination.first')}</button>
+    <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage--;renderApproval()">${t('list.pagination.prev')}</button>
+    <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage++;renderApproval()">${t('list.pagination.next')}</button>
+    <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage=totalPages;renderApproval()">${t('list.pagination.last')}</button>`;
 }
 
 function clearApprovalFilter(){
@@ -2822,20 +2844,20 @@ async function openApprovalModal(recordId){
   const record=records.find(r=>r.id===recordId);
   if(!record) return;
   if(!canApproveRecord(record)){
-    showFlash('只有当前级别审批人可以处理该审批','danger');
+    showFlash(t('error.onlyCurrentApprover'),'danger');
     return;
   }
 
   document.getElementById('approval-record-summary').innerHTML=`
     <div class="detail-grid">
-      <div class="detail-item"><span class="detail-label">售后日期</span><span class="detail-value">${esc(record.aftersales_date||'-')}</span></div>
-      <div class="detail-item"><span class="detail-label">提交人</span><span class="detail-value">${esc(record.submitter_name)}</span></div>
-      <div class="detail-item"><span class="detail-label">品牌</span><span class="detail-value">${esc(record.brand||'-')}</span></div>
-      <div class="detail-item"><span class="detail-label">合计数量</span><span class="detail-value" style="font-weight:700;color:var(--primary);font-size:16px">${record.total_quantity||(record.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
-      <div class="detail-item"><span class="detail-label">当前审批状态</span><span class="detail-value"><span class="status-badge status-${record.status}">${record.status}</span></span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.date')}</span><span class="detail-value">${esc(record.aftersales_date||'-')}</span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.submitter')}</span><span class="detail-value">${esc(record.submitter_name)}</span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.brand')}</span><span class="detail-value">${esc(record.brand||'-')}</span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.totalQty')}</span><span class="detail-value" style="font-weight:700;color:var(--primary);font-size:16px">${record.total_quantity||(record.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${record.status}">${tApprovalStatus(record.status)}</span></span></div>
     </div>
     <div style="margin-top:10px">
-      <table class="data-table" style="font-size:12px"><thead><tr><th>#</th><th>平台</th><th>SKU</th><th>订单号</th><th>数量</th><th>退货原因</th><th>处理状态</th><th>ERP入库截图</th><th>操作</th></tr></thead>
+      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processStatus')}</th><th>${t('approvalModal.col.erpScreenshot')}</th><th>${t('detail.col.actions')}</th></tr></thead>
         <tbody>${(record.items||[]).map((it,i)=>{
           const isResaleable=(it.return_reason)==='可二次销售';
           const screenshots=it.erp_screenshots||[];
@@ -2845,8 +2867,8 @@ async function openApprovalModal(recordId){
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
-            <td>${esc(it.return_reason||'-')}</td>
-            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${it.process_status}</span>`:'-'}</td>
+            <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
+            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'-'}</td>
             <td id="erp-cell-${i}">
               ${screenshots.map(s=>`<img src="${s}" class="erp-screenshot-thumb" onclick="previewErpScreenshot(this)">`).join('')}
               ${isResaleable&&it.process_status==='待ERP入库'?`<span class="erp-upload-btn" onclick="triggerErpUpload(${i})">上传截图</span>`:''}
@@ -2857,21 +2879,21 @@ async function openApprovalModal(recordId){
       </table>
     </div>
     <div style="margin-top:8px;font-size:13px;color:var(--text-muted)">
-      审批流程：${esc(record.approver_level1_name)} &#x2192; ${esc(record.approver_level2_name)} &#x2192; ${esc(record.approver_level3_name)}
+      ${t('approvalModal.flowPrefix')}${esc(record.approver_level1_name)} &#x2192; ${esc(record.approver_level2_name)} &#x2192; ${esc(record.approver_level3_name)}
     </div>
   `;
 
   // Approval history
   const history=record.approval_history||[];
   if(history.length===0){
-    document.getElementById('approval-history').innerHTML='<div style="color:var(--text-muted);font-size:13px">暂无审批记录</div>';
+    document.getElementById('approval-history').innerHTML='<div style="color:var(--text-muted);font-size:13px">'+t('approvalModal.noHistory')+'</div>';
   }else{
     document.getElementById('approval-history').innerHTML=`<div class="approval-timeline">`+
       history.map(h=>`
         <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
-          <div style="font-size:13px;font-weight:600">${h.action==='approve'?'&#x2705; 审批通过':'&#x274C; 审批拒绝'} - ${esc(h.operator_name)} (第${h.level}级)</div>
+          <div style="font-size:13px;font-weight:600">${h.action==='approve'?t('detail.approved'):t('detail.rejected')} - ${esc(h.operator_name)} (${t('approval.levelPrefix', {level: h.level})})</div>
           ${h.comment?`<div style="font-size:13px;margin-top:4px">${esc(h.comment)}</div>`:''}
-          ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">退货入库日期：${esc(h.return_date)}</div>`:''}
+          ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('detail.label.returnDate')}${esc(h.return_date)}</div>`:''}
           ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
         </div>
@@ -2898,7 +2920,7 @@ function closeApprovalModal(){
 
 async function doApproval(action){
   const comment=document.getElementById('appr-comment').value.trim();
-  if(!comment) return showFlash('请输入审批意见','warning');
+  if(!comment) return showFlash(t('validation.enterComment'),'warning');
   const returnDate=document.getElementById('appr-return-date').value;
   // Save pending ERP screenshots before approval
   if(Object.keys(pendingErpScreenshots).length>0){
@@ -2915,7 +2937,7 @@ async function doApproval(action){
   }
   const success=await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
   if(success){
-    showFlash(action==='approve'?'审批通过':'已拒绝','success');
+    showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
     closeApprovalModal();
     renderApproval();
     if(document.getElementById('page-list').classList.contains('active')) renderList();
@@ -2926,14 +2948,14 @@ async function doApproval(action){
 async function triggerErpUpload(itemIndex){
   const records=await getRecords();
   const record=records.find(r=>r.id===currentApprovalRecordId);
-  if(!canApproveRecord(record)){ showFlash('只有当前级别审批人可以上传处理截图','danger'); return; }
+  if(!canApproveRecord(record)){ showFlash(t('error.onlyCurrentApproverUpload'),'danger'); return; }
   const input=document.createElement('input');
   input.type='file';
   input.accept='image/*';
   input.onchange=function(e){
     const file=e.target.files[0];
     if(!file) return;
-    if(file.size>2*1024*1024){ showFlash('图片超过2MB，请压缩后上传','warning'); return; }
+    if(file.size>2*1024*1024){ showFlash(t('error.imageSize'),'warning'); return; }
     const reader=new FileReader();
     reader.onload=function(ev){
       if(!pendingErpScreenshots[itemIndex]) pendingErpScreenshots[itemIndex]=[];
@@ -2963,10 +2985,10 @@ async function markItemProcessed(itemIndex){
   const records=await getRecords();
   const record=records.find(r=>r.id===currentApprovalRecordId);
   if(!record||!record.items[itemIndex]) return;
-  if(!canApproveRecord(record)){ showFlash('只有当前级别审批人可以标记处理状态','danger'); return; }
+  if(!canApproveRecord(record)){ showFlash(t('error.onlyCurrentApprover'),'danger'); return; }
   const item=record.items[itemIndex];
   if(item.process_status!=='待ERP入库'){
-    showFlash('仅"待ERP入库"状态可标记为已处理','warning'); return;
+    showFlash(t('error.onlyErpStatus'),'warning'); return;
   }
   if(pendingErpScreenshots[itemIndex]){
     item.erp_screenshots=pendingErpScreenshots[itemIndex];
@@ -2977,7 +2999,7 @@ async function markItemProcessed(itemIndex){
   item.process_status_updated_at=now;
   record.updated_at=now;
   await saveRecordsAsync(records);
-  showFlash('已标记为已处理','success');
+  showFlash(t('flash.markProcessed'),'success');
   pendingErpScreenshots[itemIndex]=undefined;
   openApprovalModal(currentApprovalRecordId);
 }
@@ -2989,8 +3011,8 @@ function handleFileSelect(event){
   const files=event.target.files;
   if(!files||files.length===0) return;
   Array.from(files).forEach(file=>{
-    if(!file.type.startsWith('image/')){ showFlash(`文件 ${file.name} 不是图片，已跳过`,'warning'); return; }
-    if(file.size>2*1024*1024){ showFlash(`图片 ${file.name} 超过2MB，已跳过`,'warning'); return; }
+    if(!file.type.startsWith('image/')){ showFlash(t('error.notImage', {filename: file.name}),'warning'); return; }
+    if(file.size>2*1024*1024){ showFlash(t('error.imageSize'),'warning'); return; }
     const reader=new FileReader();
     reader.onload=function(e){
       pendingAttachments.push({name:file.name, type:file.type, data:e.target.result});
@@ -3011,7 +3033,7 @@ function setupPasteHandler(){
     Array.from(items).forEach(item=>{
       if(item.type.indexOf('image')!==-1){
         const blob=item.getAsFile();
-        if(!blob||blob.size>2*1024*1024){ showFlash('粘贴的图片超过2MB，已跳过','warning'); return; }
+        if(!blob||blob.size>2*1024*1024){ showFlash(t('flash.pasteImageTooLarge'),'warning'); return; }
         const reader=new FileReader();
         reader.onload=function(ev){
           pendingAttachments.push({name:'paste_'+Date.now()+'.png', type:blob.type||'image/png', data:ev.target.result});
@@ -3222,7 +3244,7 @@ function handleProductImportFile(file){
   if(!file) return;
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   if(!['xlsx','csv'].includes(ext)){
-    showFlash('仅支持 .xlsx / .csv 文件','warning');
+    showFlash(t('flash.onlySupportExcelCsv'),'warning');
     return;
   }
   document.getElementById('import-file-name').textContent = file.name;
@@ -3238,7 +3260,7 @@ function handleProductImportFile(file){
       }
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
-      if(json.length < 2){ showFlash('文件为空或缺少表头','warning'); return; }
+      if(json.length < 2){ showFlash(t('flash.fileEmptyOrMissingHeader'),'warning'); return; }
       const headers = json[0].map(h => String(h).trim().toLowerCase());
       const rows = json.slice(1);
       pendingImportProducts = rows.map((row, idx) => {
@@ -3261,10 +3283,10 @@ function handleProductImportFile(file){
       document.getElementById('import-preview-count').textContent = pendingImportProducts.length;
       document.getElementById('import-preview-area').style.display = 'block';
       document.getElementById('btn-confirm-import').disabled = pendingImportProducts.length === 0;
-      if(pendingImportProducts.length === 0) showFlash('未解析到有效商品数据','warning');
+      if(pendingImportProducts.length === 0) showFlash(t('flash.noValidProductData'),'warning');
     }catch(err){
       console.error(err);
-      showFlash('文件解析失败: ' + err.message,'danger');
+      showFlash(t('flash.excel.parseError') + err.message,'danger');
     }
   };
   if(ext === 'csv') reader.readAsText(file, 'UTF-8');
@@ -3300,10 +3322,10 @@ async function confirmProductImport(){
     html += `</div>`;
     document.getElementById('import-result-area').innerHTML = html;
     document.getElementById('import-result-area').style.display = 'block';
-    showFlash(`导入完成：新增${result.created} / 更新${result.updated} / 删除${result.deleted} / 失败${result.failed}`,'success');
+    showFlash(`${t('flash.import.complete', {created: result.created, updated: result.updated, deleted: result.deleted, failed: result.failed})`,'success');
     renderProducts();
   }catch(err){
-    showFlash('导入失败: ' + err.message,'danger');
+    showFlash(t('flash.import.parseError') + err.message,'danger');
     document.getElementById('btn-confirm-import').disabled = false;
   }
 }
@@ -3448,7 +3470,7 @@ async function exportAftersalesExcel(){
   }
 
   if(rows.length === 0){
-    showFlash('当前筛选条件下没有可导出的数据','warning');
+    showFlash(t('flash.noDataToExport'),'warning');
     return;
   }
 
@@ -3459,7 +3481,7 @@ async function exportAftersalesExcel(){
   XLSX.utils.book_append_sheet(wb, ws, isDetailView ? '售后明细' : '售后记录');
   const filename = `aftersales_export_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
   XLSX.writeFile(wb, filename);
-  showFlash(`已导出 ${rows.length} 条记录`,'success');
+  showFlash(`${t('flash.export.success', {count: rows.length})`,'success');
 }
 
 // ==================== PRODUCT MANAGEMENT ====================
@@ -3473,8 +3495,8 @@ async function renderProducts(){
   // Update dropdowns
   const brands=[...new Set(products.map(p=>p.brand).filter(Boolean))].sort();
   const countries=[...new Set(products.map(p=>p.country).filter(Boolean))].sort();
-  document.getElementById('prod-brand-filter').innerHTML='<option value="">全部品牌</option>'+brands.map(b=>`<option value="${esc(b)}" ${b===brandF?'selected':''}>${esc(b)}</option>`).join('');
-  document.getElementById('prod-country-filter').innerHTML='<option value="">全部国家</option>'+countries.map(c=>`<option value="${esc(c)}" ${c===countryF?'selected':''}>${esc(c)}</option>`).join('');
+  document.getElementById('prod-brand-filter').innerHTML='<option value="">'+t('products.filter.allBrands')+'</option>'+brands.map(b=>`<option value="${esc(b)}" ${b===brandF?'selected':''}>${esc(b)}</option>`).join('');
+  document.getElementById('prod-country-filter').innerHTML='<option value="">'+t('products.filter.allCountries')+'</option>'+countries.map(c=>`<option value="${esc(c)}" ${c===countryF?'selected':''}>${esc(c)}</option>`).join('');
 
   let filtered=products;
   if(brandF) filtered=filtered.filter(p=>p.brand===brandF);
@@ -3490,14 +3512,14 @@ async function renderProducts(){
   const area=document.getElementById('products-table-area');
 
   if(pageRecords.length===0){
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4E6;</div><p>暂无商品</p>${hasPermission('product_create')?`<button class="btn btn-primary" onclick="openProductModal()">新建第一个商品</button>`:''}</div>`;
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4E6;</div><p>${t('products.empty')}</p>${hasPermission('product_create')?`<button class="btn btn-primary" onclick="openProductModal()">${t('products.emptyCreateFirst')}</button>`:''}</div>`;
     document.getElementById('prod-batch-bar').style.display='none';
   }else{
     const currentPageIds = pageRecords.map(p => p.id);
     const allOnPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => prodSelected.has(id));
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th style="width:40px;text-align:center"><input type="checkbox" id="prod-select-all" ${allOnPageSelected?'checked':''} onchange="toggleSelectAllProducts(this.checked)"></th>
-      <th>SKU编码</th><th>品牌</th><th>型号</th><th>品类</th><th>国家</th><th>EAN编码</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+      <th>${t('products.col.skuCode')}</th><th>${t('products.col.brand')}</th><th>${t('products.col.model')}</th><th>${t('products.col.category')}</th><th>${t('products.col.country')}</th><th>${t('products.col.eanCode')}</th><th>${t('products.col.status')}</th><th>${t('products.col.actions')}</th></tr></thead><tbody>`;
     pageRecords.forEach(p=>{
       const isChecked = prodSelected.has(p.id);
       html+=`<tr>
@@ -3508,7 +3530,7 @@ async function renderProducts(){
         <td>${esc(p.category||'-')}</td>
         <td>${esc(p.country||'-')}</td>
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.ean_code||'-')}</td>
-        <td><span class="prod-status prod-status-${p.status}">${p.status==='active'?'启用':'禁用'}</span></td>
+        <td><span class="prod-status prod-status-${p.status}">${p.status==='active'?t('productModal.statusActive'):t('productModal.statusDisabled')}</span></td>
         <td class="cell-actions">
           ${hasPermission('product_edit')?`<button class="action-btn" title="编辑" onclick="openProductModal('${p.id}')">&#x270F;</button>`:''}
           ${hasPermission('product_delete')?`<button class="action-btn action-delete" title="删除" onclick="deleteProduct('${p.id}')">&#x1F5D1;</button>`:''}
@@ -3526,12 +3548,12 @@ function renderProdPagination(total){
   const totalPages=Math.max(1,Math.ceil(total/prodPageSize));
   if(totalPages<=1&&total<=prodPageSize){ container.innerHTML=''; return; }
   container.innerHTML=`
-    <select class="page-size-select" onchange="prodPageSize=parseInt(this.value);prodPage=1;renderProducts();"><option value="10" ${prodPageSize===10?'selected':''}>10 条/页</option><option value="20" ${prodPageSize===20?'selected':''}>20 条/页</option><option value="50" ${prodPageSize===50?'selected':''}>50 条/页</option></select>
-    <span class="pagination-info">共 ${total} 条，${prodPage}/${totalPages} 页</span>
-    <button class="pagination-btn" ${prodPage===1?'disabled':''} onclick="prodPage=1;renderProducts()">首页</button>
-    <button class="pagination-btn" ${prodPage===1?'disabled':''} onclick="prodPage--;renderProducts()">上一页</button>
-    <button class="pagination-btn" ${prodPage===totalPages?'disabled':''} onclick="prodPage++;renderProducts()">下一页</button>
-    <button class="pagination-btn" ${prodPage===totalPages?'disabled':''} onclick="prodPage=totalPages;renderProducts()">末页</button>`;
+    <select class="page-size-select" onchange="prodPageSize=parseInt(this.value);prodPage=1;renderProducts();"><option value="10" ${prodPageSize===10?'selected':''}>10 ${t('list.pagination.perPage')}</option><option value="20" ${prodPageSize===20?'selected':''}>20 ${t('list.pagination.perPage')}</option><option value="50" ${prodPageSize===50?'selected':''}>50 ${t('list.pagination.perPage')}</option></select>
+    <span class="pagination-info">${t('list.pagination.info', {count: total, current: prodPage, totalPages: totalPages})}</span>
+    <button class="pagination-btn" ${prodPage===1?'disabled':''} onclick="prodPage=1;renderProducts()">${t('list.pagination.first')}</button>
+    <button class="pagination-btn" ${prodPage===1?'disabled':''} onclick="prodPage--;renderProducts()">${t('list.pagination.prev')}</button>
+    <button class="pagination-btn" ${prodPage===totalPages?'disabled':''} onclick="prodPage++;renderProducts()">${t('list.pagination.next')}</button>
+    <button class="pagination-btn" ${prodPage===totalPages?'disabled':''} onclick="prodPage=totalPages;renderProducts()">${t('list.pagination.last')}</button>`;
 }
 
 function clearProductFilter(){
@@ -3567,7 +3589,7 @@ function updateProdBatchBar(){
   const count = document.getElementById('prod-selected-count');
   if(bar && count){
     bar.style.display = prodSelected.size > 0 ? 'block' : 'none';
-    count.textContent = `已选 ${prodSelected.size} 项`;
+    count.textContent = t('product.batch.selected', {count: prodSelected.size});
   }
 }
 function clearProductSelection(){
@@ -3575,15 +3597,13 @@ function clearProductSelection(){
   renderProducts();
 }
 async function batchDeleteProducts(){
-  if(prodSelected.size === 0){ showFlash('请先勾选要删除的商品','warning'); return; }
+  if(prodSelected.size === 0){ showFlash(t('validation.selectOneItem'),'warning'); return; }
   const ids = Array.from(prodSelected);
   const proceed = await showConfirmDialog(
-    '确认批量删除',
-    `确定要删除选中的 <b>${ids.length}</b> 个商品吗？<br><br>
-    将删除以下 SKU 编码：<br>
-    ${ids.slice(0,10).map(id => '• ' + id).join('<br>')}
-    ${ids.length > 10 ? `<br>...还有 ${ids.length - 10} 个` : ''}
-    <br><br><span style="color:#ff3b30">此操作不可恢复！</span>`
+    t('confirm.title.batchDelete'),
+    `${t('confirm.batchDeleteProducts', {count: ids.length})}<br><br>
+    ${t('confirm.batchDeleteProductsHint', {ids: ids.slice(0,10).map(id => '• ' + id).join('<br>')}${ids.length > 10 ? `<br>...${t('confirm.moreItems', {count: ids.length - 10})` : ''}
+    <br><br><span style="color:#ff3b30">${t('confirm.batchDeleteIrreversible')}</span>`
   );
   if(!proceed) return;
   try{
@@ -3594,11 +3614,11 @@ async function batchDeleteProducts(){
     });
     const result = await resp.json();
     if(result.error){ showFlash(result.error,'danger'); return; }
-    showFlash(`成功删除 ${result.deleted} 个商品`,'success');
+    showFlash(`${t('flash.product.batchDeleteSuccess', {count: result.deleted})`,'success');
     prodSelected.clear();
     renderProducts();
   }catch(err){
-    showFlash('批量删除失败: ' + err.message,'danger');
+    showFlash(t('flash.batchDeleteFailed') + err.message,'danger');
   }
 }
 
@@ -3629,7 +3649,7 @@ async function openProductModal(productId){
   if(productId){
     const p=products.find(x=>x.id===productId);
     if(!p) return;
-    document.getElementById('product-modal-title').textContent='编辑商品';
+    document.getElementById('product-modal-title').textContent=t('modal.title.editProduct');
     document.getElementById('prod-edit-id').value=p.id;
     document.getElementById('p-country').value=p.country||'';
     document.getElementById('p-brand').value=p.brand||'';
@@ -3639,7 +3659,7 @@ async function openProductModal(productId){
     document.getElementById('p-ean-code').value=p.ean_code||'';
     document.getElementById('p-status').value=p.status;
   }else{
-    document.getElementById('product-modal-title').textContent='新建商品';
+    document.getElementById('product-modal-title').textContent=t('modal.title.newProduct');
     document.getElementById('prod-edit-id').value='';
     document.getElementById('p-country').value='';
     document.getElementById('p-brand').value='';
@@ -3660,13 +3680,13 @@ async function saveProduct(e){
   if(!editId && !requirePermission('product_create')) return;
   const brand=document.getElementById('p-brand').value.trim();
   const skuCode=document.getElementById('p-sku-code').value.trim();
-  if(!brand) return showFlash('品牌不能为空','warning');
-  if(!skuCode) return showFlash('SKU编码不能为空','warning');
+  if(!brand) return showFlash(t('flash.brandRequired'),'warning');
+  if(!skuCode) return showFlash(t('flash.skuRequired'),'warning');
 
   const products=await getProducts();
   // Check SKU uniqueness
   const dup=products.find(p=>p.sku_code===skuCode&&p.id!==editId);
-  if(dup) return showFlash('SKU编码已存在','warning');
+  if(dup) return showFlash(t('flash.skuExists'),'warning');
 
   const now=new Date().toISOString();
   const data={
@@ -3689,7 +3709,7 @@ async function saveProduct(e){
   }
   await saveProducts(products);
   closeProductModal();
-  showFlash(editId?'商品已更新':'商品已创建','success');
+  showFlash(editId?t('flash.product.updateSuccess'):t('flash.product.createSuccess'),'success');
   renderProducts();
 }
 
@@ -3701,14 +3721,14 @@ async function deleteProduct(id){
   if(!product) return;
   const records=await getRecords();
   const refCount=records.filter(r=>(r.items||[]).some(it=>it.sku_code===product.sku_code)).length;
-  if(refCount>0) return showFlash(`该商品被 ${refCount} 条售后记录引用，无法删除`,'danger');
-  if(!confirm('确定要删除该商品吗？')) return;
+  if(refCount>0) return showFlash(`${t('flash.product.deleteReferenced', {count: refCount})`,'danger');
+  if(!confirm(t('confirm.message.deleteProduct'))) return;
   try{
     await deleteProductAsync(id);
-    showFlash('商品已删除','info');
+    showFlash(t('flash.productDeleted'),'info');
     renderProducts();
   }catch(e){
-    showFlash('删除失败: ' + e.message,'danger');
+    showFlash(t('flash.deleteFailed') + e.message,'danger');
   }
 }
 
@@ -3716,18 +3736,18 @@ async function deleteProduct(id){
 async function renderUsers(){
   const users=await getUsers(), roles=await getRoles();
   const area=document.getElementById('users-table-area');
-  if(users.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F464;</div><p>暂无用户</p></div>`; return; }
-  let html=`<div class="table-container"><table class="data-table"><thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>状态</th><th>飞书绑定</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+  if(users.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F464;</div><p>${t('users.empty')}</p></div>`; return; }
+  let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('users.col.username')}</th><th>${t('users.col.name')}</th><th>${t('users.col.role')}</th><th>${t('users.col.status')}</th><th>${t('users.col.feishuBind')}</th><th>${t('users.col.createdAt')}</th><th>${t('users.col.actions')}</th></tr></thead><tbody>`;
   users.forEach(u=>{
     const role=roles.find(r=>r.id===u.role_id);
     const statusClass=u.status==='active'?'user-status-active':'user-status-disabled';
     const feishuBound = u.feishu_open_id 
-      ? `<span style="color:var(--primary)">✅ ${esc(u.feishu_name || u.name || '已绑定')}</span>` 
-      : '<span style="color:var(--text-muted)">❌ 未绑定</span>';
+      ? `<span style="color:var(--primary)">✅ ${esc(u.feishu_name || u.name || t('users.feishu.bound'))}</span>` 
+      : `<span style="color:var(--text-muted)">❌ ${t('users.feishu.unbound')}</span>`;
     html+=`<tr>
       <td class="cell-name">${esc(u.username)}</td><td>${esc(u.name)}</td>
       <td><span class="role-badge">${esc(role?role.name:'-')}</span></td>
-      <td><span class="user-status ${statusClass}">${u.status==='active'?'启用':'禁用'}</span></td>
+      <td><span class="user-status ${statusClass}">${u.status==='active'?t('userModal.statusActive'):t('userModal.statusDisabled')}</span></td>
       <td style="font-size:12px;color:${u.feishu_open_id?'var(--primary)':'var(--text-muted)'}">${feishuBound}</td>
       <td class="cell-date">${(u.created_at||'').substring(0,10)}</td>
       <td class="cell-actions">
@@ -3757,7 +3777,7 @@ async function openUserModal(userId){
   if(userId){
     const u=users.find(x=>x.id===userId);
     if(!u) return;
-    document.getElementById('user-modal-title').textContent='编辑用户';
+    document.getElementById('user-modal-title').textContent=t('modal.title.editUser');
     document.getElementById('user-edit-id').value=u.id;
     document.getElementById('u-password').value='';
     document.getElementById('u-role').value=u.role_id;
@@ -3767,7 +3787,7 @@ async function openUserModal(userId){
     // 编辑模式：用户名显示为已选飞书用户，不可修改
     usernameEl.value = u.feishu_name || u.name;
     usernameEl.disabled = true;
-    usernameEl.placeholder = '飞书绑定用户（不可修改）';
+    usernameEl.placeholder = t('form.placeholder.feishuBound');
     usernameEl.oninput = null;
     usernameEl.onfocus = null;
     nameEl.value = u.name;
@@ -3779,7 +3799,7 @@ async function openUserModal(userId){
       if(feishuSelectedEl) {
         feishuSelectedEl.style.display = 'flex';
         feishuSelectedName.textContent = u.feishu_name || u.name;
-        feishuSelectedEmail.textContent = u.feishu_email || '已绑定';
+        feishuSelectedEmail.textContent = u.feishu_email || t('user.feishuNotBound');
       }
     } else {
       if(feishuSelectedEl) feishuSelectedEl.style.display = 'none';
@@ -3795,7 +3815,7 @@ async function openUserModal(userId){
     // 新建模式：用户名是搜索框
     usernameEl.value = '';
     usernameEl.disabled = false;
-    usernameEl.placeholder = '输入姓名/英文名/邮箱搜索飞书成员...';
+    usernameEl.placeholder = t('form.placeholder.searchFeishu');
     usernameEl.setAttribute('oninput', 'searchFeishuContacts(this.value)');
     usernameEl.setAttribute('onfocus', 'searchFeishuContacts(this.value)');
     usernameEl.addEventListener('input', function(e){ searchFeishuContacts(e.target.value); });
@@ -3947,7 +3967,7 @@ function clearFeishuSelection() {
   const usernameEl = document.getElementById('u-username');
   if (usernameEl && !usernameEl.disabled) {
     usernameEl.value = '';
-    usernameEl.placeholder = '输入姓名/英文名/邮箱搜索飞书成员...';
+    usernameEl.placeholder = t('form.placeholder.searchFeishu');
   }
   document.getElementById('u-name').value = '';
   document.getElementById('u-feishu-openid').value = '';
@@ -3968,16 +3988,16 @@ async function saveUser(e){
   const status=document.getElementById('u-status').value;
   const feishuOpenId = (document.getElementById('u-feishu-openid')?.value || '').trim();
   
-  if(!editId && !feishuOpenId) return showFlash('请通过搜索选择飞书用户','warning');
-  if(!username||!name) return showFlash('用户名和姓名不能为空','warning');
-  if(!editId&&!password) return showFlash('新建用户必须设置密码','warning');
+  if(!editId && !feishuOpenId) return showFlash(t('flash.searchFeishuUser'),'warning');
+  if(!username||!name) return showFlash(t('flash.usernameAndNameRequired'),'warning');
+  if(!editId&&!password) return showFlash(t('flash.user.passwordRequired'),'warning');
   
   const users=await getUsers();
   // 新建时检查飞书 Open ID 是否已被绑定（不允许重复绑定）
   if(!editId && feishuOpenId && users.some(u=>u.feishu_open_id===feishuOpenId)) {
-    return showFlash('该飞书用户已被绑定，请选择其他用户','danger');
+    return showFlash(t('flash.user.feishuAlreadyBound'),'danger');
   }
-  if(!editId&&users.some(u=>u.username===username)) return showFlash('用户名已存在','danger');
+  if(!editId&&users.some(u=>u.username===username)) return showFlash(t('flash.user.usernameExists'),'danger');
   
   // 从 selectedFeishuContact 获取完整飞书信息
   const feishuInfo = selectedFeishuContact || {};
@@ -4013,13 +4033,13 @@ async function saveUser(e){
   await saveUsers(users);
   selectedFeishuContact = null;
   closeUserModal();
-  showFlash(editId?'用户已更新':'用户已创建','success');
+  showFlash(editId?t('flash.user.updateSuccess'):t('flash.user.createSuccess'),'success');
   renderUsers();
 }
 async function deleteUser(userId){
   if(!requirePermission('user_manage')) return;
-  if(userId==='user_admin') return showFlash('不能删除超级管理员','danger');
-  if(!confirm('确定要删除该用户吗？')) return;
+  if(userId==='user_admin') return showFlash(t('flash.user.deleteAdmin'),'danger');
+  if(!confirm(t('confirm.message.deleteUser'))) return;
   if (await checkDbAvailable()) {
     const resp = await fetch(`/api/users/${userId}`, {
       method: 'DELETE',
@@ -4027,14 +4047,14 @@ async function deleteUser(userId){
     });
     if (!resp.ok) {
       const result = await resp.json().catch(() => ({}));
-      return showFlash(result.error || '删除失败', 'danger');
+      return showFlash(result.error || t('flash.user.deleteFailed'), 'danger');
     }
   } else {
     const users = await getUsers();
     localStorage.setItem('aftersales_users', JSON.stringify(users.filter(u => u.id !== userId)));
   }
   _usersCache = null;
-  showFlash('用户已删除','info');
+  showFlash(t('flash.user.deleted'),'info');
   renderUsers();
 }
 
@@ -4042,8 +4062,8 @@ async function deleteUser(userId){
 async function renderRoles(){
   const roles=await getRoles(), users=await getUsers();
   const area=document.getElementById('roles-table-area');
-  if(roles.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F6E1;</div><p>暂无角色</p></div>`; return; }
-  let html=`<div class="table-container"><table class="data-table"><thead><tr><th>角色名称</th><th>角色描述</th><th>权限</th><th>关联用户数</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+  if(roles.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F6E1;</div><p>${t('roles.empty')}</p></div>`; return; }
+  let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('roles.col.name')}</th><th>${t('roles.col.description')}</th><th>${t('roles.col.permissions')}</th><th>${t('roles.col.userCount')}</th><th>${t('roles.col.createdAt')}</th><th>${t('roles.col.actions')}</th></tr></thead><tbody>`;
   roles.forEach(r=>{
     const userCount=users.filter(u=>u.role_id===r.id).length;
     const perms=normalizePermissions(r.permissions).map(k=>{ const p=ALL_PERMISSIONS.find(x=>x.key===k); return p?p.label:k; }).join('、');
@@ -4091,7 +4111,7 @@ async function saveRole(e){
   const name=document.getElementById('r-name').value.trim();
   const description=document.getElementById('r-desc').value.trim();
   const permissions=[...document.querySelectorAll('input[name="r-perm"]:checked')].map(cb=>cb.value);
-  if(!name) return showFlash('角色名称不能为空','warning');
+  if(!name) return showFlash(t('flash.form.roleNameRequired'),'warning');
   const roles=await getRoles();
   if(editId){
     const idx=roles.findIndex(r=>r.id===editId);
@@ -4101,25 +4121,25 @@ async function saveRole(e){
   }
   await saveRoles(roles);
   closeRoleModal();
-  showFlash(editId?'角色已更新':'角色已创建','success');
+  showFlash(editId?t('flash.role.updateSuccess'):t('flash.role.createSuccess'),'success');
   renderRoles();
   renderSidebar();
 }
 async function deleteRole(roleId){
   if(!requirePermission('role_manage')) return;
   const users=await getUsers();
-  if(users.filter(u=>u.role_id===roleId).length>0) return showFlash('该角色下还有用户，无法删除','danger');
+  if(users.filter(u=>u.role_id===roleId).length>0) return showFlash(t('flash.role.deleteReferenced'),'danger');
   if(!confirm('确定要删除该角色吗？')) return;
   const roles=await getRoles();
   await saveRoles(roles.filter(r=>r.id!==roleId));
-  showFlash('角色已删除','info');
+  showFlash(t('flash.role.deleted'),'info');
   renderRoles();
 }
 
 // ==================== EXCEL IMPORT ====================
 function downloadTemplate(){
   if(!requirePermission('sales_import')) return;
-  if(typeof XLSX==='undefined'){ showFlash('Excel库加载失败，请刷新页面重试','danger'); return; }
+  if(typeof XLSX==='undefined'){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const wsData=[['品牌','月份','线上出货量','线上销量','线下出货量','线下销量']];
   wsData.push(['Apple','2026-01',5000,4800,3000,2900]);
   wsData.push(['华为','2026-01',4000,3900,2500,2400]);
@@ -4129,24 +4149,24 @@ function downloadTemplate(){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'销量数据模板');
   XLSX.writeFile(wb,'销量数据导入模板.xlsx');
-  showFlash('模板已下载','success');
+  showFlash(t('flash.excel.templateDownloaded'),'success');
 }
 
 function importSalesData(event){
   if(!requirePermission('sales_import')) return;
   const file=event.target.files[0];
   if(!file) return;
-  if(typeof XLSX==='undefined'){ showFlash('Excel库加载失败，请刷新页面重试','danger'); return; }
+  if(typeof XLSX==='undefined'){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const reader=new FileReader();
   reader.onload=async function(e){
     try{
       const wb=XLSX.read(e.target.result,{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const rows=XLSX.utils.sheet_to_json(ws);
-      if(rows.length===0){ showFlash('文件为空','warning'); return; }
+      if(rows.length===0){ showFlash(t('flash.excel.fileEmpty'),'warning'); return; }
       const headers=Object.keys(rows[0]);
       const colMap=resolveColumns(headers);
-      if(!colMap){ showFlash('列名不匹配，请使用下载的模板格式','danger'); return; }
+      if(!colMap){ showFlash(t('flash.excel.columnMismatch'),'danger'); return; }
       const salesData=await getSalesData();
       let success=0,errors=0;
       rows.forEach((row,i)=>{
@@ -4169,9 +4189,9 @@ function importSalesData(event){
         success++;
       });
       await saveSalesData(salesData);
-      showFlash(`导入完成：成功 ${success} 行`+(errors>0?`，跳过 ${errors} 行`:''),errors>0?'warning':'success');
+      showFlash(`${t('flash.import.summary', {success: success})`+(errors>0?t('flash.import.skipped', {errors: errors}):''),errors>0?'warning':'success');
       renderOverview();
-    }catch(err){ showFlash('文件解析失败：'+err.message,'danger'); }
+    }catch(err){ showFlash(t('flash.excel.parseError')+err.message,'danger'); }
   };
   reader.readAsArrayBuffer(file);
   event.target.value='';
@@ -4286,11 +4306,40 @@ function resolveColumns(headers){
   await window.__i18n.init();
   refreshApprovalStatuses();
   refreshProcessStatuses();
+  applyStaticI18n();
 
   // 初始化语言选择器
   const langSelect = document.getElementById('lang-select');
   if (langSelect) langSelect.value = window.__i18n.getLocale();
 })();
+
+// ==================== 静态元素 i18n ====================
+function applyStaticI18n() {
+  // 翻译 data-i18n 元素
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (!key) return;
+    let value = t(key);
+    const suffix = el.getAttribute('data-i18n-suffix');
+    if (suffix) value += suffix;
+    if (el.tagName === 'TITLE') document.title = value;
+    else el.textContent = value;
+  });
+  // 翻译 data-i18n-placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.placeholder = t(key);
+  });
+  // 翻译 data-i18n-params（批量计数等动态文本）
+  document.querySelectorAll('[data-i18n-params]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (!key) return;
+    try {
+      const params = JSON.parse(el.getAttribute('data-i18n-params') || '{}');
+      el.textContent = t(key, params);
+    } catch (e) { el.textContent = t(key); }
+  });
+}
 
 // ==================== i18n 语言切换 ====================
 async function switchLanguage(locale) {
@@ -4298,10 +4347,7 @@ async function switchLanguage(locale) {
   refreshApprovalStatuses();
   refreshProcessStatuses();
   refreshAllPermissions();
-  // 更新静态 UI 元素
-  document.getElementById('btn-logout').textContent = t('app.logout');
-  document.title = t('app.title');
-  document.getElementById('feishu-status-text').textContent = t('app.mode.cloud');
+  applyStaticI18n();
   // 重新渲染当前页面
   const user = getCurrentUser();
   if (user) {

@@ -3,11 +3,15 @@
     "title": "售后数据管理系统",
     "sidebarBrand": "售后管理系统",
     "mode": {
-      "cloud": "云端模式",
-      "local": "本地模式",
-      "feishu": "飞书模式"
+      "feishu": "飞书模式",
+      "local": "本地模式"
     },
-    "logout": "退出"
+    "logout": "退出",
+    "language": {
+      "zh": "中文",
+      "en": "English",
+      "id": "Bahasa Indonesia"
+    }
   },
   "login": {
     "subtitle": "请使用公司飞书账号登录",
@@ -77,7 +81,8 @@
       "skuTop10": "SKU 售后 TOP10",
       "label": {
         "count": "数量",
-        "times": "售后次数"
+        "times": "售后次数",
+        "daysSuffix": "天"
       },
       "noData": "暂无数据"
     },
@@ -96,6 +101,7 @@
     },
     "empty": "暂无数据。请先创建售后记录或导入销量数据。",
     "col": {
+      "brand": "品牌",
       "detailTotal": "明细总数",
       "pending": "待处理",
       "completed": "已处理",
@@ -171,7 +177,8 @@
       "first": "首页",
       "prev": "上一页",
       "next": "下一页",
-      "last": "末页"
+      "last": "末页",
+      "info": "共 {count} 条，第 {current}/{totalPages} 页"
     }
   },
   "status": {
@@ -228,7 +235,12 @@
     "btnCancel": "取消",
     "skuPlaceholder": "输入SKU…",
     "orderPlaceholder": "订单号",
-    "descPlaceholder": "问题说明/备注"
+    "descPlaceholder": "问题说明/备注",
+    "placeholder": {
+      "feishuBound": "飞书绑定用户（不可修改）",
+      "searchFeishu": "输入姓名/英文名/邮箱搜索飞书成员..."
+    },
+    "roleNameRequired": "角色名称不能为空"
   },
   "returnReason": {
     "resaleable": "可二次销售",
@@ -299,7 +311,11 @@
       "currentLevel": "当前级别",
       "actions": "操作"
     },
-    "levelPrefix": "第{level}级"
+    "levelPrefix": "第{level}级",
+    "level1": "一级",
+    "level2": "二级",
+    "level3": "三级",
+    "levelSuffix": "审批"
   },
   "approvalModal": {
     "title": "售后记录审批",
@@ -432,6 +448,17 @@
       "sheetName": "商品列表",
       "statusActive": "启用",
       "statusDisabled": "禁用"
+    },
+    "deleted": "商品已删除",
+    "deleteReferenced": "该商品被 {count} 条售后记录引用，无法删除",
+    "createSuccess": "商品已创建",
+    "updateSuccess": "商品已更新",
+    "batchDeleteSuccess": "成功删除 {count} 个商品",
+    "batch": {
+      "selected": "已选 {count} 项"
+    },
+    "filter": {
+      "allBrands": "全部品牌"
     }
   },
   "export": {
@@ -455,7 +482,8 @@
     "sheet": {
       "detail": "售后明细",
       "record": "售后记录"
-    }
+    },
+    "success": "已导出 {count} 条记录"
   },
   "importRecord": {
     "title": "批量导入售后记录",
@@ -624,7 +652,7 @@
   "flash": {
     "noPermission": "你没有该操作的权限",
     "noPagePermission": "你没有该页面的访问权限",
-    "welcome": "欢迎，{name}！",
+    "welcome": "欢迎，",
     "adminLogin": "管理员 {name} 已登录",
     "submitSuccess": "审批已提交，等待一级审批",
     "draftSaved": "草稿已保存",
@@ -647,7 +675,47 @@
     "templateDownloaded": "模板已下载",
     "importSuccess": "导入完成：新增{added}/更新{updated}/删除{deleted}/失败{failed}",
     "importComplete": "共读取 {total} 行，成功导入 {imported} 条草稿记录",
-    "noExportData": "当前筛选条件下没有可导出的数据"
+    "noExportData": "当前筛选条件下没有可导出的数据",
+    "noPermissionCreate": "您没有提交审批的权限",
+    "feishuNotBound": "审批已提交，但审批人 {name} 未绑定飞书账号，无法发送飞书通知。请联系管理员绑定。",
+    "feishuNotifyFailed": "审批已提交，但飞书通知发送失败。请检查审批人飞书绑定或应用权限。",
+    "approveSuccess": "审批通过",
+    "rejectSuccess": "已拒绝",
+    "fileNotImage": "文件 {filename} 不是图片，已跳过",
+    "fileTooLarge": "图片 {filename} 超过2MB，已跳过",
+    "imageTooLarge": "图片超过2MB，请压缩后上传",
+    "onlyCurrentApprover": "只有当前级别审批人可以处理该审批",
+    "onlyCurrentApproverUpload": "只有当前级别审批人可以上传处理截图",
+    "onlyCurrentApproverProcess": "只有当前级别审批人可以标记处理状态",
+    "statusNotPendingErp": "仅\"待ERP入库\"状态可标记为已处理",
+    "pleaseEnterComment": "请输入审批意见",
+    "selectProductsFirst": "请先勾选要删除的商品",
+    "approvalSubmitFeishuNotBound": "审批已提交，但审批人 ",
+    "feishuServiceUnavailable": "审批已提交，但飞书通知服务暂时不可用。",
+    "admin": "管理员",
+    "deleteFailed": "删除失败: ",
+    "selectAftersalesDate": "请选择售后日期",
+    "addAtLeastOneDetail": "请至少添加一条售后明细",
+    "selectAtLeastOneApprover": "请至少选择一位审批人",
+    "approvalSubmitted": "审批已提交，等待",
+    "fillAftersalesDate": "请至少填写售后日期",
+    "noLevelPermission": "你没有该级别的审批权限",
+    "notLevelApprover": "你不是该级别的审批人",
+    "pasteImageTooLarge": "粘贴的图片超过2MB，已跳过",
+    "onlySupportExcelCsv": "仅支持 .xlsx / .csv 文件",
+    "fileEmptyOrMissingHeader": "文件为空或缺少表头",
+    "noValidProductData": "未解析到有效商品数据",
+    "fileParseFailed": "文件解析失败: ",
+    "importFailed": "导入失败: ",
+    "noDataToExport": "当前筛选条件下没有可导出的数据",
+    "batchDeleteFailed": "批量删除失败: ",
+    "brandRequired": "品牌不能为空",
+    "skuRequired": "SKU编码不能为空",
+    "skuExists": "SKU编码已存在",
+    "searchFeishuUser": "请通过搜索选择飞书用户",
+    "usernameAndNameRequired": "用户名和姓名不能为空",
+    "approval": "审批",
+    "adminLoggedIn": " 已登录"
   },
   "validation": {
     "selectDate": "请选择售后日期",
@@ -662,7 +730,7 @@
     "fillDate": "请至少填写售后日期",
     "enterComment": "请输入审批意见",
     "brandRequired": "品牌不能为空",
-    "skuRequired": "SKU编码不能为空",
+    "skuRequired": "第{row}行：请填写SKU",
     "skuDuplicate": "SKU编码已存在",
     "usernameNameRequired": "用户名和姓名不能为空",
     "newUserPassword": "新建用户必须设置密码",
@@ -671,19 +739,29 @@
     "selectFeishuUser": "请通过搜索选择飞书用户",
     "roleNameRequired": "角色名称不能为空",
     "selectProcessStatus": "请选择要设置的处理状态",
-    "selectOneItem": "请至少选择一条明细"
+    "selectOneItem": "请至少选择一条明细",
+    "platformRequired": "第{row}行：请选择平台",
+    "quantityMustBePositive": "第{row}行：数量必须大于0",
+    "returnReasonRequired": "第{row}行：请选择退货原因",
+    "faultDescriptionRequired": "第{row}行：请填写问题说明"
   },
   "confirm": {
     "deleteRecord": "确定要删除这条记录吗？此操作不可撤销。",
     "deleteProduct": "确定要删除该商品吗？",
     "deleteUser": "确定要删除该用户吗？",
     "deleteRole": "确定要删除该角色吗？",
-    "batchDeleteProducts": "确定要删除选中的 {count} 个商品吗？",
+    "batchDeleteProducts": "确定要删除选中的 <b>{count}</b> 个商品吗？<br><br>将删除以下 SKU 编码：<br>{ids}<br><br><span style=\"color:#ff3b30\">此操作不可恢复！</span>",
     "batchDeleteIrreversible": "此操作不可恢复！",
     "btnCancel": "取消",
     "btnOk": "确认删除",
     "title": {
       "batchDelete": "确认批量删除"
+    },
+    "moreItems": "...还有 {count} 个",
+    "message": {
+      "deleteRecord": "确定要删除这条记录吗？此操作不可撤销。",
+      "deleteProduct": "确定要删除该商品吗？",
+      "deleteUser": "确定要删除该用户吗？"
     }
   },
   "error": {
@@ -771,5 +849,53 @@
     "moreItems": "... 共 {count} 条明细",
     "unknown": "未知",
     "btnView": "查看/审批"
+  },
+  "pagination": {
+    "perPage": "条/页",
+    "info": "共 {count} 条，第 {current}/{totalPages} 页",
+    "first": "首页",
+    "prev": "上一页",
+    "next": "下一页",
+    "last": "末页"
+  },
+  "welcome": "欢迎，",
+  "admin": "管理员",
+  "adminLoggedIn": " 已登录",
+  "import": {
+    "complete": "导入完成：新增{created} / 更新{updated} / 删除{deleted} / 失败{failed}",
+    "summary": "导入完成：成功 {success} 行"
+  },
+  "user": {
+    "createSuccess": "用户已创建",
+    "updateSuccess": "用户已更新",
+    "deleteAdmin": "不能删除超级管理员",
+    "deleteFailed": "删除失败",
+    "deleted": "用户已删除",
+    "passwordRequired": "新建用户必须设置密码",
+    "feishuAlreadyBound": "该飞书用户已被绑定，请选择其他用户",
+    "usernameExists": "用户名已存在",
+    "feishuNotBound": "未绑定",
+    "feishuDefaultName": "飞书用户"
+  },
+  "role": {
+    "createSuccess": "角色已创建",
+    "updateSuccess": "角色已更新",
+    "deleteReferenced": "该角色下还有用户，无法删除",
+    "deleted": "角色已删除"
+  },
+  "excel": {
+    "libraryLoadFailed": "Excel库加载失败，请刷新页面重试",
+    "templateDownloaded": "模板已下载",
+    "fileEmpty": "文件为空",
+    "columnMismatch": "列名不匹配，请使用下载的模板格式",
+    "parseError": "文件解析失败："
+  },
+  "modal": {
+    "title": {
+      "editProduct": "编辑商品",
+      "newProduct": "新建商品",
+      "editUser": "编辑用户",
+      "newUser": "新建用户"
+    }
   }
 }

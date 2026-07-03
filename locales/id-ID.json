@@ -3,11 +3,15 @@
     "title": "Portal Data Purna Jual",
     "sidebarBrand": "Portal Purna Jual",
     "mode": {
-      "cloud": "Mode Cloud",
-      "local": "Mode Lokal",
-      "feishu": "Mode Lark"
+      "feishu": "Mode Feishu",
+      "local": "Mode Lokal"
     },
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "language": {
+      "zh": "Tionghoa",
+      "en": "English",
+      "id": "Bahasa Indonesia"
+    }
   },
   "login": {
     "subtitle": "Masuk dengan akun Lark perusahaan",
@@ -77,7 +81,8 @@
       "skuTop10": "Top 10 SKU RMA",
       "label": {
         "count": "Qty",
-        "times": "Jumlah RMA"
+        "times": "Jumlah RMA",
+        "daysSuffix": "hr"
       },
       "noData": "Belum ada data"
     },
@@ -96,6 +101,7 @@
     },
     "empty": "Belum ada data. Silakan buat kasus RMA atau impor data penjualan terlebih dahulu.",
     "col": {
+      "brand": "Brand",
       "detailTotal": "Total Item",
       "pending": "Menunggu",
       "completed": "Selesai",
@@ -171,7 +177,8 @@
       "first": "Awal",
       "prev": "Sebelumnya",
       "next": "Berikutnya",
-      "last": "Akhir"
+      "last": "Akhir",
+      "info": "Total {count}, halaman {current}/{totalPages}"
     }
   },
   "status": {
@@ -228,7 +235,12 @@
     "btnCancel": "Batal",
     "skuPlaceholder": "Masukkan SKU...",
     "orderPlaceholder": "No. Pesanan",
-    "descPlaceholder": "Deskripsi Masalah / Catatan"
+    "descPlaceholder": "Deskripsi Masalah / Catatan",
+    "placeholder": {
+      "feishuBound": "Pengguna terhubung Feishu (tidak dapat diubah)",
+      "searchFeishu": "Cari anggota Feishu berdasarkan nama/nama Inggris/email..."
+    },
+    "roleNameRequired": "Nama peran wajib diisi"
   },
   "returnReason": {
     "resaleable": "Bisa Dijual Kembali",
@@ -299,7 +311,11 @@
       "currentLevel": "Level Saat Ini",
       "actions": "Aksi"
     },
-    "levelPrefix": "Level {level}"
+    "levelPrefix": "Level {level}",
+    "level1": "Level 1",
+    "level2": "Level 2",
+    "level3": "Level 3",
+    "levelSuffix": "Persetujuan"
   },
   "approvalModal": {
     "title": "Persetujuan RMA",
@@ -432,6 +448,17 @@
       "sheetName": "Daftar Produk",
       "statusActive": "Aktif",
       "statusDisabled": "Nonaktif"
+    },
+    "deleted": "Produk dihapus",
+    "deleteReferenced": "Produk ini dirujuk oleh {count} catatan purna jual, tidak dapat dihapus",
+    "createSuccess": "Produk dibuat",
+    "updateSuccess": "Produk diperbarui",
+    "batchDeleteSuccess": "Berhasil menghapus {count} produk",
+    "batch": {
+      "selected": "Terpilih {count} item"
+    },
+    "filter": {
+      "allBrands": "Semua Brand"
     }
   },
   "export": {
@@ -455,7 +482,8 @@
     "sheet": {
       "detail": "Item RMA",
       "record": "Kasus RMA"
-    }
+    },
+    "success": "Diekspor {count} catatan"
   },
   "importRecord": {
     "title": "Impor Kasus RMA Massal",
@@ -622,15 +650,15 @@
     }
   },
   "flash": {
-    "noPermission": "Anda tidak memiliki izin untuk melakukan aksi ini",
-    "noPagePermission": "Anda tidak memiliki akses ke halaman ini",
-    "welcome": "Selamat datang, {name}!",
+    "noPermission": "Anda tidak memiliki izin untuk operasi ini",
+    "noPagePermission": "Anda tidak memiliki izin untuk mengakses halaman ini",
+    "welcome": "Selamat datang, ",
     "adminLogin": "Admin {name} sudah masuk",
     "submitSuccess": "Sudah diajukan. Menunggu approval Level 1.",
     "draftSaved": "Draft disimpan",
     "approved": "Disetujui",
     "rejected": "Ditolak",
-    "recordDeleted": "Data dihapus",
+    "recordDeleted": "Catatan dihapus",
     "userCreated": "Pengguna dibuat",
     "userUpdated": "Pengguna diperbarui",
     "userDeleted": "Pengguna dihapus",
@@ -641,13 +669,53 @@
     "roleUpdated": "Role diperbarui",
     "roleDeleted": "Role dihapus",
     "batchProcessUpdated": "Status proses untuk {count} item berhasil diperbarui",
-    "markProcessed": "Ditandai selesai",
+    "markProcessed": "Ditandai sebagai diproses",
     "exportSuccess": "Berhasil mengekspor {count} data",
     "batchDeleteSuccess": "Berhasil menghapus {count} produk",
     "templateDownloaded": "Template diunduh",
     "importSuccess": "Impor selesai: {added} ditambah / {updated} diperbarui / {deleted} dihapus / {failed} gagal",
     "importComplete": "Membaca {total} baris. Berhasil mengimpor {imported} draft.",
-    "noExportData": "Tidak ada data untuk diekspor dengan filter saat ini"
+    "noExportData": "Tidak ada data untuk diekspor dengan filter saat ini",
+    "noPermissionCreate": "Anda tidak memiliki izin untuk membuat kasus",
+    "feishuNotBound": "Persetujuan diajukan, tetapi approver {name} belum menghubungkan akun Feishu. Notifikasi Feishu tidak dapat dikirim. Silakan hubungi admin untuk menghubungkan.",
+    "feishuNotifyFailed": "Persetujuan diajukan, tetapi notifikasi Feishu gagal.",
+    "approveSuccess": "Disetujui",
+    "rejectSuccess": "Ditolak",
+    "fileNotImage": "File {filename} bukan gambar, dilewati",
+    "fileTooLarge": "Gambar {filename} melebihi 2MB, dilewati",
+    "imageTooLarge": "Gambar melebihi 2MB, silakan kompres sebelum mengupload",
+    "onlyCurrentApprover": "Hanya approver level saat ini yang dapat memproses persetujuan ini",
+    "onlyCurrentApproverUpload": "Hanya approver level saat ini yang dapat upload screenshot proses",
+    "onlyCurrentApproverProcess": "Hanya approver level saat ini yang dapat menandai status proses",
+    "statusNotPendingErp": "Hanya item dengan status \"Menunggu ERP Inbound\" yang dapat ditandai sebagai diproses",
+    "pleaseEnterComment": "Silakan masukkan komentar persetujuan",
+    "selectProductsFirst": "Silakan pilih produk yang akan dihapus terlebih dahulu",
+    "approvalSubmitFeishuNotBound": "Persetujuan diajukan, tetapi approver {name} belum menghubungkan Feishu.",
+    "feishuServiceUnavailable": "Persetujuan diajukan, tetapi layanan Feishu sedang tidak tersedia.",
+    "admin": "Admin",
+    "deleteFailed": "Gagal menghapus: ",
+    "selectAftersalesDate": "Silakan pilih tanggal aftersales",
+    "addAtLeastOneDetail": "Silakan tambah setidaknya satu detail",
+    "selectAtLeastOneApprover": "Silakan pilih setidaknya satu approver",
+    "approvalSubmitted": "Persetujuan diajukan, menunggu ",
+    "fillAftersalesDate": "Silakan isi tanggal aftersales",
+    "noLevelPermission": "Anda tidak memiliki izin untuk level persetujuan ini",
+    "notLevelApprover": "Anda bukan approver untuk level ini",
+    "pasteImageTooLarge": "Gambar yang ditempel melebihi 2MB, dilewati",
+    "onlySupportExcelCsv": "Hanya file .xlsx / .csv yang didukung",
+    "fileEmptyOrMissingHeader": "File kosong atau kehilangan header",
+    "noValidProductData": "Tidak ada data produk yang valid",
+    "fileParseFailed": "Gagal parse file: ",
+    "importFailed": "Gagal import: ",
+    "noDataToExport": "Tidak ada data untuk diekspor dalam filter saat ini",
+    "batchDeleteFailed": "Gagal hapus massal: ",
+    "brandRequired": "Brand wajib diisi",
+    "skuRequired": "Kode SKU wajib diisi",
+    "skuExists": "Kode SKU sudah ada",
+    "searchFeishuUser": "Silakan cari dan pilih pengguna Feishu",
+    "usernameAndNameRequired": "Username dan nama wajib diisi",
+    "approval": "Persetujuan",
+    "adminLoggedIn": " sudah login"
   },
   "validation": {
     "selectDate": "Pilih tanggal RMA",
@@ -662,7 +730,7 @@
     "fillDate": "Isi minimal tanggal RMA",
     "enterComment": "Masukkan komentar approval",
     "brandRequired": "Brand wajib diisi",
-    "skuRequired": "Kode SKU wajib diisi",
+    "skuRequired": "Baris {row}: Silakan isi SKU",
     "skuDuplicate": "Kode SKU sudah ada",
     "usernameNameRequired": "Username dan nama wajib diisi",
     "newUserPassword": "Password wajib diisi untuk pengguna baru",
@@ -671,19 +739,29 @@
     "selectFeishuUser": "Pilih pengguna Lark dari hasil pencarian",
     "roleNameRequired": "Nama role wajib diisi",
     "selectProcessStatus": "Pilih status proses yang ingin diterapkan",
-    "selectOneItem": "Pilih minimal satu item"
+    "selectOneItem": "Pilih minimal satu item",
+    "platformRequired": "Baris {row}: Silakan pilih platform",
+    "quantityMustBePositive": "Baris {row}: Jumlah harus > 0",
+    "returnReasonRequired": "Baris {row}: Silakan pilih alasan pengembalian",
+    "faultDescriptionRequired": "Baris {row}: Silakan isi deskripsi kerusakan"
   },
   "confirm": {
-    "deleteRecord": "Hapus data ini? Aksi ini tidak dapat dibatalkan.",
+    "deleteRecord": "Yakin ingin menghapus catatan ini? Aksi ini tidak dapat dibatalkan.",
     "deleteProduct": "Hapus produk ini?",
     "deleteUser": "Hapus pengguna ini?",
     "deleteRole": "Hapus role ini?",
-    "batchDeleteProducts": "Hapus {count} produk yang dipilih?",
+    "batchDeleteProducts": "Hapus <b>{count}</b> produk yang dipilih?<br><br>Akan menghapus SKU berikut:<br>{ids}<br><br><span style=\"color:#ff3b30\">Aksi ini tidak dapat dibatalkan!</span>",
     "batchDeleteIrreversible": "Aksi ini tidak dapat dibatalkan!",
     "btnCancel": "Batal",
     "btnOk": "Hapus",
     "title": {
       "batchDelete": "Konfirmasi Hapus Massal"
+    },
+    "moreItems": "...{count} lagi",
+    "message": {
+      "deleteRecord": "Yakin ingin menghapus catatan ini? Aksi ini tidak dapat dibatalkan.",
+      "deleteProduct": "Yakin ingin menghapus produk ini?",
+      "deleteUser": "Yakin ingin menghapus pengguna ini?"
     }
   },
   "error": {
@@ -771,5 +849,53 @@
     "moreItems": "... total {count} item",
     "unknown": "Tidak diketahui",
     "btnView": "Lihat / Approve"
+  },
+  "pagination": {
+    "perPage": "per halaman",
+    "info": "Total {count}, halaman {current}/{totalPages}",
+    "first": "Pertama",
+    "prev": "Sebelumnya",
+    "next": "Berikutnya",
+    "last": "Terakhir"
+  },
+  "welcome": "Selamat datang, ",
+  "admin": "Admin",
+  "adminLoggedIn": " sudah login",
+  "import": {
+    "complete": "Import selesai: {created} dibuat / {updated} diperbarui / {deleted} dihapus / {failed} gagal",
+    "summary": "Import selesai: {success} baris sukses"
+  },
+  "user": {
+    "createSuccess": "Pengguna dibuat",
+    "updateSuccess": "Pengguna diperbarui",
+    "deleteAdmin": "Tidak dapat menghapus super admin",
+    "deleteFailed": "Gagal menghapus",
+    "deleted": "Pengguna dihapus",
+    "passwordRequired": "Kata sandi wajib untuk pengguna baru",
+    "feishuAlreadyBound": "Pengguna Feishu ini sudah terhubung, silakan pilih yang lain",
+    "usernameExists": "Username sudah ada",
+    "feishuNotBound": "Belum Terhubung",
+    "feishuDefaultName": "Pengguna Feishu"
+  },
+  "role": {
+    "createSuccess": "Peran dibuat",
+    "updateSuccess": "Peran diperbarui",
+    "deleteReferenced": "Masih ada pengguna di bawah peran ini, tidak dapat dihapus",
+    "deleted": "Peran dihapus"
+  },
+  "excel": {
+    "libraryLoadFailed": "Pustaka Excel gagal dimuat, silakan segarkan dan coba lagi",
+    "templateDownloaded": "Template diunduh",
+    "fileEmpty": "File kosong",
+    "columnMismatch": "Nama kolom tidak cocok, silakan gunakan template yang diunduh",
+    "parseError": "Gagal parse file: "
+  },
+  "modal": {
+    "title": {
+      "editProduct": "Edit Produk",
+      "newProduct": "Produk Baru",
+      "editUser": "Edit Pengguna",
+      "newUser": "Pengguna Baru"
+    }
   }
 }
