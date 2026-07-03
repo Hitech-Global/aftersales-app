@@ -1,775 +1,775 @@
 {
   "app": {
-    "title": "",
-    "sidebarBrand": "",
+    "title": "Portal Data Purna Jual",
+    "sidebarBrand": "Portal Purna Jual",
     "mode": {
-      "cloud": "",
-      "local": "",
-      "feishu": ""
+      "cloud": "Mode Cloud",
+      "local": "Mode Lokal",
+      "feishu": "Mode Lark"
     },
-    "logout": ""
+    "logout": "Keluar"
   },
   "login": {
-    "subtitle": "",
-    "verifying": "",
-    "localModeHint": "",
-    "localAccountLoginHint": "",
-    "feishuOnlyHint": "",
-    "btnFeishu": "",
-    "btnLocal": "",
-    "usernamePlaceholder": "",
-    "passwordPlaceholder": "",
+    "subtitle": "Masuk dengan akun Lark perusahaan",
+    "verifying": "Sedang memverifikasi identitas...",
+    "localModeHint": "Mode login lokal sedang aktif",
+    "localAccountLoginHint": "Anda dapat masuk dengan akun lokal.",
+    "feishuOnlyHint": "Hanya anggota organisasi Lark perusahaan yang dapat masuk.",
+    "btnFeishu": "Masuk dengan Lark",
+    "btnLocal": "Masuk dengan akun lokal",
+    "usernamePlaceholder": "Username",
+    "passwordPlaceholder": "Password",
     "error": {
-      "connectFeishu": "",
-      "feishuUnavailable": "",
-      "enterCredentials": "",
-      "wrongCredentials": "",
-      "processFailed": "",
-      "missingOpenid": "",
-      "missingCode": "",
-      "invalidState": "",
-      "notConfigured": "",
-      "tokenExchangeFailed": "",
-      "getUserFailed": "",
-      "userInfoInvalid": "",
-      "tokenResponseInvalid": "",
-      "serverError": ""
+      "connectFeishu": "Tidak dapat terhubung ke layanan Lark. Silakan masuk dengan akun lokal.",
+      "feishuUnavailable": "Login Lark sementara tidak tersedia",
+      "enterCredentials": "Masukkan username dan password",
+      "wrongCredentials": "Username atau password salah, atau akun dinonaktifkan",
+      "processFailed": "Proses login gagal. Silakan coba lagi.",
+      "missingOpenid": "Profil pengguna Lark tidak memiliki OpenID",
+      "missingCode": "Otorisasi Lark gagal: kode otorisasi tidak ada",
+      "invalidState": "Sesi login Lark sudah kedaluwarsa. Silakan mulai lagi.",
+      "notConfigured": "Mode login lokal sedang aktif. Silakan gunakan akun lokal.",
+      "tokenExchangeFailed": "Gagal menukar token Lark",
+      "getUserFailed": "Gagal mengambil informasi pengguna Lark",
+      "userInfoInvalid": "Informasi pengguna dari Lark tidak lengkap",
+      "tokenResponseInvalid": "Respons token Lark tidak valid",
+      "serverError": "Terjadi kesalahan server"
     }
   },
   "nav": {
     "group": {
-      "aftersales": "",
-      "approval": "",
-      "data": "",
-      "system": ""
+      "aftersales": "Purna Jual",
+      "approval": "Approval",
+      "data": "Master Data",
+      "system": "Sistem"
     },
-    "overview": "",
-    "list": "",
-    "detail": "",
-    "approval": "",
-    "products": "",
-    "users": "",
-    "roles": ""
+    "overview": "Ringkasan",
+    "list": "Kasus RMA",
+    "detail": "Detail Kasus RMA",
+    "approval": "Persetujuan RMA",
+    "products": "Produk",
+    "users": "Pengguna",
+    "roles": "Role"
   },
   "page": {
     "title": {
-      "overview": "",
-      "list": "",
-      "detail": "",
-      "products": "",
-      "approval": "",
-      "users": "",
-      "roles": ""
+      "overview": "Ringkasan",
+      "list": "Kasus RMA",
+      "detail": "Detail Kasus RMA",
+      "products": "Produk",
+      "approval": "Persetujuan RMA",
+      "users": "Pengguna",
+      "roles": "Role"
     }
   },
   "overview": {
     "filter": {
-      "startDate": "",
-      "endDate": "",
-      "brand": "",
-      "allBrands": ""
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Selesai",
+      "brand": "Brand",
+      "allBrands": "Semua Brand"
     },
-    "btnReset": "",
-    "btnDownloadTemplate": "",
-    "btnImportSales": "",
+    "btnReset": "Reset",
+    "btnDownloadTemplate": "Unduh Template Penjualan",
+    "btnImportSales": "Impor Data Penjualan",
     "chart": {
-      "reasonTop5": "",
-      "skuTop10": "",
+      "reasonTop5": "Top 5 Alasan Retur",
+      "skuTop10": "Top 10 SKU RMA",
       "label": {
-        "count": "",
-        "times": ""
+        "count": "Qty",
+        "times": "Jumlah RMA"
       },
-      "noData": ""
+      "noData": "Belum ada data"
     },
     "section": {
-      "brandCompare": ""
+      "brandCompare": "Perbandingan per Brand"
     },
     "card": {
-      "total": "",
-      "pending": "",
-      "returnRate": "",
-      "defectRate": ""
+      "total": "Total Kasus RMA",
+      "pending": "Item Menunggu Proses",
+      "returnRate": "Total Return Rate",
+      "defectRate": "Total Defect Rate"
     },
     "metric": {
-      "avgDays": "",
-      "overdue": ""
+      "avgDays": "Rata-rata Hari Proses",
+      "overdue": "Terlambat Diproses (7+ Hari)"
     },
-    "empty": "",
+    "empty": "Belum ada data. Silakan buat kasus RMA atau impor data penjualan terlebih dahulu.",
     "col": {
-      "detailTotal": "",
-      "pending": "",
-      "completed": "",
-      "overdue": "",
-      "avgDays": "",
-      "shipment": "",
-      "sales": "",
-      "returnRate": "",
-      "defectRate": ""
+      "detailTotal": "Total Item",
+      "pending": "Menunggu",
+      "completed": "Selesai",
+      "overdue": "Terlambat",
+      "avgDays": "Rata-rata Hari Proses",
+      "shipment": "Total Pengiriman",
+      "sales": "Total Penjualan",
+      "returnRate": "Return Rate",
+      "defectRate": "Defect Rate"
     },
     "period": {
-      "all": ""
+      "all": "Semua"
     }
   },
   "list": {
-    "title": "",
-    "btnExport": "",
+    "title": "Daftar Kasus RMA",
+    "btnExport": "Ekspor Excel",
     "filter": {
-      "keyword": "",
-      "keywordPlaceholder": "",
-      "brand": "",
-      "allBrands": "",
-      "approvalStatus": "",
-      "allApprovalStatus": "",
-      "processStatus": "",
-      "allProcessStatus": "",
-      "startDate": "",
-      "endDate": ""
+      "keyword": "Kata Kunci",
+      "keywordPlaceholder": "Cari no. pesanan, SKU, brand, atau model...",
+      "brand": "Brand",
+      "allBrands": "Semua Brand",
+      "approvalStatus": "Status Approval",
+      "allApprovalStatus": "Semua Status Approval",
+      "processStatus": "Status Proses",
+      "allProcessStatus": "Semua Status Proses",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Selesai"
     },
-    "btnSearch": "",
-    "btnClear": "",
-    "sectionTitle": "",
+    "btnSearch": "Cari",
+    "btnClear": "Bersihkan",
+    "sectionTitle": "Kasus RMA",
     "mode": {
-      "byRecord": "",
-      "byItem": ""
+      "byRecord": "Per Kasus",
+      "byItem": "Per Item"
     },
-    "btnManual": "",
-    "btnBatchImport": "",
+    "btnManual": "Input Manual",
+    "btnBatchImport": "Impor Massal",
     "batch": {
-      "selected": "",
-      "selectStatus": "",
-      "btnUpdate": "",
-      "btnCancel": ""
+      "selected": "{count} item dipilih",
+      "selectStatus": "Pilih status proses...",
+      "btnUpdate": "Update Massal",
+      "btnCancel": "Batal"
     },
     "col": {
-      "id": "",
-      "approvalStatus": "",
-      "processStatus": "",
-      "date": "",
-      "platform": "",
-      "returnReason": "",
-      "sku": "",
-      "orderNo": "",
-      "qty": "",
-      "description": "",
-      "submitter": "",
-      "updatedAt": "",
-      "actions": ""
+      "id": "ID",
+      "approvalStatus": "Status Approval",
+      "processStatus": "Status Proses",
+      "date": "Tanggal RMA",
+      "platform": "Platform",
+      "returnReason": "Alasan Retur",
+      "sku": "SKU",
+      "orderNo": "No. Pesanan",
+      "qty": "Qty",
+      "description": "Deskripsi Masalah",
+      "submitter": "Diajukan oleh",
+      "updatedAt": "Diperbarui pada",
+      "actions": "Aksi"
     },
     "empty": {
-      "noRecords": "",
-      "noMatch": "",
-      "createFirst": ""
+      "noRecords": "Belum ada kasus RMA",
+      "noMatch": "Tidak ada hasil yang cocok",
+      "createFirst": "Buat Kasus Pertama"
     },
     "action": {
-      "view": "",
-      "approve": "",
-      "delete": ""
+      "view": "Lihat",
+      "approve": "Approve",
+      "delete": "Hapus"
     },
     "pagination": {
-      "perPage": "",
-      "total": "",
-      "first": "",
-      "prev": "",
-      "next": "",
-      "last": ""
+      "perPage": "/ halaman",
+      "total": "Total {count}",
+      "first": "Awal",
+      "prev": "Sebelumnya",
+      "next": "Berikutnya",
+      "last": "Akhir"
     }
   },
   "status": {
-    "draft": "",
-    "pendingLevel1": "",
-    "level1Approved": "",
-    "pendingLevel2": "",
-    "level2Approved": "",
-    "pendingLevel3": "",
-    "approved": "",
-    "rejected": ""
+    "draft": "Draft",
+    "pendingLevel1": "Menunggu Approval Level 1",
+    "level1Approved": "Level 1 Disetujui",
+    "pendingLevel2": "Menunggu Approval Level 2",
+    "level2Approved": "Level 2 Disetujui",
+    "pendingLevel3": "Menunggu Approval Level 3",
+    "approved": "Disetujui",
+    "rejected": "Ditolak"
   },
   "process": {
-    "pendingErp": "",
-    "pendingColorBox": "",
-    "pendingParts": "",
-    "pendingRma": "",
-    "pendingScrap": "",
-    "completed": ""
+    "pendingErp": "Menunggu Penerimaan ERP",
+    "pendingColorBox": "Menunggu Ganti Box",
+    "pendingParts": "Menunggu Kelengkapan Aksesori",
+    "pendingRma": "Menunggu RMA",
+    "pendingScrap": "Menunggu Scrap",
+    "completed": "Selesai"
   },
   "form": {
-    "titleNew": "",
+    "titleNew": "Buat Kasus RMA",
     "section": {
-      "basic": "",
-      "details": "",
-      "approvers": ""
+      "basic": "Informasi Dasar",
+      "details": "Item RMA",
+      "approvers": "Pengaturan Approver"
     },
     "hint": {
-      "minOneItem": "",
-      "approverRule": ""
+      "minOneItem": "(Tambahkan minimal satu item)",
+      "approverRule": "Approver harus memiliki izin sesuai level approval. Satu orang hanya boleh ditetapkan pada satu level."
     },
     "col": {
-      "platform": "",
-      "sku": "",
-      "orderNo": "",
-      "qty": "",
-      "returnReason": "",
-      "description": "",
-      "actions": ""
+      "platform": "Platform",
+      "sku": "SKU",
+      "orderNo": "No. Pesanan",
+      "qty": "Qty",
+      "returnReason": "Alasan Retur",
+      "description": "Deskripsi Masalah / Catatan",
+      "actions": "Aksi"
     },
-    "btnAddRow": "",
-    "totalQty": "",
+    "btnAddRow": "+ Tambah Item",
+    "totalQty": "Total Qty:",
     "label": {
-      "date": "",
-      "approverL1": "",
-      "approverL2": "",
-      "approverL3": ""
+      "date": "Tanggal RMA",
+      "approverL1": "Approver Level 1",
+      "approverL2": "Approver Level 2",
+      "approverL3": "Approver Level 3"
     },
     "option": {
-      "pleaseSelect": ""
+      "pleaseSelect": "Pilih"
     },
-    "btnSubmit": "",
-    "btnSaveDraft": "",
-    "btnCancel": "",
-    "skuPlaceholder": "",
-    "orderPlaceholder": "",
-    "descPlaceholder": ""
+    "btnSubmit": "Ajukan Approval",
+    "btnSaveDraft": "Simpan Draft",
+    "btnCancel": "Batal",
+    "skuPlaceholder": "Masukkan SKU...",
+    "orderPlaceholder": "No. Pesanan",
+    "descPlaceholder": "Deskripsi Masalah / Catatan"
   },
   "returnReason": {
-    "resaleable": "",
-    "colorBoxDamage": "",
-    "missingParts": "",
-    "hardwareFault": "",
-    "scrap": ""
+    "resaleable": "Bisa Dijual Kembali",
+    "colorBoxDamage": "Box Rusak",
+    "missingParts": "Aksesori Tidak Lengkap",
+    "hardwareFault": "Masalah Hardware",
+    "scrap": "Scrap"
   },
   "detail": {
-    "btnBack": "",
-    "titlePrefix": "",
+    "btnBack": "Kembali ke Daftar",
+    "titlePrefix": "Kasus RMA #",
     "section": {
-      "basic": "",
-      "items": "",
-      "approvalHistory": "",
-      "approvalFlow": "",
-      "time": ""
+      "basic": "Informasi Dasar",
+      "items": "Item RMA",
+      "approvalHistory": "Riwayat Approval",
+      "approvalFlow": "Alur Approval",
+      "time": "Info Waktu"
     },
     "label": {
-      "date": "",
-      "status": "",
-      "submitter": "",
-      "brand": "",
-      "totalQty": "",
-      "initiator": "",
-      "level1": "",
-      "level2": "",
-      "level3": "",
-      "returnDate": "",
-      "createdAt": "",
-      "updatedAt": ""
+      "date": "Tanggal RMA",
+      "status": "Status Approval",
+      "submitter": "Diajukan oleh",
+      "brand": "Brand",
+      "totalQty": "Total Qty",
+      "initiator": "Pemohon",
+      "level1": "Level 1",
+      "level2": "Level 2",
+      "level3": "Level 3",
+      "returnDate": "Tanggal Stock-In Retur:",
+      "createdAt": "Dibuat pada",
+      "updatedAt": "Update Terakhir"
     },
     "col": {
-      "index": "",
-      "platform": "",
-      "sku": "",
-      "orderNo": "",
-      "qty": "",
-      "returnReason": "",
-      "processStatus": "",
-      "desc": ""
+      "index": "#",
+      "platform": "Platform",
+      "sku": "SKU",
+      "orderNo": "No. Pesanan",
+      "qty": "Qty",
+      "returnReason": "Alasan Retur",
+      "processStatus": "Status Proses",
+      "desc": "Deskripsi Masalah / Catatan"
     },
-    "notSet": "",
-    "approved": "",
-    "rejected": ""
+    "notSet": "Belum Diatur",
+    "approved": "Disetujui",
+    "rejected": "Ditolak"
   },
   "approval": {
-    "title": "",
+    "title": "Persetujuan RMA",
     "filter": {
-      "keyword": "",
-      "keywordPlaceholder": "",
-      "scope": "",
-      "pending": "",
-      "done": "",
-      "all": ""
+      "keyword": "Kata Kunci",
+      "keywordPlaceholder": "Cari no. pesanan, SKU, brand, atau model...",
+      "scope": "Scope",
+      "pending": "Menunggu Approval Saya",
+      "done": "Sudah Diproses",
+      "all": "Semua"
     },
-    "btnClear": "",
-    "empty": "",
+    "btnClear": "Bersihkan",
+    "empty": "Belum ada riwayat approval",
     "col": {
-      "createdAt": "",
-      "initiator": "",
-      "approver": "",
-      "status": "",
-      "processStatus": "",
-      "date": "",
-      "platform": "",
-      "totalQty": "",
-      "currentLevel": "",
-      "actions": ""
+      "createdAt": "Diajukan pada",
+      "initiator": "Pemohon",
+      "approver": "Approver",
+      "status": "Status Approval",
+      "processStatus": "Status Proses",
+      "date": "Tanggal RMA",
+      "platform": "Platform",
+      "totalQty": "Total Qty",
+      "currentLevel": "Level Saat Ini",
+      "actions": "Aksi"
     },
-    "levelPrefix": ""
+    "levelPrefix": "Level {level}"
   },
   "approvalModal": {
-    "title": "",
+    "title": "Persetujuan RMA",
     "section": {
-      "history": "",
-      "operation": ""
+      "history": "Riwayat Approval",
+      "operation": "Aksi Approval"
     },
     "label": {
-      "returnDate": "",
-      "comment": "",
-      "attachments": "",
-      "currentStatus": "",
-      "date": "",
-      "submitter": "",
-      "brand": "",
-      "totalQty": ""
+      "returnDate": "Tanggal Stock-In Retur",
+      "comment": "Komentar Approval",
+      "attachments": "Lampiran",
+      "currentStatus": "Status Approval Saat Ini",
+      "date": "Tanggal RMA",
+      "submitter": "Diajukan oleh",
+      "brand": "Brand",
+      "totalQty": "Total Qty"
     },
-    "commentPlaceholder": "",
-    "attachmentHint": "",
-    "storageWarning": "",
-    "btnApprove": "",
-    "btnReject": "",
-    "btnCancel": "",
+    "commentPlaceholder": "Masukkan komentar approval...",
+    "attachmentHint": "Klik untuk memilih file atau paste gambar di sini (Ctrl+V)",
+    "storageWarning": "Catatan: Gambar disimpan sebagai Base64 di browser. Sebaiknya total ukuran di bawah 2 MB.",
+    "btnApprove": "Setujui",
+    "btnReject": "Tolak",
+    "btnCancel": "Batal",
     "col": {
-      "index": "",
-      "platform": "",
-      "sku": "",
-      "orderNo": "",
-      "qty": "",
-      "returnReason": "",
-      "processStatus": "",
-      "erpScreenshot": "",
-      "actions": ""
+      "index": "#",
+      "platform": "Platform",
+      "sku": "SKU",
+      "orderNo": "No. Pesanan",
+      "qty": "Qty",
+      "returnReason": "Alasan Retur",
+      "processStatus": "Status Proses",
+      "erpScreenshot": "Screenshot Stock-In ERP",
+      "actions": "Aksi"
     },
-    "btnUploadScreenshot": "",
-    "btnMarkProcessed": "",
-    "flowPrefix": "",
-    "noHistory": ""
+    "btnUploadScreenshot": "Upload Screenshot",
+    "btnMarkProcessed": "Tandai Selesai",
+    "flowPrefix": "Alur Approval:",
+    "noHistory": "Belum ada riwayat approval"
   },
   "products": {
-    "title": "",
-    "btnDownloadTemplate": "",
-    "btnBatchImport": "",
-    "btnBatchExport": "",
-    "btnNew": "",
+    "title": "Produk",
+    "btnDownloadTemplate": "Unduh Template Impor",
+    "btnBatchImport": "Impor Massal",
+    "btnBatchExport": "Ekspor Massal",
+    "btnNew": "+ Produk Baru",
     "batch": {
-      "selected": "",
-      "btnDelete": "",
-      "btnCancel": ""
+      "selected": "{count} dipilih",
+      "btnDelete": "Hapus Massal",
+      "btnCancel": "Batalkan Pilihan"
     },
     "filter": {
-      "keyword": "",
-      "keywordPlaceholder": "",
-      "brand": "",
-      "allBrands": "",
-      "country": "",
-      "allCountries": "",
-      "status": "",
-      "statusAll": "",
-      "statusActive": "",
-      "statusDisabled": ""
+      "keyword": "Kata Kunci",
+      "keywordPlaceholder": "Cari SKU, brand, model, atau kategori...",
+      "brand": "Brand",
+      "allBrands": "Semua Brand",
+      "country": "Negara",
+      "allCountries": "Semua Negara",
+      "status": "Status",
+      "statusAll": "Semua",
+      "statusActive": "Aktif",
+      "statusDisabled": "Nonaktif"
     },
-    "btnSearch": "",
-    "btnClear": "",
+    "btnSearch": "Cari",
+    "btnClear": "Bersihkan",
     "col": {
-      "skuCode": "",
-      "brand": "",
-      "model": "",
-      "category": "",
-      "country": "",
-      "eanCode": "",
-      "status": "",
-      "actions": ""
+      "skuCode": "Kode SKU",
+      "brand": "Brand",
+      "model": "Model",
+      "category": "Kategori",
+      "country": "Negara",
+      "eanCode": "Kode EAN",
+      "status": "Status",
+      "actions": "Aksi"
     },
-    "empty": "",
-    "emptyCreateFirst": "",
+    "empty": "Belum ada produk",
+    "emptyCreateFirst": "Buat Produk Pertama",
     "action": {
-      "edit": "",
-      "delete": ""
+      "edit": "Edit",
+      "delete": "Hapus"
     }
   },
   "productModal": {
-    "titleNew": "",
-    "titleEdit": "",
+    "titleNew": "Produk Baru",
+    "titleEdit": "Edit Produk",
     "label": {
-      "country": "",
-      "brand": "",
-      "skuCode": "",
-      "model": "",
-      "category": "",
-      "eanCode": "",
-      "status": ""
+      "country": "Negara",
+      "brand": "Brand",
+      "skuCode": "Kode SKU",
+      "model": "Model",
+      "category": "Kategori",
+      "eanCode": "Kode EAN",
+      "status": "Status"
     },
-    "countryPlaceholder": "",
-    "brandPlaceholder": "",
-    "skuPlaceholder": "",
-    "modelPlaceholder": "",
-    "categoryPlaceholder": "",
-    "eanPlaceholder": "",
-    "statusActive": "",
-    "statusDisabled": "",
-    "btnSave": "",
-    "btnCancel": ""
+    "countryPlaceholder": "cth: China",
+    "brandPlaceholder": "cth: Apple",
+    "skuPlaceholder": "cth: IPHONE15-PRO-128",
+    "modelPlaceholder": "cth: iPhone 15 Pro",
+    "categoryPlaceholder": "cth: Smartphone",
+    "eanPlaceholder": "cth: 195949015726",
+    "statusActive": "Aktif",
+    "statusDisabled": "Nonaktif",
+    "btnSave": "Simpan",
+    "btnCancel": "Batal"
   },
   "productImport": {
-    "title": "",
-    "uploadHint": "",
-    "fileFormat": "",
-    "btnDownloadTemplate": "",
-    "pendingPrefix": "",
-    "btnStart": "",
-    "btnClose": ""
+    "title": "Impor Produk Massal",
+    "uploadHint": "Klik untuk upload atau tarik file ke sini",
+    "fileFormat": "Mendukung file .xlsx / .csv",
+    "btnDownloadTemplate": "Unduh Template",
+    "pendingPrefix": "{count} produk siap diimpor",
+    "btnStart": "Mulai Impor",
+    "btnClose": "Tutup"
   },
   "product": {
     "template": {
-      "sheetName": "",
+      "sheetName": "Template Impor Produk",
       "col": {
-        "skuCode": "",
-        "productName": "",
-        "brand": "",
-        "model": "",
-        "category": "",
-        "country": "",
-        "eanCode": "",
-        "status": "",
-        "price": ""
+        "skuCode": "Kode SKU",
+        "productName": "Nama Produk",
+        "brand": "Brand",
+        "model": "Model",
+        "category": "Kategori",
+        "country": "Negara",
+        "eanCode": "Kode EAN",
+        "status": "Status",
+        "price": "Harga"
       }
     },
     "export": {
-      "sheetName": "",
-      "statusActive": "",
-      "statusDisabled": ""
+      "sheetName": "Daftar Produk",
+      "statusActive": "Aktif",
+      "statusDisabled": "Nonaktif"
     }
   },
   "export": {
     "col": {
-      "id": "",
-      "date": "",
-      "platform": "",
-      "brand": "",
-      "sku": "",
-      "model": "",
-      "qty": "",
-      "orderNo": "",
-      "returnReason": "",
-      "description": "",
-      "approvalStatus": "",
-      "processStatus": "",
-      "submitter": "",
-      "createdAt": "",
-      "updatedAt": ""
+      "id": "No. Kasus RMA",
+      "date": "Tanggal RMA",
+      "platform": "Platform",
+      "brand": "Brand",
+      "sku": "SKU",
+      "model": "Model",
+      "qty": "Qty",
+      "orderNo": "No. Pesanan",
+      "returnReason": "Jenis Masalah",
+      "description": "Deskripsi Masalah",
+      "approvalStatus": "Status Approval",
+      "processStatus": "Status Proses",
+      "submitter": "Diajukan oleh",
+      "createdAt": "Dibuat pada",
+      "updatedAt": "Diperbarui pada"
     },
     "sheet": {
-      "detail": "",
-      "record": ""
+      "detail": "Item RMA",
+      "record": "Kasus RMA"
     }
   },
   "importRecord": {
-    "title": "",
+    "title": "Impor Kasus RMA Massal",
     "guide": {
-      "title": "",
-      "csvFormat": "",
-      "requiredCols": "",
-      "optionalCols": "",
-      "draftNote": ""
+      "title": "Panduan Impor",
+      "csvFormat": "Mendukung file CSV (encoding UTF-8)",
+      "requiredCols": "Kolom wajib: Tanggal RMA, Platform, SKU, Qty",
+      "optionalCols": "Kolom opsional: No. Pesanan, Alasan Retur, Deskripsi Masalah / Catatan",
+      "draftNote": "Data yang diimpor akan disimpan sebagai draft. Silakan edit dan ajukan approval dari daftar."
     },
-    "btnDownloadTemplate": "",
-    "dropHint": "",
-    "fileFormat": "",
-    "btnClose": ""
+    "btnDownloadTemplate": "Unduh Template Impor",
+    "dropHint": "Klik untuk memilih file atau tarik file CSV ke sini",
+    "fileFormat": "Mendukung file .csv",
+    "btnClose": "Tutup"
   },
   "users": {
-    "title": "",
-    "btnNew": "",
+    "title": "Pengguna",
+    "btnNew": "+ Pengguna Baru",
     "col": {
-      "username": "",
-      "name": "",
-      "role": "",
-      "status": "",
-      "feishuBind": "",
-      "createdAt": "",
-      "actions": ""
+      "username": "Username",
+      "name": "Nama",
+      "role": "Peran",
+      "status": "Status",
+      "feishuBind": "Binding Lark",
+      "createdAt": "Dibuat pada",
+      "actions": "Aksi"
     },
-    "empty": "",
+    "empty": "Belum ada pengguna",
     "feishu": {
-      "bound": "",
-      "unbound": ""
+      "bound": "Sudah Terhubung",
+      "unbound": "Belum Terhubung"
     },
     "action": {
-      "edit": "",
-      "delete": ""
+      "edit": "Edit",
+      "delete": "Hapus"
     }
   },
   "userModal": {
-    "titleNew": "",
-    "titleEdit": "",
+    "titleNew": "Pengguna Baru",
+    "titleEdit": "Edit Pengguna",
     "label": {
-      "feishuUser": "",
-      "name": "",
-      "password": "",
-      "role": "",
-      "status": "",
-      "feishuUserLabel": ""
+      "feishuUser": "Pengguna Lark",
+      "name": "Nama",
+      "password": "Password",
+      "role": "Peran",
+      "status": "Status",
+      "feishuUserLabel": "Pengguna Lark"
     },
-    "feishuPlaceholder": "",
-    "namePlaceholder": "",
-    "passwordHint": "",
-    "statusActive": "",
-    "statusDisabled": "",
-    "btnSave": "",
-    "btnCancel": "",
-    "editModeHint": "",
-    "searchLoading": "",
-    "searchEmpty": "",
-    "searchFailed": "",
-    "searchPermHint": ""
+    "feishuPlaceholder": "Cari anggota Lark berdasarkan nama, nama Inggris, atau email...",
+    "namePlaceholder": "Nama Tampilan",
+    "passwordHint": "Wajib untuk pengguna baru; kosongkan saat edit jika tidak ingin mengubah",
+    "statusActive": "Aktif",
+    "statusDisabled": "Nonaktif",
+    "btnSave": "Simpan",
+    "btnCancel": "Batal",
+    "editModeHint": "Pengguna Lark terhubung (tidak dapat diubah)",
+    "searchLoading": "Mencari...",
+    "searchEmpty": "Pengguna Lark tidak ditemukan",
+    "searchFailed": "Pencarian gagal. Periksa status integrasi Lark.",
+    "searchPermHint": "Aktifkan izin Kontak yang diperlukan di Lark Developer Console."
   },
   "roles": {
-    "title": "",
-    "btnNew": "",
+    "title": "Peran",
+    "btnNew": "+ Peran Baru",
     "col": {
-      "name": "",
-      "description": "",
-      "permissions": "",
-      "userCount": "",
-      "createdAt": "",
-      "actions": ""
+      "name": "Nama Role",
+      "description": "Deskripsi Role",
+      "permissions": "Izin",
+      "userCount": "Jumlah Pengguna",
+      "createdAt": "Dibuat pada",
+      "actions": "Aksi"
     },
-    "empty": "",
+    "empty": "Belum ada role",
     "action": {
-      "edit": "",
-      "delete": ""
+      "edit": "Edit",
+      "delete": "Hapus"
     }
   },
   "roleModal": {
-    "titleNew": "",
-    "titleEdit": "",
+    "titleNew": "Peran Baru",
+    "titleEdit": "Edit Peran",
     "label": {
-      "name": "",
-      "desc": "",
-      "permissions": ""
+      "name": "Nama Peran",
+      "desc": "Deskripsi Peran",
+      "permissions": "Pengaturan Izin"
     },
-    "namePlaceholder": "",
-    "descPlaceholder": "",
-    "btnSave": "",
-    "btnCancel": ""
+    "namePlaceholder": "cth: Operator",
+    "descPlaceholder": "Jelaskan tanggung jawab role ini",
+    "btnSave": "Simpan",
+    "btnCancel": "Batal"
   },
   "perm": {
     "recordView": {
-      "label": "",
-      "desc": ""
+      "label": "Lihat Kasus RMA",
+      "desc": "Lihat dashboard dan daftar RMA"
     },
     "recordCreate": {
-      "label": "",
-      "desc": ""
+      "label": "Buat Kasus RMA",
+      "desc": "Buat kasus RMA"
     },
     "recordEdit": {
-      "label": "",
-      "desc": ""
+      "label": "Edit Kasus RMA",
+      "desc": "Ubah kasus RMA"
     },
     "recordDelete": {
-      "label": "",
-      "desc": ""
+      "label": "Hapus Kasus RMA",
+      "desc": "Hapus Kasus RMA"
     },
     "recordImport": {
-      "label": "",
-      "desc": ""
+      "label": "Impor Kasus RMA",
+      "desc": "Impor data RMA secara massal"
     },
     "recordExport": {
-      "label": "",
-      "desc": ""
+      "label": "Ekspor Kasus RMA",
+      "desc": "Ekspor Excel untuk analisis pabrik"
     },
     "productView": {
-      "label": "",
-      "desc": ""
+      "label": "Lihat Produk",
+      "desc": "Lihat katalog produk"
     },
     "productCreate": {
-      "label": "",
-      "desc": ""
+      "label": "Tambah Produk",
+      "desc": "Buat data produk"
     },
     "productEdit": {
-      "label": "",
-      "desc": ""
+      "label": "Edit Produk",
+      "desc": "Ubah data produk"
     },
     "productDelete": {
-      "label": "",
-      "desc": ""
+      "label": "Hapus Produk",
+      "desc": "Hapus Produk"
     },
     "productImport": {
-      "label": "",
-      "desc": ""
+      "label": "Impor Produk",
+      "desc": "Impor data produk secara massal"
     },
     "productExport": {
-      "label": "",
-      "desc": ""
+      "label": "Ekspor Produk",
+      "desc": "Ekspor produk ke Excel"
     },
     "approvalLevel1": {
-      "label": "",
-      "desc": ""
+      "label": "Approval Level 1",
+      "desc": "Memproses approval sebagai approver Level 1"
     },
     "approvalLevel2": {
-      "label": "",
-      "desc": ""
+      "label": "Approval Level 2",
+      "desc": "Memproses approval sebagai approver Level 2"
     },
     "approvalLevel3": {
-      "label": "",
-      "desc": ""
+      "label": "Approval Level 3",
+      "desc": "Memproses approval sebagai approver Level 3"
     },
     "userManage": {
-      "label": "",
-      "desc": ""
+      "label": "Pengguna",
+      "desc": "Mengelola pengguna sistem"
     },
     "roleManage": {
-      "label": "",
-      "desc": ""
+      "label": "Role",
+      "desc": "Mengelola role dan izin"
     },
     "systemConfig": {
-      "label": "",
-      "desc": ""
+      "label": "Pengaturan Sistem",
+      "desc": "Mengubah pengaturan sistem"
     }
   },
   "flash": {
-    "noPermission": "",
-    "noPagePermission": "",
-    "welcome": "",
-    "adminLogin": "",
-    "submitSuccess": "",
-    "draftSaved": "",
-    "approved": "",
-    "rejected": "",
-    "recordDeleted": "",
-    "userCreated": "",
-    "userUpdated": "",
-    "userDeleted": "",
-    "productCreated": "",
-    "productUpdated": "",
-    "productDeleted": "",
-    "roleCreated": "",
-    "roleUpdated": "",
-    "roleDeleted": "",
-    "batchProcessUpdated": "",
-    "markProcessed": "",
-    "exportSuccess": "",
-    "batchDeleteSuccess": "",
-    "templateDownloaded": "",
-    "importSuccess": "",
-    "importComplete": "",
-    "noExportData": ""
+    "noPermission": "Anda tidak memiliki izin untuk melakukan aksi ini",
+    "noPagePermission": "Anda tidak memiliki akses ke halaman ini",
+    "welcome": "Selamat datang, {name}!",
+    "adminLogin": "Admin {name} sudah masuk",
+    "submitSuccess": "Sudah diajukan. Menunggu approval Level 1.",
+    "draftSaved": "Draft disimpan",
+    "approved": "Disetujui",
+    "rejected": "Ditolak",
+    "recordDeleted": "Data dihapus",
+    "userCreated": "Pengguna dibuat",
+    "userUpdated": "Pengguna diperbarui",
+    "userDeleted": "Pengguna dihapus",
+    "productCreated": "Produk dibuat",
+    "productUpdated": "Produk diperbarui",
+    "productDeleted": "Produk dihapus",
+    "roleCreated": "Role dibuat",
+    "roleUpdated": "Role diperbarui",
+    "roleDeleted": "Role dihapus",
+    "batchProcessUpdated": "Status proses untuk {count} item berhasil diperbarui",
+    "markProcessed": "Ditandai selesai",
+    "exportSuccess": "Berhasil mengekspor {count} data",
+    "batchDeleteSuccess": "Berhasil menghapus {count} produk",
+    "templateDownloaded": "Template diunduh",
+    "importSuccess": "Impor selesai: {added} ditambah / {updated} diperbarui / {deleted} dihapus / {failed} gagal",
+    "importComplete": "Membaca {total} baris. Berhasil mengimpor {imported} draft.",
+    "noExportData": "Tidak ada data untuk diekspor dengan filter saat ini"
   },
   "validation": {
-    "selectDate": "",
-    "minOneItem": "",
-    "rowPlatform": "",
-    "rowSku": "",
-    "rowQty": "",
-    "rowReturnReason": "",
-    "rowDesc": "",
-    "selectApprovers": "",
-    "approversUnique": "",
-    "fillDate": "",
-    "enterComment": "",
-    "brandRequired": "",
-    "skuRequired": "",
-    "skuDuplicate": "",
-    "usernameNameRequired": "",
-    "newUserPassword": "",
-    "usernameDuplicate": "",
-    "feishuDuplicate": "",
-    "selectFeishuUser": "",
-    "roleNameRequired": "",
-    "selectProcessStatus": "",
-    "selectOneItem": ""
+    "selectDate": "Pilih tanggal RMA",
+    "minOneItem": "Tambahkan minimal satu item RMA",
+    "rowPlatform": "Baris {row}: pilih platform",
+    "rowSku": "Baris {row}: isi SKU",
+    "rowQty": "Baris {row}: qty harus lebih dari 0",
+    "rowReturnReason": "Baris {row}: pilih alasan retur",
+    "rowDesc": "Baris {row}: isi deskripsi masalah",
+    "selectApprovers": "Pilih tiga approver",
+    "approversUnique": "Tiga approver tidak boleh sama",
+    "fillDate": "Isi minimal tanggal RMA",
+    "enterComment": "Masukkan komentar approval",
+    "brandRequired": "Brand wajib diisi",
+    "skuRequired": "Kode SKU wajib diisi",
+    "skuDuplicate": "Kode SKU sudah ada",
+    "usernameNameRequired": "Username dan nama wajib diisi",
+    "newUserPassword": "Password wajib diisi untuk pengguna baru",
+    "usernameDuplicate": "Username sudah ada",
+    "feishuDuplicate": "Pengguna Lark ini sudah terhubung. Pilih pengguna lain.",
+    "selectFeishuUser": "Pilih pengguna Lark dari hasil pencarian",
+    "roleNameRequired": "Nama role wajib diisi",
+    "selectProcessStatus": "Pilih status proses yang ingin diterapkan",
+    "selectOneItem": "Pilih minimal satu item"
   },
   "confirm": {
-    "deleteRecord": "",
-    "deleteProduct": "",
-    "deleteUser": "",
-    "deleteRole": "",
-    "batchDeleteProducts": "",
-    "batchDeleteIrreversible": "",
-    "btnCancel": "",
-    "btnOk": "",
+    "deleteRecord": "Hapus data ini? Aksi ini tidak dapat dibatalkan.",
+    "deleteProduct": "Hapus produk ini?",
+    "deleteUser": "Hapus pengguna ini?",
+    "deleteRole": "Hapus role ini?",
+    "batchDeleteProducts": "Hapus {count} produk yang dipilih?",
+    "batchDeleteIrreversible": "Aksi ini tidak dapat dibatalkan!",
+    "btnCancel": "Batal",
+    "btnOk": "Hapus",
     "title": {
-      "batchDelete": ""
+      "batchDelete": "Konfirmasi Hapus Massal"
     }
   },
   "error": {
-    "cannotDeleteAdmin": "",
-    "roleHasUsers": "",
-    "productReferenced": "",
-    "approvalNotOwner": "",
-    "approvalNoPerm": "",
-    "onlyCurrentApprover": "",
-    "onlyErpStatus": "",
-    "onlyCurrentApproverUpload": "",
-    "imageSize": "",
-    "notImage": "",
-    "pasteImageSize": "",
-    "selectCsv": "",
-    "fileEmpty": "",
-    "missingRequiredCols": "",
-    "fileEmptyNoHeader": "",
-    "noValidData": "",
-    "fileParseFailed": "",
-    "excelLoadFailed": "",
-    "columnMismatch": "",
-    "formatXlsxCsvOnly": ""
+    "cannotDeleteAdmin": "Super admin tidak dapat dihapus",
+    "roleHasUsers": "Role ini masih memiliki pengguna dan tidak dapat dihapus",
+    "productReferenced": "Produk ini digunakan oleh {count} data RMA dan tidak dapat dihapus",
+    "approvalNotOwner": "Anda bukan approver untuk level ini",
+    "approvalNoPerm": "Anda tidak memiliki izin approval untuk level ini",
+    "onlyCurrentApprover": "Hanya approver level saat ini yang dapat memproses approval ini",
+    "onlyErpStatus": "Hanya item berstatus \"Menunggu Stock-In ERP\" yang dapat ditandai selesai",
+    "onlyCurrentApproverUpload": "Hanya approver level saat ini yang dapat upload screenshot proses",
+    "imageSize": "Gambar melebihi 2 MB. Kompres sebelum upload.",
+    "notImage": "File {filename} bukan gambar dan dilewati",
+    "pasteImageSize": "Gambar yang ditempel melebihi 2 MB dan dilewati",
+    "selectCsv": "Pilih file CSV",
+    "fileEmpty": "File kosong atau formatnya salah",
+    "missingRequiredCols": "Kolom wajib tidak lengkap: Tanggal RMA, Platform, SKU, Qty. Header saat ini: {headers}",
+    "fileEmptyNoHeader": "File kosong atau tidak memiliki header",
+    "noValidData": "Tidak ada data produk valid yang terbaca",
+    "fileParseFailed": "Gagal membaca file: {message}",
+    "excelLoadFailed": "Library Excel gagal dimuat. Refresh halaman dan coba lagi.",
+    "columnMismatch": "Nama kolom tidak sesuai. Gunakan format template yang diunduh.",
+    "formatXlsxCsvOnly": "Hanya mendukung file .xlsx / .csv"
   },
   "sales": {
     "template": {
-      "sheet": "",
+      "sheet": "Template Data Penjualan",
       "col": {
-        "brand": "",
-        "month": "",
-        "onlineShipment": "",
-        "onlineSales": "",
-        "offlineShipment": "",
-        "offlineSales": ""
+        "brand": "Brand",
+        "month": "Bulan",
+        "onlineShipment": "Pengiriman Online",
+        "onlineSales": "Penjualan Online",
+        "offlineShipment": "Pengiriman Offline",
+        "offlineSales": "Penjualan Offline"
       }
     }
   },
   "default": {
-    "roleAdmin": "",
-    "roleAdminDesc": "",
-    "roleOperator": "",
-    "roleOperatorDesc": "",
-    "roleViewer": "",
-    "roleViewerDesc": "",
-    "userAdmin": "",
-    "userOperator": "",
-    "userViewer": "",
-    "feishuUser": ""
+    "roleAdmin": "Super Admin",
+    "roleAdminDesc": "Memiliki akses penuh untuk administrasi sistem",
+    "roleOperator": "Operator",
+    "roleOperatorDesc": "Akses operasional, termasuk approval dan impor/ekspor",
+    "roleViewer": "User Biasa",
+    "roleViewerDesc": "Akses lihat dan buat",
+    "userAdmin": "Super Admin",
+    "userOperator": "Operator",
+    "userViewer": "User Biasa",
+    "feishuUser": "Pengguna Lark"
   },
   "server": {
-    "appName": "",
+    "appName": "Portal Data Purna Jual",
     "error": {
-      "notLoggedIn": "",
-      "noPermission": "",
-      "cannotDeleteAdmin": "",
-      "userNotFound": "",
-      "recordNotFound": "",
-      "productNotFound": "",
-      "usernameNameRequired": "",
-      "usernameExists": "",
-      "noFieldsToUpdate": "",
-      "provideProductIds": "",
-      "feishuNotConfigured": "",
-      "missingParams": "",
-      "feishuTokenFailed": "",
-      "databaseNotConfigured": ""
+      "notLoggedIn": "Belum login",
+      "noPermission": "Tidak memiliki izin untuk aksi ini",
+      "cannotDeleteAdmin": "Super admin tidak dapat dihapus",
+      "userNotFound": "Pengguna tidak ditemukan",
+      "recordNotFound": "Data tidak ditemukan",
+      "productNotFound": "Produk tidak ditemukan",
+      "usernameNameRequired": "Username dan nama wajib diisi",
+      "usernameExists": "Username sudah ada",
+      "noFieldsToUpdate": "Tidak ada field yang perlu diupdate",
+      "provideProductIds": "Berikan daftar ID produk yang akan dihapus",
+      "feishuNotConfigured": "Lark belum dikonfigurasi",
+      "missingParams": "Parameter wajib tidak lengkap",
+      "feishuTokenFailed": "Gagal mendapatkan token Lark",
+      "databaseNotConfigured": "Database belum dikonfigurasi"
     },
-    "skuEmpty": "",
-    "brandEmpty": "",
-    "skuNotFoundDelete": "",
-    "feishuPermHint": "",
-    "notifyMock": "",
-    "notifySent": "",
-    "notifyFailed": "",
-    "notifyUnbound": ""
+    "skuEmpty": "Kode SKU kosong",
+    "brandEmpty": "Brand kosong",
+    "skuNotFoundDelete": "SKU yang akan dihapus/dinonaktifkan tidak ditemukan",
+    "feishuPermHint": "Aplikasi Lark belum memiliki izin Kontak. Di Lark Developer Console > Permissions, aktifkan \"Get basic contact information\" atau \"Access contacts as app\".",
+    "notifyMock": "Mode mock: notifikasi tercatat (digunakan saat Lark belum dikonfigurasi)",
+    "notifySent": "Sudah memberi notifikasi ke {name}",
+    "notifyFailed": "Gagal mengirim notifikasi",
+    "notifyUnbound": "Akun Lark belum terhubung"
   },
   "feishuCard": {
-    "title": "",
-    "recordId": "",
-    "submitter": "",
-    "date": "",
-    "totalQty": "",
-    "skuDetail": "",
-    "processSummary": "",
-    "moreItems": "",
-    "unknown": "",
-    "btnView": ""
+    "title": "Notifikasi Approval RMA",
+    "recordId": "No. Kasus RMA",
+    "submitter": "Diajukan oleh",
+    "date": "Tanggal RMA",
+    "totalQty": "Total Qty",
+    "skuDetail": "Detail SKU",
+    "processSummary": "Distribusi Status Proses",
+    "moreItems": "... total {count} item",
+    "unknown": "Tidak diketahui",
+    "btnView": "Lihat / Approve"
   }
 }

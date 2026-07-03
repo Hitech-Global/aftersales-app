@@ -579,11 +579,11 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                 <fieldset class="form-section">
                   <legend>审批人设置</legend>
                   <div class="form-grid">
-                    <div class="form-group"><label>一级审批人 <span class="required">*</span></label><select id="f-approver-level1" required onchange="updateApproverOptions()"><option value="">请选择</option></select></div>
-                    <div class="form-group"><label>二级审批人 <span class="required">*</span></label><select id="f-approver-level2" required onchange="updateApproverOptions()"><option value="">请选择</option></select></div>
-                    <div class="form-group"><label>三级审批人 <span class="required">*</span></label><select id="f-approver-level3" required onchange="updateApproverOptions()"><option value="">请选择</option></select></div>
+                    <div class="form-group"><label>一级审批人</label><select id="f-approver-level1"><option value="">请选择（可选）</option></select></div>
+                    <div class="form-group"><label>二级审批人</label><select id="f-approver-level2"><option value="">请选择（可选）</option></select></div>
+                    <div class="form-group"><label>三级审批人</label><select id="f-approver-level3"><option value="">请选择（可选）</option></select></div>
                   </div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px">* 审批人需具有对应审批级别的权限，同一人仅能担任一个审批级别。</div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px">至少选择一位审批人即可提交。审批将按填写顺序依次进行，各级可为同一人。</div>
                 </fieldset>
                 <div class="form-actions" style="margin-top:8px">
                   <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn">&#x1F4E4; 提交审批</button>
@@ -2522,14 +2522,7 @@ function renderApproverSelect(id, users){
 }
 
 function updateApproverOptions(){
-  // Disable selected approvers in other levels
-  const sel1=document.getElementById('f-approver-level1');
-  const sel2=document.getElementById('f-approver-level2');
-  const sel3=document.getElementById('f-approver-level3');
-  const vals=[sel1.value,sel2.value,sel3.value];
-  [sel2,sel3].forEach(s=>{ for(let o of s.options){ if(o.value) o.disabled=(o.value===sel1.value&&o.value!==s.value); }});
-  [sel1,sel3].forEach(s=>{ for(let o of s.options){ if(o.value) o.disabled=(o.value===sel2.value&&o.value!==s.value); }});
-  [sel1,sel2].forEach(s=>{ for(let o of s.options){ if(o.value) o.disabled=(o.value===sel3.value&&o.value!==s.value); }});
+  // No longer restricts same person across levels — any combination is allowed
 }
 
 function getApproverName(selId){
@@ -4287,8 +4280,11 @@ async function switchLanguage(locale) {
   await window.__i18n.setLocale(locale);
   refreshApprovalStatuses();
   refreshProcessStatuses();
+  refreshAllPermissions();
   // 更新静态 UI 元素
   document.getElementById('btn-logout').textContent = t('app.logout');
+  document.title = t('app.title');
+  document.getElementById('feishu-status-text').textContent = t('app.mode.cloud');
   // 重新渲染当前页面
   const user = getCurrentUser();
   if (user) {
@@ -4337,7 +4333,7 @@ window.__i18n_validate = async function() {
 // 在控制台执行: __i18n_test() 测试所有 key 解析
 window.__i18n_test = async function() {
   await window.__i18n.init();
-  const zh = window.__i18n._bundles ? window.__i18n._bundles['zh-CN'] || {} : {};
+  const zh = window.__i18n.bundle('zh-CN') || {};
   let total = 0, errors = 0;
   const errorList = [];
 
