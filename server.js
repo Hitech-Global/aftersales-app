@@ -1,0 +1,1145 @@
+/**
+ * 售后数据管理系统 - 飞书集成后端服务
+ * 
+ * 功能：
+ * 1. 飞书 OAuth2.0 登录（网页/工作台免登）
+ * 2. 飞书组织成员校验
+ * 3. 飞书自建应用机器人消息推送（审批通知卡片）
+ * 4. 支持 Mock 模式（未配置飞书凭证时，使用本地模拟）
+ */
+
+const express = require('express');
+const axios = require('axios');
+const path = require('path');
+const crypto = require('crypto');
+const { query, initDatabase } = require('./db');
+
+// ==================== 加载环境变量 ====================
+let envLoaded = false;
+try {
+  require('dotenv').config();
+  envLoaded = true;
+} catch (e) {
+  console.log('[Config] dotenv 未安装，将使用系统环境变量');
+}
+
+// ==================== 配置 ====================
+const PORT = process.env.PORT || 3000;
+const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
+const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
+const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
+const FEISHU_ORG_ID = process.env.FEISHU_ORG_ID || ''; // 企业组织 ID，用于校验用户是否属于本组织
+const APP_BASE_URL = process.env.BASE_URL || process.env.APP_BASE_URL || `http://localhost:${PORT}`;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const FEISHU_APP_NAME = process.env.FEISHU_APP_NAME || '售后数据管理系统';
+const OAUTH_STATE_COOKIE = 'feishu_oauth_state';
+const OAUTH_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+const oauthStates = new Map();
+const feishuLoginEvents = [];
+
+// 验证飞书配置
+const feishuConfigured = !!(FEISHU_ENABLED && FEISHU_APP_ID && FEISHU_APP_SECRET);
+
+function parseCookies(cookieHeader) {
+  return String(cookieHeader || '').split(';').reduce((cookies, part) => {
+    const index = part.indexOf('=');
+    if (index === -1) return cookies;
+    const key = part.slice(0, index).trim();
+    const value = part.slice(index + 1).trim();
+    if (key) cookies[key] = decodeURIComponent(value);
+    return cookies;
+  }, {});
+}
+
+function feishuCookieOptions(maxAge) {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: APP_BASE_URL.startsWith('https://'),
+    maxAge
+  };
+}
+
+function rememberOAuthState(state) {
+  const now = Date.now();
+  for (const [key, expiresAt] of oauthStates.entries()) {
+    if (expiresAt <= now) oauthStates.delete(key);
+  }
+  oauthStates.set(state, now + OAUTH_STATE_MAX_AGE_MS);
+}
+
+function consumeOAuthState(state, cookieState) {
+  if (!state) return false;
+  const expiresAt = oauthStates.get(state);
+  if (expiresAt) {
+    oauthStates.delete(state);
+    return Date.now() <= expiresAt;
+  }
+  return Boolean(cookieState && state === cookieState);
+}
+
+function recordFeishuEvent(step, detail = {}) {
+  const event = {
+    time: new Date().toISOString(),
+    step,
+    detail
+  };
+  feishuLoginEvents.unshift(event);
+  feishuLoginEvents.splice(20);
+  console.log('[FeishuLogin]', step, detail);
+}
+
+function getFeishuDisplayName(userInfo) {
+  return (
+    userInfo.en_name ||
+    userInfo.name ||
+    userInfo.nickname ||
+    userInfo.email?.split('@')[0] ||
+    '飞书用户'
+  );
+}
+
+function getFeishuAvatar(userInfo) {
+  return (
+    userInfo.avatar_url ||
+    userInfo.avatar_thumb ||
+    userInfo.avatar_middle ||
+    userInfo.avatar_big ||
+    userInfo.avatar?.avatar_240 ||
+    userInfo.avatar?.avatar_72 ||
+    userInfo.avatar?.avatar_origin ||
+    ''
+  );
+}
+
+console.log('========================================');
+console.log(`  售后数据管理系统 - 后端服务`);
+console.log('========================================');
+console.log(`  端口: ${PORT}`);
+console.log(`  飞书集成: ${FEISHU_ENABLED ? '启用' : '未启用 (Mock 模式)'}`);
+if (FEISHU_ENABLED && feishuConfigured) {
+  console.log(`  飞书 App ID: ${FEISHU_APP_ID}`);
+  console.log(`  飞书组织 ID: ${FEISHU_ORG_ID || '(未设置)'}`);
+  console.log(`  应用地址: ${APP_BASE_URL}`);
+} else if (FEISHU_ENABLED) {
+  console.log(`  ⚠ 飞书已启用但缺少凭证，请配置 FEISHU_APP_ID 和 FEISHU_APP_SECRET`);
+}
+console.log('========================================\n');
+
+// ==================== Express 初始化 ====================
+const app = express();
+app.use(express.json());
+
+function sendNoCacheHtml(res, fileName) {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.sendFile(path.join(__dirname, fileName));
+}
+
+// 前端路由：所有带 hash 的请求返回首页
+app.get('/', (req, res) => {
+  sendNoCacheHtml(res, 'index.html');
+});
+
+app.get('/index.html', (req, res) => {
+  sendNoCacheHtml(res, 'index.html');
+});
+
+app.use(express.static(path.join(__dirname), {
+  index: false,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+  }
+}));
+
+// ==================== API 认证中间件 ====================
+function apiAuth(req, res, next) {
+  // 从 header 获取当前用户信息（前端在每次请求时传入）
+  const userId = req.headers['x-user-id'];
+  const userRole = req.headers['x-user-role'];
+  if (userId) {
+    req.currentUserId = userId;
+    req.currentUserRole = userRole || '';
+  }
+  next();
+}
+
+app.use('/api/users', apiAuth);
+app.use('/api/roles', apiAuth);
+app.use('/api/records', apiAuth);
+app.use('/api/products', apiAuth);
+app.use('/api/sales', apiAuth);
+
+// ==================== 数据库 CRUD API ====================
+
+// 初始化数据库
+app.post('/api/db/init', async (req, res) => {
+  try {
+    const ok = await initDatabase();
+    res.json({ success: ok });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---- 用户 API ----
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM users ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const { id, username, name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name } = req.body;
+    if (!username || !name) return res.status(400).json({ error: '用户名和姓名不能为空' });
+    
+    // 检查用户名重复
+    const exist = await query('SELECT id FROM users WHERE username = $1', [username]);
+    if (exist.rows.length > 0) return res.status(400).json({ error: '用户名已存在' });
+
+    const result = await query(
+      `INSERT INTO users (id, username, name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [id, username, name, password || '', role_id || 'role_viewer', status || 'active',
+       feishu_open_id || '', feishu_union_id || '', feishu_name || '', feishu_email || '', feishu_avatar || '', feishu_tenant_key || '', feishu_raw_name || '', feishu_en_name || '']
+    );
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const { name, password, role_id, status, feishu_open_id, feishu_union_id, feishu_name, feishu_email, feishu_avatar, feishu_tenant_key, feishu_raw_name, feishu_en_name } = req.body;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name); }
+    if (password !== undefined && password !== '') { fields.push(`password = $${idx++}`); values.push(password); }
+    if (role_id !== undefined) { fields.push(`role_id = $${idx++}`); values.push(role_id); }
+    if (status !== undefined) { fields.push(`status = $${idx++}`); values.push(status); }
+    if (feishu_open_id !== undefined) { fields.push(`feishu_open_id = $${idx++}`); values.push(feishu_open_id); }
+    if (feishu_union_id !== undefined) { fields.push(`feishu_union_id = $${idx++}`); values.push(feishu_union_id); }
+    if (feishu_name !== undefined) { fields.push(`feishu_name = $${idx++}`); values.push(feishu_name); }
+    if (feishu_email !== undefined) { fields.push(`feishu_email = $${idx++}`); values.push(feishu_email); }
+    if (feishu_avatar !== undefined) { fields.push(`feishu_avatar = $${idx++}`); values.push(feishu_avatar); }
+    if (feishu_tenant_key !== undefined) { fields.push(`feishu_tenant_key = $${idx++}`); values.push(feishu_tenant_key); }
+    if (feishu_raw_name !== undefined) { fields.push(`feishu_raw_name = $${idx++}`); values.push(feishu_raw_name); }
+    if (feishu_en_name !== undefined) { fields.push(`feishu_en_name = $${idx++}`); values.push(feishu_en_name); }
+
+    if (fields.length === 0) return res.json({ message: '没有需要更新的字段' });
+
+    values.push(req.params.id);
+    const result = await query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: '用户不存在' });
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 根据飞书身份查找用户
+app.get('/api/users/find-by-feishu/:openId', async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT * FROM users WHERE feishu_open_id = $1 OR (feishu_union_id = $1 AND $1 != \'\')',
+      [req.params.openId]
+    );
+    res.json(result.rows[0] || null);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- 角色 API ----
+app.get('/api/roles', async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM roles ORDER BY created_at');
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/roles', async (req, res) => {
+  try {
+    const { id, name, description, permissions, system } = req.body;
+    const result = await query(
+      `INSERT INTO roles (id, name, description, permissions, system) VALUES ($1,$2,$3,$4,$5) 
+       ON CONFLICT (id) DO UPDATE SET name=$2, description=$3, permissions=$4 RETURNING *`,
+      [id, name, description || '', JSON.stringify(permissions || []), system || false]
+    );
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- 售后记录 API ----
+app.get('/api/records', async (req, res) => {
+  try {
+    const { status, submitter_id, page, pageSize } = req.query;
+    let sql = 'SELECT * FROM aftersales_records';
+    const conditions = [];
+    const values = [];
+    let idx = 1;
+
+    if (status) { conditions.push(`status = $${idx++}`); values.push(status); }
+    if (submitter_id) { conditions.push(`submitter_id = $${idx++}`); values.push(submitter_id); }
+
+    if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ');
+    sql += ' ORDER BY created_at DESC';
+
+    if (page && pageSize) {
+      const offset = (parseInt(page) - 1) * parseInt(pageSize);
+      sql += ` LIMIT $${idx++} OFFSET $${idx++}`;
+      values.push(parseInt(pageSize), offset);
+    }
+
+    const result = await query(sql, values);
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/records', async (req, res) => {
+  try {
+    const { id, submitter_id, submitter_name, aftersales_date, status, brand, platforms, items,
+      approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name } = req.body;
+
+    const result = await query(
+      `INSERT INTO aftersales_records (id, submitter_id, submitter_name, aftersales_date, status, brand, platforms, items,
+        approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [id, submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', platforms || '', JSON.stringify(items || []),
+       approver_level1_id || '', approver_level1_name || '', approver_level2_id || '', approver_level2_name || '']
+    );
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/records/:id', async (req, res) => {
+  try {
+    const { submitter_name, aftersales_date, status, brand, platforms, items,
+      approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
+      approval_level1_status, approval_level2_status } = req.body;
+
+    const fields = ['updated_at = NOW()'];
+    const values = [];
+    let idx = 1;
+
+    const add = (field, val) => {
+      if (val !== undefined) { fields.push(`${field} = $${idx++}`); values.push(val); }
+    };
+    add('submitter_name', submitter_name);
+    add('aftersales_date', aftersales_date);
+    add('status', status);
+    add('brand', brand);
+    add('platforms', platforms);
+    add('items', items !== undefined ? JSON.stringify(items) : undefined);
+    add('approver_level1_id', approver_level1_id);
+    add('approver_level1_name', approver_level1_name);
+    add('approver_level2_id', approver_level2_id);
+    add('approver_level2_name', approver_level2_name);
+    add('approval_level1_status', approval_level1_status);
+    add('approval_level2_status', approval_level2_status);
+
+    values.push(req.params.id);
+    const result = await query(
+      `UPDATE aftersales_records SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: '记录不存在' });
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/records/:id', async (req, res) => {
+  try {
+    const result = await query('DELETE FROM aftersales_records WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: '记录不存在' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- 商品 API ----
+app.get('/api/products', async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM products ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const { id, sku_code, product_name, brand, model, price } = req.body;
+    const result = await query(
+      `INSERT INTO products (id, sku_code, product_name, brand, model, price) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [id, sku_code, product_name || '', brand || '', model || '', price || 0]
+    );
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const { sku_code, product_name, brand, model, price } = req.body;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    const add = (field, val) => { if (val !== undefined) { fields.push(`${field} = $${idx++}`); values.push(val); } };
+    add('sku_code', sku_code);
+    add('product_name', product_name);
+    add('brand', brand);
+    add('model', model);
+    add('price', price);
+
+    if (fields.length === 0) return res.json({ message: '没有需要更新的字段' });
+    values.push(req.params.id);
+    const result = await query(
+      `UPDATE products SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: '商品不存在' });
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const result = await query('DELETE FROM products WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: '商品不存在' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- 销售数据 API ----
+app.get('/api/sales', async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM sales_data ORDER BY date DESC');
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/sales', async (req, res) => {
+  try {
+    const entries = Array.isArray(req.body) ? req.body : [req.body];
+    const results = [];
+    for (const entry of entries) {
+      const { id, date, product_name, sku_code, quantity, amount, platform } = entry;
+      const result = await query(
+        `INSERT INTO sales_data (id, date, product_name, sku_code, quantity, amount, platform) 
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [id, date, product_name || '', sku_code || '', quantity || 0, amount || 0, platform || '']
+      );
+      results.push(result.rows[0]);
+    }
+    res.json(results);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 数据库状态
+app.get('/api/db/status', (req, res) => {
+  const dbUrl = process.env.DATABASE_URL || '';
+  res.json({
+    configured: Boolean(dbUrl),
+    connected: Boolean(require('./db').getPool())
+  });
+});
+
+let tenantAccessToken = null;
+let tokenExpiresAt = 0;
+
+/**
+ * 获取 tenant_access_token（企业自建应用）
+ * 参考: https://open.feishu.cn/document/server-docs/authentication-management/access-token/tenant_access_token_internal
+ */
+async function getTenantAccessToken() {
+  if (!feishuConfigured) {
+    return { error: '飞书未配置' };
+  }
+
+  // 缓存有效期内直接返回
+  if (tenantAccessToken && Date.now() < tokenExpiresAt - 60000) {
+    return { token: tenantAccessToken };
+  }
+
+  try {
+    const response = await axios.post(
+      'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+      { app_id: FEISHU_APP_ID, app_secret: FEISHU_APP_SECRET },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+    );
+
+    if (response.data.code === 0) {
+      tenantAccessToken = response.data.tenant_access_token;
+      tokenExpiresAt = Date.now() + (response.data.expire || 7200) * 1000;
+      console.log('[Feishu] Token 获取成功，有效期至:', new Date(tokenExpiresAt).toISOString());
+      return { token: tenantAccessToken };
+    } else {
+      console.error('[Feishu] Token 获取失败:', response.data);
+      return { error: response.data.msg || '获取 token 失败' };
+    }
+  } catch (e) {
+    console.error('[Feishu] Token 获取异常:', e.message);
+    return { error: e.message };
+  }
+}
+
+// ==================== 飞书 OAuth2.0 登录 ====================
+/**
+ * 飞书 OAuth2.0 网页授权
+ * 参考: https://open.feishu.cn/document/uAjLw4CM/uYjL24iN/app-authorization/obtain
+ */
+
+// 获取登录 URL
+app.get('/api/auth/feishu/login', (req, res) => {
+  if (!feishuConfigured) {
+    recordFeishuEvent('login_not_configured');
+    return res.json({ error: '飞书未配置', feishuEnabled: false });
+  }
+
+  const redirectUri = `${APP_BASE_URL}/api/auth/feishu/callback`;
+  const state = crypto.randomBytes(16).toString('hex');
+  rememberOAuthState(state);
+  res.cookie(OAUTH_STATE_COOKIE, state, feishuCookieOptions(OAUTH_STATE_MAX_AGE_MS));
+  recordFeishuEvent('login_url_created', {
+    redirectUri,
+    appId: FEISHU_APP_ID.slice(0, 8) + '***',
+    state
+  });
+
+  const loginUrl = 'https://accounts.feishu.cn/open-apis/authen/v1/authorize'
+    + `?client_id=${FEISHU_APP_ID}`
+    + `&response_type=code`
+    + `&redirect_uri=${encodeURIComponent(redirectUri)}`
+    + `&state=${state}`
+    + `&scope=${encodeURIComponent('contact:user.base:readonly')}`
+    + `&prompt=consent`;
+
+  res.json({ loginUrl, feishuEnabled: true });
+});
+
+// OAuth 回调
+app.get('/api/auth/feishu/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  const cookies = parseCookies(req.headers.cookie);
+  const expectedState = cookies[OAUTH_STATE_COOKIE] || '';
+  res.clearCookie(OAUTH_STATE_COOKIE, feishuCookieOptions(0));
+  recordFeishuEvent('callback_received', {
+    hasCode: Boolean(code),
+    hasState: Boolean(state),
+    hasCookieState: Boolean(expectedState),
+    error: error || ''
+  });
+
+  if (error) {
+    // 用户拒绝授权，返回错误信息到前端
+    recordFeishuEvent('callback_error_from_feishu', { error });
+    return res.redirect(`/?feishu_error=${encodeURIComponent(error)}`);
+  }
+
+  if (!code) {
+    recordFeishuEvent('callback_missing_code');
+    return res.redirect('/?feishu_error=missing_code');
+  }
+
+  if (!consumeOAuthState(state, expectedState)) {
+    console.warn('[Feishu] OAuth state 校验失败', {
+      hasState: Boolean(state),
+      hasCookieState: Boolean(expectedState),
+      cachedStates: oauthStates.size
+    });
+    recordFeishuEvent('callback_invalid_state', {
+      hasState: Boolean(state),
+      hasCookieState: Boolean(expectedState),
+      cachedStates: oauthStates.size
+    });
+    return res.redirect('/?feishu_error=invalid_state');
+  }
+
+  if (!feishuConfigured) {
+    recordFeishuEvent('callback_not_configured');
+    return res.redirect('/?feishu_error=not_configured');
+  }
+
+  try {
+    // Step 1: 用 code 换取 user_access_token (v2 OAuth2)
+    // v2 返回标准 OAuth2 格式，不是 {code, data} 包装
+    let tokenData;
+    try {
+      const tokenRes = await axios.post(
+        'https://open.feishu.cn/open-apis/authen/v2/oauth/token',
+        {
+          grant_type: 'authorization_code',
+          client_id: FEISHU_APP_ID,
+          client_secret: FEISHU_APP_SECRET,
+          code,
+          redirect_uri: `${APP_BASE_URL}/api/auth/feishu/callback`
+        },
+        { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+      );
+
+      if (tokenRes.data && tokenRes.data.code !== undefined && tokenRes.data.code !== 0) {
+        console.error('[Feishu] Code 换 token 失败:', tokenRes.data);
+        recordFeishuEvent('token_exchange_failed', { response: tokenRes.data });
+        return res.redirect(`/?feishu_error=${encodeURIComponent(tokenRes.data.msg || tokenRes.data.message || 'token_exchange_failed')}`);
+      }
+
+      tokenData = tokenRes.data.data || tokenRes.data;
+    } catch (tokenErr) {
+      console.error('[Feishu] Code 换 token 请求失败:', tokenErr.response?.data || tokenErr.message);
+      recordFeishuEvent('token_exchange_request_failed', {
+        response: tokenErr.response?.data || null,
+        message: tokenErr.message
+      });
+      return res.redirect(`/?feishu_error=${encodeURIComponent(tokenErr.response?.data?.msg || tokenErr.response?.data?.message || 'token_exchange_failed')}`);
+    }
+
+    if (!tokenData || !tokenData.access_token) {
+      console.error('[Feishu] Token 响应无效:', tokenData);
+      recordFeishuEvent('token_response_invalid', { tokenData });
+      return res.redirect(`/?feishu_error=token_response_invalid`);
+    }
+
+    const userAccessToken = tokenData.access_token;
+    recordFeishuEvent('token_exchange_success');
+
+    // Step 2: 获取用户信息
+    const userRes = await axios.get(
+      'https://open.feishu.cn/open-apis/authen/v1/user_info',
+      { headers: { 'Authorization': `Bearer ${userAccessToken}` }, timeout: 10000 }
+    );
+
+    if (userRes.data.code !== 0) {
+      console.error('[Feishu] 获取用户信息失败:', userRes.data);
+      recordFeishuEvent('get_user_failed', { response: userRes.data });
+      return res.redirect(`/?feishu_error=${encodeURIComponent(userRes.data.msg || 'get_user_failed')}`);
+    }
+
+    const userInfo = userRes.data.data;
+    if (!userInfo || !userInfo.open_id) {
+      console.error('[Feishu] 用户信息缺少 open_id:', userInfo);
+      recordFeishuEvent('user_info_invalid', { userInfo });
+      return res.redirect(`/?feishu_error=user_info_invalid`);
+    }
+    recordFeishuEvent('get_user_success', {
+      openId: userInfo.open_id,
+      name: userInfo.en_name || userInfo.name || userInfo.nickname || ''
+    });
+
+    console.log('[Feishu] 原始用户信息 (bytes):', JSON.stringify(userInfo));
+    console.log('[Feishu] name 字段:', userInfo.name, 'en_name:', userInfo.en_name, 'nickname:', userInfo.nickname);
+
+    // Step 3: 校验组织（如果配置了 ORG_ID）
+    if (FEISHU_ORG_ID) {
+      // 获取用户所在组织列表
+      try {
+        const tenantToken = await getTenantAccessToken();
+        if (tenantToken.token) {
+          const deptRes = await axios.get(
+            `https://open.feishu.cn/open-apis/contact/v3/users/${userInfo.open_id}?department_id_type=open_department_id&user_id_type=open_id`,
+            { headers: { 'Authorization': `Bearer ${tenantToken.token}` }, timeout: 10000 }
+          );
+          
+          if (deptRes.data.code === 0) {
+            const departments = deptRes.data.data.user?.department_ids || [];
+            // TODO: 更严格的组织校验逻辑
+            console.log('[Feishu] 用户部门:', departments);
+          }
+        }
+      } catch (deptErr) {
+        console.warn('[Feishu] 获取用户部门失败，跳过组织校验:', deptErr.message);
+      }
+    }
+
+    // Step 4: 构造返回给前端的用户数据
+    // 优先使用 en_name（英文/常用名），再回退到姓名、昵称、邮箱前缀
+    const displayName = getFeishuDisplayName(userInfo);
+    const feishuUser = {
+      feishu_open_id: userInfo.open_id,
+      feishu_union_id: userInfo.union_id || '',
+      feishu_name: displayName,
+      feishu_raw_name: userInfo.name || '',
+      feishu_en_name: userInfo.en_name || '',
+      feishu_nickname: userInfo.nickname || '',
+      feishu_email: userInfo.email || '',
+      feishu_avatar: getFeishuAvatar(userInfo),
+      feishu_mobile: userInfo.mobile || '',
+      feishu_tenant_key: userInfo.tenant_key || ''
+    };
+
+    // 将用户信息编码后传给前端
+    const userDataB64 = Buffer.from(JSON.stringify(feishuUser)).toString('base64');
+    
+    // 重定向到前端，带上用户信息和来源标记
+    recordFeishuEvent('redirect_to_frontend');
+    res.redirect(`/?feishu_user=${encodeURIComponent(userDataB64)}#page=overview`);
+
+  } catch (e) {
+    console.error('[Feishu] OAuth 回调异常:', e.message);
+    recordFeishuEvent('callback_server_error', { message: e.message });
+    res.redirect(`/?feishu_error=${encodeURIComponent('server_error')}`);
+  }
+});
+
+app.get('/api/auth/feishu/debug', (req, res) => {
+  res.json({
+    configured: feishuConfigured,
+    appId: FEISHU_APP_ID ? FEISHU_APP_ID.slice(0, 8) + '***' : '',
+    baseUrl: APP_BASE_URL,
+    callbackUrl: `${APP_BASE_URL}/api/auth/feishu/callback`,
+    pendingStates: oauthStates.size,
+    events: feishuLoginEvents
+  });
+});
+
+// 获取飞书配置状态
+app.get('/api/auth/feishu/status', (req, res) => {
+  res.json({
+    feishuEnabled: FEISHU_ENABLED && feishuConfigured,
+    appId: FEISHU_APP_ID ? FEISHU_APP_ID.slice(0, 8) + '***' : '',
+    orgId: FEISHU_ORG_ID || '',
+    appName: FEISHU_APP_NAME,
+    baseUrl: APP_BASE_URL,
+    configured: feishuConfigured
+  });
+});
+
+// ==================== 飞书通讯录搜索 ====================
+// GET /api/feishu/contacts/search?query=xxx
+// 通过飞书 find_by_department 接口递归搜索组织成员
+// 需要权限：获取通讯录基本信息（contact:contact:readonly）或 以应用身份访问通讯录
+app.get('/api/feishu/contacts/search', async (req, res) => {
+  const query = (req.query.query || '').trim().toLowerCase();
+  
+  if (!feishuConfigured) {
+    return res.json({ success: false, error: '飞书未配置', users: [] });
+  }
+  
+  const tokenResult = await getTenantAccessToken();
+  if (tokenResult.error) {
+    return res.status(500).json({ success: false, error: `获取飞书 token 失败: ${tokenResult.error}`, users: [] });
+  }
+
+  const token = tokenResult.token;
+
+  try {
+    // ============ 步骤1：递归获取所有部门ID ============
+    const departmentIds = [];
+    
+    async function collectDepartments(parentId) {
+      let pageToken = null;
+      do {
+        let url = `https://open.feishu.cn/open-apis/contact/v3/departments/${parentId}/children`
+          + `?department_id_type=open_department_id&fetch_child=true&page_size=50`;
+        if (pageToken) url += `&page_token=${pageToken}`;
+
+        try {
+          const resp = await axios.get(url, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            timeout: 10000
+          });
+
+          if (resp.data.code === 0) {
+            const items = resp.data.data?.items || [];
+            for (const dept of items) {
+              departmentIds.push(dept.open_department_id);
+            }
+            pageToken = resp.data.data?.page_token || null;
+          } else {
+            console.warn('[Feishu] 获取部门列表失败 (父部门: ' + parentId + '):', resp.data.msg);
+            pageToken = null;
+          }
+        } catch (e) {
+          console.warn('[Feishu] 获取部门列表异常 (父部门: ' + parentId + '):', e.message);
+          pageToken = null;
+        }
+      } while (pageToken);
+    }
+
+    // 先收集所有部门（从根部门开始，fetch_child=true 递归获取）
+    try {
+      await collectDepartments(0);
+    } catch (deptErr) {
+      console.warn('[Feishu] 收集部门列表失败，将仅搜索根部门直属用户:', deptErr.message);
+    }
+    
+    // 添加根部门（根部门直属用户也需要搜索）
+    departmentIds.push('0');
+    
+    console.log(`[Feishu] 共获取 ${departmentIds.length} 个部门（含根部门）`);
+
+    // ============ 步骤2：遍历部门获取用户 ============
+    const allUsers = [];
+    const seenOpenIds = new Set();
+    const maxResults = 50;
+
+    for (const deptId of departmentIds) {
+      if (allUsers.length >= maxResults) break;
+
+      let pageToken = null;
+      let deptErrorCount = 0;
+      
+      do {
+        if (allUsers.length >= maxResults) break;
+
+        let url = `https://open.feishu.cn/open-apis/contact/v3/users/find_by_department`
+          + `?user_id_type=open_id&department_id_type=open_department_id`
+          + `&department_id=${deptId}&page_size=50`;
+        if (pageToken) url += `&page_token=${pageToken}`;
+
+        try {
+          const resp = await axios.get(url, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            timeout: 10000
+          });
+
+          if (resp.data.code !== 0) {
+            deptErrorCount++;
+            if (deptErrorCount <= 1) {
+              console.warn(`[Feishu] 部门 ${deptId} 用户列表获取失败:`, resp.data.msg);
+            }
+            break;
+          }
+
+          const items = resp.data.data?.items || [];
+          for (const u of items) {
+            // 去重
+            if (seenOpenIds.has(u.open_id)) continue;
+            seenOpenIds.add(u.open_id);
+
+            const name = u.name || '';
+            const enName = u.en_name || '';
+            const nickname = u.nickname || '';
+            const email = u.email || '';
+            
+            // 关键词过滤
+            if (query && 
+                !name.toLowerCase().includes(query) && 
+                !enName.toLowerCase().includes(query) && 
+                !nickname.toLowerCase().includes(query) &&
+                !email.toLowerCase().includes(query)) {
+              continue;
+            }
+            
+            allUsers.push({
+              open_id: u.open_id,
+              union_id: u.union_id || '',
+              name: enName || name,
+              full_name: name,
+              en_name: enName,
+              nickname: nickname,
+              avatar: u.avatar?.avatar_240 || u.avatar?.avatar_72 || u.avatar?.avatar_origin || '',
+              email: email,
+              mobile: u.mobile || '',
+              department_names: (u.department_names || []).slice(0, 3)
+            });
+
+            if (allUsers.length >= maxResults) break;
+          }
+
+          pageToken = resp.data.data?.page_token || null;
+          
+        } catch (e) {
+          deptErrorCount++;
+          if (deptErrorCount <= 1) {
+            console.warn(`[Feishu] 部门 ${deptId} 用户搜索异常:`, e.message);
+          }
+          break;
+        }
+      } while (pageToken);
+    }
+
+    console.log(`[Feishu] 通讯录搜索 "${query || '(全部)'}" → ${allUsers.length} 条结果 (扫描 ${departmentIds.length} 个部门)`);
+    res.json({ success: true, users: allUsers });
+    
+  } catch (e) {
+    console.error('[Feishu] 通讯录搜索异常:', e.message);
+    let errorMsg = e.response?.data?.msg || e.message || '搜索异常';
+    
+    // 友好的权限提示
+    if (e.response?.data?.code === 99991663 || errorMsg.includes('no permission')) {
+      errorMsg = '飞书应用缺少通讯录权限。请在飞书开发者后台 > 权限管理中开通"获取通讯录基本信息"或"以应用身份访问通讯录"权限';
+    }
+    
+    res.json({ success: false, error: errorMsg, users: [] });
+  }
+});
+
+// 退出登录：清除飞书相关状态
+app.post('/api/auth/feishu/logout', (req, res) => {
+  res.clearCookie('feishu_session');
+  res.json({ success: true });
+});
+
+// ==================== 飞书消息推送 ====================
+/**
+ * 发送审批通知（互动卡片消息）
+ * 参考: https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/create
+ */
+
+app.post('/api/notify/approval', async (req, res) => {
+  const { recordId, record, approvers } = req.body;
+
+  if (!recordId || !record || !approvers || !approvers.length) {
+    return res.status(400).json({ error: '缺少必要参数' });
+  }
+
+  // ========== 模拟模式 ==========
+  if (!feishuConfigured) {
+    console.log('[Mock] 模拟发送审批通知:');
+    console.log(`  售后单号: AS${String(recordId).padStart(4,'0')}`);
+    console.log(`  提交人: ${record.submitter_name}`);
+    console.log(`  审批人: ${approvers.map(a => a.name).join(', ')}`);
+    console.log(`  SKU 数量: ${(record.items || []).length}`);
+    
+    return res.json({
+      success: true,
+      mock: true,
+      message: '模拟模式：通知已记录（飞书未配置时使用）',
+      sentTo: approvers.map(a => a.name)
+    });
+  }
+
+  // ========== 生产模式 ==========
+  const tokenResult = await getTenantAccessToken();
+  if (tokenResult.error) {
+    return res.status(500).json({ error: `获取飞书 token 失败: ${tokenResult.error}` });
+  }
+
+  const results = { success: [], failed: [] };
+  const recordDisplayId = `AS${String(recordId).padStart(4, '0')}`;
+  const detailUrl = `${APP_BASE_URL}/#page=approval&record=${recordId}`;
+
+  for (const approver of approvers) {
+    if (!approver.feishu_open_id) {
+      results.failed.push({ name: approver.name, reason: '未绑定飞书账号' });
+      continue;
+    }
+
+    try {
+      // 构建互动卡片内容
+      const card = buildApprovalCard({
+        recordDisplayId,
+        submitterName: record.submitter_name,
+        aftersalesDate: record.aftersales_date,
+        items: record.items || [],
+        brands: record.brand || '',
+        platforms: (record.platforms || []).join(', '),
+        detailUrl
+      });
+
+      const response = await axios.post(
+        'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id',
+        {
+          receive_id: approver.feishu_open_id,
+          msg_type: 'interactive',
+          content: JSON.stringify(card)
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${tokenResult.token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      if (response.data.code === 0) {
+        console.log(`[Feishu] 通知已发送给 ${approver.name} (${approver.feishu_open_id})`);
+        results.success.push({ name: approver.name, messageId: response.data.data.message_id });
+      } else {
+        console.error(`[Feishu] 发送给 ${approver.name} 失败:`, response.data);
+        results.failed.push({ name: approver.name, reason: response.data.msg });
+      }
+    } catch (e) {
+      console.error(`[Feishu] 发送给 ${approver.name} 异常:`, e.message);
+      results.failed.push({ name: approver.name, reason: e.message });
+    }
+  }
+
+  res.json({
+    success: results.failed.length === 0,
+    results,
+    message: results.success.length > 0 
+      ? `已通知 ${results.success.map(r => r.name).join('、')}` 
+      : '通知发送失败'
+  });
+});
+
+/**
+ * 构建飞书互动卡片（审批通知）
+ */
+function buildApprovalCard({ recordDisplayId, submitterName, aftersalesDate, items, brands, platforms, detailUrl }) {
+  // 构建 SKU 明细文本（最多展示 5 条）
+  const skuLines = items.slice(0, 5).map(it => {
+    const reason = it.return_reason || '-';
+    const process = it.process_status || '-';
+    return `• ${it.sku_code || '-'} | ${it.order_no || '-'} | ×${it.quantity || 0} | ${reason} | ${process}`;
+  });
+  if (items.length > 5) {
+    skuLines.push(`... 共 ${items.length} 条明细`);
+  }
+
+  const skuContent = skuLines.join('\n');
+
+  // 处理状态统计
+  const processSummary = {};
+  items.forEach(it => {
+    const ps = it.process_status || '未知';
+    processSummary[ps] = (processSummary[ps] || 0) + 1;
+  });
+  const processText = Object.entries(processSummary)
+    .map(([k, v]) => `${k}: ${v}条`)
+    .join(' / ');
+
+  return {
+    config: {
+      wide_screen_mode: true // 宽屏模式
+    },
+    header: {
+      title: {
+        tag: 'plain_text',
+        content: '📋 售后审批通知'
+      },
+      template: 'blue'
+    },
+    elements: [
+      {
+        tag: 'div',
+        fields: [
+          {
+            is_short: true,
+            text: {
+              tag: 'lark_md',
+              content: `**售后单号**\n${recordDisplayId}`
+            }
+          },
+          {
+            is_short: true,
+            text: {
+              tag: 'lark_md',
+              content: `**提交人**\n${submitterName}`
+            }
+          },
+          {
+            is_short: true,
+            text: {
+              tag: 'lark_md',
+              content: `**售后日期**\n${aftersalesDate}`
+            }
+          },
+          {
+            is_short: true,
+            text: {
+              tag: 'lark_md',
+              content: `**总数量**\n${items.reduce((s, i) => s + (i.quantity || 0), 0)}件`
+            }
+          }
+        ]
+      },
+      {
+        tag: 'hr'
+      },
+      {
+        tag: 'div',
+        text: {
+          tag: 'lark_md',
+          content: `**SKU 明细**\n${skuContent}`
+        }
+      },
+      {
+        tag: 'div',
+        text: {
+          tag: 'lark_md',
+          content: `**处理状态分布**\n${processText}`
+        }
+      },
+      {
+        tag: 'hr'
+      },
+      {
+        tag: 'note',
+        elements: [
+          {
+            tag: 'plain_text',
+            content: `品牌：${brands || '-'} | 平台：${platforms || '-'}`
+          }
+        ]
+      },
+      {
+        tag: 'action',
+        actions: [
+          {
+            tag: 'button',
+            text: {
+              tag: 'plain_text',
+              content: '📝 查看/审批'
+            },
+            type: 'primary',
+            url: detailUrl,
+            value: {}
+          }
+        ]
+      }
+    ]
+  };
+}
+
+// ==================== 用户飞书绑定 API ====================
+/**
+ * 根据飞书 open_id 查找本地用户
+ */
+app.get('/api/users/find-by-feishu/:openId', (req, res) => {
+  // 这是一个辅助端点，实际查找在前端 localStorage 中完成
+  // 后端返回提示，前端自行匹配
+  res.json({ 
+    hint: '请在客户端 localStorage 中查找匹配用户',
+    openId: req.params.openId
+  });
+});
+
+// ==================== 通用兜底路由 ====================
+// 其他所有未匹配路由返回首页（支持 SPA）
+app.get('*', (req, res) => {
+  // 排除已处理的 API 路由
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  } else {
+    res.status(404).json({ error: 'API not found' });
+  }
+});
+
+// ==================== 启动服务器 ====================
+async function startServer() {
+  // 尝试初始化数据库（如果 DATABASE_URL 未设置则跳过）
+  const dbOk = await initDatabase();
+  if (dbOk) {
+    console.log('✅ 数据库已初始化');
+  } else if (process.env.DATABASE_URL) {
+    console.log('⚠ 数据库配置但初始化失败，请检查 DATABASE_URL');
+  } else {
+    console.log('📦 数据库未配置，将使用本地存储模式');
+  }
+
+  app.listen(PORT, () => {
+    console.log(`\n✅ 服务已启动: ${APP_BASE_URL}`);
+    console.log(`📋 飞书登录: ${APP_BASE_URL}/api/auth/feishu/login`);
+    console.log(`📊 飞书状态: ${APP_BASE_URL}/api/auth/feishu/status`);
+    console.log(`📨 审批通知: POST ${APP_BASE_URL}/api/notify/approval`);
+    console.log(`💾 数据库: ${dbOk ? 'PostgreSQL 已连接' : '本地模式'}`);
+    if (!feishuConfigured) {
+      console.log(`\n⚠ 当前使用 Mock 模式（飞书未配置）`);
+      console.log(`  如需启用飞书集成，请：`);
+      console.log(`  1. 复制 .env.example 为 .env`);
+      console.log(`  2. 填写飞书应用凭证（App ID / App Secret）`);
+      console.log(`  3. 设置 FEISHU_ENABLED=true`);
+      console.log(`  4. 重启服务`);
+    }
+    console.log('');
+  });
+}
+
+startServer();

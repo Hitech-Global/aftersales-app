@@ -1,0 +1,18 @@
+{
+  "name": "aftersales-management-system",
+  "version": "3.1.0",
+  "description": "售后数据管理系统 - 飞书集成版",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "pg": "^8.13.0"
+  },
+  "keywords": ["aftersales", "feishu", "lark", "management"],
+  "license": "MIT"
+}

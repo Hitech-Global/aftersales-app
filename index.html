@@ -1,0 +1,3762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>售后数据管理系统 v3</title>
+<script>
+if (window.location.protocol === 'file:') {
+  window.location.replace('http://localhost:3000/?admin');
+}
+</script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#2e7d32;--primary-hover:#1b5e20;--primary-light:#e8f5e9;--success:#34c759;--warning:#ff9500;--danger:#ff3b30;--bg:#f5f6f8;--sidebar-bg:#1a2f1a;--sidebar-text:#b8c5b9;--sidebar-active:#2e7d32;--card-bg:#fff;--border:#e5e6eb;--text:#1f2329;--text-secondary:#646a73;--text-muted:#999;--radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-hover:0 4px 12px rgba(0,0,0,.12)}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+/* Layout */
+.app-shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s}
+.sidebar-header{height:56px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-brand{font-size:16px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px;text-decoration:none}
+.sidebar-brand .brand-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto}
+.sidebar-group{margin-bottom:16px}
+.sidebar-group-title{font-size:11px;text-transform:uppercase;color:rgba(255,255,255,.4);padding:0 12px;margin-bottom:6px;letter-spacing:.5px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;cursor:pointer;transition:all .2s;font-size:14px;color:var(--sidebar-text);margin-bottom:2px}
+.sidebar-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sidebar-item.active{background:var(--sidebar-active);color:#fff}
+.sidebar-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.4);text-align:center}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:56px;background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;box-shadow:var(--shadow)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.page-title{font-size:18px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.user-menu{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 12px;border-radius:6px;transition:background .2s;position:relative}
+.user-menu:hover{background:var(--bg)}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.user-info{display:flex;flex-direction:column;line-height:1.2}
+.user-name{font-size:13px;font-weight:600;color:var(--text)}
+.user-role{font-size:11px;color:var(--text-muted)}
+.logout-btn{color:var(--text-muted);font-size:13px;cursor:pointer;border:none;background:none;padding:6px 10px;border-radius:6px}
+.logout-btn:hover{background:var(--bg);color:var(--danger)}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+.content-inner{max-width:1200px;margin:0 auto}
+
+.flash{display:none;padding:12px 18px;border-radius:var(--radius);margin-bottom:16px;font-size:14px;animation:slideDown .3s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.flash.show{display:block}
+.flash-success{background:#e8f8ef;color:#1a7a3a;border:1px solid #b7ebc3}
+.flash-danger{background:#fde8e8;color:#c53030;border:1px solid #fbb}
+.flash-warning{background:#fff8e6;color:#9a6d0a;border:1px solid #ffe3a3}
+.flash-info{background:#e6f0ff;color:#2b5fbf;border:1px solid #b3d4ff}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-header h2{font-size:20px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .2s;text-decoration:none;white-space:nowrap;font-family:inherit}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--card-bg);color:var(--text-secondary);border-color:var(--border)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-success{background:#2e7d32;color:#fff}
+.btn-success:hover{background:#1b5e20}
+.table-section-actions{display:flex;gap:8px;align-items:center}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#d32f2f}
+.btn-search{background:var(--primary);color:#fff;border:none}
+.btn-clear{background:none;color:var(--text-muted);border-color:var(--border)}
+.btn-sm{padding:6px 12px;font-size:13px}
+.btn-lg{padding:12px 28px;font-size:16px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.stats-grid{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.stat-card{flex:1;min-width:120px;background:var(--card-bg);border-radius:var(--radius);padding:12px 16px;text-align:center;box-shadow:var(--shadow);transition:all .2s;cursor:pointer;border:2px solid transparent;color:var(--text)}
+.stat-card:hover{box-shadow:var(--shadow-hover);border-color:var(--primary);transform:translateY(-2px)}
+.stat-card.active{border-color:var(--primary);background:var(--primary-light)}
+.table-section{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.table-section-title{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:var(--card-bg)}
+.table-section-title-left{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;color:var(--text)}
+.table-section-icon{font-size:18px}
+.table-section-title .btn{min-height:36px;padding:8px 18px}
+.stat-number{font-size:24px;font-weight:700;color:var(--primary)}
+.stat-label{font-size:12px;color:var(--text-secondary);margin-top:2px}
+
+.filter-bar{margin-bottom:20px;background:var(--card-bg);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.filter-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.filter-group label{font-size:12px;color:var(--text-secondary);font-weight:500}
+.search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;font-family:inherit}
+.search-input:focus,.filter-select:focus,.date-input:focus,.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
+.filter-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--card-bg);outline:none;cursor:pointer;font-family:inherit}
+.date-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none}
+.filter-actions{display:flex;gap:8px}
+
+.table-container{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
+.data-table th{padding:10px 12px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.data-table tbody tr:hover{background:#f8f9ff}
+.data-table tbody tr:last-child td{border-bottom:none}
+.cell-id{color:var(--text-muted);font-family:monospace;font-size:12px}
+.cell-name{font-weight:500}
+.cell-desc{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell-date{font-size:12px;color:var(--text-muted);white-space:nowrap}
+.cell-actions{white-space:nowrap}
+.action-btn{background:none;border:none;cursor:pointer;padding:4px 6px;font-size:16px;opacity:.6;transition:opacity .2s;font-family:inherit}
+.action-btn:hover{opacity:1}
+.action-delete:hover{color:var(--danger)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;white-space:nowrap}
+.status-草稿{background:#f5f5f5;color:#757575}
+.status-待一级审批{background:#fff3e0;color:#e65100}
+.status-一级审批通过{background:#e8f5e9;color:#2e7d32}
+.status-待二级审批{background:#fff8e1;color:#f9a825}
+.status-二级审批通过{background:#e8f5e9;color:#2e7d32}
+.status-待三级审批{background:#fce4ec;color:#c62828}
+.status-审批通过{background:#e8f5e9;color:#1b5e20}
+.status-审批拒绝{background:#fde8e8;color:#b71c1c}
+.category-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;background:#f0f0f0;color:var(--text-secondary)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary);background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.page-info{margin-top:16px;font-size:13px;color:var(--text-muted)}
+
+.form-container{max-width:800px}
+.record-form{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
+.form-section{border:none;margin-bottom:24px;padding:0}
+.form-section legend{font-size:16px;font-weight:600;padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--border);width:100%}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group-full{grid-column:1/-1}
+.form-group label{font-size:14px;font-weight:500;color:var(--text-secondary)}
+.required{color:var(--danger)}
+.form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--card-bg);width:100%}
+input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
+.form-actions{display:flex;gap:12px;margin-top:8px}
+
+.detail-card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
+.detail-section{margin-bottom:24px}
+.detail-section:last-child{margin-bottom:0}
+.detail-section h3{font-size:15px;font-weight:600;color:var(--text-secondary);padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.detail-item{display:flex;flex-direction:column;gap:4px}
+.detail-label{font-size:12px;color:var(--text-muted);text-transform:uppercase}
+.detail-value{font-size:14px;color:var(--text);word-break:break-all}
+.detail-text{font-size:14px;line-height:1.8;white-space:pre-wrap;background:var(--bg);padding:14px;border-radius:6px}
+
+/* Login page */
+.login-page{background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%);display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-container{width:100%;max-width:440px;padding:20px}
+.login-card{background:var(--card-bg);border-radius:16px;padding:40px 32px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
+.login-card h1{font-size:24px;margin-bottom:8px}
+.login-card p{color:var(--text-secondary);font-size:14px;margin-bottom:24px}
+.login-card input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:15px;margin-bottom:14px;outline:none;font-family:inherit}
+.login-card input:focus{border-color:var(--primary)}
+.login-card button{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit}
+.login-card button:hover{background:var(--primary-hover)}
+.login-hint{background:#fafbfc;border:1px dashed var(--border);border-radius:8px;padding:14px;margin-top:20px;font-size:12px;color:var(--text-secondary);text-align:left}
+.login-tabs{display:flex;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.login-tab{flex:1;padding:10px;border:none;background:#fafbfc;font-size:14px;cursor:pointer;color:var(--text-secondary);font-family:inherit;transition:all .2s}
+.login-tab.active{background:var(--primary);color:#fff;font-weight:500}
+.login-tab:hover:not(.active){background:#eee}
+
+/* Feishu contacts search dropdown */
+.feishu-contact-search{position:relative}
+.feishu-contact-search input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box}
+.feishu-contact-search input:focus{border-color:var(--primary)}
+.feishu-search-dropdown{position:absolute;top:100%;left:0;right:0;z-index:300;background:var(--card-bg);border:1px solid var(--border);border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:240px;overflow-y:auto}
+.feishu-search-dropdown .fs-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background .15s}
+.feishu-search-dropdown .fs-item:hover{background:#f5f6fa}
+.feishu-search-dropdown .fs-item:last-child{border-bottom:none}
+.feishu-search-dropdown .fs-avatar{width:32px;height:32px;border-radius:50%;background:#e0e4f0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#5a6a8a;flex-shrink:0;overflow:hidden}
+.feishu-search-dropdown .fs-avatar img{width:100%;height:100%;object-fit:cover}
+.feishu-search-dropdown .fs-info{flex:1;min-width:0}
+.feishu-search-dropdown .fs-name{font-size:14px;font-weight:500}
+.feishu-search-dropdown .fs-dept{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feishu-search-dropdown .fs-empty{padding:14px;text-align:center;color:var(--text-muted);font-size:13px}
+.feishu-search-dropdown .fs-loading{padding:14px;text-align:center;color:var(--text-muted);font-size:13px}
+.feishu-search-loading-indicator{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;display:none}
+.login-loading{display:none;align-items:center;justify-content:center;gap:8px;padding:14px;font-size:14px;color:var(--text-secondary)}
+.login-loading .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.login-feishu-btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:#3370ff;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;width:100%;transition:background .2s}
+.login-feishu-btn:hover{background:#2860e0}
+.login-feishu-btn .feishu-icon{font-size:20px}
+.login-divider{display:flex;align-items:center;margin:20px 0;color:var(--text-muted);font-size:12px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.login-divider span{padding:0 12px}
+.login-error{display:none;padding:10px 14px;background:#fde8e8;color:#c53030;border-radius:8px;margin-bottom:16px;font-size:13px;text-align:left}
+.login-feishu-info{background:#e8f2ff;border:1px solid #b3d4ff;border-radius:8px;padding:10px;margin-top:16px;font-size:12px;color:#2b5fbf;text-align:left}
+.login-feishu-info strong{display:block;margin-bottom:4px}
+
+/* Overview page */
+.ov-filter-bar{display:flex;align-items:flex-end;gap:12px;margin-bottom:20px;flex-wrap:wrap;background:var(--card-bg);padding:16px 20px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.ov-filter-group{display:flex;flex-direction:column;gap:4px}
+.ov-filter-group label{font-size:12px;color:var(--text-secondary);font-weight:500}
+.ov-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.ov-summary-card{background:var(--card-bg);border-radius:var(--radius);padding:20px 24px;text-align:center;box-shadow:var(--shadow)}
+.ov-summary-card .ov-card-icon{font-size:28px;margin-bottom:8px}
+.ov-summary-card .ov-card-value{font-size:32px;font-weight:700;color:var(--text);margin-bottom:4px}
+.ov-summary-card .ov-card-label{font-size:13px;color:var(--text-secondary)}
+.ov-summary-card.card-total .ov-card-value{color:var(--primary)}
+.ov-summary-card.card-return .ov-card-value{color:#e65100}
+.ov-summary-card.card-rate .ov-card-value{color:#1565c0}
+.ov-section{margin-bottom:24px}
+.ov-section-title{font-size:16px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ov-section-title .badge{font-size:12px;padding:2px 8px;border-radius:10px;background:#e3f2fd;color:#1565c0}
+.ov-brand-table{width:100%;border-collapse:collapse;background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.ov-brand-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
+.ov-brand-table th{padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:13px;white-space:nowrap}
+.ov-brand-table th.right,.ov-brand-table td.right{text-align:right}
+.ov-brand-table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px}
+.ov-brand-table tbody tr:hover{background:#f8f9ff}
+.ov-brand-table tbody tr:last-child td{border-bottom:none}
+.ov-brand-name{font-weight:600;display:flex;align-items:center;gap:8px}
+.ov-brand-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rate-indicator{padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;white-space:nowrap}
+.rate-good{background:#e8f5e9;color:#2e7d32}
+.rate-warn{background:#fff3e0;color:#e65100}
+.rate-bad{background:#fde8e8;color:#c53030}
+.rate-na{background:#f5f5f5;color:#999}
+.ov-action-bar{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.file-input-hidden{display:none}
+.ov-empty{text-align:center;padding:60px 20px;background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);color:var(--text-secondary)}
+
+/* User/Role management */
+.permission-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+.permission-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:6px;cursor:pointer;transition:background .2s}
+.permission-item:hover{background:#e8f5e9}
+.permission-item input{cursor:pointer}
+.permission-item label{flex:1;cursor:pointer;font-size:13px}
+.permission-desc{font-size:11px;color:var(--text-muted);display:block}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:500;background:#e3f2fd;color:#1565c0}
+.user-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500}
+.user-status-active{background:#e8f5e9;color:#2e7d32}
+.user-status-disabled{background:#f5f5f5;color:#757575}
+
+/* Product status badge */
+.prod-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500}
+.prod-status-active{background:#e8f5e9;color:#2e7d32}
+.prod-status-disabled{background:#f5f5f5;color:#757575}
+
+/* Approval timeline */
+.approval-timeline{position:relative;padding-left:24px}
+.approval-timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.approval-timeline-item{position:relative;margin-bottom:16px;padding:12px 14px;background:var(--bg);border-radius:6px;border-left:3px solid var(--primary)}
+.approval-timeline-item::before{content:'';position:absolute;left:-26px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary)}
+.approval-timeline-item.rejected{border-left-color:var(--danger)}
+.approval-timeline-item.rejected::before{background:var(--danger);box-shadow:0 0 0 2px var(--danger)}
+
+/* Attachment area */
+.attachment-thumb{transition:transform .2s;cursor:pointer}
+.attachment-thumb:hover{transform:scale(1.05)}
+.attachment-upload-area{border:2px dashed var(--border);border-radius:6px;padding:16px;text-align:center;cursor:pointer;transition:border .2s}
+.attachment-upload-area:hover{border-color:var(--primary)}
+
+/* Pagination */
+.pagination{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:16px}
+.pagination-btn{padding:6px 12px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;font-size:13px}
+.pagination-btn:hover{background:var(--bg)}
+.pagination-btn:disabled{opacity:.5;cursor:not-allowed}
+.pagination-info{font-size:13px;color:var(--text-secondary)}
+.page-size-select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg)}
+
+.hidden{display:none!important}
+.page{display:none}
+.page.active{display:block}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
+.modal-overlay.hidden{display:none}
+.modal-panel{background:var(--card-bg);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.18);width:100%;max-width:520px;animation:modalIn .2s ease}
+.modal-panel.modal-large{max-width:780px}
+.modal-panel.modal-xlarge{max-width:960px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border)}
+.modal-header h3{margin:0;font-size:18px}
+.modal-close{background:none;border:none;font-size:24px;color:var(--text-muted);cursor:pointer;padding:0 4px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:24px;max-height:70vh;overflow-y:auto}
+@keyframes modalIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Detail items table in form */
+.detail-items-table-wrapper{overflow-x:auto}
+.detail-items-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.detail-items-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
+.detail-items-table th{padding:8px 6px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
+.detail-items-table td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top}
+.detail-items-table input,.detail-items-table select{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);box-sizing:border-box}
+.detail-items-table input:focus,.detail-items-table select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(46,125,50,.1)}
+.detail-items-table .qty-input{text-align:center}
+.detail-items-table .btn-delete-row{background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1;border-radius:4px}
+.detail-items-table .btn-delete-row:hover{background:#fde8e8}
+
+@media(max-width:768px){
+  .sidebar{width:0;overflow:hidden}
+  .stats-grid{flex-wrap:wrap}.stat-card{flex:1 1 calc(50% - 4px);min-width:80px}
+  .filter-form{flex-direction:column;align-items:stretch}
+  .filter-actions{width:100%;justify-content:flex-end}
+  .form-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}
+  .ov-summary{grid-template-columns:repeat(2,1fr)}
+  .ov-filter-bar{flex-direction:column;align-items:stretch}
+  .permission-grid{grid-template-columns:1fr}
+}
+/* 处理状态徽章 */
+.ps-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.ps-待ERP入库{background:#e3f2fd;color:#1565c0}
+.ps-待换彩盒{background:#fff3e0;color:#e65100}
+.ps-待补配件{background:#f3e5f5;color:#7b1fa2}
+.ps-待RMA{background:#fce4ec;color:#c62828}
+.ps-待报废{background:#efebe9;color:#5d4037}
+.ps-已处理{background:#e8f5e9;color:#2e7d32}
+/* 批量操作栏 */
+.batch-bar{display:none;align-items:center;gap:12px;padding:12px 20px;background:var(--primary-light);border-radius:var(--radius);margin-bottom:12px;flex-wrap:wrap}
+.batch-bar.show{display:flex}
+.batch-bar .batch-info{font-size:14px;font-weight:500;color:var(--primary)}
+/* 图表容器 */
+.chart-container{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.chart-wrapper{position:relative;height:260px}
+.ov-charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+/* 概览处理状态卡片 */
+.ov-process-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.ov-process-card{background:var(--card-bg);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow);border-top:3px solid var(--primary)}
+.ov-process-card .ov-ps-value{font-size:22px;font-weight:700;color:var(--text)}
+.ov-process-card .ov-ps-label{font-size:11px;color:var(--text-secondary)}
+.ov-metric-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+/* 明细模式表格 */
+.data-table .col-checkbox{width:36px;text-align:center}
+.data-table .col-checkbox input{cursor:pointer}
+.view-mode-toggle{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.view-mode-toggle button{padding:4px 12px;border:none;background:transparent;font-size:13px;cursor:pointer;color:var(--text-secondary)}
+.view-mode-toggle button.active{background:var(--primary);color:#fff}
+/* ERP截图 */
+.erp-screenshot-thumb{width:48px;height:48px;border:1px solid var(--border);border-radius:4px;object-fit:cover;cursor:pointer}
+.erp-upload-btn{font-size:11px;color:var(--primary);cursor:pointer;text-decoration:underline}
+.btn-sm{padding:4px 10px;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="page-login" class="login-page">
+  <div class="login-container">
+    <div class="login-card">
+      <h1>&#x1F4CB; 售后数据管理系统</h1>
+      <p>请使用公司飞书账号登录</p>
+
+      <!-- 加载中 -->
+      <div class="login-loading" id="login-loading">
+        <span class="spinner"></span> 正在验证身份...
+      </div>
+
+      <!-- 错误提示 -->
+      <div class="login-error" id="login-error"></div>
+
+      <!-- 飞书登录面板 -->
+      <div id="login-panel-feishu" style="display:block">
+        <div id="login-feishu-status" style="margin-bottom:16px;">
+          <!-- 动态填充：飞书配置状态 -->
+        </div>
+        <button class="login-feishu-btn" id="btn-feishu-login" onclick="initiateFeishuLogin()" style="display:none">
+          <span class="feishu-icon">&#x1F4E8;</span> 飞书登录
+        </button>
+        <div id="login-feishu-hint" class="login-feishu-info" style="display:none">
+          <strong>&#x26A0; 当前为本地登录模式</strong>
+          可使用本地账号登录。
+        </div>
+        <div id="login-feishu-ready" class="login-feishu-info" style="display:none">
+          仅限公司飞书组织成员登录。
+        </div>
+      </div>
+
+      <!-- 本地登录（飞书未配置时自动显示，也可通过 ?admin 参数访问） -->
+      <div id="login-panel-admin" style="display:none; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border)">
+        <input type="text" id="login-username" placeholder="用户名" autofocus>
+        <input type="password" id="login-password" placeholder="密码" onkeydown="if(event.key==='Enter')adminLogin()">
+        <button onclick="adminLogin()" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit">本地账号登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- App Shell -->
+<div id="app-shell" class="app-shell hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer" id="sidebar-footer">v3.1 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">本地模式</span></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="topbar-title">&#x540E; 售概览</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="user-menu">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <div class="user-info">
+            <span class="user-name" id="user-name">--</span>
+            <span class="user-role" id="user-role">--</span>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">&#x9000; 出</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="content-inner">
+        <div id="flash-msg" class="flash"></div>
+
+        <!-- 售后概览 -->
+        <div id="page-overview" class="page">
+          <div class="ov-filter-bar">
+            <div class="ov-filter-group">
+              <label>开始日期</label>
+              <input type="date" class="date-input" id="ov-start-date" onchange="renderOverview()">
+            </div>
+            <div class="ov-filter-group">
+              <label>结束日期</label>
+              <input type="date" class="date-input" id="ov-end-date" onchange="renderOverview()">
+            </div>
+            <div class="ov-filter-group">
+              <label>品牌</label>
+              <select class="filter-select" id="ov-brand-filter" onchange="renderOverview()"><option value="">全部品牌</option></select>
+            </div>
+            <button class="btn btn-secondary" onclick="resetOverviewFilter()">重置</button>
+          </div>
+          <div class="ov-summary" id="ov-summary"></div>
+          <div class="ov-process-cards" id="ov-process-cards"></div>
+          <div class="ov-metric-row" id="ov-metric-row"></div>
+          <div class="ov-charts-row">
+            <div class="chart-container">
+              <div class="ov-section-title">退货原因 TOP5</div>
+              <div class="chart-wrapper"><canvas id="chart-reason-top5"></canvas></div>
+            </div>
+            <div class="chart-container">
+              <div class="ov-section-title">SKU 售后 TOP10</div>
+              <div class="chart-wrapper"><canvas id="chart-sku-top10"></canvas></div>
+            </div>
+          </div>
+          <div class="ov-section">
+            <div class="ov-section-title">按品牌对比 <span class="badge" id="ov-period-label"></span></div>
+            <div id="ov-brand-table-area"></div>
+          </div>
+          <div class="ov-action-bar">
+            <button class="btn btn-secondary" onclick="downloadTemplate()">下载销量模板</button>
+            <button class="btn btn-primary" id="btn-import-sales" onclick="document.getElementById('sales-file-input').click()">导入销量数据</button>
+            <input type="file" id="sales-file-input" class="file-input-hidden" accept=".xlsx,.xls" onchange="importSalesData(event)">
+          </div>
+        </div>
+
+        <!-- 售后列表 -->
+        <div id="page-list" class="page">
+          <div class="page-header">
+            <h2>售后记录列表</h2>
+          </div>
+          <div class="filter-bar">
+            <div class="filter-form">
+              <div class="filter-group" style="flex:2">
+                <label>关键词</label>
+                <input type="text" class="search-input" id="search-input" placeholder="搜索订单号、SKU、品牌、型号…" oninput="renderList()">
+              </div>
+              <div class="filter-group">
+                <label>品牌</label>
+                <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="">全部品牌</option></select>
+              </div>
+              <div class="filter-group">
+                <label>审批状态</label>
+                <select class="filter-select" id="status-filter" onchange="renderList()"><option value="">全部审批状态</option></select>
+              </div>
+              <div class="filter-group">
+                <label>处理状态</label>
+                <select class="filter-select" id="process-status-filter" onchange="renderList()"><option value="">全部处理状态</option></select>
+              </div>
+              <div class="filter-group">
+                <label>开始日期</label>
+                <input type="date" class="date-input" id="list-start-date" onchange="renderList()">
+              </div>
+              <div class="filter-group">
+                <label>结束日期</label>
+                <input type="date" class="date-input" id="list-end-date" onchange="renderList()">
+              </div>
+              <div class="filter-actions">
+                <button class="btn btn-search" onclick="renderList()">搜索</button>
+                <button class="btn btn-clear" onclick="clearListFilter()">清除</button>
+              </div>
+            </div>
+          </div>
+          <div class="table-section" id="list-table-section">
+            <div class="table-section-title">
+              <div class="table-section-title-left">
+                <span class="table-section-icon">📝</span>
+                <span>售后记录</span>
+                <div class="view-mode-toggle" style="margin-left:12px">
+                  <button id="mode-by-record" class="active" onclick="switchListMode('record')">按售后单</button>
+                  <button id="mode-by-item" onclick="switchListMode('item')">按售后明细</button>
+                </div>
+              </div>
+              <div class="table-section-actions" id="list-actions">
+                <button class="btn btn-primary" id="btn-new-record-table" onclick="openRecordForm()">📝 手动填写</button>
+                <button class="btn btn-success" id="btn-import-records" onclick="openImportDialog()">📥 批量导入</button>
+              </div>
+            </div>
+            <div class="batch-bar" id="batch-bar">
+              <span class="batch-info">已选 <span id="batch-count">0</span> 项明细</span>
+              <select class="filter-select" id="batch-process-status" style="width:auto">
+                <option value="">选择处理状态...</option>
+                <option value="待ERP入库">待ERP入库</option>
+                <option value="待换彩盒">待换彩盒</option>
+                <option value="待补配件">待补配件</option>
+                <option value="待RMA">待RMA</option>
+                <option value="待报废">待报废</option>
+                <option value="已处理">已处理</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="batchUpdateProcessStatus()">批量更新</button>
+              <button class="btn btn-secondary btn-sm" onclick="clearBatchSelection()">取消</button>
+            </div>
+            <div id="table-area"></div>
+          </div>
+          <div class="pagination" id="list-pagination"></div>
+        </div>
+
+        <!-- 新建记录弹窗 -->
+        <div id="record-form-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeRecordForm()">
+          <div class="modal-panel modal-xlarge">
+            <div class="modal-header">
+              <h3 id="form-title">新建售后记录</h3>
+              <button type="button" class="modal-close" onclick="closeRecordForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+              <form class="record-form" onsubmit="submitForApproval(event)">
+                <datalist id="sku-datalist"></datalist>
+                <fieldset class="form-section">
+                  <legend>基本信息</legend>
+                  <div class="form-grid">
+                    <div class="form-group"><label>售后日期 <span class="required">*</span></label><input type="date" class="date-input" id="f-aftersales-date" required></div>
+                  </div>
+                </fieldset>
+                <fieldset class="form-section">
+                  <legend>售后明细 <span style="font-size:12px;color:var(--text-muted);font-weight:400">（至少添加一条明细）</span></legend>
+                  <div class="detail-items-table-wrapper">
+                    <table class="detail-items-table" id="detail-items-table">
+                      <thead><tr>
+                        <th style="width:11%">平台 <span class="required">*</span></th>
+                        <th style="width:13%">SKU <span class="required">*</span></th>
+                        <th style="width:14%">订单号</th>
+                        <th style="width:7%">数量 <span class="required">*</span></th>
+                        <th style="width:10%">退货原因 <span class="required">*</span></th>
+                        <th style="width:33%">问题说明/备注 <span class="required">*</span></th>
+                        <th style="width:5%">操作</th>
+                      </tr></thead>
+                      <tbody id="detail-items-tbody"></tbody>
+                    </table>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addDetailItem()">+ 添加明细行</button>
+                    <span style="font-size:14px;font-weight:600">合计数量：<span id="detail-total-qty" style="color:var(--primary);font-size:16px">0</span></span>
+                  </div>
+                </fieldset>
+                <fieldset class="form-section">
+                  <legend>审批人设置</legend>
+                  <div class="form-grid">
+                    <div class="form-group"><label>一级审批人 <span class="required">*</span></label><select id="f-approver-level1" required onchange="updateApproverOptions()"><option value="">请选择</option></select></div>
+                    <div class="form-group"><label>二级审批人 <span class="required">*</span></label><select id="f-approver-level2" required onchange="updateApproverOptions()"><option value="">请选择</option></select></div>
+                    <div class="form-group"><label>三级审批人 <span class="required">*</span></label><select id="f-approver-level3" required onchange="updateApproverOptions()"><option value="">请选择</option></select></div>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px">* 审批人需具有对应审批级别的权限，同一人仅能担任一个审批级别。</div>
+                </fieldset>
+                <div class="form-actions" style="margin-top:8px">
+                  <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn">&#x1F4E4; 提交审批</button>
+                  <button type="button" class="btn btn-secondary btn-lg" onclick="saveAsDraft()">&#x1F4BE; 保存草稿</button>
+                  <button type="button" class="btn btn-secondary btn-lg" onclick="closeRecordForm()">取消</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- 详情页 -->
+        <div id="page-detail" class="page">
+          <div class="page-header">
+            <div><h2 id="detail-title"></h2></div>
+            <div style="display:flex;gap:12px">
+              <button class="btn btn-secondary" onclick="showPage('list')">返回列表</button>
+            </div>
+          </div>
+          <div class="detail-card" id="detail-content"></div>
+        </div>
+
+        <!-- 售后记录审批 -->
+        <div id="page-approval" class="page">
+          <div class="page-header">
+            <h2>售后记录审批</h2>
+          </div>
+          <div class="filter-bar">
+            <div class="filter-form">
+              <div class="filter-group" style="flex:2">
+                <label>关键词</label>
+                <input type="text" class="search-input" id="appr-search" placeholder="搜索订单号、SKU、品牌、型号…" oninput="renderApproval()">
+              </div>
+              <div class="filter-group">
+                <label>范围</label>
+                <select class="filter-select" id="appr-tab" onchange="renderApproval()">
+                  <option value="pending">待我审批</option>
+                  <option value="done">已审批</option>
+                  <option value="all">全部</option>
+                </select>
+              </div>
+              <div class="filter-actions">
+                <button class="btn btn-clear" onclick="clearApprovalFilter()">清除</button>
+              </div>
+            </div>
+          </div>
+          <div id="approval-table-area"></div>
+          <div class="pagination" id="appr-pagination"></div>
+        </div>
+
+        <!-- 商品管理 -->
+        <div id="page-products" class="page">
+          <div class="page-header">
+            <h2>商品管理</h2>
+            <button class="btn btn-primary" id="btn-new-product" onclick="openProductModal()">+ 新建商品</button>
+          </div>
+          <div class="filter-bar">
+            <div class="filter-form">
+              <div class="filter-group" style="flex:2">
+                <label>关键词</label>
+                <input type="text" class="search-input" id="prod-search" placeholder="搜索SKU、品牌、型号、品类…" oninput="renderProducts()">
+              </div>
+              <div class="filter-group">
+                <label>品牌</label>
+                <select class="filter-select" id="prod-brand-filter" onchange="renderProducts()"><option value="">全部品牌</option></select>
+              </div>
+              <div class="filter-group">
+                <label>国家</label>
+                <select class="filter-select" id="prod-country-filter" onchange="renderProducts()"><option value="">全部国家</option></select>
+              </div>
+              <div class="filter-group">
+                <label>状态</label>
+                <select class="filter-select" id="prod-status-filter" onchange="renderProducts()">
+                  <option value="">全部</option><option value="active">启用</option><option value="disabled">禁用</option>
+                </select>
+              </div>
+              <div class="filter-actions">
+                <button class="btn btn-search" onclick="renderProducts()">搜索</button>
+                <button class="btn btn-clear" onclick="clearProductFilter()">清除</button>
+              </div>
+            </div>
+          </div>
+          <div id="products-table-area"></div>
+          <div class="pagination" id="prod-pagination"></div>
+        </div>
+
+        <!-- 用户管理 -->
+        <div id="page-users" class="page">
+          <div class="page-header">
+            <h2>用户管理</h2>
+            <button class="btn btn-primary" onclick="openUserModal()">+ 新建用户</button>
+          </div>
+          <div id="users-table-area"></div>
+        </div>
+
+        <!-- 角色管理 -->
+        <div id="page-roles" class="page">
+          <div class="page-header">
+            <h2>角色管理</h2>
+            <button class="btn btn-primary" onclick="openRoleModal()">+ 新建角色</button>
+          </div>
+          <div id="roles-table-area"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modals -->
+
+<!-- 用户编辑弹窗 -->
+<div id="user-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h3 id="user-modal-title" style="font-size:17px">新建用户</h3>
+      <button class="action-btn" onclick="closeUserModal()" style="font-size:20px">&times;</button>
+    </div>
+    <form onsubmit="saveUser(event)" style="padding:24px">
+      <input type="hidden" id="user-edit-id">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label>飞书用户 <span class="required">*</span></label>
+          <div class="feishu-contact-search">
+            <input type="text" id="u-username" required placeholder="输入姓名/英文名/邮箱搜索飞书成员..." autocomplete="off" oninput="searchFeishuContacts(this.value)" onfocus="searchFeishuContacts(this.value)">
+            <div class="feishu-search-dropdown" id="feishu-search-dropdown" style="display:none"></div>
+          </div>
+          <input type="hidden" id="u-feishu-openid">
+          <div id="u-feishu-selected" style="display:none;margin-top:8px;padding:6px 12px;background:#e8f2ff;border-radius:6px;font-size:13px;align-items:center;gap:8px">
+            <span id="u-feishu-selected-name" style="font-weight:500"></span>
+            <span style="color:var(--text-muted);font-size:11px" id="u-feishu-selected-email"></span>
+            <button type="button" onclick="clearFeishuSelection()" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px">&times;</button>
+          </div>
+        </div>
+        <div class="form-group"><label>姓名 <span class="required">*</span></label><input type="text" id="u-name" required placeholder="显示名称" readonly></div>
+        <div class="form-group"><label>密码 <span id="u-pwd-required" class="required">*</span></label><input type="password" id="u-password" placeholder="新建时必填，编辑时留空不修改"></div>
+        <div class="form-group"><label>角色 <span class="required">*</span></label><select id="u-role" required></select></div>
+        <div class="form-group"><label>状态</label><select id="u-status"><option value="active">启用</option><option value="disabled">禁用</option></select></div>
+      </div>
+      <div class="form-actions" style="margin-top:24px">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 角色编辑弹窗 -->
+<div id="role-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:520px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h3 id="role-modal-title" style="font-size:17px">新建角色</h3>
+      <button class="action-btn" onclick="closeRoleModal()" style="font-size:20px">&times;</button>
+    </div>
+    <form onsubmit="saveRole(event)" style="padding:24px">
+      <input type="hidden" id="role-edit-id">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group"><label>角色名称 <span class="required">*</span></label><input type="text" id="r-name" required placeholder="如：运营人员"></div>
+        <div class="form-group"><label>角色描述</label><textarea id="r-desc" rows="2" placeholder="描述该角色的职责范围"></textarea></div>
+        <div class="form-group"><label>权限配置</label><div class="permission-grid" id="r-permissions"></div></div>
+      </div>
+      <div class="form-actions" style="margin-top:24px">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 商品编辑弹窗 -->
+<div id="product-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h3 id="product-modal-title" style="font-size:17px">新建商品</h3>
+      <button class="action-btn" onclick="closeProductModal()" style="font-size:20px">&times;</button>
+    </div>
+    <form onsubmit="saveProduct(event)" style="padding:24px">
+      <input type="hidden" id="prod-edit-id">
+      <div class="form-grid">
+        <div class="form-group"><label>国家</label><input type="text" id="p-country" placeholder="如：中国"></div>
+        <div class="form-group"><label>品牌 <span class="required">*</span></label><input type="text" id="p-brand" required placeholder="如：Apple"></div>
+        <div class="form-group"><label>SKU编码 <span class="required">*</span></label><input type="text" id="p-sku-code" required placeholder="如：IPHONE15-PRO-128"></div>
+        <div class="form-group"><label>型号</label><input type="text" id="p-model" placeholder="如：iPhone 15 Pro"></div>
+        <div class="form-group"><label>品类</label><input type="text" id="p-category" placeholder="如：智能手机"></div>
+        <div class="form-group"><label>EAN编码</label><input type="text" id="p-ean-code" placeholder="如：195949015726"></div>
+        <div class="form-group"><label>状态</label><select id="p-status"><option value="active">启用</option><option value="disabled">禁用</option></select></div>
+      </div>
+      <div class="form-actions" style="margin-top:24px">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 审批操作弹窗 -->
+<div id="approval-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:880px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h3 id="approval-modal-title" style="font-size:17px">售后记录审批</h3>
+      <button class="action-btn" onclick="closeApprovalModal()" style="font-size:20px">&times;</button>
+    </div>
+    <div style="padding:24px">
+      <div class="detail-section" id="approval-record-summary"></div>
+      <div class="detail-section">
+        <h3>审批记录</h3>
+        <div id="approval-history"></div>
+      </div>
+      <div class="detail-section" id="approval-form-section">
+        <h3>审批操作</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>退货入库日期</label><input type="date" class="date-input" id="appr-return-date"></div>
+          <div class="form-group form-group-full"><label>审批意见 <span class="required">*</span></label><textarea id="appr-comment" rows="3" required placeholder="请输入审批意见…"></textarea></div>
+        </div>
+        <div style="margin-top:12px">
+          <label style="font-size:14px;font-weight:500;color:var(--text-secondary)">附件</label>
+          <div id="appr-attachments" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+          <div class="attachment-upload-area" style="margin-top:8px" onclick="triggerAttachmentUpload()">
+            <span style="color:var(--text-muted)">&#x1F4CE; 点击选择文件 或 在此区域粘贴图片 (Ctrl+V)</span>
+          </div>
+          <input type="file" id="appr-file-input" class="file-input-hidden" accept="image/*" multiple onchange="handleFileSelect(event)">
+        </div>
+        <div id="appr-storage-warning" style="margin-top:8px;font-size:11px;color:var(--warning);display:none">
+          &#x26A0; 注意：图片以Base64格式存储在本地浏览器中，建议控制总大小在2MB以内。
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-primary btn-lg" id="btn-approve" onclick="doApproval('approve')">&#x2705; 审批通过</button>
+        <button type="button" class="btn btn-danger btn-lg" id="btn-reject" onclick="doApproval('reject')">&#x274C; 审批拒绝</button>
+        <button type="button" class="btn btn-secondary btn-lg" onclick="closeApprovalModal()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 图片预览遮罩 -->
+<div id="image-preview-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;cursor:zoom-out" onclick="closeImagePreview()">
+  <img id="image-preview-img" style="max-width:90%;max-height:90%;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.5)" alt="preview">
+</div>
+
+<!-- 批量导入弹窗 -->
+<div id="import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:600px;max-height:90vh;overflow-y:auto">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:17px">批量导入售后记录</h3>
+      <button class="action-btn" onclick="closeImportDialog()" style="font-size:20px">&times;</button>
+    </div>
+    <div style="padding:24px">
+      <div style="margin-bottom:20px;padding:16px;background:#f0f7ff;border-radius:8px;border-left:4px solid var(--primary)">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">导入说明</div>
+        <ul style="margin:0;padding-left:16px;font-size:13px;color:var(--text-secondary);line-height:1.8">
+          <li>支持 CSV 文件（UTF-8 编码）</li>
+          <li>必填列：<b>售后日期, 平台, SKU, 数量</b></li>
+          <li>可选列：订单号, 退货原因, 问题说明/备注</li>
+          <li>导入的记录将自动保存为<b>草稿</b>状态，请到列表中编辑并提交审批</li>
+        </ul>
+      </div>
+      <div style="margin-bottom:16px">
+        <button class="btn btn-secondary" onclick="downloadImportTemplate()">📄 下载导入模板</button>
+      </div>
+      <div style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all .2s"
+           id="import-drop-zone"
+           onclick="document.getElementById('import-file-input').click()"
+           ondragover="event.preventDefault();this.style.borderColor='var(--primary)';this.style.background='var(--primary-light)'"
+           ondragleave="this.style.borderColor='var(--border)';this.style.background='transparent'"
+           ondrop="handleImportDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
+        <div style="font-weight:500;margin-bottom:4px">点击选择文件或拖拽 CSV 文件到此处</div>
+        <div style="font-size:12px;color:var(--text-muted)">支持 .csv 格式</div>
+      </div>
+      <input type="file" id="import-file-input" class="file-input-hidden" accept=".csv" onchange="handleImportFile(event)">
+      <div id="import-result" style="margin-top:16px"></div>
+      <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-secondary" onclick="closeImportDialog()">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA LAYER ====================
+const APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
+const ALL_PERMISSIONS = [
+  {key:'record_view', label:'查看售后记录', desc:'查看概览和售后列表'},
+  {key:'record_create', label:'新建/编辑记录', desc:'创建和修改售后记录'},
+  {key:'record_delete', label:'删除记录', desc:'删除售后记录'},
+  {key:'sales_import', label:'导入销量数据', desc:'下载模板并导入销量数据'},
+  {key:'product_view', label:'查看商品', desc:'查看商品目录'},
+  {key:'product_create', label:'管理商品', desc:'创建/编辑/删除商品'},
+  {key:'approval_submit', label:'提交审批', desc:'创建售后记录并提交审批'},
+  {key:'approval_level1', label:'一级审批', desc:'作为一级审批人处理审批'},
+  {key:'approval_level2', label:'二级审批', desc:'作为二级审批人处理审批'},
+  {key:'approval_level3', label:'三级审批', desc:'作为三级审批人处理审批'},
+  {key:'user_manage', label:'用户管理', desc:'管理系统用户'},
+  {key:'role_manage', label:'角色管理', desc:'管理系统角色和权限'}
+];
+const BRAND_COLORS=['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6','#007aff','#ff2d55','#af52de','#5ac8fa','#ffcc00'];
+
+async function getRecords(){
+  try{
+    const data = await getRecordsAsync();
+    // Migrate old records to new items-based format
+    let migrated=false;
+    let records=Array.isArray(data) ? data.map(r=>{
+      if(!r.items){
+        migrated=true;
+        return {
+          ...r,
+          items:[{
+            platform:r.platform||'',
+            sku_code:r.sku_code||'',
+            order_no:r.order_no||'',
+            quantity:r.quantity||1,
+            return_reason:'可二次销售',
+            fault_description:r.fault_description||''
+          }],
+          total_quantity:r.quantity||1,
+          platforms:r.platform?[r.platform]:[]
+        };
+      }
+      if(r.items.some(it=>it.return_type&&!it.return_reason)){
+        migrated=true;
+        r.items=r.items.map(it=>{
+          if(it.return_type&&!it.return_reason){
+            const oldMap={'退货':'可二次销售','换货':'彩盒损坏','维修':'硬件故障','折让':'可二次销售','其他':'可二次销售'};
+            it.return_reason=oldMap[it.return_type]||it.return_type;
+            delete it.return_type;
+          }
+          return it;
+        });
+      }
+      if(r.items.some(it=>!it.platform)){
+        migrated=true;
+        const defaultPlatform=r.platform||'';
+        r.items=r.items.map(it=>({...it,platform:it.platform||defaultPlatform}));
+      }
+      if(r.platform&&!r.platforms){
+        migrated=true;
+        r.platforms=[r.platform];
+      }
+      if(!r.platforms) r.platforms=[];
+      if(!r.total_quantity) r.total_quantity=(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
+      return r;
+    }) : data;
+    if(migrated) await saveRecordsAsync(records);
+    return records;
+  }catch(e){return[];}
+}
+async function saveRecordsAsync(r){ _recordsCache = null;
+  if (await checkDbAvailable()) {
+    for (const record of r) { await saveRecordAsync(record).catch(e => console.error('Save record failed:', e)); }
+    return;
+  }
+  localStorage.setItem('aftersales_records',JSON.stringify(r)); }
+async function nextId(){ const r=await getRecords(); return r.length>0?Math.max(...r.map(x=>x.id))+1:1; }
+async function getSalesData(){ return await getSalesAsync(); }
+async function saveSalesData(d){ _salesCache = null;
+  if (await checkDbAvailable()) {
+    for (const entry of d) {
+      await fetch('/api/sales', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(entry) });
+    }
+    return;
+  }
+  localStorage.setItem('aftersales_sales_data',JSON.stringify(d)); }
+async function getUsers(){ return await getUsersAsync(); }
+async function saveUsers(u){ _usersCache = null; for(const user of u) await saveUserAsync(user).catch(e => console.error('Save user failed:', e)); }
+async function getRoles(){ return await getRolesAsync(); }
+async function saveRoles(r){ await saveRolesAsync(r); }
+async function getProducts(){ return await getProductsAsync(); }
+async function saveProducts(p){ _productsCache = null; for(const prod of p) await saveProductAsync(prod).catch(e => console.error('Save product failed:', e)); }
+function getCurrentUser(){ try{return JSON.parse(localStorage.getItem('aftersales_current_user')||'null');}catch(e){return null;} }
+function getCurrentUsername(){ const u=getCurrentUser(); return u?u.name:''; }
+function setCurrentUser(u){ localStorage.setItem('aftersales_current_user',JSON.stringify(u)); }
+
+// ==================== API 数据适配层 ====================
+let _dbAvailable = null;
+let _usersCache = null;
+let _rolesCache = null;
+let _productsCache = null;
+let _salesCache = null;
+let _recordsCache = null;
+let _cacheTimestamp = 0;
+const CACHE_TTL = 5000; // 5秒缓存
+
+function getAuthHeaders() {
+  const user = getCurrentUser();
+  return {
+    'Content-Type': 'application/json',
+    'X-User-Id': user ? user.id : '',
+    'X-User-Role': user ? user.role_id : ''
+  };
+}
+
+async function checkDbAvailable() {
+  if (_dbAvailable !== null) return _dbAvailable;
+  try {
+    const resp = await fetch('/api/db/status');
+    const data = await resp.json();
+    _dbAvailable = data.connected;
+    return _dbAvailable;
+  } catch (e) {
+    _dbAvailable = false;
+    return false;
+  }
+}
+
+function cacheValid() { return Date.now() - _cacheTimestamp < CACHE_TTL; }
+
+// 用户
+async function getUsersAsync() {
+  if (await checkDbAvailable()) {
+    if (!_usersCache || !cacheValid()) {
+      const resp = await fetch('/api/users', { headers: getAuthHeaders() });
+      _usersCache = await resp.json();
+      _cacheTimestamp = Date.now();
+    }
+    return _usersCache;
+  }
+  // fallback to localStorage
+  try { return JSON.parse(localStorage.getItem('aftersales_users') || '[]'); } catch(e) { return []; }
+}
+async function saveUserAsync(user) {
+  _usersCache = null;
+  if (await checkDbAvailable()) {
+    const resp = await fetch(`/api/users/${user.id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(user)
+    });
+    return await resp.json();
+  }
+  const users = await getUsersAsync();
+  const idx = users.findIndex(u => u.id === user.id);
+  if (idx >= 0) users[idx] = user; else users.push(user);
+  localStorage.setItem('aftersales_users', JSON.stringify(users));
+  return user;
+}
+async function createUserAsync(user) {
+  _usersCache = null;
+  if (await checkDbAvailable()) {
+    const resp = await fetch('/api/users', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(user)
+    });
+    const result = await resp.json();
+    if (resp.ok) return result;
+    throw new Error(result.error || '创建失败');
+  }
+  const users = await getUsersAsync();
+  users.push(user);
+  localStorage.setItem('aftersales_users', JSON.stringify(users));
+  return user;
+}
+async function findUserByFeishuAsync(openId, unionId) {
+  if (await checkDbAvailable()) {
+    const resp = await fetch(`/api/users/find-by-feishu/${openId}`, { headers: getAuthHeaders() });
+    return await resp.json();
+  }
+  const users = await getUsersAsync();
+  return users.find(u => (openId && u.feishu_open_id === openId) || (unionId && u.feishu_union_id === unionId)) || null;
+}
+
+// 角色
+async function getRolesAsync() {
+  if (await checkDbAvailable()) {
+    if (!_rolesCache || !cacheValid()) {
+      const resp = await fetch('/api/roles', { headers: getAuthHeaders() });
+      _rolesCache = await resp.json();
+      _cacheTimestamp = Date.now();
+    }
+    return _rolesCache;
+  }
+  try { return JSON.parse(localStorage.getItem('aftersales_roles') || '[]'); } catch(e) { return []; }
+}
+async function saveRolesAsync(roles) {
+  _rolesCache = null;
+  if (await checkDbAvailable()) {
+    for (const r of roles) {
+      await fetch('/api/roles', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(r) });
+    }
+    return;
+  }
+  localStorage.setItem('aftersales_roles', JSON.stringify(roles));
+}
+
+// 商品
+async function getProductsAsync() {
+  if (await checkDbAvailable()) {
+    if (!_productsCache || !cacheValid()) {
+      const resp = await fetch('/api/products', { headers: getAuthHeaders() });
+      _productsCache = await resp.json();
+      _cacheTimestamp = Date.now();
+    }
+    return _productsCache;
+  }
+  try { return JSON.parse(localStorage.getItem('aftersales_products') || '[]'); } catch(e) { return []; }
+}
+async function saveProductAsync(product) {
+  _productsCache = null;
+  if (await checkDbAvailable()) {
+    const resp = await fetch(`/api/products/${product.id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(product)
+    });
+    if (resp.status === 404) {
+      await fetch('/api/products', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(product) });
+    }
+    return;
+  }
+  const products = await getProductsAsync();
+  const idx = products.findIndex(p => p.id === product.id);
+  if (idx >= 0) products[idx] = product; else products.push(product);
+  localStorage.setItem('aftersales_products', JSON.stringify(products));
+}
+async function deleteProductAsync(id) {
+  _productsCache = null;
+  if (await checkDbAvailable()) {
+    await fetch(`/api/products/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+    return;
+  }
+  const products = await getProductsAsync();
+  localStorage.setItem('aftersales_products', JSON.stringify(products.filter(p => p.id !== id)));
+}
+
+// 销售数据
+async function getSalesAsync() {
+  if (await checkDbAvailable()) {
+    if (!_salesCache || !cacheValid()) {
+      const resp = await fetch('/api/sales', { headers: getAuthHeaders() });
+      _salesCache = await resp.json();
+      _cacheTimestamp = Date.now();
+    }
+    return _salesCache;
+  }
+  try { return JSON.parse(localStorage.getItem('aftersales_sales_data') || '[]'); } catch(e) { return []; }
+}
+async function saveSalesAsync(data) {
+  _salesCache = null;
+  if (await checkDbAvailable()) {
+    for (const entry of data) {
+      await fetch('/api/sales', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(entry) });
+    }
+    return;
+  }
+  localStorage.setItem('aftersales_sales_data', JSON.stringify(data));
+}
+
+// 售后记录
+async function getRecordsAsync() {
+  if (await checkDbAvailable()) {
+    if (!_recordsCache || !cacheValid()) {
+      const resp = await fetch('/api/records', { headers: getAuthHeaders() });
+      _recordsCache = await resp.json();
+      _cacheTimestamp = Date.now();
+    }
+    return _recordsCache;
+  }
+  try { return JSON.parse(localStorage.getItem('aftersales_records') || '[]'); } catch(e) { return []; }
+}
+async function saveRecordAsync(record) {
+  _recordsCache = null;
+  if (await checkDbAvailable()) {
+    const resp = await fetch(`/api/records/${record.id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(record)
+    });
+    if (resp.status === 404) {
+      await fetch('/api/records', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(record) });
+    }
+    return;
+  }
+  const records = await getRecordsAsync();
+  const idx = records.findIndex(r => r.id === record.id);
+  if (idx >= 0) records[idx] = record; else records.push(record);
+  localStorage.setItem('aftersales_records', JSON.stringify(records));
+}
+async function deleteRecordAsync(id) {
+  _recordsCache = null;
+  if (await checkDbAvailable()) {
+    await fetch(`/api/records/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+    return;
+  }
+  const records = await getRecordsAsync();
+  localStorage.setItem('aftersales_records', JSON.stringify(records.filter(r => r.id !== id)));
+}
+
+function hasValue(v){ return typeof v === 'string' && v.trim() !== ''; }
+function makeUniqueUsername(base, users){
+  const raw = String(base || '飞书用户').trim() || '飞书用户';
+  let username = raw;
+  let suffix = 2;
+  while(users.some(u => u.username === username)){
+    username = raw + suffix;
+    suffix++;
+  }
+  return username;
+}
+async function findUserByFeishuIdentity(users, userData){
+  const openId = String(userData.feishu_open_id || '').trim();
+  const unionId = String(userData.feishu_union_id || '').trim();
+  if (openId || unionId) {
+    try {
+      const dbUser = await findUserByFeishuAsync(openId, unionId);
+      if (dbUser) return dbUser;
+    } catch(e) { console.warn('DB lookup failed, falling back to local:', e.message); }
+  }
+  return users.find(u =>
+    (openId && u.feishu_open_id === openId) ||
+    (unionId && u.feishu_union_id === unionId)
+  );
+}
+async function getDefaultFeishuRoleId(){
+  const roles = await getRoles();
+  const viewerRole = roles.find(r => r.id === 'role_viewer');
+  return viewerRole ? viewerRole.id : 'role_viewer';
+}
+
+let currentDetailId=null, currentApprovalRecordId=null, pendingAttachments=[];
+let listPage=1, listPageSize=20, prodPage=1, prodPageSize=20, apprPage=1, apprPageSize=20;
+
+// ==================== MIGRATION ====================
+async function runMigration(){
+  // 旧迁移：清空售后记录（仅执行一次）
+  const migrated = localStorage.getItem('aftersales_v3_migrated');
+  if(migrated!=='true') {
+    localStorage.setItem('aftersales_records','[]');
+    localStorage.setItem('aftersales_v3_migrated','true');
+    console.log('[Migration v3] Cleared old aftersales records');
+  }
+  
+  // 飞书用户名迁移：将 feishu_xxx 改为飞书名称（仅执行一次）
+  const fsMigrated = localStorage.getItem('aftersales_fs_username_migrated');
+  if (fsMigrated !== 'true') {
+    const users = await getUsers();
+    let changed = false;
+    for (const u of users) {
+      if (u.feishu_open_id && u.username && u.username.startsWith('feishu_')) {
+        const oldName = u.username;
+        const newName = u.feishu_name || u.name || u.username;
+        if (newName !== oldName) {
+          u.username = newName;
+          changed = true;
+          console.log(`[Migration] 飞书用户名迁移: ${oldName} → ${newName}`);
+        }
+      }
+    }
+    if (changed) {
+      await saveUsers(users);
+    }
+    localStorage.setItem('aftersales_fs_username_migrated', 'true');
+  }
+}
+
+// ==================== INIT DEFAULT DATA ====================
+async function initDefaultData(){
+  let roles=await getRoles();
+  if(roles.length===0){
+    roles=[
+      {id:'role_admin', name:'超级管理员', description:'拥有系统全部管理权限', permissions:ALL_PERMISSIONS.map(p=>p.key), created_at:new Date().toISOString(), system:true},
+      {id:'role_operator', name:'运营人员', description:'业务操作权限，含一级审批和系统管理', permissions:['record_view','record_create','record_delete','sales_import','product_view','approval_submit','approval_level1','user_manage','role_manage'], created_at:new Date().toISOString(), system:true},
+      {id:'role_viewer', name:'普通用户', description:'只读权限', permissions:['record_view','product_view'], created_at:new Date().toISOString(), system:true}
+    ];
+    await saveRoles(roles);
+  }
+  let users=await getUsers();
+  if(users.length===0){
+    users=[
+      {id:'user_admin', username:'admin', name:'超级管理员', password:'admin', role_id:'role_admin', status:'active', created_at:new Date().toISOString()},
+      {id:'user_operator', username:'operator', name:'运营人员', password:'operator', role_id:'role_operator', status:'active', created_at:new Date().toISOString()},
+      {id:'user_viewer', username:'viewer', name:'普通用户', password:'viewer', role_id:'role_viewer', status:'active', created_at:new Date().toISOString()}
+    ];
+    await saveUsers(users);
+  }
+  let products=await getProducts();
+  if(products.length===0){
+    const now=new Date().toISOString();
+    products=[
+      {id:'prod_sample1', country:'中国', brand:'Apple', sku_code:'IPHONE15-PRO-128', model:'iPhone 15 Pro', category:'智能手机', ean_code:'195949015726', status:'active', created_at:now, updated_at:now},
+      {id:'prod_sample2', country:'中国', brand:'Apple', sku_code:'IPHONE15-256', model:'iPhone 15', category:'智能手机', ean_code:'195949015733', status:'active', created_at:now, updated_at:now},
+      {id:'prod_sample3', country:'中国', brand:'华为', sku_code:'MATE60-512', model:'Mate 60 Pro', category:'智能手机', ean_code:'6901443374456', status:'active', created_at:now, updated_at:now},
+      {id:'prod_sample4', country:'中国', brand:'华为', sku_code:'WATCH-GT4-46', model:'Watch GT 4', category:'智能手表', ean_code:'6901443374460', status:'active', created_at:now, updated_at:now},
+      {id:'prod_sample5', country:'中国', brand:'小米', sku_code:'MI14-PRO-256', model:'小米14 Pro', category:'智能手机', ean_code:'6934177799510', status:'active', created_at:now, updated_at:now}
+    ];
+    await saveProducts(products);
+  }
+}
+
+function getUserRole(user){
+  if(!user) return null;
+  // 优先使用缓存（由 API 层或 initDefaultData 填充），否则从 localStorage 读取
+  const roles = _rolesCache || (function(){ try{return JSON.parse(localStorage.getItem('aftersales_roles')||'[]');}catch(e){return[];} })();
+  return roles.find(r=>r.id===user.role_id)||null;
+}
+
+function hasPermission(perm){
+  const user=getCurrentUser();
+  if(!user) return false;
+  const role=getUserRole(user);
+  if(!role) return false;
+  return (role.permissions||[]).includes(perm);
+}
+
+function requirePermission(perm){
+  if(!hasPermission(perm)){ showFlash('你没有该操作的权限','danger'); return false; }
+  return true;
+}
+const PAGE_PERMISSIONS = {
+  overview: 'record_view',
+  list: 'record_view',
+  detail: 'record_view',
+  products: 'product_view',
+  approval: ['approval_level1', 'approval_level2', 'approval_level3', 'record_view'],
+  users: 'user_manage',
+  roles: 'role_manage'
+};
+function canAccessPage(page){
+  const requiredPerm = PAGE_PERMISSIONS[page];
+  if(!requiredPerm) return false;
+  const perms = Array.isArray(requiredPerm) ? requiredPerm : [requiredPerm];
+  return perms.some(p => hasPermission(p));
+}
+function getDefaultAccessiblePage(){
+  return Object.keys(PAGE_PERMISSIONS).find(canAccessPage) || null;
+}
+
+// ==================== UTILITIES ====================
+function showFlash(msg,type='info'){
+  const el=document.getElementById('flash-msg');
+  el.className='flash flash-'+type+' show';
+  el.textContent=msg;
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+function esc(s){ if(!s)return''; const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+function escAttr(s){ return esc(s).replace(/'/g,"&#39;").replace(/"/g,"&quot;"); }
+function formatDateLocal(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-bad'; if(rate>=2)return'rate-warn'; return'rate-good'; }
+
+// ==================== FEISHU NOTIFICATION ====================
+/**
+ * 审批提交后发送飞书通知
+ * @param {Object} record - 售后记录
+ */
+async function sendApprovalNotification(record) {
+  if (!record || !record.id) return;
+
+  // 收集需要通知的审批人
+  const users = await getUsers();
+  const approvers = [];
+
+  // 根据审批级别确定通知对象
+  if (record.status === '待一级审批' && record.approver_level1_id) {
+    const approver = users.find(u => u.id === record.approver_level1_id);
+    if (approver) approvers.push(approver);
+  }
+
+  // 如果是在移动审批，也要通知（根据 current_approval_level）
+  const levelMap = {
+    1: 'approver_level1_id',
+    2: 'approver_level2_id',
+    3: 'approver_level3_id'
+  };
+  const approverKey = levelMap[record.current_approval_level];
+  if (approverKey && record[approverKey]) {
+    const approver = users.find(u => u.id === record[approverKey]);
+    if (approver && !approvers.find(a => a.id === approver.id)) {
+      approvers.push(approver);
+    }
+  }
+
+  if (approvers.length === 0) {
+    console.log('[Notify] 没有找到可通知的审批人');
+    return;
+  }
+
+  // 筛选已绑定飞书账号的审批人
+  const feishuApprovers = approvers.filter(a => a.feishu_open_id);
+  if (feishuApprovers.length === 0) {
+    console.log('[Notify] 审批人未绑定飞书账号，跳过通知');
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/notify/approval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recordId: record.id,
+        record: record,
+        approvers: feishuApprovers.map(a => ({
+          name: a.name,
+          feishu_open_id: a.feishu_open_id
+        }))
+      })
+    });
+
+    const result = await resp.json();
+    if (result.success) {
+      if (result.mock) {
+        console.log('[Notify Mock]', result.message);
+      } else {
+        console.log('[Notify] 通知已发送:', result.message);
+      }
+    } else {
+      console.warn('[Notify] 通知发送失败:', result.message);
+    }
+  } catch (e) {
+    // 后端不可用时静默失败
+    console.log('[Notify] 后端不可用，跳过飞书通知:', e.message);
+  }
+}
+
+// ==================== URL HASH ROUTING ====================
+/**
+ * 处理 URL Hash 路由
+ * 支持格式：
+ *   #page=overview
+ *   #page=approval&record=123
+ *   #page=list&view=detail
+ */
+function handleHashRoute() {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash) return;
+
+  const params = {};
+  hash.split('&').forEach(pair => {
+    const [key, val] = pair.split('=');
+    if (key && val) params[decodeURIComponent(key)] = decodeURIComponent(val);
+  });
+
+  const page = params.page;
+  if (!page) return;
+
+  // 权限检查
+  const user = getCurrentUser();
+  if (!user) return;
+
+  if (!canAccessPage(page)) {
+    showFlash('你没有该页面的访问权限', 'danger');
+    const fallback = getDefaultAccessiblePage();
+    if (fallback) showPage(fallback);
+    return;
+  }
+
+  showPage(page);
+
+  // 如果是审批页面且有 record 参数，打开审批详情
+  if (page === 'approval' && params.record) {
+    const recordId = parseInt(params.record);
+    if (recordId > 0) {
+      // 等待页面渲染后打开审批模态框
+      setTimeout(() => {
+        openApprovalModal(recordId);
+      }, 300);
+    }
+  }
+
+  // 列表页的视图模式
+  if (page === 'list' && params.view === 'detail') {
+    setTimeout(() => {
+      if (typeof switchListMode === 'function') {
+        switchListMode('item');
+      }
+    }, 200);
+  }
+}
+
+// 监听 hash 变化
+window.addEventListener('hashchange', () => {
+  if (getCurrentUser()) {
+    handleHashRoute();
+  }
+});
+let feishuConfig = {
+  enabled: false,
+  appId: '',
+  orgId: '',
+  baseUrl: '',
+  configured: false
+};
+
+// 页面初始化时检测飞书配置状态
+async function checkFeishuStatus() {
+  const statusEl = document.getElementById('login-feishu-status');
+  const btnLogin = document.getElementById('btn-feishu-login');
+  const hint = document.getElementById('login-feishu-hint');
+  const ready = document.getElementById('login-feishu-ready');
+  
+  try {
+    const resp = await fetch('/api/auth/feishu/status');
+    if (resp.ok) {
+      const data = await resp.json();
+      feishuConfig = data;
+      if (data.configured) {
+        if (statusEl) statusEl.innerHTML = '';
+        if (hint) hint.style.display = 'none';
+        if (ready) ready.style.display = 'block';
+        if (btnLogin) btnLogin.style.display = 'block';
+        setLocalLoginVisible(new URLSearchParams(window.location.search).has('admin'));
+      } else {
+        if (statusEl) statusEl.innerHTML = '';
+        if (hint) hint.style.display = 'block';
+        if (ready) ready.style.display = 'none';
+        if (btnLogin) btnLogin.style.display = 'none';
+        setLocalLoginVisible(true);
+      }
+    }
+  } catch (e) {
+    // 后端不可用，使用 Mock 模式
+    if (statusEl) statusEl.innerHTML = '';
+    if (hint) hint.style.display = 'block';
+    if (ready) ready.style.display = 'none';
+    if (btnLogin) btnLogin.style.display = 'none';
+    setLocalLoginVisible(true);
+  }
+  
+  // 更新侧边栏状态
+  updateFeishuStatusBadge();
+}
+
+function updateFeishuStatusBadge() {
+  const dot = document.getElementById('feishu-status-dot');
+  const txt = document.getElementById('feishu-status-text');
+  if (!dot || !txt) return;
+  if (feishuConfig.configured) {
+    dot.style.color = '#4caf50';
+    txt.textContent = '飞书模式';
+  } else {
+    dot.style.color = '#ff9500';
+    txt.textContent = '本地模式';
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showLoginLoading(show) {
+  document.getElementById('login-loading').style.display = show ? 'flex' : 'none';
+}
+
+function setLocalLoginVisible(show) {
+  const adminPanel = document.getElementById('login-panel-admin');
+  if (adminPanel) adminPanel.style.display = show ? 'block' : 'none';
+}
+
+// 飞书登录：重定向到飞书 OAuth
+async function initiateFeishuLogin() {
+  showLoginLoading(true);
+  document.getElementById('login-error').style.display = 'none';
+  
+  try {
+    const resp = await fetch('/api/auth/feishu/login');
+    const data = await resp.json();
+    if (data.loginUrl) {
+      // 保存当前标签页状态
+      localStorage.setItem('aftersales_login_tab', 'feishu');
+      window.location.href = data.loginUrl;
+    } else {
+      showLoginError(data.error || '飞书登录暂不可用');
+      showLoginLoading(false);
+    }
+  } catch (e) {
+    showLoginError('无法连接飞书服务，请使用本地账号登录');
+    showLoginLoading(false);
+  }
+}
+
+// 处理飞书 OAuth 回调
+async function handleFeishuCallback(encodedUserData) {
+  try {
+    // 修复：atob 返回二进制串（Latin-1），需用 TextDecoder 转 UTF-8
+    const binary = atob(encodedUserData);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const jsonStr = new TextDecoder('utf-8').decode(bytes);
+    const userData = JSON.parse(jsonStr);
+    if (!hasValue(userData.feishu_open_id)) {
+      throw new Error('飞书返回的用户信息缺少 OpenID');
+    }
+    
+    // 在本地用户中查找匹配的飞书账号
+    const users = await getUsers();
+    let localUser = await findUserByFeishuIdentity(users, userData);
+    
+    if (!localUser) {
+      // 首次飞书登录，自动创建普通用户，管理员可后续提升角色权限。
+      const fsUsername = makeUniqueUsername(userData.feishu_name || userData.feishu_email?.split('@')[0], users);
+      const userIdSuffix = window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now();
+      localUser = {
+        id: 'user_fs_' + userIdSuffix,
+        username: fsUsername,
+        name: userData.feishu_name || '飞书用户',
+        password: '',
+        role_id: await getDefaultFeishuRoleId(),
+        status: 'active',
+        feishu_open_id: userData.feishu_open_id,
+        feishu_union_id: userData.feishu_union_id,
+        feishu_name: userData.feishu_name || '',
+        feishu_email: userData.feishu_email || '',
+        feishu_avatar: userData.feishu_avatar || '',
+        feishu_tenant_key: userData.feishu_tenant_key || '',
+        feishu_raw_name: userData.feishu_raw_name || '',
+        feishu_en_name: userData.feishu_en_name || '',
+        created_at: new Date().toISOString()
+      };
+      users.push(localUser);
+      await saveUsers(users);
+      console.log('[Feishu] 新用户已自动创建:', localUser.name);
+    } else {
+      // 更新已有用户的飞书信息
+      let changed = false;
+      if (!localUser.feishu_open_id) { localUser.feishu_open_id = userData.feishu_open_id; changed = true; }
+      if (!localUser.feishu_union_id) { localUser.feishu_union_id = userData.feishu_union_id; changed = true; }
+      if (!localUser.feishu_name || localUser.feishu_name !== userData.feishu_name) { localUser.feishu_name = userData.feishu_name; changed = true; }
+      if ((userData.feishu_email || '') !== (localUser.feishu_email || '')) { localUser.feishu_email = userData.feishu_email || ''; changed = true; }
+      if ((userData.feishu_avatar || '') !== (localUser.feishu_avatar || '')) { localUser.feishu_avatar = userData.feishu_avatar || ''; changed = true; }
+      if ((userData.feishu_tenant_key || '') !== (localUser.feishu_tenant_key || '')) { localUser.feishu_tenant_key = userData.feishu_tenant_key || ''; changed = true; }
+      if ((userData.feishu_raw_name || '') !== (localUser.feishu_raw_name || '')) { localUser.feishu_raw_name = userData.feishu_raw_name || ''; changed = true; }
+      if ((userData.feishu_en_name || '') !== (localUser.feishu_en_name || '')) { localUser.feishu_en_name = userData.feishu_en_name || ''; changed = true; }
+      // 同步更新显示名称，避免旧乱码名字残留
+      if (userData.feishu_name && localUser.name !== userData.feishu_name) {
+        localUser.name = userData.feishu_name;
+        changed = true;
+      }
+      if (changed) {
+        const idx = users.findIndex(u => u.id === localUser.id);
+        if (idx >= 0) { users[idx] = localUser; await saveUsers(users); }
+      }
+    }
+    
+    setCurrentUser(localUser);
+    enterApp();
+    showFlash('欢迎，' + localUser.name + '！', 'success');
+    
+  } catch (e) {
+    console.error('[Feishu] 回调处理失败:', e);
+    showLoginError('登录处理失败，请重试');
+  }
+}
+
+function logout() {
+  // 清除本地登录状态
+  localStorage.removeItem('aftersales_current_user');
+  localStorage.removeItem('aftersales_login_error');
+  
+  // 调用后端接口清除飞书 OAuth 相关状态
+  fetch('/api/auth/feishu/logout', { method: 'POST', keepalive: true }).catch(() => {});
+  
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('page-login').classList.remove('hidden');
+  
+  // 清空登录错误
+  const errEl = document.getElementById('login-error');
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  
+  // 重新检测飞书状态
+  checkFeishuStatus();
+}
+
+// 管理员本地登录（仅通过 ?admin 参数访问）
+async function adminLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) { showLoginError('请输入用户名和密码'); return; }
+  const users = await getUsers();
+  const user = users.find(u => u.username === username && u.password === password && u.status === 'active');
+  if (!user) { showLoginError('用户名或密码错误，或账号已被禁用'); return; }
+  setCurrentUser(user);
+  enterApp();
+  showFlash('管理员 ' + user.name + ' 已登录', 'success');
+}
+
+function enterApp() {
+  const user = getCurrentUser();
+  if (!user) return;
+  document.getElementById('page-login').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('user-name').textContent = user.name;
+  const avatarEl = document.getElementById('user-avatar');
+  avatarEl.style.backgroundImage = '';
+  avatarEl.style.backgroundSize = '';
+  avatarEl.textContent = (user.name || 'U').charAt(0);
+  const role = getUserRole(user);
+  document.getElementById('user-role').textContent = role ? role.name : '未分配角色';
+  
+  // 更新用户头像：飞书用户使用飞书头像
+  if (user.feishu_avatar) {
+    avatarEl.style.backgroundImage = `url(${user.feishu_avatar})`;
+    avatarEl.style.backgroundSize = 'cover';
+    avatarEl.textContent = '';
+  }
+  
+  renderSidebar();
+  updatePermissionedUI();
+  updateFeishuStatusBadge();
+  
+  // 检查 URL hash，决定初始页面
+  handleHashRoute();
+}
+
+// ==================== SIDEBAR ====================
+function renderSidebar(){
+  const nav=document.getElementById('sidebar-nav');
+  const groups=[
+    {title:'业务数据', items:[
+      {id:'overview', icon:'&#x1F4CA;', label:'售后概览', perm:'record_view'},
+      {id:'list', icon:'&#x1F4CB;', label:'售后列表', perm:'record_view'},
+    ]},
+    {title:'审批管理', items:[
+      {id:'approval', icon:'&#x2705;', label:'售后记录审批', perm:['approval_level1','approval_level2','approval_level3','record_view']},
+    ]},
+    {title:'基础数据', items:[
+      {id:'products', icon:'&#x1F4E6;', label:'商品管理', perm:'product_view'},
+    ]},
+    {title:'系统管理', items:[
+      {id:'users', icon:'&#x1F464;', label:'用户管理', perm:'user_manage'},
+      {id:'roles', icon:'&#x1F6E1;', label:'角色管理', perm:'role_manage'},
+    ]}
+  ];
+  let html='';
+  groups.forEach(g=>{
+    const hasVisible=g.items.some(item=>{
+      if(Array.isArray(item.perm)) return item.perm.some(hasPermission);
+      return hasPermission(item.perm);
+    });
+    if(!hasVisible) return;
+    html+=`<div class="sidebar-group-title">${esc(g.title)}</div>`;
+    g.items.forEach(item=>{
+      const hasPerm=Array.isArray(item.perm)?item.perm.some(hasPermission):hasPermission(item.perm);
+      if(!hasPerm) return;
+      html+=`<div class="sidebar-item" data-page="${item.id}" onclick="showPage('${item.id}')"><span class="icon">${item.icon}</span><span>${esc(item.label)}</span></div>`;
+    });
+  });
+  nav.innerHTML=html;
+}
+
+function setSidebarActive(page){
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+}
+
+// ==================== PAGE ROUTING ====================
+function showPage(page, recordId=null){
+  if(!canAccessPage(page)){
+    showFlash('你没有该页面的访问权限','danger');
+    const fallback=getDefaultAccessiblePage();
+    if(fallback&&fallback!==page) return showPage(fallback);
+    return;
+  }
+  setSidebarActive(page);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const titles={overview:'售后概览', list:'售后列表', detail:'售后记录详情', products:'商品管理', approval:'售后记录审批', users:'用户管理', roles:'角色管理'};
+  document.getElementById('topbar-title').textContent=titles[page]||page;
+
+  if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
+  else if(page==='list'){ document.getElementById('page-list').classList.add('active'); renderList(); }
+  else if(page==='detail'){
+    document.getElementById('page-detail').classList.add('active');
+    currentDetailId=recordId; renderDetail(recordId);
+  }
+  else if(page==='products'){ document.getElementById('page-products').classList.add('active'); renderProducts(); }
+  else if(page==='approval'){ document.getElementById('page-approval').classList.add('active'); renderApproval(); }
+  else if(page==='users'){ document.getElementById('page-users').classList.add('active'); renderUsers(); }
+  else if(page==='roles'){ document.getElementById('page-roles').classList.add('active'); renderRoles(); }
+}
+
+function updatePermissionedUI(){
+  const btnNewTable=document.getElementById('btn-new-record-table');
+  if(btnNewTable) btnNewTable.style.display=hasPermission('record_create')?'inline-flex':'none';
+  const btnImportRecs=document.getElementById('btn-import-records');
+  if(btnImportRecs) btnImportRecs.style.display=hasPermission('record_create')?'inline-flex':'none';
+  const btnImport=document.getElementById('btn-import-sales');
+  if(btnImport) btnImport.style.display=hasPermission('sales_import')?'inline-flex':'none';
+  const btnNewProd=document.getElementById('btn-new-product');
+  if(btnNewProd) btnNewProd.style.display=hasPermission('product_create')?'inline-flex':'none';
+}
+
+// ==================== OVERVIEW PAGE ====================
+function initOverview(){
+  const now=new Date();
+  const start=new Date(now.getFullYear(), now.getMonth()-2, 1);
+  document.getElementById('ov-start-date').value=formatDateLocal(start);
+  document.getElementById('ov-end-date').value=formatDateLocal(now);
+  updateOverviewBrandFilter();
+  renderOverview();
+}
+
+function resetOverviewFilter(){
+  document.getElementById('ov-start-date').value='';
+  document.getElementById('ov-end-date').value='';
+  document.getElementById('ov-brand-filter').value='';
+  renderOverview();
+}
+
+async function updateOverviewBrandFilter(){
+  const records=await getRecords(), brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
+  const sel=document.getElementById('ov-brand-filter'), cur=sel.value;
+  sel.innerHTML='<option value="">全部品牌</option>'+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  sel.value=cur;
+}
+
+let chartReasonTop5=null, chartSkuTop10=null;
+
+function getPsColor(ps){
+  const colors={'待ERP入库':'#1565c0','待换彩盒':'#e65100','待补配件':'#7b1fa2','待RMA':'#c62828','待报废':'#5d4037','已处理':'#2e7d32'};
+  return colors[ps]||'#2e7d32';
+}
+
+async function renderOverview(){
+  const startD=document.getElementById('ov-start-date').value;
+  const endD=document.getElementById('ov-end-date').value;
+  const brandF=document.getElementById('ov-brand-filter').value;
+  const salesData=await getSalesData();
+  let records=await getRecords();
+
+  if(startD||endD){
+    records=records.filter(r=>{
+      const d=(r.aftersales_date||r.created_at||'').substring(0,10);
+      if(startD&&d<startD) return false;
+      if(endD&&d>endD) return false;
+      return true;
+    });
+  }
+  if(brandF) records=records.filter(r=>r.brand===brandF);
+
+  const periodLabel=startD&&endD?startD+' ~ '+endD:(startD||endD||'全部');
+  document.getElementById('ov-period-label').textContent=brandF?periodLabel+' · '+brandF:periodLabel;
+
+  const startMonth=startD?startD.substring(0,7):null;
+  const endMonth=endD?endD.substring(0,7):null;
+  const brandSales={};
+  salesData.forEach(d=>{
+    if(startMonth&&d.month<startMonth) return;
+    if(endMonth&&d.month>endMonth) return;
+    if(!brandSales[d.brand]) brandSales[d.brand]={shipment:0,sales:0};
+    brandSales[d.brand].shipment+=Number(d.online_shipment||0)+Number(d.offline_shipment||0);
+    brandSales[d.brand].sales+=Number(d.online_sales||0)+Number(d.offline_sales||0);
+  });
+
+  // 展开所有 item 作为统计单元
+  const allItems=[];
+  records.forEach(r=>{
+    (r.items||[]).forEach(it=>{
+      allItems.push({...it,record_id:r.id,brand:r.brand||'未分类',created_at:r.created_at});
+    });
+  });
+
+  const grandTotal=allItems.length;
+  const grandShipment=Object.values(brandSales).reduce((s,v)=>s+v.shipment,0);
+  const grandSales=Object.values(brandSales).reduce((s,v)=>s+v.sales,0);
+
+  // === 汇总卡片 ===
+  const pendingCount=allItems.filter(it=>it.process_status&&it.process_status!=='已处理').length;
+  const overallReturnRate=grandSales>0?(grandTotal/grandSales*100):null;
+  const overallDefectRate=grandShipment>0?(grandTotal/grandShipment*100):null;
+  document.getElementById('ov-summary').innerHTML=`
+    <div class="ov-summary-card card-total"><div class="ov-card-icon">&#x1F4E6;</div><div class="ov-card-value">${grandTotal}</div><div class="ov-card-label">总售后数</div></div>
+    <div class="ov-summary-card card-return"><div class="ov-card-icon">&#x23F3;</div><div class="ov-card-value">${pendingCount}</div><div class="ov-card-label">待处理数</div></div>
+    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x1F4CA;</div><div class="ov-card-value">${overallReturnRate!=null?overallReturnRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">综合退货率</div></div>
+    <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${overallDefectRate!=null?overallDefectRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">综合不良率</div></div>
+  `;
+
+  // === 处理状态分布卡片 ===
+  const psCounts={};
+  PROCESS_STATUSES.forEach(ps=>psCounts[ps]=0);
+  allItems.forEach(it=>{if(it.process_status&&psCounts.hasOwnProperty(it.process_status))psCounts[it.process_status]++;});
+  document.getElementById('ov-process-cards').innerHTML=
+    PROCESS_STATUSES.map(ps=>`<div class="ov-process-card" style="border-top-color:${getPsColor(ps)}"><div class="ov-ps-value">${psCounts[ps]}</div><div class="ov-ps-label">${ps}</div></div>`).join('');
+
+  // === 指标行：平均处理天数 + 超期数 ===
+  const completedItems=allItems.filter(it=>it.process_status==='已处理'&&it.process_status_date&&it.process_completed_date);
+  const avgDays=completedItems.length>0
+    ?(completedItems.reduce((s,it)=>s+(new Date(it.process_completed_date)-new Date(it.process_status_date))/(86400000),0)/completedItems.length).toFixed(1)
+    :'--';
+  const now=new Date();
+  const overdueCount=allItems.filter(it=>{
+    if(!it.process_status||it.process_status==='已处理'||!it.process_status_date) return false;
+    return (now-new Date(it.process_status_date))/86400000>=7;
+  }).length;
+  document.getElementById('ov-metric-row').innerHTML=`
+    <div class="ov-summary-card"><div class="ov-card-icon">&#x23F1;</div><div class="ov-card-value">${avgDays}${avgDays!=='--'?'天':''}</div><div class="ov-card-label">平均处理天数</div></div>
+    <div class="ov-summary-card"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value" style="color:${overdueCount>0?'var(--danger)':'var(--text)'}">${overdueCount}</div><div class="ov-card-label">超期未处理数 (7天+)</div></div>
+  `;
+
+  // === 退货原因 TOP5 ===
+  const reasonCounts={};
+  allItems.forEach(it=>{const r=it.return_reason;if(r)reasonCounts[r]=(reasonCounts[r]||0)+1;});
+  const reasonSorted=Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  renderReasonTop5Chart(reasonSorted);
+
+  // === SKU 售后 TOP10 ===
+  const skuCounts={};
+  allItems.forEach(it=>{if(it.sku_code)skuCounts[it.sku_code]=(skuCounts[it.sku_code]||0)+1;});
+  const skuSorted=Object.entries(skuCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  renderSkuTop10Chart(skuSorted);
+
+  // === 品牌对比表（增强）===
+  const brandItemStats={};
+  allItems.forEach(it=>{
+    const b=it.brand;
+    if(!brandItemStats[b])brandItemStats[b]={total:0,pending:0,completed:0,overdue:0,processDays:[]};
+    brandItemStats[b].total++;
+    if(it.process_status==='已处理'){
+      brandItemStats[b].completed++;
+      if(it.process_status_date&&it.process_completed_date)
+        brandItemStats[b].processDays.push((new Date(it.process_completed_date)-new Date(it.process_status_date))/86400000);
+    } else if(it.process_status){
+      brandItemStats[b].pending++;
+      if(it.process_status_date&&(now-new Date(it.process_status_date))/86400000>=7) brandItemStats[b].overdue++;
+    }
+  });
+
+  let allBrands=new Set([...Object.keys(brandItemStats),...Object.keys(brandSales)]);
+  const rows=[];
+  allBrands.forEach((brand,i)=>{
+    const s=brandItemStats[brand]||{total:0,pending:0,completed:0,overdue:0,processDays:[]};
+    const sl=brandSales[brand]||{shipment:0,sales:0};
+    const avgD=s.processDays.length>0?(s.processDays.reduce((a,b)=>a+b,0)/s.processDays.length).toFixed(1):null;
+    const returnRate=sl.sales>0?(s.total/sl.sales*100):null;
+    const defectRate=sl.shipment>0?(s.total/sl.shipment*100):null;
+    rows.push({brand,color:BRAND_COLORS[i%BRAND_COLORS.length],...s,avgDays:avgD,shipment:sl.shipment,sales:sl.sales,returnRate,defectRate});
+  });
+
+  if(rows.length===0){
+    document.getElementById('ov-brand-table-area').innerHTML=`<div class="ov-empty"><div class="empty-icon">&#x1F4CA;</div><p>暂无数据。请先创建售后记录或导入销量数据。</p></div>`;
+    return;
+  }
+  let t=`<div style="overflow-x:auto"><table class="ov-brand-table"><thead><tr><th>品牌</th><th class="right">明细总数</th><th class="right">待处理</th><th class="right">已处理</th><th class="right">超期</th><th class="right">平均处理天数</th><th class="right">总出货量</th><th class="right">总销量</th><th class="right">退货率</th><th class="right">不良率</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    t+=`<tr><td><div class="ov-brand-name"><span class="ov-brand-dot" style="background:${r.color}"></span>${esc(r.brand)}</div></td>
+      <td class="right"><strong>${r.total}</strong></td>
+      <td class="right">${r.pending}</td>
+      <td class="right">${r.completed}</td>
+      <td class="right" style="color:${r.overdue>0?'var(--danger)':''}">${r.overdue}</td>
+      <td class="right">${r.avgDays||'--'}</td>
+      <td class="right">${r.shipment||'--'}</td>
+      <td class="right">${r.sales||'--'}</td>
+      <td class="right"><span class="rate-indicator ${rateClass(r.returnRate)}">${r.returnRate!=null?r.returnRate.toFixed(2)+'%':'--'}</span></td>
+      <td class="right"><span class="rate-indicator ${rateClass(r.defectRate)}">${r.defectRate!=null?r.defectRate.toFixed(2)+'%':'--'}</span></td></tr>`;
+  });
+  t+=`</tbody></table></div>`;
+  document.getElementById('ov-brand-table-area').innerHTML=t;
+}
+
+function renderReasonTop5Chart(data){
+  const ctx=document.getElementById('chart-reason-top5');
+  if(chartReasonTop5) chartReasonTop5.destroy();
+  if(!ctx) return;
+  if(data.length===0){ctx.parentElement.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)">暂无数据</div>';return;}
+  chartReasonTop5=new Chart(ctx,{
+    type:'bar',
+    data:{labels:data.map(d=>d[0]),datasets:[{label:'数量',data:data.map(d=>d[1]),backgroundColor:['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+  });
+}
+
+function renderSkuTop10Chart(data){
+  const ctx=document.getElementById('chart-sku-top10');
+  if(chartSkuTop10) chartSkuTop10.destroy();
+  if(!ctx) return;
+  if(data.length===0){ctx.parentElement.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-muted)">暂无数据</div>';return;}
+  chartSkuTop10=new Chart(ctx,{
+    type:'bar',
+    data:{labels:data.map(d=>d[0]),datasets:[{label:'售后次数',data:data.map(d=>d[1]),backgroundColor:'#2e7d32',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}
+  });
+}
+
+// ==================== LIST PAGE ====================
+async function updateBrandFilter(){
+  const records=await getRecords();
+  const brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
+  const current=document.getElementById('brand-filter').value;
+  let html='<option value="">全部品牌</option>';
+  brands.forEach(b=>html+=`<option value="${esc(b)}">${esc(b)}</option>`);
+  document.getElementById('brand-filter').innerHTML=html;
+  document.getElementById('brand-filter').value=current;
+}
+
+function updateStatusFilter(){
+  const sel=document.getElementById('status-filter'), cur=sel.value;
+  sel.innerHTML='<option value="">全部审批状态</option>'+APPROVAL_STATUSES.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.value=cur;
+}
+
+function updateProcessStatusFilter(){
+  const sel=document.getElementById('process-status-filter'), cur=sel.value;
+  sel.innerHTML='<option value="">全部处理状态</option>'+PROCESS_STATUSES.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.value=cur;
+}
+
+let listMode='record';
+
+function switchListMode(mode){
+  listMode=mode;
+  document.getElementById('mode-by-record').classList.toggle('active',mode==='record');
+  document.getElementById('mode-by-item').classList.toggle('active',mode==='item');
+  document.getElementById('batch-bar').classList.remove('show');
+  listPage=1;
+  renderList();
+}
+
+async function renderList(){
+  await updateBrandFilter(); updateStatusFilter(); updateProcessStatusFilter();
+  const records=await getRecords();
+  const search=(document.getElementById('search-input').value||'').toLowerCase();
+  const status=document.getElementById('status-filter').value;
+  const brand=document.getElementById('brand-filter').value;
+  const psFilter=document.getElementById('process-status-filter').value;
+  const startD=document.getElementById('list-start-date').value;
+  const endD=document.getElementById('list-end-date').value;
+  const user=getCurrentUser();
+
+  let filtered=records;
+  if(status) filtered=filtered.filter(r=>r.status===status);
+  if(brand) filtered=filtered.filter(r=>r.brand===brand);
+  if(psFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.process_status===psFilter));
+  if(startD||endD){
+    filtered=filtered.filter(r=>{
+      const d=(r.aftersales_date||r.created_at||'').substring(0,10);
+      if(startD&&d<startD) return false;
+      if(endD&&d>endD) return false;
+      return true;
+    });
+  }
+  if(search) filtered=filtered.filter(r=>{
+    const items=r.items||[];
+    const itemSearch=items.some(it=>
+      (it.platform||'').toLowerCase().includes(search)||
+      (it.sku_code||'').toLowerCase().includes(search)||
+      (it.order_no||'').toLowerCase().includes(search)||
+      (it.fault_description||'').toLowerCase().includes(search)||
+      (it.return_reason||'').toLowerCase().includes(search)
+    );
+    return itemSearch||
+      (r.brand||'').toLowerCase().includes(search)||
+      (r.model||'').toLowerCase().includes(search)||
+      (r.submitter_name||'').toLowerCase().includes(search)||
+      (String(r.id)).includes(search);
+  });
+  filtered.sort((a,b)=>new Date(b.created_at)-(new Date(a.created_at)));
+
+  const total=filtered.length;
+  const start=(listPage-1)*listPageSize;
+  const pageRecords=filtered.slice(start,start+listPageSize);
+  const area=document.getElementById('table-area');
+
+  if(pageRecords.length===0){
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${records.length===0?'暂无售后记录':'没有找到匹配的结果'}</p>${records.length===0&&hasPermission('record_create')?`<button class="btn btn-primary" onclick="openRecordForm()">创建第一条记录</button>`:''}</div>`;
+    renderListPagination(total);
+    return;
+  }
+
+  if(listMode==='item'){
+    // ===== 按售后明细模式 =====
+    let html=`<div class="table-container"><table class="data-table"><thead><tr>
+      <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
+      <th>ID</th><th>审批状态</th><th>处理状态</th><th>售后日期</th><th>平台</th><th>退货原因</th><th>SKU</th><th>订单号</th><th>数量</th><th>问题说明</th><th>提交人</th><th>操作</th>
+    </tr></thead><tbody>`;
+    pageRecords.forEach(r=>{
+      (r.items||[]).forEach((it,idx)=>{
+        const showItem=!psFilter||it.process_status===psFilter;
+        if(!showItem) return;
+        html+=`<tr>
+          <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${r.id}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
+          <td class="cell-id">${r.id}</td>
+          <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+          <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${it.process_status}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
+          <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
+          <td>${esc(it.platform||'-')}</td>
+          <td>${esc(it.return_reason||'-')}</td>
+          <td>${esc(it.sku_code||'-')}</td>
+          <td>${esc(it.order_no||'-')}</td>
+          <td>${it.quantity||0}</td>
+          <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
+          <td>${esc(r.submitter_name||'-')}</td>
+          <td class="cell-actions"><button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button></td>
+        </tr>`;
+      });
+    });
+    html+=`</tbody></table></div>`;
+    area.innerHTML=html;
+  } else {
+    // ===== 按售后单模式 =====
+    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>ID</th><th>审批状态</th><th>处理状态</th><th>售后日期</th><th>平台</th><th>退货原因</th><th>SKU</th><th>订单号</th><th>数量</th><th>问题说明</th><th>提交人</th><th>更新时间</th><th>操作</th></tr></thead><tbody>`;
+    pageRecords.forEach(r=>{
+      const items=r.items||[];
+      const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+      const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].join(',');
+      const skus=items.map(it=>it.sku_code).filter(Boolean).join(', ');
+      const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
+      const faultDescs=items.map(it=>(it.fault_description||'').substring(0,30)).join('; ');
+      const totalQty=r.total_quantity||items.reduce((s,it)=>s+(it.quantity||0),0);
+      // Process status distribution
+      const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
+      const psCell=psSet.length===0?'<span style="color:var(--text-muted)">-</span>'
+        :psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${ps}${c>1?'('+c+')':''}</span>`;}).join(' ');
+      const canApprove=r.current_approval_level>0&&r[`approver_level${r.current_approval_level}_id`]===user.id&&(r.status==='待一级审批'||r.status==='待二级审批'||r.status==='待三级审批');
+      html+=`<tr>
+        <td class="cell-id">${r.id}</td>
+        <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+        <td>${psCell}</td>
+        <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
+        <td>${esc(platforms.join(',')||r.platform||'-')}</td>
+        <td>${returnReasons||'-'}</td>
+        <td class="cell-desc" title="${esc(skus)}">${esc(skus||'-')}</td>
+        <td class="cell-desc" title="${esc(orders)}">${esc(orders||'-')}</td>
+        <td>${totalQty}</td>
+        <td class="cell-desc" title="${esc(faultDescs)}">${esc(faultDescs||'-').substring(0,25)}${faultDescs.length>25?'...':''}</td>
+        <td>${esc(r.submitter_name||'-')}</td>
+        <td class="cell-date">${(r.updated_at||'').substring(0,10)}</td>
+        <td class="cell-actions">
+          <button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button>
+          ${canApprove?`<button class="action-btn action-approve" title="审批" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
+          ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="删除" onclick="deleteRecord(${r.id})">&#x1F5D1;</button>`:''}
+        </td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+    area.innerHTML=html;
+  }
+  renderListPagination(total);
+}
+
+// ===== 批量操作函数 =====
+function toggleSelectAllItems(masterCheckbox){
+  document.querySelectorAll('.item-checkbox').forEach(cb=>{cb.checked=masterCheckbox.checked;});
+  updateBatchBar();
+}
+
+function onItemCheckboxChange(){
+  updateBatchBar();
+}
+
+function updateBatchBar(){
+  const checked=document.querySelectorAll('.item-checkbox:checked');
+  const bar=document.getElementById('batch-bar');
+  document.getElementById('batch-count').textContent=checked.length;
+  bar.classList.toggle('show',checked.length>0);
+  const master=document.getElementById('select-all-items');
+  const all=document.querySelectorAll('.item-checkbox');
+  if(master) master.checked=all.length>0&&checked.length===all.length;
+}
+
+function clearBatchSelection(){
+  document.querySelectorAll('.item-checkbox').forEach(cb=>{cb.checked=false;});
+  const master=document.getElementById('select-all-items');
+  if(master) master.checked=false;
+  updateBatchBar();
+}
+
+async function batchUpdateProcessStatus(){
+  const newStatus=document.getElementById('batch-process-status').value;
+  if(!newStatus){ showFlash('请选择要设置的处理状态','warning'); return; }
+  const checked=document.querySelectorAll('.item-checkbox:checked');
+  if(checked.length===0){ showFlash('请至少选择一条明细','warning'); return; }
+  const records=await getRecords();
+  const now=new Date().toISOString();
+  let updated=0;
+  checked.forEach(cb=>{
+    const rid=parseInt(cb.dataset.recordId);
+    const idx=parseInt(cb.dataset.itemIndex);
+    const r=records.find(x=>x.id===rid);
+    if(r&&r.items[idx]&&r.items[idx].process_status!=='已处理'){
+      r.items[idx].process_status=newStatus;
+      if(newStatus==='已处理') r.items[idx].process_completed_date=now;
+      r.items[idx].process_status_updated_at=now;
+      r.updated_at=now;
+      updated++;
+    }
+  });
+  await saveRecordsAsync(records);
+  showFlash(`已更新 ${updated} 个明细的处理状态`,'success');
+  clearBatchSelection();
+  renderList();
+}
+
+function renderListPagination(total){
+  const container=document.getElementById('list-pagination');
+  const totalPages=Math.max(1,Math.ceil(total/listPageSize));
+  if(totalPages<=1&&total<=listPageSize){ container.innerHTML=''; return; }
+  container.innerHTML=`
+    <select class="page-size-select" onchange="listPageSize=parseInt(this.value);listPage=1;renderList();"><option value="10" ${listPageSize===10?'selected':''}>10 条/页</option><option value="20" ${listPageSize===20?'selected':''}>20 条/页</option><option value="50" ${listPageSize===50?'selected':''}>50 条/页</option></select>
+    <span class="pagination-info">共 ${total} 条，${listPage}/${totalPages} 页</span>
+    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage=1;renderList()">首页</button>
+    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage--;renderList()">上一页</button>
+    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage++;renderList()">下一页</button>
+    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage=totalPages;renderList()">末页</button>`;
+}
+
+function clearListFilter(){
+  document.getElementById('search-input').value='';
+  document.getElementById('status-filter').value='';
+  document.getElementById('process-status-filter').value='';
+  document.getElementById('brand-filter').value='';
+  document.getElementById('list-start-date').value='';
+  document.getElementById('list-end-date').value='';
+  listPage=1; renderList();
+}
+
+async function deleteRecord(id){
+  if(!requirePermission('record_delete')) return;
+  if(!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
+  const records=(await getRecords()).filter(r=>r.id!==id);
+  await saveRecordsAsync(records);
+  showFlash('记录已删除','info');
+  renderList();
+}
+
+// ==================== DETAIL PAGE ====================
+async function renderDetail(id){
+  const records=await getRecords(),r=records.find(x=>x.id===id);
+  if(!r){ showPage('list'); return; }
+  document.getElementById('detail-title').textContent='售后记录 #'+id;
+
+  // Approval history timeline
+  let historyHTML='';
+  const ah=r.approval_history||[];
+  if(ah.length>0){
+    historyHTML=`
+      <div class="detail-section"><h3>审批记录</h3>
+        <div class="approval-timeline">
+          ${ah.map(h=>`
+            <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
+              <div style="font-size:13px;font-weight:600">${h.action==='approve'?'&#x2705; 审批通过':'&#x274C; 审批拒绝'} - ${esc(h.operator_name)} (第${h.level}级)</div>
+              ${h.comment?`<div style="font-size:13px;margin-top:4px">${esc(h.comment)}</div>`:''}
+              ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">退货入库日期：${esc(h.return_date)}</div>`:''}
+              ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+
+  // Approvers info
+  let approversHTML='';
+  if(r.approver_level1_name||r.approver_level2_name||r.approver_level3_name){
+    approversHTML=`<div class="detail-section"><h3>审批流程</h3>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px">
+        <span>发起人：<strong>${esc(r.submitter_name||'-')}</strong></span>
+        <span style="color:var(--text-muted)">&#x2192;</span>
+        <span>一级：<strong>${esc(r.approver_level1_name||'未设置')}</strong></span>
+        <span style="color:var(--text-muted)">&#x2192;</span>
+        <span>二级：<strong>${esc(r.approver_level2_name||'未设置')}</strong></span>
+        <span style="color:var(--text-muted)">&#x2192;</span>
+        <span>三级：<strong>${esc(r.approver_level3_name||'未设置')}</strong></span>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('detail-content').innerHTML=`
+    <div class="detail-section"><h3>基本信息</h3>
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-label">售后日期</span><span class="detail-value">${esc(r.aftersales_date||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">审批状态</span><span class="detail-value"><span class="status-badge status-${r.status}">${r.status}</span></span></div>
+        <div class="detail-item"><span class="detail-label">提交人</span><span class="detail-value">${esc(r.submitter_name||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">品牌</span><span class="detail-value">${esc(r.brand||'-')}</span></div>
+        <div class="detail-item"><span class="detail-label">合计数量</span><span class="detail-value" style="font-size:18px;font-weight:700;color:var(--primary)">${r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
+      </div>
+    </div>
+    <div class="detail-section"><h3>售后明细</h3>
+      <div class="table-container">
+        <table class="data-table"><thead><tr><th>#</th><th>平台</th><th>SKU</th><th>订单号</th><th>数量</th><th>退货原因</th><th>处理状态</th><th>问题说明/备注</th></tr></thead>
+          <tbody>${(r.items||[]).map((it,i)=>`<tr>
+            <td class="cell-id">${i+1}</td>
+            <td>${esc(it.platform||'-')}</td>
+            <td>${esc(it.sku_code||'-')}</td>
+            <td>${esc(it.order_no||'-')}</td>
+            <td>${it.quantity||0}</td>
+            <td>${esc(it.return_reason||'-')}</td>
+            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${it.process_status}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
+            <td>${esc(it.fault_description||'-')}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    ${approversHTML}
+    ${historyHTML}
+    <div class="detail-section"><h3>时间信息</h3>
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-label">创建时间</span><span class="detail-value">${esc(r.created_at||'')}</span></div>
+        <div class="detail-item"><span class="detail-label">最后更新</span><span class="detail-value">${esc(r.updated_at||'')}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== RECORD FORM MODAL ====================
+function openRecordForm(){
+  if(!hasPermission('approval_submit')){ showFlash('您没有提交审批的权限','warning'); return; }
+  resetForm();
+  document.getElementById('record-form-modal').classList.remove('hidden');
+}
+
+function closeRecordForm(){
+  document.getElementById('record-form-modal').classList.add('hidden');
+}
+
+// ==================== DETAIL ITEMS TABLE ====================
+const RETURN_REASONS=['可二次销售','彩盒损坏','配件缺失','硬件故障','报废'];
+const PROCESS_STATUSES=['待ERP入库','待换彩盒','待补配件','待RMA','待报废','已处理'];
+const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废'};
+
+function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
+  const tbody=document.getElementById('detail-items-tbody');
+  const idx=tbody.children.length;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><select class="platform-select">
+      <option value="">请选择</option>
+      <option value="Shopee" ${platform==='Shopee'?'selected':''}>Shopee</option>
+      <option value="TikTok" ${platform==='TikTok'?'selected':''}>TikTok</option>
+      <option value="Offline Store" ${platform==='Offline Store'?'selected':''}>Offline Store</option>
+    </select></td>
+    <td><input type="text" class="sku-input" list="sku-datalist" placeholder="输入SKU…" value="${esc(sku||'')}" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
+    <td><input type="text" class="order-input" placeholder="订单号" value="${esc(orderNo||'')}"></td>
+    <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
+    <td><select class="type-select" onchange="updateDetailTotalQty()">
+      <option value="">请选择</option>
+      ${RETURN_REASONS.map(t=>`<option value="${t}" ${returnReason===t?'selected':''}>${t}</option>`).join('')}
+    </select></td>
+    <td><input type="text" class="fault-input" placeholder="问题说明/备注" value="${esc(faultDesc||'')}"></td>
+    <td><button type="button" class="btn-delete-row" title="删除" onclick="removeDetailItem(this)">&times;</button></td>`;
+  tr.dataset.index=idx;
+  tbody.appendChild(tr);
+  updateDetailTotalQty();
+}
+
+function removeDetailItem(btn){
+  const tbody=document.getElementById('detail-items-tbody');
+  const tr=btn.closest('tr');
+  if(!tr) return;
+  tr.remove();
+  // Re-index
+  [...tbody.children].forEach((r,i)=>{r.dataset.index=i;});
+  updateDetailTotalQty();
+}
+
+function updateDetailTotalQty(){
+  let total=0;
+  document.querySelectorAll('#detail-items-tbody .qty-input').forEach(inp=>{
+    total+=parseInt(inp.value)||0;
+  });
+  document.getElementById('detail-total-qty').textContent=total;
+}
+
+function collectDetailItems(){
+  const items=[];
+  document.querySelectorAll('#detail-items-tbody tr').forEach(tr=>{
+    const platform=tr.querySelector('.platform-select').value;
+    const sku=tr.querySelector('.sku-input').value.trim();
+    const orderNo=tr.querySelector('.order-input').value.trim();
+    const qty=parseInt(tr.querySelector('.qty-input').value)||0;
+    const returnReason=tr.querySelector('.type-select').value;
+    const faultDesc=tr.querySelector('.fault-input').value.trim();
+    items.push({platform,sku_code:sku,order_no:orderNo,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
+  });
+  return items;
+}
+
+async function onSkuChanged(input){
+  const sku=input.value.trim();
+  const tr=input.closest('tr');
+  if(!tr) return;
+  // Auto-fill brand/model from product
+  const products=await getProducts();
+  const product=products.find(p=>p.sku_code===sku);
+  // Could show brand hint - but user said remove auto fields, so just keep SKU lookups working
+}
+
+function resetForm(){
+  document.getElementById('form-title').textContent='新建售后记录';
+  document.getElementById('form-submit-btn').textContent='&#x1F4E4; 提交审批';
+  const today=formatDateLocal(new Date());
+  document.getElementById('f-aftersales-date').value=today;
+  document.getElementById('detail-items-tbody').innerHTML='';
+  updateSkuDatalist();
+  populateApproverSelects();
+  addDetailItem(); // start with one empty row
+}
+
+async function updateSkuDatalist(filter){
+  const products=await getProducts();
+  const filtered = products.filter(p=>p.status==='active');
+  const dl=document.getElementById('sku-datalist');
+  dl.innerHTML=filtered
+    .filter(p=>!filter||p.sku_code.toLowerCase().includes(filter.toLowerCase())||(p.model||'').toLowerCase().includes(filter.toLowerCase())||(p.brand||'').toLowerCase().includes(filter.toLowerCase()))
+    .map(p=>`<option value="${esc(p.sku_code)}">${esc(p.brand)} - ${esc(p.model)}</option>`).join('');
+}
+
+async function populateApproverSelects(){
+  const users=await getUsers(); const roles=await getRoles();
+  const activeUsers = users.filter(u=>u.status==='active');
+  function getUsersWithPerm(perm){
+    return activeUsers.filter(u=>{ const role=roles.find(r=>r.id===u.role_id); return role&&(role.permissions||[]).includes(perm); });
+  }
+  renderApproverSelect('f-approver-level1', getUsersWithPerm('approval_level1'));
+  renderApproverSelect('f-approver-level2', getUsersWithPerm('approval_level2'));
+  renderApproverSelect('f-approver-level3', getUsersWithPerm('approval_level3'));
+}
+
+function renderApproverSelect(id, users){
+  const sel=document.getElementById(id), cur=sel.value;
+  sel.innerHTML='<option value="">请选择</option>'+users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} (${esc(u.username)})</option>`).join('');
+  sel.value=cur;
+}
+
+function updateApproverOptions(){
+  // Disable selected approvers in other levels
+  const sel1=document.getElementById('f-approver-level1');
+  const sel2=document.getElementById('f-approver-level2');
+  const sel3=document.getElementById('f-approver-level3');
+  const vals=[sel1.value,sel2.value,sel3.value];
+  [sel2,sel3].forEach(s=>{ for(let o of s.options){ if(o.value) o.disabled=(o.value===sel1.value&&o.value!==s.value); }});
+  [sel1,sel3].forEach(s=>{ for(let o of s.options){ if(o.value) o.disabled=(o.value===sel2.value&&o.value!==s.value); }});
+  [sel1,sel2].forEach(s=>{ for(let o of s.options){ if(o.value) o.disabled=(o.value===sel3.value&&o.value!==s.value); }});
+}
+
+function getApproverName(selId){
+  const sel=document.getElementById(selId);
+  return sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text.replace(/\s*\(.*\)/,''):'';
+}
+
+async function submitForApproval(e){
+  e.preventDefault();
+  if(!requirePermission('approval_submit')) return;
+
+  const aftersalesDate=document.getElementById('f-aftersales-date').value;
+  const a1=document.getElementById('f-approver-level1').value;
+  const a2=document.getElementById('f-approver-level2').value;
+  const a3=document.getElementById('f-approver-level3').value;
+
+  if(!aftersalesDate){ showFlash('请选择售后日期','warning'); return; }
+
+  const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
+  if(items.length===0){ showFlash('请至少添加一条售后明细','warning'); return; }
+  for(let i=0;i<items.length;i++){
+    const it=items[i];
+    if(!it.platform){ showFlash(`第${i+1}行：请选择平台`,'warning'); return; }
+    if(!it.sku_code){ showFlash(`第${i+1}行：请填写SKU`,'warning'); return; }
+    if(!it.quantity||it.quantity<1){ showFlash(`第${i+1}行：数量必须大于0`,'warning'); return; }
+    if(!it.return_reason){ showFlash(`第${i+1}行：请选择退货原因`,'warning'); return; }
+    if(!it.fault_description){ showFlash(`第${i+1}行：请填写问题说明`,'warning'); return; }
+  }
+
+  // Collect unique platforms from items
+  const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+  if(!a1||!a2||!a3){ showFlash('请选择三位审批人','warning'); return; }
+  if(a1===a2||a1===a3||a2===a3){ showFlash('三位审批人不能相同','warning'); return; }
+
+  // Derive brand/model from first item's SKU
+  const firstSku=items[0].sku_code;
+  const products=await getProducts();
+  const product=products.find(p=>p.sku_code===firstSku);
+  const totalQty=items.reduce((s,it)=>s+it.quantity,0);
+  const user=getCurrentUser();
+  const now=new Date().toISOString();
+
+  // 为每个明细自动分配处理状态
+  items.forEach(it=>{
+    it.process_status=REASON_TO_PROCESS[it.return_reason]||'待ERP入库';
+    it.process_status_date=now;
+  });
+
+  const record={
+    id:await nextId(),
+    aftersales_date:aftersalesDate,
+    platforms,
+    items,
+    total_quantity:totalQty,
+    brand:product?product.brand:'',
+    model:product?product.model:'',
+    category:product?product.category:'',
+    submitter_id:user.id,
+    submitter_name:user.name,
+    approver_level1_id:a1,
+    approver_level1_name:getApproverName('f-approver-level1'),
+    approver_level2_id:a2,
+    approver_level2_name:getApproverName('f-approver-level2'),
+    approver_level3_id:a3,
+    approver_level3_name:getApproverName('f-approver-level3'),
+    status:'待一级审批',
+    current_approval_level:1,
+    approval_history:[],
+    created_at:now,
+    updated_at:now
+  };
+  const records=await getRecords();
+  records.push(record);
+  await saveRecordsAsync(records);
+  showFlash('审批已提交，等待一级审批','success');
+  // 发送飞书审批通知
+  sendApprovalNotification(record);
+  closeRecordForm();
+  renderList();
+}
+
+async function saveAsDraft(){
+  if(!requirePermission('approval_submit')) return;
+  const aftersalesDate=document.getElementById('f-aftersales-date').value;
+  if(!aftersalesDate){ showFlash('请至少填写售后日期','warning'); return; }
+
+  const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
+  if(items.length===0){ showFlash('请至少添加一条售后明细','warning'); return; }
+  // Basic validation for quantities
+  for(let i=0;i<items.length;i++){
+    if(!items[i].quantity||items[i].quantity<1) items[i].quantity=1;
+  }
+
+  const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+  const firstSku=items[0].sku_code;
+  const products=await getProducts();
+  const product=products.find(p=>p.sku_code===firstSku);
+  const totalQty=items.reduce((s,it)=>s+it.quantity,0);
+  const user=getCurrentUser();
+  const now=new Date().toISOString();
+
+  const record={
+    id:await nextId(),
+    aftersales_date:aftersalesDate,
+    platforms,
+    items,
+    total_quantity:totalQty,
+    brand:product?product.brand:'',
+    model:product?product.model:'',
+    category:product?product.category:'',
+    submitter_id:user.id,
+    submitter_name:user.name,
+    approver_level1_id:null, approver_level1_name:null,
+    approver_level2_id:null, approver_level2_name:null,
+    approver_level3_id:null, approver_level3_name:null,
+    status:'草稿',
+    current_approval_level:0,
+    approval_history:[],
+    created_at:now,
+    updated_at:now
+  };
+  const records=await getRecords();
+  records.push(record);
+  await saveRecordsAsync(records);
+  showFlash('草稿已保存','success');
+  closeRecordForm();
+  renderList();
+}
+
+// ==================== APPROVAL STATE MACHINE ====================
+function getNextStatus(currentStatus, action){
+  if(currentStatus==='草稿') return action==='submit'?'待一级审批':null;
+  if(currentStatus==='待一级审批') return action==='approve'?'一级审批通过':action==='reject'?'审批拒绝':null;
+  if(currentStatus==='一级审批通过') return '待二级审批';
+  if(currentStatus==='待二级审批') return action==='approve'?'二级审批通过':action==='reject'?'审批拒绝':null;
+  if(currentStatus==='二级审批通过') return '待三级审批';
+  if(currentStatus==='待三级审批') return action==='approve'?'审批通过':action==='reject'?'审批拒绝':null;
+  return null;
+}
+
+function canApproveRecord(record){
+  const user=getCurrentUser();
+  if(!user||!record||record.current_approval_level<=0) return false;
+  if(!['待一级审批','待二级审批','待三级审批'].includes(record.status)) return false;
+  const level=record.current_approval_level;
+  return hasPermission('approval_level'+level)&&record['approver_level'+level+'_id']===user.id;
+}
+
+async function executeApproval(recordId, action, comment, returnDate, attachments){
+  const records=await getRecords();
+  const idx=records.findIndex(r=>r.id===recordId);
+  if(idx<0) return false;
+  const record=records[idx];
+  const user=getCurrentUser();
+  const level=record.current_approval_level;
+
+  const permKey='approval_level'+level;
+  if(!hasPermission(permKey)){ showFlash('你没有该级别的审批权限','danger'); return false; }
+
+  const approverIdField='approver_level'+level+'_id';
+  if(record[approverIdField]!==user.id){ showFlash('你不是该级别的审批人','danger'); return false; }
+
+  const now=new Date().toISOString();
+  record.approval_history.push({
+    level, action,
+    operator_id:user.id,
+    operator_name:user.name,
+    comment:comment||'',
+    return_date:returnDate||null,
+    attachments:attachments||[],
+    timestamp:now
+  });
+
+  record.status=getNextStatus(record.status, action);
+  if(action==='reject') record.current_approval_level=0;
+  else if(level===1) record.current_approval_level=2;
+  else if(level===2) record.current_approval_level=3;
+  else if(level===3) record.current_approval_level=0;
+
+  record.updated_at=now;
+  await saveRecordsAsync(records);
+  // 如果审批通过且流转到下一级，发送飞书通知给下一级审批人
+  if(action==='approve'&&record.current_approval_level>0){
+    sendApprovalNotification(record);
+  }
+  return true;
+}
+
+// ==================== APPROVAL PAGE ====================
+async function renderApproval(){
+  const tab=document.getElementById('appr-tab').value;
+  const user=getCurrentUser();
+  const records=await getRecords();
+
+  let filtered=records;
+  if(tab==='pending'){
+    filtered=records.filter(r=>{
+      if(r.status==='草稿'||r.status==='审批通过'||r.status==='审批拒绝') return false;
+      const level=r.current_approval_level;
+      return r['approver_level'+level+'_id']===user.id;
+    });
+  }else if(tab==='done'){
+    filtered=records.filter(r=>(r.approval_history||[]).some(h=>h.operator_id===user.id));
+  }
+
+  const search=(document.getElementById('appr-search').value||'').toLowerCase();
+  if(search){
+    filtered=filtered.filter(r=>{
+      const items=r.items||[];
+      const itemSearch=items.some(it=>(it.sku_code||'').toLowerCase().includes(search)||(it.order_no||'').toLowerCase().includes(search));
+      return itemSearch||(r.brand||'').toLowerCase().includes(search)||(r.model||'').toLowerCase().includes(search)||(r.submitter_name||'').toLowerCase().includes(search);
+    });
+  }
+  filtered.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+  const total=filtered.length;
+  const start=(apprPage-1)*apprPageSize;
+  const pageRecords=filtered.slice(start,start+apprPageSize);
+  const area=document.getElementById('approval-table-area');
+
+  if(pageRecords.length===0){
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>暂无审批记录</p></div>`;
+  }else{
+    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>ID</th><th>流程发起时间</th><th>发起人</th><th>审批人</th><th>审批状态</th><th>处理状态</th><th>售后日期</th><th>平台</th><th>合计数量</th><th>当前级别</th><th>操作</th></tr></thead><tbody>`;
+    pageRecords.forEach(r=>{
+      const items=r.items||[];
+      const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+      const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
+      const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${ps}${c>1?'('+c+')':''}</span>`;}).join(' ');
+      const canApprove=canApproveRecord(r);
+      const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
+      html+=`<tr>
+        <td class="cell-id">${r.id}</td>
+        <td class="cell-date">${(r.created_at||'').substring(0,16)}</td>
+        <td>${esc(r.submitter_name||'-')}</td>
+        <td><span style="font-size:12px;color:var(--text-muted)">${esc(r.approver_level1_name||'-')} / ${esc(r.approver_level2_name||'-')} / ${esc(r.approver_level3_name||'-')}</span></td>
+        <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+        <td>${psCell}</td>
+        <td class="cell-date">${esc(r.aftersales_date||'-')}</td>
+        <td>${esc(platforms.join(',')||r.platform||'-')}</td>
+        <td><strong>${totalQty}</strong></td>
+        <td>${r.current_approval_level>0?'第'+r.current_approval_level+'级':'-'}</td>
+        <td class="cell-actions">
+          <button class="action-btn" title="查看" onclick="showPage('detail',${r.id})">&#x1F441;</button>
+          ${canApprove?`<button class="action-btn" title="审批" onclick="openApprovalModal(${r.id})" style="color:var(--primary);font-weight:600">&#x2705;</button>`:''}
+        </td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+    area.innerHTML=html;
+  }
+  renderApprPagination(total);
+}
+
+function renderApprPagination(total){
+  const container=document.getElementById('appr-pagination');
+  const totalPages=Math.max(1,Math.ceil(total/apprPageSize));
+  if(totalPages<=1&&total<=apprPageSize){ container.innerHTML=''; return; }
+  container.innerHTML=`
+    <select class="page-size-select" onchange="apprPageSize=parseInt(this.value);apprPage=1;renderApproval();"><option value="10" ${apprPageSize===10?'selected':''}>10 条/页</option><option value="20" ${apprPageSize===20?'selected':''}>20 条/页</option><option value="50" ${apprPageSize===50?'selected':''}>50 条/页</option></select>
+    <span class="pagination-info">共 ${total} 条，${apprPage}/${totalPages} 页</span>
+    <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage=1;renderApproval()">首页</button>
+    <button class="pagination-btn" ${apprPage===1?'disabled':''} onclick="apprPage--;renderApproval()">上一页</button>
+    <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage++;renderApproval()">下一页</button>
+    <button class="pagination-btn" ${apprPage===totalPages?'disabled':''} onclick="apprPage=totalPages;renderApproval()">末页</button>`;
+}
+
+function clearApprovalFilter(){
+  document.getElementById('appr-search').value='';
+  document.getElementById('appr-tab').value='pending';
+  apprPage=1; renderApproval();
+}
+
+// ==================== APPROVAL MODAL ====================
+let pendingErpScreenshots={};
+
+async function openApprovalModal(recordId){
+  currentApprovalRecordId=recordId;
+  pendingErpScreenshots={};
+  const records=await getRecords();
+  const record=records.find(r=>r.id===recordId);
+  if(!record) return;
+  if(!canApproveRecord(record)){
+    showFlash('只有当前级别审批人可以处理该审批','danger');
+    return;
+  }
+
+  document.getElementById('approval-record-summary').innerHTML=`
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">售后日期</span><span class="detail-value">${esc(record.aftersales_date||'-')}</span></div>
+      <div class="detail-item"><span class="detail-label">提交人</span><span class="detail-value">${esc(record.submitter_name)}</span></div>
+      <div class="detail-item"><span class="detail-label">品牌</span><span class="detail-value">${esc(record.brand||'-')}</span></div>
+      <div class="detail-item"><span class="detail-label">合计数量</span><span class="detail-value" style="font-weight:700;color:var(--primary);font-size:16px">${record.total_quantity||(record.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
+      <div class="detail-item"><span class="detail-label">当前审批状态</span><span class="detail-value"><span class="status-badge status-${record.status}">${record.status}</span></span></div>
+    </div>
+    <div style="margin-top:10px">
+      <table class="data-table" style="font-size:12px"><thead><tr><th>#</th><th>平台</th><th>SKU</th><th>订单号</th><th>数量</th><th>退货原因</th><th>处理状态</th><th>ERP入库截图</th><th>操作</th></tr></thead>
+        <tbody>${(record.items||[]).map((it,i)=>{
+          const isResaleable=(it.return_reason)==='可二次销售';
+          const screenshots=it.erp_screenshots||[];
+          return `<tr>
+            <td>${i+1}</td>
+            <td>${esc(it.platform||'-')}</td>
+            <td>${esc(it.sku_code||'-')}</td>
+            <td>${esc(it.order_no||'-')}</td>
+            <td>${it.quantity||0}</td>
+            <td>${esc(it.return_reason||'-')}</td>
+            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${it.process_status}</span>`:'-'}</td>
+            <td id="erp-cell-${i}">
+              ${screenshots.map(s=>`<img src="${s}" class="erp-screenshot-thumb" onclick="previewErpScreenshot(this)">`).join('')}
+              ${isResaleable&&it.process_status==='待ERP入库'?`<span class="erp-upload-btn" onclick="triggerErpUpload(${i})">上传截图</span>`:''}
+            </td>
+            <td>${isResaleable&&it.process_status==='待ERP入库'?`<button class="btn btn-sm btn-primary" onclick="markItemProcessed(${i})">标记已处理</button>`:''}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-size:13px;color:var(--text-muted)">
+      审批流程：${esc(record.approver_level1_name)} &#x2192; ${esc(record.approver_level2_name)} &#x2192; ${esc(record.approver_level3_name)}
+    </div>
+  `;
+
+  // Approval history
+  const history=record.approval_history||[];
+  if(history.length===0){
+    document.getElementById('approval-history').innerHTML='<div style="color:var(--text-muted);font-size:13px">暂无审批记录</div>';
+  }else{
+    document.getElementById('approval-history').innerHTML=`<div class="approval-timeline">`+
+      history.map(h=>`
+        <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
+          <div style="font-size:13px;font-weight:600">${h.action==='approve'?'&#x2705; 审批通过':'&#x274C; 审批拒绝'} - ${esc(h.operator_name)} (第${h.level}级)</div>
+          ${h.comment?`<div style="font-size:13px;margin-top:4px">${esc(h.comment)}</div>`:''}
+          ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">退货入库日期：${esc(h.return_date)}</div>`:''}
+          ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
+        </div>
+      `).join('')+
+    `</div>`;
+  }
+
+  // Reset form
+  document.getElementById('appr-return-date').value='';
+  document.getElementById('appr-comment').value='';
+  pendingAttachments=[];
+  renderPendingAttachments();
+  document.getElementById('appr-storage-warning').style.display='none';
+
+  document.getElementById('approval-modal').classList.remove('hidden');
+}
+
+function closeApprovalModal(){
+  document.getElementById('approval-modal').classList.add('hidden');
+  currentApprovalRecordId=null;
+  pendingAttachments=[];
+  pendingErpScreenshots={};
+}
+
+async function doApproval(action){
+  const comment=document.getElementById('appr-comment').value.trim();
+  if(!comment) return showFlash('请输入审批意见','warning');
+  const returnDate=document.getElementById('appr-return-date').value;
+  // Save pending ERP screenshots before approval
+  if(Object.keys(pendingErpScreenshots).length>0){
+    const records=await getRecords();
+    const record=records.find(r=>r.id===currentApprovalRecordId);
+    if(record){
+      Object.entries(pendingErpScreenshots).forEach(([idx,shots])=>{
+        if(shots&&record.items[parseInt(idx)]){
+          record.items[parseInt(idx)].erp_screenshots=shots;
+        }
+      });
+      await saveRecordsAsync(records);
+    }
+  }
+  const success=executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
+  if(success){
+    showFlash(action==='approve'?'审批通过':'已拒绝','success');
+    closeApprovalModal();
+    renderApproval();
+    if(document.getElementById('page-list').classList.contains('active')) renderList();
+    if(document.getElementById('page-detail').classList.contains('active')&&currentDetailId===currentApprovalRecordId) renderDetail(currentDetailId);
+  }
+}
+
+async function triggerErpUpload(itemIndex){
+  const records=await getRecords();
+  const record=records.find(r=>r.id===currentApprovalRecordId);
+  if(!canApproveRecord(record)){ showFlash('只有当前级别审批人可以上传处理截图','danger'); return; }
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.onchange=function(e){
+    const file=e.target.files[0];
+    if(!file) return;
+    if(file.size>2*1024*1024){ showFlash('图片超过2MB，请压缩后上传','warning'); return; }
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      if(!pendingErpScreenshots[itemIndex]) pendingErpScreenshots[itemIndex]=[];
+      pendingErpScreenshots[itemIndex].push(ev.target.result);
+      const cell=document.getElementById('erp-cell-'+itemIndex);
+      if(cell){
+        const img=document.createElement('img');
+        img.src=ev.target.result;
+        img.className='erp-screenshot-thumb';
+        img.onclick=function(){ previewErpScreenshot(this); };
+        const uploadBtn=cell.querySelector('.erp-upload-btn');
+        if(uploadBtn) cell.insertBefore(img,uploadBtn);
+        else cell.appendChild(img);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function previewErpScreenshot(imgEl){
+  document.getElementById('image-preview-img').src=imgEl.src;
+  document.getElementById('image-preview-overlay').classList.remove('hidden');
+}
+
+async function markItemProcessed(itemIndex){
+  const records=await getRecords();
+  const record=records.find(r=>r.id===currentApprovalRecordId);
+  if(!record||!record.items[itemIndex]) return;
+  if(!canApproveRecord(record)){ showFlash('只有当前级别审批人可以标记处理状态','danger'); return; }
+  const item=record.items[itemIndex];
+  if(item.process_status!=='待ERP入库'){
+    showFlash('仅"待ERP入库"状态可标记为已处理','warning'); return;
+  }
+  if(pendingErpScreenshots[itemIndex]){
+    item.erp_screenshots=pendingErpScreenshots[itemIndex];
+  }
+  const now=new Date().toISOString();
+  item.process_status='已处理';
+  item.process_completed_date=now;
+  item.process_status_updated_at=now;
+  record.updated_at=now;
+  await saveRecordsAsync(records);
+  showFlash('已标记为已处理','success');
+  pendingErpScreenshots[itemIndex]=undefined;
+  openApprovalModal(currentApprovalRecordId);
+}
+
+// ==================== ATTACHMENTS ====================
+function triggerAttachmentUpload(){ document.getElementById('appr-file-input').click(); }
+
+function handleFileSelect(event){
+  const files=event.target.files;
+  if(!files||files.length===0) return;
+  Array.from(files).forEach(file=>{
+    if(!file.type.startsWith('image/')){ showFlash(`文件 ${file.name} 不是图片，已跳过`,'warning'); return; }
+    if(file.size>2*1024*1024){ showFlash(`图片 ${file.name} 超过2MB，已跳过`,'warning'); return; }
+    const reader=new FileReader();
+    reader.onload=function(e){
+      pendingAttachments.push({name:file.name, type:file.type, data:e.target.result});
+      renderPendingAttachments();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value='';
+}
+
+function setupPasteHandler(){
+  document.addEventListener('paste',function(e){
+    const modal=document.getElementById('approval-modal');
+    if(modal.classList.contains('hidden')) return;
+    const items=(e.clipboardData||window.clipboardData).items;
+    if(!items) return;
+    let handled=false;
+    Array.from(items).forEach(item=>{
+      if(item.type.indexOf('image')!==-1){
+        const blob=item.getAsFile();
+        if(!blob||blob.size>2*1024*1024){ showFlash('粘贴的图片超过2MB，已跳过','warning'); return; }
+        const reader=new FileReader();
+        reader.onload=function(ev){
+          pendingAttachments.push({name:'paste_'+Date.now()+'.png', type:blob.type||'image/png', data:ev.target.result});
+          renderPendingAttachments();
+        };
+        reader.readAsDataURL(blob);
+        handled=true;
+      }
+    });
+    if(handled){ e.preventDefault(); e.stopPropagation(); }
+  });
+}
+
+function renderPendingAttachments(){
+  const container=document.getElementById('appr-attachments');
+  const sizeMB=pendingAttachments.reduce((sum,a)=>sum+(a.data.length*0.75/1024/1024),0);
+  container.innerHTML=pendingAttachments.map((att,i)=>`
+    <div style="position:relative;display:inline-block;width:72px;height:72px;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0">
+      <img src="${att.data}" class="attachment-thumb" style="width:100%;height:100%;object-fit:cover" onclick="event.stopPropagation();previewPendingImage(${i})" title="${esc(att.name)}">
+      <button type="button" onclick="event.stopPropagation();removePendingAttachment(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1">&times;</button>
+    </div>
+  `).join('');
+  document.getElementById('appr-storage-warning').style.display=sizeMB>0.5?'block':'none';
+}
+
+function renderAttachmentsHTML(attachments){
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`+
+    attachments.map((att,i)=>`
+      <div style="width:56px;height:56px;border:1px solid var(--border);border-radius:4px;overflow:hidden;cursor:pointer" class="attachment-thumb" onclick="event.stopPropagation();previewHistoryImage(this)" data-src="${att.data}">
+        <img src="${att.data}" style="width:100%;height:100%;object-fit:cover" title="${esc(att.name||'')}">
+      </div>
+    `).join('')+`</div>`;
+}
+
+function previewPendingImage(index){
+  const att=pendingAttachments[index];
+  if(!att) return;
+  document.getElementById('image-preview-img').src=att.data;
+  document.getElementById('image-preview-overlay').classList.remove('hidden');
+}
+
+function previewHistoryImage(el){
+  document.getElementById('image-preview-img').src=el.dataset.src;
+  document.getElementById('image-preview-overlay').classList.remove('hidden');
+}
+
+function closeImagePreview(){ document.getElementById('image-preview-overlay').classList.add('hidden'); }
+
+// ==================== BATCH IMPORT ====================
+function openImportDialog(){
+  document.getElementById('import-modal').classList.remove('hidden');
+  document.getElementById('import-result').innerHTML='';
+  document.getElementById('import-file-input').value='';
+}
+function closeImportDialog(){ document.getElementById('import-modal').classList.add('hidden'); }
+
+function downloadImportTemplate(){
+  const headers=['售后日期','平台','SKU','订单号','数量','退货原因','问题说明/备注'];
+  const example=['2026-01-15','Shopee','SKU-APPLE-001','SH20260115001','2','可二次销售','屏幕裂纹'];
+  const bom='\uFEFF';
+  const csvLine=arr=>arr.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',');
+  const csv=bom+headers.join(',')+'\n'+csvLine(example);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='售后记录导入模板.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function handleImportFile(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  processImportFile(file);
+}
+
+function handleImportDrop(event){
+  event.preventDefault();
+  document.getElementById('import-drop-zone').style.borderColor='var(--border)';
+  document.getElementById('import-drop-zone').style.background='transparent';
+  const file=event.dataTransfer.files[0];
+  if(file) processImportFile(file);
+}
+
+function processImportFile(file){
+  if(!file.name.endsWith('.csv')){
+    showImportResult('error','请选择 CSV 格式的文件');
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const text=e.target.result;
+    const lines=parseCSV(text);
+    if(lines.length<2){ showImportResult('error','文件为空或格式不正确'); return; }
+    const header=lines[0].map(h=>h.trim());
+    const colMap={};
+    header.forEach((h,i)=>{
+      const k=h.replace(/\s/g,'').toLowerCase();
+      if(k.includes('售后日期')||k.includes('日期')) colMap.date=i;
+      else if(k.includes('平台')) colMap.platform=i;
+      else if(k.includes('订单号')) colMap.order=i;
+      else if(k.includes('sku')) colMap.sku=i;
+      else if(k.includes('数量')) colMap.qty=i;
+      else if(k.includes('退货原因')||k.includes('退货类型')||k.includes('售后类型')||k.includes('类型')) colMap.type=i;
+      else if(k.includes('故障')||k.includes('说明')||k.includes('备注')||k.includes('问题')) colMap.fault=i;
+    });
+    if(colMap.date===undefined||colMap.platform===undefined||colMap.sku===undefined||colMap.qty===undefined){
+      showImportResult('error','缺少必填列：售后日期、平台、SKU、数量。当前表头：'+header.join(' | '));
+      return;
+    }
+    let imported=0,skipped=0;
+    const records=await getRecords();
+    const products=await getProducts();
+    for(let i=1;i<lines.length;i++){
+      const row=lines[i];
+      if(row.length===0||row.every(c=>!c.trim())){ skipped++; continue; }
+      const aftersales_date=getVal(row,colMap.date);
+      const platform=getVal(row,colMap.platform);
+      const order_no=getVal(row,colMap.order);
+      const sku=getVal(row,colMap.sku);
+      const quantity=parseInt(getVal(row,colMap.qty))||1;
+      const return_reason=getVal(row,colMap.type)||'可二次销售';
+      const fault_desc=getVal(row,colMap.fault);
+      if(!aftersales_date||!platform||!sku){skipped++; continue;}
+      // Lookup product info
+      const prod=products.find(p=>p.sku_code===sku);
+      const now=new Date().toISOString();
+      records.push({
+        id:await nextId(),
+        aftersales_date, platforms:[platform],
+        items:[{platform, sku_code:sku, order_no, quantity, return_reason, fault_description:fault_desc}],
+        total_quantity:quantity,
+        brand:prod?prod.brand:'',
+        model:prod?prod.model:'',
+        category:prod?prod.category:'',
+        submitter_id:getCurrentUser().id,
+        submitter_name:getCurrentUser().name,
+        approver_level1_id:null, approver_level1_name:null,
+        approver_level2_id:null, approver_level2_name:null,
+        approver_level3_id:null, approver_level3_name:null,
+        status:'草稿',
+        current_approval_level:0,
+        approval_history:[],
+        created_at:now, updated_at:now
+      });
+      imported++;
+    }
+    await saveRecordsAsync(records);
+    showImportResult('success','共读取 '+(lines.length-1)+' 行，成功导入 <b>'+imported+'</b> 条草稿记录'+(skipped>0?'，跳过 '+skipped+' 行':''));
+
+    function getVal(row,idx){ return idx!==undefined&&row[idx]?row[idx].trim():''; }
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines=[]; let current=[], field='', inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inQuotes){
+      if(ch==='"'){ if(text[i+1]==='"'){ field+='"';i++; } else inQuotes=false; }
+      else field+=ch;
+    }else{
+      if(ch==='"') inQuotes=true;
+      else if(ch===','){ current.push(field); field=''; }
+      else if(ch==='\n'){ current.push(field); field=''; lines.push(current); current=[]; }
+      else field+=ch;
+    }
+  }
+  if(field||current.length>0){ current.push(field); lines.push(current); }
+  return lines;
+}
+
+function showImportResult(type,msg){
+  const el=document.getElementById('import-result');
+  const bg=type==='success'?'#e8f5e9':type==='error'?'#ffebee':'#fff3e0';
+  const cl=type==='success'?'#2e7d32':type==='error'?'#c62828':'#e65100';
+  el.innerHTML='<div style="padding:12px 16px;border-radius:8px;background:'+bg+';color:'+cl+';font-size:14px">'+msg+'</div>';
+}
+
+function removePendingAttachment(index){
+  pendingAttachments.splice(index,1);
+  renderPendingAttachments();
+}
+
+// ==================== PRODUCT MANAGEMENT ====================
+async function renderProducts(){
+  const products=await getProducts();
+  const search=(document.getElementById('prod-search').value||'').toLowerCase();
+  const brandF=document.getElementById('prod-brand-filter').value;
+  const countryF=document.getElementById('prod-country-filter').value;
+  const statusF=document.getElementById('prod-status-filter').value;
+
+  // Update dropdowns
+  const brands=[...new Set(products.map(p=>p.brand).filter(Boolean))].sort();
+  const countries=[...new Set(products.map(p=>p.country).filter(Boolean))].sort();
+  document.getElementById('prod-brand-filter').innerHTML='<option value="">全部品牌</option>'+brands.map(b=>`<option value="${esc(b)}" ${b===brandF?'selected':''}>${esc(b)}</option>`).join('');
+  document.getElementById('prod-country-filter').innerHTML='<option value="">全部国家</option>'+countries.map(c=>`<option value="${esc(c)}" ${c===countryF?'selected':''}>${esc(c)}</option>`).join('');
+
+  let filtered=products;
+  if(brandF) filtered=filtered.filter(p=>p.brand===brandF);
+  if(countryF) filtered=filtered.filter(p=>p.country===countryF);
+  if(statusF) filtered=filtered.filter(p=>p.status===statusF);
+  if(search) filtered=filtered.filter(p=>(p.sku_code||'').toLowerCase().includes(search)||(p.brand||'').toLowerCase().includes(search)||(p.model||'').toLowerCase().includes(search)||(p.category||'').toLowerCase().includes(search)||(p.ean_code||'').toLowerCase().includes(search));
+  filtered.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+  const total=filtered.length;
+  const start=(prodPage-1)*prodPageSize;
+  const pageRecords=filtered.slice(start,start+prodPageSize);
+  const area=document.getElementById('products-table-area');
+
+  if(pageRecords.length===0){
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4E6;</div><p>暂无商品</p>${hasPermission('product_create')?`<button class="btn btn-primary" onclick="openProductModal()">新建第一个商品</button>`:''}</div>`;
+  }else{
+    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>SKU编码</th><th>品牌</th><th>型号</th><th>品类</th><th>国家</th><th>EAN编码</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+    pageRecords.forEach(p=>{
+      html+=`<tr>
+        <td class="cell-id">${esc(p.sku_code)}</td>
+        <td class="cell-name">${esc(p.brand)}</td>
+        <td>${esc(p.model||'-')}</td>
+        <td>${esc(p.category||'-')}</td>
+        <td>${esc(p.country||'-')}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${esc(p.ean_code||'-')}</td>
+        <td><span class="prod-status prod-status-${p.status}">${p.status==='active'?'启用':'禁用'}</span></td>
+        <td class="cell-actions">
+          ${hasPermission('product_create')?`<button class="action-btn" title="编辑" onclick="openProductModal('${p.id}')">&#x270F;</button>`:''}
+          ${hasPermission('product_create')?`<button class="action-btn action-delete" title="删除" onclick="deleteProduct('${p.id}')">&#x1F5D1;</button>`:''}
+        </td></tr>`;
+    });
+    html+=`</tbody></table></div>`;
+    area.innerHTML=html;
+  }
+  renderProdPagination(total);
+}
+
+function renderProdPagination(total){
+  const container=document.getElementById('prod-pagination');
+  const totalPages=Math.max(1,Math.ceil(total/prodPageSize));
+  if(totalPages<=1&&total<=prodPageSize){ container.innerHTML=''; return; }
+  container.innerHTML=`
+    <select class="page-size-select" onchange="prodPageSize=parseInt(this.value);prodPage=1;renderProducts();"><option value="10" ${prodPageSize===10?'selected':''}>10 条/页</option><option value="20" ${prodPageSize===20?'selected':''}>20 条/页</option><option value="50" ${prodPageSize===50?'selected':''}>50 条/页</option></select>
+    <span class="pagination-info">共 ${total} 条，${prodPage}/${totalPages} 页</span>
+    <button class="pagination-btn" ${prodPage===1?'disabled':''} onclick="prodPage=1;renderProducts()">首页</button>
+    <button class="pagination-btn" ${prodPage===1?'disabled':''} onclick="prodPage--;renderProducts()">上一页</button>
+    <button class="pagination-btn" ${prodPage===totalPages?'disabled':''} onclick="prodPage++;renderProducts()">下一页</button>
+    <button class="pagination-btn" ${prodPage===totalPages?'disabled':''} onclick="prodPage=totalPages;renderProducts()">末页</button>`;
+}
+
+function clearProductFilter(){
+  document.getElementById('prod-search').value='';
+  document.getElementById('prod-brand-filter').value='';
+  document.getElementById('prod-country-filter').value='';
+  document.getElementById('prod-status-filter').value='';
+  prodPage=1; renderProducts();
+}
+
+async function openProductModal(productId){
+  if(!requirePermission('product_create')) return;
+  document.getElementById('product-modal').classList.remove('hidden');
+  const products=await getProducts();
+  if(productId){
+    const p=products.find(x=>x.id===productId);
+    if(!p) return;
+    document.getElementById('product-modal-title').textContent='编辑商品';
+    document.getElementById('prod-edit-id').value=p.id;
+    document.getElementById('p-country').value=p.country||'';
+    document.getElementById('p-brand').value=p.brand||'';
+    document.getElementById('p-sku-code').value=p.sku_code;
+    document.getElementById('p-model').value=p.model||'';
+    document.getElementById('p-category').value=p.category||'';
+    document.getElementById('p-ean-code').value=p.ean_code||'';
+    document.getElementById('p-status').value=p.status;
+  }else{
+    document.getElementById('product-modal-title').textContent='新建商品';
+    document.getElementById('prod-edit-id').value='';
+    document.getElementById('p-country').value='';
+    document.getElementById('p-brand').value='';
+    document.getElementById('p-sku-code').value='';
+    document.getElementById('p-model').value='';
+    document.getElementById('p-category').value='';
+    document.getElementById('p-ean-code').value='';
+    document.getElementById('p-status').value='active';
+  }
+}
+
+function closeProductModal(){ document.getElementById('product-modal').classList.add('hidden'); }
+
+async function saveProduct(e){
+  e.preventDefault();
+  if(!requirePermission('product_create')) return;
+  const editId=document.getElementById('prod-edit-id').value;
+  const brand=document.getElementById('p-brand').value.trim();
+  const skuCode=document.getElementById('p-sku-code').value.trim();
+  if(!brand) return showFlash('品牌不能为空','warning');
+  if(!skuCode) return showFlash('SKU编码不能为空','warning');
+
+  const products=await getProducts();
+  // Check SKU uniqueness
+  const dup=products.find(p=>p.sku_code===skuCode&&p.id!==editId);
+  if(dup) return showFlash('SKU编码已存在','warning');
+
+  const now=new Date().toISOString();
+  const data={
+    id:editId||'prod_'+Date.now(),
+    country:document.getElementById('p-country').value.trim(),
+    brand,
+    sku_code:skuCode,
+    model:document.getElementById('p-model').value.trim(),
+    category:document.getElementById('p-category').value.trim(),
+    ean_code:document.getElementById('p-ean-code').value.trim(),
+    status:document.getElementById('p-status').value,
+    updated_at:now
+  };
+
+  if(editId){
+    const idx=products.findIndex(p=>p.id===editId);
+    if(idx>=0){ data.created_at=products[idx].created_at; products[idx]=data; }
+  }else{
+    data.created_at=now; products.push(data);
+  }
+  await saveProducts(products);
+  closeProductModal();
+  showFlash(editId?'商品已更新':'商品已创建','success');
+  renderProducts();
+}
+
+async function deleteProduct(id){
+  if(!requirePermission('product_create')) return;
+  // Check if referenced in records
+  const productsList=await getProducts();
+  const product=productsList.find(p=>p.id===id);
+  if(!product) return;
+  const records=await getRecords();
+  const refCount=records.filter(r=>(r.items||[]).some(it=>it.sku_code===product.sku_code)).length;
+  if(refCount>0) return showFlash(`该商品被 ${refCount} 条售后记录引用，无法删除`,'danger');
+  if(!confirm('确定要删除该商品吗？')) return;
+  const products=productsList.filter(p=>p.id!==id);
+  await saveProducts(products);
+  showFlash('商品已删除','info');
+  renderProducts();
+}
+
+// ==================== USER MANAGEMENT ====================
+async function renderUsers(){
+  const users=await getUsers(), roles=await getRoles();
+  const area=document.getElementById('users-table-area');
+  if(users.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F464;</div><p>暂无用户</p></div>`; return; }
+  let html=`<div class="table-container"><table class="data-table"><thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>状态</th><th>飞书绑定</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+  users.forEach(u=>{
+    const role=roles.find(r=>r.id===u.role_id);
+    const statusClass=u.status==='active'?'user-status-active':'user-status-disabled';
+    const feishuBound = u.feishu_open_id 
+      ? `<span style="color:var(--primary)">✅ ${esc(u.feishu_name || u.name || '已绑定')}</span>` 
+      : '<span style="color:var(--text-muted)">❌ 未绑定</span>';
+    html+=`<tr>
+      <td class="cell-name">${esc(u.username)}</td><td>${esc(u.name)}</td>
+      <td><span class="role-badge">${esc(role?role.name:'-')}</span></td>
+      <td><span class="user-status ${statusClass}">${u.status==='active'?'启用':'禁用'}</span></td>
+      <td style="font-size:12px;color:${u.feishu_open_id?'var(--primary)':'var(--text-muted)'}">${feishuBound}</td>
+      <td class="cell-date">${(u.created_at||'').substring(0,10)}</td>
+      <td class="cell-actions">
+        <button class="action-btn" title="编辑" onclick="openUserModal('${u.id}')">&#x270F;</button>
+        ${u.id!=='user_admin'?`<button class="action-btn action-delete" title="删除" onclick="deleteUser('${u.id}')">&#x1F5D1;</button>`:''}
+      </td></tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  area.innerHTML=html;
+}
+
+async function openUserModal(userId){
+  if(!requirePermission('user_manage')) return;
+  const roles=await getRoles();
+  document.getElementById('u-role').innerHTML=roles.map(r=>`<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+  document.getElementById('user-modal').classList.remove('hidden');
+  const feishuOpenidEl = document.getElementById('u-feishu-openid');
+  const usernameEl = document.getElementById('u-username');
+  const nameEl = document.getElementById('u-name');
+  const feishuSelectedEl = document.getElementById('u-feishu-selected');
+  const feishuSelectedName = document.getElementById('u-feishu-selected-name');
+  const feishuSelectedEmail = document.getElementById('u-feishu-selected-email');
+  const dropdownEl = document.getElementById('feishu-search-dropdown');
+  selectedFeishuContact = null;
+  
+  const users=await getUsers();
+  if(userId){
+    const u=users.find(x=>x.id===userId);
+    if(!u) return;
+    document.getElementById('user-modal-title').textContent='编辑用户';
+    document.getElementById('user-edit-id').value=u.id;
+    document.getElementById('u-password').value='';
+    document.getElementById('u-role').value=u.role_id;
+    document.getElementById('u-status').value=u.status;
+    document.getElementById('u-pwd-required').style.display='none';
+    
+    // 编辑模式：用户名显示为已选飞书用户，不可修改
+    usernameEl.value = u.feishu_name || u.name;
+    usernameEl.disabled = true;
+    usernameEl.placeholder = '飞书绑定用户（不可修改）';
+    usernameEl.oninput = null;
+    usernameEl.onfocus = null;
+    nameEl.value = u.name;
+    nameEl.readOnly = true;
+    
+    // 飞书绑定状态
+    if(feishuOpenidEl) feishuOpenidEl.value = u.feishu_open_id || '';
+    if(u.feishu_open_id){
+      if(feishuSelectedEl) {
+        feishuSelectedEl.style.display = 'flex';
+        feishuSelectedName.textContent = u.feishu_name || u.name;
+        feishuSelectedEmail.textContent = u.feishu_email || '已绑定';
+      }
+    } else {
+      if(feishuSelectedEl) feishuSelectedEl.style.display = 'none';
+    }
+    if(dropdownEl) dropdownEl.style.display = 'none';
+  } else {
+    document.getElementById('user-modal-title').textContent='新建用户';
+    document.getElementById('user-edit-id').value='';
+    document.getElementById('u-password').value='';
+    document.getElementById('u-status').value='active';
+    document.getElementById('u-pwd-required').style.display='inline';
+    
+    // 新建模式：用户名是搜索框
+    usernameEl.value = '';
+    usernameEl.disabled = false;
+    usernameEl.placeholder = '输入姓名/英文名/邮箱搜索飞书成员...';
+    usernameEl.setAttribute('oninput', 'searchFeishuContacts(this.value)');
+    usernameEl.setAttribute('onfocus', 'searchFeishuContacts(this.value)');
+    usernameEl.addEventListener('input', function(e){ searchFeishuContacts(e.target.value); });
+    usernameEl.addEventListener('focus', function(e){ searchFeishuContacts(e.target.value); });
+    nameEl.value = '';
+    nameEl.readOnly = true;
+    
+    if(feishuOpenidEl) feishuOpenidEl.value = '';
+    if(feishuSelectedEl) feishuSelectedEl.style.display = 'none';
+    if(dropdownEl) dropdownEl.style.display = 'none';
+  }
+}
+function closeUserModal(){ document.getElementById('user-modal').classList.add('hidden'); }
+
+// ==================== 飞书通讯录搜索 ====================
+let feishuSearchTimer = null;
+let feishuSearchResults = [];
+let selectedFeishuContact = null;
+
+function searchFeishuContacts(query) {
+  const dropdownEl = document.getElementById('feishu-search-dropdown');
+  const usernameEl = document.getElementById('u-username');
+  
+  // 编辑模式不触发搜索
+  if (usernameEl && usernameEl.disabled) return;
+  
+  clearTimeout(feishuSearchTimer);
+  
+  if (!query || query.trim().length === 0) {
+    feishuSearchResults = [];
+    if (dropdownEl) dropdownEl.style.display = 'none';
+    return;
+  }
+  
+  feishuSearchTimer = setTimeout(async () => {
+    const q = query.trim();
+    if (q.length < 1) return;
+    
+    // 显示加载状态
+    if (dropdownEl) {
+      dropdownEl.style.display = 'block';
+      dropdownEl.innerHTML = '<div class="fs-loading">搜索中...</div>';
+    }
+    
+    try {
+      const resp = await fetch(`/api/feishu/contacts/search?query=${encodeURIComponent(q)}`);
+      const data = await resp.json();
+      
+      if (data.success && data.users) {
+        feishuSearchResults = data.users;
+        renderFeishuSearchResults(data.users);
+      } else {
+        // 显示错误提示
+        const errParts = [];
+        if (!data.success) {
+          errParts.push(data.error || '搜索失败');
+        } else {
+          errParts.push('未找到匹配的飞书用户');
+        }
+        if (data.error && data.error.includes('权限')) {
+          errParts.push('<br><small style="color:#e67e22">请在飞书开发者后台启用"通讯录"相关权限</small>');
+        }
+        if (dropdownEl) {
+          dropdownEl.innerHTML = `<div class="fs-empty">${errParts.join('')}</div>`;
+        }
+      }
+    } catch (e) {
+      if (dropdownEl) {
+        dropdownEl.innerHTML = '<div class="fs-empty">搜索失败，请检查飞书集成状态</div>';
+      }
+    }
+  }, 300);
+}
+
+function renderFeishuSearchResults(users) {
+  const dropdownEl = document.getElementById('feishu-search-dropdown');
+  if (!dropdownEl) return;
+  
+  if (!users || users.length === 0) {
+    dropdownEl.innerHTML = '<div class="fs-empty">未找到匹配的飞书用户</div>';
+    return;
+  }
+  
+  let html = '';
+  users.forEach((u, idx) => {
+    const name = u.name || u.full_name || '未知';
+    const fullName = u.full_name || '';
+    const dept = (u.department_names || []).join(' / ') || '';
+    const email = u.email || '';
+    // 显示更多信息：英文名 + 中文名 + 邮箱
+    let displayName = name;
+    if (u.en_name && u.en_name !== name) {
+      displayName = `${u.en_name} (${name})`;
+    }
+    if (email) {
+      displayName += ` · ${email}`;
+    }
+    const avatarHtml = u.avatar 
+      ? `<img src="${escAttr(u.avatar)}" alt="">` 
+      : name.charAt(0);
+    
+    html += `<div class="fs-item" onclick="selectFeishuUser(${idx})">
+      <div class="fs-avatar">${avatarHtml}</div>
+      <div class="fs-info">
+        <div class="fs-name">${esc(displayName)}</div>
+        ${dept ? `<div class="fs-dept">${esc(dept)}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  
+  dropdownEl.innerHTML = html;
+  dropdownEl.style.display = 'block';
+}
+
+function selectFeishuUser(idx) {
+  const u = feishuSearchResults[idx];
+  if (!u) return;
+  
+  selectedFeishuContact = u;
+  
+  // 设置隐藏的 open_id
+  document.getElementById('u-feishu-openid').value = u.open_id;
+  
+  // 设置显示名称（优先 en_name，其次 name）
+  const displayName = u.en_name || u.name || u.full_name || '飞书用户';
+  document.getElementById('u-username').value = displayName;
+  
+  // 设置姓名（中文名或英文名）
+  const realName = u.full_name || u.name || displayName;
+  document.getElementById('u-name').value = realName;
+  
+  // 隐藏下拉
+  document.getElementById('feishu-search-dropdown').style.display = 'none';
+  
+  // 显示已选用户卡片
+  const selectedEl = document.getElementById('u-feishu-selected');
+  const selectedName = document.getElementById('u-feishu-selected-name');
+  const selectedEmail = document.getElementById('u-feishu-selected-email');
+  
+  selectedName.textContent = u.en_name ? `${u.en_name} · ${u.full_name || u.name}` : displayName;
+  selectedEmail.textContent = u.email || '飞书用户';
+  selectedEl.style.display = 'flex';
+  
+  feishuSearchResults = [];
+}
+
+function clearFeishuSelection() {
+  selectedFeishuContact = null;
+  const usernameEl = document.getElementById('u-username');
+  if (usernameEl && !usernameEl.disabled) {
+    usernameEl.value = '';
+    usernameEl.placeholder = '输入姓名/英文名/邮箱搜索飞书成员...';
+  }
+  document.getElementById('u-name').value = '';
+  document.getElementById('u-feishu-openid').value = '';
+  document.getElementById('u-feishu-selected').style.display = 'none';
+  document.getElementById('feishu-search-dropdown').style.display = 'none';
+  feishuSearchResults = [];
+}
+
+async function saveUser(e){
+  e.preventDefault();
+  if(!requirePermission('user_manage')) return;
+  const editId=document.getElementById('user-edit-id').value;
+  const usernameEl=document.getElementById('u-username');
+  const username=usernameEl.value.trim();
+  const name=document.getElementById('u-name').value.trim();
+  const password=document.getElementById('u-password').value;
+  const roleId=document.getElementById('u-role').value;
+  const status=document.getElementById('u-status').value;
+  const feishuOpenId = (document.getElementById('u-feishu-openid')?.value || '').trim();
+  
+  if(!editId && !feishuOpenId) return showFlash('请通过搜索选择飞书用户','warning');
+  if(!username||!name) return showFlash('用户名和姓名不能为空','warning');
+  if(!editId&&!password) return showFlash('新建用户必须设置密码','warning');
+  
+  const users=await getUsers();
+  // 新建时检查飞书 Open ID 是否已被绑定（不允许重复绑定）
+  if(!editId && feishuOpenId && users.some(u=>u.feishu_open_id===feishuOpenId)) {
+    return showFlash('该飞书用户已被绑定，请选择其他用户','danger');
+  }
+  if(!editId&&users.some(u=>u.username===username)) return showFlash('用户名已存在','danger');
+  
+  // 从 selectedFeishuContact 获取完整飞书信息
+  const feishuInfo = selectedFeishuContact || {};
+  
+  if(editId){
+    const idx=users.findIndex(u=>u.id===editId);
+    if(idx>=0){ 
+      users[idx].name=name; 
+      if(password) users[idx].password=password; 
+      users[idx].role_id=roleId; 
+      users[idx].status=status; 
+      users[idx].feishu_open_id=feishuOpenId;
+      users[idx].feishu_name = users[idx].feishu_name || username;
+      users[idx].feishu_email = users[idx].feishu_email || (feishuInfo.email || '');
+    }
+  }else{
+    users.push({
+      id:'user_'+Date.now(), 
+      username, 
+      name, 
+      password, 
+      role_id:roleId, 
+      status, 
+      feishu_open_id: feishuOpenId,
+      feishu_name: feishuInfo.en_name || feishuInfo.name || username,
+      feishu_union_id: feishuInfo.union_id || '',
+      feishu_email: feishuInfo.email || '',
+      feishu_avatar: feishuInfo.avatar || '',
+      feishu_tenant_key: '',
+      created_at: new Date().toISOString()
+    });
+  }
+  await saveUsers(users);
+  selectedFeishuContact = null;
+  closeUserModal();
+  showFlash(editId?'用户已更新':'用户已创建','success');
+  renderUsers();
+}
+async function deleteUser(userId){
+  if(!requirePermission('user_manage')) return;
+  if(userId==='user_admin') return showFlash('不能删除超级管理员','danger');
+  if(!confirm('确定要删除该用户吗？')) return;
+  const users=await getUsers();
+  await saveUsers(users.filter(u=>u.id!==userId));
+  showFlash('用户已删除','info');
+  renderUsers();
+}
+
+// ==================== ROLE MANAGEMENT ====================
+async function renderRoles(){
+  const roles=await getRoles(), users=await getUsers();
+  const area=document.getElementById('roles-table-area');
+  if(roles.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F6E1;</div><p>暂无角色</p></div>`; return; }
+  let html=`<div class="table-container"><table class="data-table"><thead><tr><th>角色名称</th><th>角色描述</th><th>权限</th><th>关联用户数</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+  roles.forEach(r=>{
+    const userCount=users.filter(u=>u.role_id===r.id).length;
+    const perms=(r.permissions||[]).map(k=>{ const p=ALL_PERMISSIONS.find(x=>x.key===k); return p?p.label:k; }).join('、');
+    html+=`<tr><td class="cell-name">${esc(r.name)}</td><td>${esc(r.description||'-')}</td>
+      <td style="max-width:260px" class="cell-desc" title="${esc(perms)}">${esc(perms)||'-'}</td>
+      <td>${userCount}</td><td class="cell-date">${(r.created_at||'').substring(0,10)}</td>
+      <td class="cell-actions">
+        <button class="action-btn" title="编辑" onclick="openRoleModal('${r.id}')">&#x270F;</button>
+        ${!r.system?`<button class="action-btn action-delete" title="删除" onclick="deleteRole('${r.id}')">&#x1F5D1;</button>`:''}
+      </td></tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  area.innerHTML=html;
+}
+
+async function openRoleModal(roleId){
+  if(!requirePermission('role_manage')) return;
+  document.getElementById('r-permissions').innerHTML=ALL_PERMISSIONS.map(p=>`
+    <label class="permission-item"><input type="checkbox" name="r-perm" value="${esc(p.key)}"><span>${esc(p.label)}<span class="permission-desc">${esc(p.desc)}</span></span></label>
+  `).join('');
+  document.getElementById('role-modal').classList.remove('hidden');
+  const roles=await getRoles();
+  if(roleId){
+    const r=roles.find(x=>x.id===roleId);
+    if(!r) return;
+    document.getElementById('role-modal-title').textContent='编辑角色';
+    document.getElementById('role-edit-id').value=r.id;
+    document.getElementById('r-name').value=r.name;
+    document.getElementById('r-desc').value=r.description||'';
+    document.querySelectorAll('input[name="r-perm"]').forEach(cb=>{ cb.checked=(r.permissions||[]).includes(cb.value); });
+  }else{
+    document.getElementById('role-modal-title').textContent='新建角色';
+    document.getElementById('role-edit-id').value='';
+    document.getElementById('r-name').value='';
+    document.getElementById('r-desc').value='';
+    document.querySelectorAll('input[name="r-perm"]').forEach(cb=>cb.checked=false);
+  }
+}
+function closeRoleModal(){ document.getElementById('role-modal').classList.add('hidden'); }
+
+async function saveRole(e){
+  e.preventDefault();
+  if(!requirePermission('role_manage')) return;
+  const editId=document.getElementById('role-edit-id').value;
+  const name=document.getElementById('r-name').value.trim();
+  const description=document.getElementById('r-desc').value.trim();
+  const permissions=[...document.querySelectorAll('input[name="r-perm"]:checked')].map(cb=>cb.value);
+  if(!name) return showFlash('角色名称不能为空','warning');
+  const roles=await getRoles();
+  if(editId){
+    const idx=roles.findIndex(r=>r.id===editId);
+    if(idx>=0){ roles[idx].name=name; roles[idx].description=description; roles[idx].permissions=permissions; }
+  }else{
+    roles.push({id:'role_'+Date.now(), name, description, permissions, created_at:new Date().toISOString(), system:false});
+  }
+  await saveRoles(roles);
+  closeRoleModal();
+  showFlash(editId?'角色已更新':'角色已创建','success');
+  renderRoles();
+  renderSidebar();
+}
+async function deleteRole(roleId){
+  if(!requirePermission('role_manage')) return;
+  const users=await getUsers();
+  if(users.filter(u=>u.role_id===roleId).length>0) return showFlash('该角色下还有用户，无法删除','danger');
+  if(!confirm('确定要删除该角色吗？')) return;
+  const roles=await getRoles();
+  await saveRoles(roles.filter(r=>r.id!==roleId));
+  showFlash('角色已删除','info');
+  renderRoles();
+}
+
+// ==================== EXCEL IMPORT ====================
+function downloadTemplate(){
+  if(!requirePermission('sales_import')) return;
+  if(typeof XLSX==='undefined'){ showFlash('Excel库加载失败，请刷新页面重试','danger'); return; }
+  const wsData=[['品牌','月份','线上出货量','线上销量','线下出货量','线下销量']];
+  wsData.push(['Apple','2026-01',5000,4800,3000,2900]);
+  wsData.push(['华为','2026-01',4000,3900,2500,2400]);
+  wsData.push(['小米','2026-01',3500,3400,2000,1900]);
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:10}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'销量数据模板');
+  XLSX.writeFile(wb,'销量数据导入模板.xlsx');
+  showFlash('模板已下载','success');
+}
+
+function importSalesData(event){
+  if(!requirePermission('sales_import')) return;
+  const file=event.target.files[0];
+  if(!file) return;
+  if(typeof XLSX==='undefined'){ showFlash('Excel库加载失败，请刷新页面重试','danger'); return; }
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws);
+      if(rows.length===0){ showFlash('文件为空','warning'); return; }
+      const headers=Object.keys(rows[0]);
+      const colMap=resolveColumns(headers);
+      if(!colMap){ showFlash('列名不匹配，请使用下载的模板格式','danger'); return; }
+      const salesData=await getSalesData();
+      let success=0,errors=0;
+      rows.forEach((row,i)=>{
+        const brand=String(row[colMap.brand]||'').trim();
+        if(!brand){ errors++; return; }
+        let month=String(row[colMap.month]||'').trim();
+        month=month.replace('/','-');
+        if(!/^\d{4}-\d{2}$/.test(month)){ errors++; return; }
+        const fields=['online_shipment','online_sales','offline_shipment','offline_sales'];
+        for(const f of fields){ if(isNaN(Number(row[colMap[f]]))){ errors++; return; } }
+        const entry={
+          brand, month,
+          online_shipment:Number(row[colMap.online_shipment]),
+          online_sales:Number(row[colMap.online_sales]),
+          offline_shipment:Number(row[colMap.offline_shipment]),
+          offline_sales:Number(row[colMap.offline_sales])
+        };
+        const idx=salesData.findIndex(d=>d.brand===brand&&d.month===month);
+        if(idx>=0) salesData[idx]=entry; else salesData.push(entry);
+        success++;
+      });
+      await saveSalesData(salesData);
+      showFlash(`导入完成：成功 ${success} 行`+(errors>0?`，跳过 ${errors} 行`:''),errors>0?'warning':'success');
+      renderOverview();
+    }catch(err){ showFlash('文件解析失败：'+err.message,'danger'); }
+  };
+  reader.readAsArrayBuffer(file);
+  event.target.value='';
+}
+
+function resolveColumns(headers){
+  const patterns={
+    brand:['品牌','brand','品名'],
+    month:['月份','month','月份/月','日期'],
+    online_shipment:['线上出货量','线上出货','出货量(线上)','出货量（线上）'],
+    online_sales:['线上销量','线上销','销量(线上)','销量（线上）'],
+    offline_shipment:['线下出货量','线下出货','出货量(线下)','出货量（线下）'],
+    offline_sales:['线下销量','线下销','销量(线下)','销量（线下）']
+  };
+  const result={};
+  for(const[key,pats] of Object.entries(patterns)){
+    let found=null;
+    for(const h of headers){ for(const p of pats){ if(h.includes(p)){ found=h; break; } } if(found) break; }
+    if(!found) return null;
+    result[key]=found;
+  }
+  return result;
+}
+
+// ==================== INITIALIZATION ====================
+(async function(){
+  await runMigration();
+  await initDefaultData();
+  setupPasteHandler();
+
+  // 解析 URL 参数（飞书 OAuth 回调等）
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // 处理飞书登录错误
+  const feishuError = urlParams.get('feishu_error');
+  if (feishuError) {
+    const errorMsg = {
+      'missing_code': '飞书授权失败：缺少授权码',
+      'invalid_state': '飞书登录状态已过期，请重新发起登录',
+      'not_configured': '当前为本地登录模式，请使用本地账号登录',
+      'token_exchange_failed': '飞书令牌交换失败',
+      'get_user_failed': '获取飞书用户信息失败',
+      'user_info_invalid': '飞书返回的用户信息不完整',
+      'token_response_invalid': '飞书令牌响应无效',
+      'server_error': '服务器处理错误'
+    };
+    const friendlyError = errorMsg[feishuError] || ('飞书登录失败：' + feishuError);
+    localStorage.setItem('aftersales_login_error', friendlyError);
+    localStorage.setItem('aftersales_login_tab', 'feishu');
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    }
+  }
+
+  // 处理飞书登录回调
+  const feishuUserData = urlParams.get('feishu_user');
+  if (feishuUserData && !getCurrentUser()) {
+    handleFeishuCallback(feishuUserData);
+    // 清理 URL 参数（不影响页面状态）
+    if (window.history && window.history.replaceState) {
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+    return;
+  }
+
+  // 检查本地已登录用户
+  const user = getCurrentUser();
+  if (user) {
+    const fresh = (await getUsers()).find(u => u.id === user.id && u.status === 'active');
+    if (fresh) { setCurrentUser(fresh); enterApp(); }
+    else { localStorage.removeItem('aftersales_current_user'); }
+  }
+
+  // 登录页初始化
+  // 检测飞书配置状态
+  checkFeishuStatus();
+
+  // 点击页面其他区域关闭飞书通讯录搜索下拉
+  document.addEventListener('click', function(e) {
+    const searchBox = document.querySelector('.feishu-contact-search');
+    const dropdown = document.getElementById('feishu-search-dropdown');
+    if (dropdown && searchBox && !searchBox.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  // 显示管理员本地登录入口（通过 ?admin 参数访问）
+  const showAdmin = urlParams.get('admin');
+  if (showAdmin !== null) {
+    document.getElementById('login-panel-admin').style.display = 'block';
+  }
+
+  // 显示上次登录错误
+  let savedError = localStorage.getItem('aftersales_login_error');
+  if (savedError === '飞书集成' + '未配置') {
+    savedError = '当前为本地登录模式，请使用本地账号登录';
+  }
+  if (savedError) {
+    setTimeout(() => {
+      showLoginError(savedError);
+    }, 100);
+    localStorage.removeItem('aftersales_login_error');
+  }
+})();
+</script>
+</body>
+</html>
