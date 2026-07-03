@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>售后数据管理系统 v3.2</title>
+<title>售后数据管理系统 v3.3.2</title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.3.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.3.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -2374,7 +2374,7 @@ function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
       <option value="TikTok" ${platform==='TikTok'?'selected':''}>TikTok</option>
       <option value="Offline Store" ${platform==='Offline Store'?'selected':''}>Offline Store</option>
     </select></td>
-    <td><input type="text" class="sku-input" list="sku-datalist" placeholder="输入SKU…" value="${esc(sku||'')}" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
+    <td><input type="text" class="sku-input" list="sku-datalist" placeholder="输入SKU…" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
     <td><input type="text" class="order-input" placeholder="订单号" value="${esc(orderNo||'')}"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
     <td><select class="type-select" onchange="updateDetailTotalQty()">
