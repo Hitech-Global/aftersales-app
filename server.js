@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.4.1-render-latest';
+const APP_VERSION = '3.5.0-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -1056,17 +1056,21 @@ app.post('/api/auth/feishu/logout', (req, res) => {
  */
 
 app.post('/api/notify/approval', async (req, res) => {
-  const { recordId, record, approvers } = req.body;
+  const { recordId, record, approvers, approvalLevel } = req.body;
 
   if (!recordId || !record || !approvers || !approvers.length) {
     return res.status(400).json({ error: '缺少必要参数' });
   }
+
+  const currentLevel = approvalLevel || record.current_approval_level || 1;
+  const levelNames = {1:'一级', 2:'二级', 3:'三级'};
 
   // ========== 模拟模式 ==========
   if (!feishuConfigured) {
     console.log('[Mock] 模拟发送审批通知:');
     console.log(`  售后单号: AS${String(recordId).padStart(4,'0')}`);
     console.log(`  提交人: ${record.submitter_name}`);
+    console.log(`  当前审批级别: ${levelNames[currentLevel] || currentLevel}`);
     console.log(`  审批人: ${approvers.map(a => a.name).join(', ')}`);
     console.log(`  SKU 数量: ${(record.items || []).length}`);
     
@@ -1079,10 +1083,14 @@ app.post('/api/notify/approval', async (req, res) => {
   }
 
   // ========== 生产模式 ==========
+  console.log(`[Feishu] 开始发送审批通知 - 单号: ${recordId}, 级别: ${levelNames[currentLevel]}, 目标: ${approvers.map(a=>a.name).join(',')}`);
+
   const tokenResult = await getTenantAccessToken();
   if (tokenResult.error) {
+    console.error(`[Feishu] 获取 tenant_access_token 失败:`, tokenResult.error);
     return res.status(500).json({ error: `获取飞书 token 失败: ${tokenResult.error}` });
   }
+  console.log(`[Feishu] tenant_access_token 获取成功`);
 
   const results = { success: [], failed: [] };
   const recordDisplayId = `AS${String(recordId).padStart(4, '0')}`;
@@ -1090,9 +1098,12 @@ app.post('/api/notify/approval', async (req, res) => {
 
   for (const approver of approvers) {
     if (!approver.feishu_open_id) {
-      results.failed.push({ name: approver.name, reason: '未绑定飞书账号' });
+      console.warn(`[Feishu] 审批人 ${approver.name} 未绑定飞书 open_id，跳过`);
+      results.failed.push({ name: approver.name, reason: '未绑定飞书账号（feishu_open_id 为空）' });
       continue;
     }
+
+    console.log(`[Feishu] 准备发送消息给 ${approver.name} (open_id: ${approver.feishu_open_id})`);
 
     try {
       // 构建互动卡片内容
@@ -1103,7 +1114,8 @@ app.post('/api/notify/approval', async (req, res) => {
         items: record.items || [],
         brands: record.brand || '',
         platforms: (record.platforms || []).join(', '),
-        detailUrl
+        detailUrl,
+        approvalLevel: currentLevel
       });
 
       const response = await axios.post(
@@ -1122,32 +1134,52 @@ app.post('/api/notify/approval', async (req, res) => {
         }
       );
 
+      console.log(`[Feishu] 发送消息 API 响应 code=${response.data.code}, msg=${response.data.msg || 'N/A'}`);
+
       if (response.data.code === 0) {
-        console.log(`[Feishu] 通知已发送给 ${approver.name} (${approver.feishu_open_id})`);
-        results.success.push({ name: approver.name, messageId: response.data.data.message_id });
+        console.log(`[Feishu] ✅ 通知已发送给 ${approver.name} (message_id: ${response.data.data?.message_id || 'N/A'})`);
+        results.success.push({ name: approver.name, messageId: response.data.data?.message_id });
       } else {
-        console.error(`[Feishu] 发送给 ${approver.name} 失败:`, response.data);
-        results.failed.push({ name: approver.name, reason: response.data.msg });
+        const errCode = response.data.code;
+        const errMsg = response.data.msg || '未知错误';
+        console.error(`[Feishu] ❌ 发送给 ${approver.name} 失败 - code: ${errCode}, msg: ${errMsg}, 完整响应:`, JSON.stringify(response.data));
+        
+        // 常见错误码提示
+        let reason = errMsg;
+        if (errCode === 230001) reason = '应用权限不足：请在飞书开放平台开通"获取用户信息"或"以应用身份发送消息"权限';
+        else if (errCode === 102210001) reason = '接收人 open_id 无效或不属于当前应用';
+        else if (errCode === 99991663) reason = '应用未开通"以应用身份发送消息"权限，请在飞书开发者后台开通';
+        
+        results.failed.push({ name: approver.name, reason, code: errCode });
       }
     } catch (e) {
-      console.error(`[Feishu] 发送给 ${approver.name} 异常:`, e.message);
-      results.failed.push({ name: approver.name, reason: e.message });
+      const axiosErr = e.response?.data;
+      console.error(`[Feishu] ❌ 发送给 ${approver.name} 网络异常:`, e.message);
+      if (axiosErr) console.error(`[Feishu] API 错误详情:`, JSON.stringify(axiosErr));
+      results.failed.push({ name: approver.name, reason: e.response?.data?.msg || e.message });
     }
+  }
+
+  const summary = results.success.length > 0 
+    ? `已通知 ${results.success.map(r => r.name).join('、')}` 
+    : '通知发送失败';
+  
+  if (results.failed.length > 0) {
+    console.warn(`[Feishu] 通知发送结果: 成功 ${results.success.length}, 失败 ${results.failed.length}`);
+    results.failed.forEach(f => console.warn(`[Feishu]   失败: ${f.name} - ${f.reason}`));
   }
 
   res.json({
     success: results.failed.length === 0,
     results,
-    message: results.success.length > 0 
-      ? `已通知 ${results.success.map(r => r.name).join('、')}` 
-      : '通知发送失败'
+    message: summary
   });
 });
 
 /**
  * 构建飞书互动卡片（审批通知）
  */
-function buildApprovalCard({ recordDisplayId, submitterName, aftersalesDate, items, brands, platforms, detailUrl }) {
+function buildApprovalCard({ recordDisplayId, submitterName, aftersalesDate, items, brands, platforms, detailUrl, approvalLevel }) {
   // 构建 SKU 明细文本（最多展示 5 条）
   const skuLines = items.slice(0, 5).map(it => {
     const reason = it.return_reason || '-';
@@ -1177,7 +1209,7 @@ function buildApprovalCard({ recordDisplayId, submitterName, aftersalesDate, ite
     header: {
       title: {
         tag: 'plain_text',
-        content: '📋 售后审批通知'
+        content: '📋 售后审批通知' + (approvalLevel ? ` - 待${['','一','二','三'][approvalLevel]}级审批` : '')
       },
       template: 'blue'
     },

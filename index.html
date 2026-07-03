@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>售后数据管理系统 v3.4.1</title>
+<title>售后数据管理系统 v3.5.0</title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -393,7 +393,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span>售后管理系统</span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.4.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text">云端模式</span></div>
   </aside>
 
   <main class="main">
@@ -1434,45 +1434,32 @@ function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-b
 
 // ==================== FEISHU NOTIFICATION ====================
 /**
- * 审批提交后发送飞书通知
+ * 审批提交/流转后发送飞书通知给当前待审批人
  * @param {Object} record - 售后记录
  */
 async function sendApprovalNotification(record) {
   if (!record || !record.id) return;
 
-  // 收集需要通知的审批人
+  const level = record.current_approval_level;
+  if (level <= 0) return; // 无需通知
+
   const users = await getUsers();
-  const approvers = [];
-
-  // 根据审批级别确定通知对象
-  if (record.status === '待一级审批' && record.approver_level1_id) {
-    const approver = users.find(u => u.id === record.approver_level1_id);
-    if (approver) approvers.push(approver);
-  }
-
-  // 如果是在移动审批，也要通知（根据 current_approval_level）
-  const levelMap = {
-    1: 'approver_level1_id',
-    2: 'approver_level2_id',
-    3: 'approver_level3_id'
-  };
-  const approverKey = levelMap[record.current_approval_level];
-  if (approverKey && record[approverKey]) {
-    const approver = users.find(u => u.id === record[approverKey]);
-    if (approver && !approvers.find(a => a.id === approver.id)) {
-      approvers.push(approver);
-    }
-  }
-
-  if (approvers.length === 0) {
-    console.log('[Notify] 没有找到可通知的审批人');
+  const approverId = record['approver_level'+level+'_id'];
+  if (!approverId) {
+    console.log('[Notify] 当前审批级别无审批人，跳过通知');
     return;
   }
 
-  // 筛选已绑定飞书账号的审批人
-  const feishuApprovers = approvers.filter(a => a.feishu_open_id);
-  if (feishuApprovers.length === 0) {
-    console.log('[Notify] 审批人未绑定飞书账号，跳过通知');
+  const approver = users.find(u => u.id === approverId);
+  if (!approver) {
+    console.log('[Notify] 审批人未在用户列表中找到:', approverId);
+    return;
+  }
+
+  // 检查飞书绑定
+  if (!approver.feishu_open_id) {
+    console.warn('[Notify] 审批人 ' + approver.name + ' 未绑定飞书账号，无法发送通知');
+    showFlash('审批已提交，但审批人 ' + approver.name + ' 未绑定飞书账号，无法发送飞书通知。请联系管理员绑定。', 'warning');
     return;
   }
 
@@ -1483,10 +1470,11 @@ async function sendApprovalNotification(record) {
       body: JSON.stringify({
         recordId: record.id,
         record: record,
-        approvers: feishuApprovers.map(a => ({
-          name: a.name,
-          feishu_open_id: a.feishu_open_id
-        }))
+        approvalLevel: level,
+        approvers: [{
+          name: approver.name,
+          feishu_open_id: approver.feishu_open_id
+        }]
       })
     });
 
@@ -1495,14 +1483,15 @@ async function sendApprovalNotification(record) {
       if (result.mock) {
         console.log('[Notify Mock]', result.message);
       } else {
-        console.log('[Notify] 通知已发送:', result.message);
+        console.log('[Notify] 通知已发送给 ' + approver.name + ':', result.message);
       }
     } else {
-      console.warn('[Notify] 通知发送失败:', result.message);
+      console.warn('[Notify] 通知发送失败:', result.message || result.error);
+      showFlash('审批已提交，但飞书通知发送失败。请检查审批人飞书绑定或应用权限。', 'warning');
     }
   } catch (e) {
-    // 后端不可用时静默失败
-    console.log('[Notify] 后端不可用，跳过飞书通知:', e.message);
+    console.error('[Notify] 后端不可用，飞书通知发送失败:', e.message);
+    showFlash('审批已提交，但飞书通知服务暂时不可用。', 'warning');
   }
 }
 
@@ -2202,7 +2191,7 @@ async function renderList(){
       const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
       const psCell=psSet.length===0?'<span style="color:var(--text-muted)">-</span>'
         :psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${ps}${c>1?'('+c+')':''}</span>`;}).join(' ');
-      const canApprove=r.current_approval_level>0&&r[`approver_level${r.current_approval_level}_id`]===user.id&&(r.status==='待一级审批'||r.status==='待二级审批'||r.status==='待三级审批');
+      const canApprove=r.current_approval_level>0&&r[`approver_level${r.current_approval_level}_id`]===user.id&&['待一级审批','待二级审批','待三级审批'].includes(r.status);
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge status-${r.status}">${r.status}</span></td>
@@ -2552,10 +2541,15 @@ async function submitForApproval(e){
     if(!it.fault_description){ showFlash(`第${i+1}行：请填写问题说明`,'warning'); return; }
   }
 
+  // 至少选择一个审批人
+  if(!a1&&!a2&&!a3){ showFlash('请至少选择一位审批人','warning'); return; }
+
+  // 找到第一个有值的审批级别
+  const firstLevel = a1 ? 1 : (a2 ? 2 : 3);
+  const levelNames = {1:'一级', 2:'二级', 3:'三级'};
+
   // Collect unique platforms from items
   const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
-  if(!a1||!a2||!a3){ showFlash('请选择三位审批人','warning'); return; }
-  if(a1===a2||a1===a3||a2===a3){ showFlash('三位审批人不能相同','warning'); return; }
 
   // Derive brand/model from first item's SKU
   const firstSku=items[0].sku_code;
@@ -2583,13 +2577,13 @@ async function submitForApproval(e){
     submitter_id:user.id,
     submitter_name:user.name,
     approver_level1_id:a1,
-    approver_level1_name:getApproverName('f-approver-level1'),
+    approver_level1_name:a1?getApproverName('f-approver-level1'):'',
     approver_level2_id:a2,
-    approver_level2_name:getApproverName('f-approver-level2'),
+    approver_level2_name:a2?getApproverName('f-approver-level2'):'',
     approver_level3_id:a3,
-    approver_level3_name:getApproverName('f-approver-level3'),
-    status:'待一级审批',
-    current_approval_level:1,
+    approver_level3_name:a3?getApproverName('f-approver-level3'):'',
+    status:'待'+levelNames[firstLevel]+'审批',
+    current_approval_level:firstLevel,
     approval_history:[],
     created_at:now,
     updated_at:now
@@ -2597,7 +2591,7 @@ async function submitForApproval(e){
   const records=await getRecords();
   records.push(record);
   await saveRecordsAsync(records);
-  showFlash('审批已提交，等待一级审批','success');
+  showFlash('审批已提交，等待'+levelNames[firstLevel]+'审批','success');
   // 发送飞书审批通知
   sendApprovalNotification(record);
   closeRecordForm();
@@ -2615,6 +2609,10 @@ async function saveAsDraft(){
   for(let i=0;i<items.length;i++){
     if(!items[i].quantity||items[i].quantity<1) items[i].quantity=1;
   }
+
+  const a1=document.getElementById('f-approver-level1').value;
+  const a2=document.getElementById('f-approver-level2').value;
+  const a3=document.getElementById('f-approver-level3').value;
 
   const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
   const firstSku=items[0].sku_code;
@@ -2635,9 +2633,9 @@ async function saveAsDraft(){
     category:product?product.category:'',
     submitter_id:user.id,
     submitter_name:user.name,
-    approver_level1_id:null, approver_level1_name:null,
-    approver_level2_id:null, approver_level2_name:null,
-    approver_level3_id:null, approver_level3_name:null,
+    approver_level1_id:a1||'', approver_level1_name:a1?getApproverName('f-approver-level1'):'',
+    approver_level2_id:a2||'', approver_level2_name:a2?getApproverName('f-approver-level2'):'',
+    approver_level3_id:a3||'', approver_level3_name:a3?getApproverName('f-approver-level3'):'',
     status:'草稿',
     current_approval_level:0,
     approval_history:[],
@@ -2653,20 +2651,30 @@ async function saveAsDraft(){
 }
 
 // ==================== APPROVAL STATE MACHINE ====================
-function getNextStatus(currentStatus, action){
-  if(currentStatus==='草稿') return action==='submit'?'待一级审批':null;
-  if(currentStatus==='待一级审批') return action==='approve'?'一级审批通过':action==='reject'?'审批拒绝':null;
-  if(currentStatus==='一级审批通过') return '待二级审批';
-  if(currentStatus==='待二级审批') return action==='approve'?'二级审批通过':action==='reject'?'审批拒绝':null;
-  if(currentStatus==='二级审批通过') return '待三级审批';
-  if(currentStatus==='待三级审批') return action==='approve'?'审批通过':action==='reject'?'审批拒绝':null;
-  return null;
+// 找到 record 中 level 之后第一个已填写的审批级别
+function findNextApprovalLevel(record, level){
+  for(let l=level+1;l<=3;l++){
+    if(record['approver_level'+l+'_id']) return l;
+  }
+  return 0;
+}
+
+// 找到 record 中第一个已填写的审批级别
+function findFirstApprovalLevel(record){
+  return findNextApprovalLevel(record, 0);
+}
+
+const LEVEL_NAMES = {1:'一级', 2:'二级', 3:'三级'};
+
+function getLevelStatusText(level){
+  return '待'+LEVEL_NAMES[level]+'审批';
 }
 
 function canApproveRecord(record){
   const user=getCurrentUser();
   if(!user||!record||record.current_approval_level<=0) return false;
-  if(!['待一级审批','待二级审批','待三级审批'].includes(record.status)) return false;
+  const pendingStatuses = ['待一级审批','待二级审批','待三级审批'];
+  if(!pendingStatuses.includes(record.status)) return false;
   const level=record.current_approval_level;
   return hasPermission('approval_level'+level)&&record['approver_level'+level+'_id']===user.id;
 }
@@ -2696,11 +2704,20 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
     timestamp:now
   });
 
-  record.status=getNextStatus(record.status, action);
-  if(action==='reject') record.current_approval_level=0;
-  else if(level===1) record.current_approval_level=2;
-  else if(level===2) record.current_approval_level=3;
-  else if(level===3) record.current_approval_level=0;
+  if(action==='reject'){
+    record.status='审批拒绝';
+    record.current_approval_level=0;
+  }else{
+    // 审批通过：找下一个已填写的审批级别
+    const nextLevel=findNextApprovalLevel(record, level);
+    if(nextLevel>0){
+      record.status=getLevelStatusText(nextLevel);
+      record.current_approval_level=nextLevel;
+    }else{
+      record.status='审批通过';
+      record.current_approval_level=0;
+    }
+  }
 
   record.updated_at=now;
   await saveRecordsAsync(records);
@@ -2896,7 +2913,7 @@ async function doApproval(action){
       await saveRecordsAsync(records);
     }
   }
-  const success=executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
+  const success=await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
   if(success){
     showFlash(action==='approve'?'审批通过':'已拒绝','success');
     closeApprovalModal();
