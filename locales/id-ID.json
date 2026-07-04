@@ -269,6 +269,8 @@
   "detail": {
     "btnBack": "Kembali ke Daftar",
     "titlePrefix": "Kasus RMA #",
+    "loading": "Memuat detail...",
+    "recordNotFound": "Kasus RMA tidak ditemukan",
     "section": {
       "basic": "Informasi Dasar",
       "items": "Item RMA",
@@ -519,15 +521,36 @@
     "title": "Impor Kasus RMA Massal",
     "guide": {
       "title": "Panduan Impor",
-      "csvFormat": "Mendukung file CSV (encoding UTF-8)",
-      "requiredCols": "Kolom wajib: Tanggal RMA, Platform, SKU, Qty",
-      "optionalCols": "Kolom opsional: No. Pesanan, Alasan Retur, Deskripsi Masalah / Catatan",
+      "csvFormat": "Mendukung file Excel / CSV (encoding UTF-8)",
+      "requiredCols": "Kolom wajib: Tanggal RMA, Platform, SKU, Qty, Alasan Retur",
+      "optionalCols": "Kolom opsional: No. Pesanan, Deskripsi Masalah / Catatan",
       "draftNote": "Data yang diimpor akan disimpan sebagai draft. Silakan edit dan ajukan approval dari daftar."
     },
     "btnDownloadTemplate": "Unduh Template Impor",
-    "dropHint": "Klik untuk memilih file atau tarik file CSV ke sini",
-    "fileFormat": "Mendukung file .csv",
-    "btnClose": "Tutup"
+    "dropHint": "Klik untuk memilih file atau tarik file Excel / CSV ke sini",
+    "fileFormat": "Mendukung file .xlsx / .csv",
+    "btnClose": "Tutup",
+    "btnConfirmImport": "Impor Baris Valid",
+    "previewTitle": "Pratinjau Impor",
+    "previewSummary": "Membaca {total} baris: {success} valid, {failed} gagal",
+    "moreErrors": "{count} baris gagal lainnya tidak ditampilkan",
+    "noValidRows": "Tidak ada baris valid untuk diimpor",
+    "importedDrafts": "Berhasil mengimpor {count} catatan draft. Silakan edit dan ajukan approval dari daftar.",
+    "col": {
+      "row": "Baris",
+      "reason": "Alasan Gagal"
+    },
+    "error": {
+      "fileType": "Silakan pilih file Excel atau CSV",
+      "emptyFile": "File kosong atau format tidak valid",
+      "missingRequiredCols": "Kolom wajib kurang: Tanggal RMA, Platform, SKU, Qty, Alasan Retur. Header saat ini: {headers}",
+      "dateRequired": "Tanggal RMA wajib diisi",
+      "platformRequired": "Platform wajib diisi",
+      "skuRequired": "SKU wajib diisi",
+      "qtyInvalid": "Qty harus lebih besar dari 0",
+      "returnReasonRequired": "Alasan retur wajib diisi",
+      "returnReasonInvalid": "Alasan retur tidak valid. Gunakan nilai pilihan di template."
+    }
   },
   "users": {
     "title": "Pengguna",

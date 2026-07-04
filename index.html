@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.8"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.9"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -428,7 +428,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.8 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.9 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -942,7 +942,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <div style="font-weight:500;margin-bottom:4px" data-i18n="importRecord.dropHint"></div>
         <div style="font-size:12px;color:var(--text-muted)" data-i18n="importRecord.fileFormat"></div>
       </div>
-      <input type="file" id="import-file-input" class="file-input-hidden" accept=".csv" onchange="handleImportFile(event)">
+      <input type="file" id="import-file-input" class="file-input-hidden" accept=".csv,.xlsx" onchange="handleImportFile(event)">
       <div id="import-result" style="margin-top:16px"></div>
       <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
         <button class="btn btn-secondary" onclick="closeImportDialog()" data-i18n="importRecord.btnClose"></button>
@@ -1051,7 +1051,11 @@ async function saveRecordsAsync(r){ _recordsCache = null;
     return;
   }
   localStorage.setItem('aftersales_records',JSON.stringify(r)); }
-async function nextId(){ const r=await getRecords(); return r.length>0?Math.max(...r.map(x=>x.id))+1:1; }
+async function nextId(){
+  const r=await getRecords();
+  const numericIds=r.map(x=>Number(x.id)).filter(Number.isFinite);
+  return numericIds.length>0?Math.max(...numericIds)+1:1;
+}
 async function getSalesData(){ return asArray(await getSalesAsync()); }
 async function saveSalesData(d){ _salesCache = null;
   if (await checkDbAvailable()) {
@@ -1800,20 +1804,15 @@ function handleHashRoute() {
   }
 
   if (page === 'detail' && params.id) {
-    const recordId = parseInt(params.id);
-    if (recordId > 0) {
-      showPage('detail', recordId);
-    } else {
-      showPage(page);
-    }
+    showPage('detail', params.id);
   } else {
     showPage(page);
   }
 
   // 如果是审批页面且有 record 参数，跳转到售后详情完成审批
   if (page === 'approval' && params.record) {
-    const recordId = parseInt(params.record);
-    if (recordId > 0) {
+    const recordId = params.record;
+    if (recordId) {
       setTimeout(() => {
         showPage('detail', recordId);
       }, 300);
@@ -2520,7 +2519,7 @@ async function renderList(){
           <td>${it.quantity||0}</td>
           <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
           <td>${esc(r.submitter_name||'-')}</td>
-          <td class="cell-actions"><button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button></td>
+          <td class="cell-actions"><button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button></td>
         </tr>`;
       });
     });
@@ -2557,8 +2556,8 @@ async function renderList(){
         <td>${esc(r.submitter_name||'-')}</td>
         <td class="cell-date">${formatDateTime(r.updated_at)}</td>
         <td class="cell-actions">
-          <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail',${r.id})">&#x1F441;</button>
-          ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord(${r.id})">&#x1F5D1;</button>`:''}
+          <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button>
+          ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord('${escAttr(String(r.id))}')">&#x1F5D1;</button>`:''}
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -2658,8 +2657,14 @@ async function deleteRecord(id){
 
 // ==================== DETAIL PAGE ====================
 async function renderDetail(id){
+  const detailContent=document.getElementById('detail-content');
+  detailContent.innerHTML=`<div class="detail-section" style="color:var(--text-muted)">${t('detail.loading')}</div>`;
+  try{
   const records=await getRecords(),r=records.find(x=>String(x.id)===String(id));
-  if(!r){ showPage('list'); return; }
+  if(!r){
+    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage('list')">${t('detail.btnBack')}</button></div>`;
+    return;
+  }
   const products=await getProducts();
   const productBySku=new Map(products.map(p=>[String(p.sku_code||'').toLowerCase(),p]));
   const pendingErpQty=(r.items||[]).reduce((sum,it)=>sum+(it.process_status==='待ERP入库'?(Number(it.quantity)||0):0),0);
@@ -2774,6 +2779,10 @@ async function renderDetail(id){
   `;
   applyDateInputLocale();
   renderPendingAttachments();
+  }catch(err){
+    console.error('[detail] render failed', err);
+    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage('list')">${t('detail.btnBack')}</button></div>`;
+  }
 }
 
 // ==================== RECORD FORM MODAL ====================
@@ -2804,6 +2813,10 @@ const RETURN_REASON_KEY_MAP = {
 };
 function tReturnReason(zh){ return t(RETURN_REASON_KEY_MAP[zh] || zh); }
 const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废'};
+const RETURN_REASON_LOCALE_FALLBACKS={
+  'en-US':{'可二次销售':'Resellable','彩盒损坏':'Damaged Color Box','配件缺失':'Missing Parts','硬件故障':'Hardware Issue','报废':'Scrap'},
+  'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap'}
+};
 
 function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
   const tbody=document.getElementById('detail-items-tbody');
@@ -3180,7 +3193,7 @@ async function renderApproval(){
       const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
       const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       const currentApprover=getCurrentApproverText(r);
-      html+=`<tr class="row-clickable" onclick="showPage('detail',${r.id})">
+      html+=`<tr class="row-clickable" onclick="showPage('detail','${escAttr(String(r.id))}')">
         <td class="cell-id">${r.id}</td>
         <td class="cell-date">${formatDateTime(r.created_at)}</td>
         <td>${esc(r.submitter_name||'-')}</td>
@@ -3192,7 +3205,7 @@ async function renderApproval(){
         <td><strong>${totalQty}</strong></td>
         <td>${esc(currentApprover)}</td>
         <td class="cell-actions">
-          <button class="action-btn" title="${t('list.action.view')}" onclick="event.stopPropagation();showPage('detail',${r.id})">&#x1F441;</button>
+          <button class="action-btn" title="${t('list.action.view')}" onclick="event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button>
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -3548,7 +3561,12 @@ function previewHistoryImage(el){
 function closeImagePreview(){ document.getElementById('image-preview-overlay').classList.add('hidden'); }
 
 // ==================== BATCH IMPORT ====================
+let pendingRecordImports=[];
+let pendingRecordImportErrors=[];
+
 function openImportDialog(){
+  pendingRecordImports=[];
+  pendingRecordImportErrors=[];
   document.getElementById('import-modal').classList.remove('hidden');
   document.getElementById('import-result').innerHTML='';
   document.getElementById('import-file-input').value='';
@@ -3556,8 +3574,34 @@ function openImportDialog(){
 function closeImportDialog(){ document.getElementById('import-modal').classList.add('hidden'); }
 
 function downloadImportTemplate(){
-  const headers=['售后日期','平台','SKU','订单号','数量','退货原因','问题说明/备注'];
+  const headers=['售后日期','平台','SKU','订单号','数量','退货原因（必填）','问题说明/备注'];
   const example=['2026-01-15','Shopee','SKU-APPLE-001','SH20260115001','2','可二次销售','屏幕裂纹'];
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.aoa_to_sheet([headers, example]);
+    ws['!cols']=[{wch:14},{wch:14},{wch:18},{wch:20},{wch:10},{wch:18},{wch:28}];
+    ws['!dataValidation']=[{
+      sqref:'F2:F500',
+      type:'list',
+      allowBlank:false,
+      formula1:`"${RETURN_REASONS.join(',')}"`
+    }];
+    const instructionRows=[
+      ['填写说明 / Instructions',''],
+      ['退货原因（必填）','请从下方可选值中选择；也支持填写中文/English/Bahasa Indonesia 显示名称。'],
+      ['Return Reason (Required)','Choose one of the allowed values below. Display names are accepted and mapped automatically.'],
+      ['Alasan Retur (Wajib)','Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.'],
+      [],
+      ['系统内部值','中文','English','Bahasa Indonesia'],
+      ...RETURN_REASONS.map(reason=>[reason, reason, getReturnReasonLabelForLocale(reason,'en-US'), getReturnReasonLabelForLocale(reason,'id-ID')])
+    ];
+    const instructionWs=XLSX.utils.aoa_to_sheet(instructionRows);
+    instructionWs['!cols']=[{wch:18},{wch:18},{wch:24},{wch:28}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'售后记录导入模板');
+    XLSX.utils.book_append_sheet(wb,instructionWs,'填写说明 Instructions');
+    XLSX.writeFile(wb,'售后记录导入模板.xlsx');
+    return;
+  }
   const bom='\uFEFF';
   const csvLine=arr=>arr.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',');
   const csv=bom+headers.join(',')+'\n'+csvLine(example);
@@ -3582,52 +3626,76 @@ function handleImportDrop(event){
 }
 
 function processImportFile(file){
-  if(!file.name.endsWith('.csv')){
-    showImportResult('error','请选择 CSV 格式的文件');
+  const lowerName=file.name.toLowerCase();
+  const isCsv=lowerName.endsWith('.csv');
+  const isXlsx=lowerName.endsWith('.xlsx');
+  if(!isCsv&&!isXlsx){
+    showImportResult('error',t('importRecord.error.fileType'));
     return;
   }
   const reader=new FileReader();
   reader.onload=async function(e){
-    const text=e.target.result;
-    const lines=parseCSV(text);
-    if(lines.length<2){ showImportResult('error','文件为空或格式不正确'); return; }
+    let lines=[];
+    if(isXlsx){
+      if(typeof XLSX==='undefined'){ showImportResult('error',t('flash.excel.libraryLoadFailed')); return; }
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const firstSheet=wb.Sheets[wb.SheetNames[0]];
+      lines=XLSX.utils.sheet_to_json(firstSheet,{header:1,defval:''});
+    }else{
+      lines=parseCSV(e.target.result);
+    }
+    if(lines.length<2){ showImportResult('error',t('importRecord.error.emptyFile')); return; }
     const header=lines[0].map(h=>h.trim());
     const colMap={};
     header.forEach((h,i)=>{
       const k=h.replace(/\s/g,'').toLowerCase();
-      if(k.includes('售后日期')||k.includes('日期')) colMap.date=i;
-      else if(k.includes('平台')) colMap.platform=i;
+      if(k.includes('售后日期')||k.includes('日期')||k.includes('rmadate')||k.includes('tanggalrma')) colMap.date=i;
+      else if(k.includes('平台')||k.includes('platform')) colMap.platform=i;
       else if(k.includes('订单号')) colMap.order=i;
       else if(k.includes('sku')) colMap.sku=i;
-      else if(k.includes('数量')) colMap.qty=i;
-      else if(k.includes('退货原因')||k.includes('退货类型')||k.includes('售后类型')||k.includes('类型')) colMap.type=i;
+      else if(k.includes('数量')||k.includes('qty')||k.includes('quantity')) colMap.qty=i;
+      else if(k.includes('退货原因')||k.includes('退货类型')||k.includes('售后类型')||k.includes('类型')||k.includes('returnreason')||k.includes('alasanretur')) colMap.type=i;
       else if(k.includes('故障')||k.includes('说明')||k.includes('备注')||k.includes('问题')) colMap.fault=i;
     });
-    if(colMap.date===undefined||colMap.platform===undefined||colMap.sku===undefined||colMap.qty===undefined){
-      showImportResult('error','缺少必填列：售后日期、平台、SKU、数量。当前表头：'+header.join(' | '));
+    if(colMap.date===undefined||colMap.platform===undefined||colMap.sku===undefined||colMap.qty===undefined||colMap.type===undefined){
+      showImportResult('error',t('importRecord.error.missingRequiredCols',{headers:esc(header.join(' | '))}));
       return;
     }
-    let imported=0,skipped=0;
-    const records=await getRecords();
+    pendingRecordImports=[];
+    pendingRecordImportErrors=[];
     const products=await getProducts();
+    let importNextId=await nextId();
+    let blankRows=0;
     for(let i=1;i<lines.length;i++){
       const row=lines[i];
-      if(row.length===0||row.every(c=>!c.trim())){ skipped++; continue; }
+      if(row.length===0||row.every(c=>!String(c||'').trim())){ blankRows++; continue; }
       const aftersales_date=getVal(row,colMap.date);
       const platform=getVal(row,colMap.platform);
       const order_no=getVal(row,colMap.order);
       const sku=getVal(row,colMap.sku);
-      const quantity=parseInt(getVal(row,colMap.qty))||1;
-      const return_reason=getVal(row,colMap.type)||'可二次销售';
+      const qtyRaw=getVal(row,colMap.qty);
+      const quantity=parseInt(qtyRaw,10);
+      const returnReasonRaw=getVal(row,colMap.type);
+      const return_reason=normalizeReturnReason(returnReasonRaw);
       const fault_desc=getVal(row,colMap.fault);
-      if(!aftersales_date||!platform||!sku){skipped++; continue;}
+      const rowErrors=[];
+      if(!aftersales_date) rowErrors.push(t('importRecord.error.dateRequired'));
+      if(!platform) rowErrors.push(t('importRecord.error.platformRequired'));
+      if(!sku) rowErrors.push(t('importRecord.error.skuRequired'));
+      if(!Number.isFinite(quantity)||quantity<=0) rowErrors.push(t('importRecord.error.qtyInvalid'));
+      if(!returnReasonRaw) rowErrors.push(t('importRecord.error.returnReasonRequired'));
+      else if(!return_reason) rowErrors.push(t('importRecord.error.returnReasonInvalid'));
+      if(rowErrors.length>0){
+        pendingRecordImportErrors.push({row:i+1, reason:rowErrors.join('；')});
+        continue;
+      }
       // Lookup product info
       const prod=products.find(p=>p.sku_code===sku);
       const now=new Date().toISOString();
-      records.push({
-        id:await nextId(),
+      pendingRecordImports.push({
+        id:importNextId++,
         aftersales_date, platforms:[platform],
-        items:[{platform, sku_code:sku, order_no, quantity, return_reason, fault_description:fault_desc}],
+        items:[{platform, sku_code:sku, order_no, quantity, return_reason, fault_description:fault_desc, process_status:REASON_TO_PROCESS[return_reason]||'待ERP入库', process_status_date:now}],
         total_quantity:quantity,
         brand:prod?prod.brand:'',
         model:prod?prod.model:'',
@@ -3642,14 +3710,90 @@ function processImportFile(file){
         approval_history:[],
         created_at:now, updated_at:now
       });
-      imported++;
     }
-    await saveRecordsAsync(records);
-    showImportResult('success','共读取 '+(lines.length-1)+' 行，成功导入 <b>'+imported+'</b> 条草稿记录'+(skipped>0?'，跳过 '+skipped+' 行':''));
+    showImportPreview(lines.length-1-blankRows);
 
-    function getVal(row,idx){ return idx!==undefined&&row[idx]?row[idx].trim():''; }
+    function getVal(row,idx){ return idx!==undefined&&row[idx]!==undefined?String(row[idx]).trim():''; }
   };
-  reader.readAsText(file,'UTF-8');
+  if(isXlsx) reader.readAsArrayBuffer(file);
+  else reader.readAsText(file,'UTF-8');
+}
+
+function getReturnReasonLabelForLocale(reason, locale){
+  const key=RETURN_REASON_KEY_MAP[reason];
+  const fallback=RETURN_REASON_LOCALE_FALLBACKS[locale]?.[reason]||reason;
+  if(!key||!window.__i18n||!window.__i18n.bundle) return fallback;
+  const bundle=window.__i18n.bundle(locale)||{};
+  return key.split('.').reduce((obj,part)=>obj&&obj[part],bundle)||fallback;
+}
+
+function normalizeReasonToken(value){
+  return String(value||'').trim().toLowerCase().replace(/\s+/g,' ').replace(/[()（）_\-]/g,'');
+}
+
+function getReturnReasonAliasMap(){
+  const aliases=new Map();
+  const add=(label,reason)=>{
+    const token=normalizeReasonToken(label);
+    if(token) aliases.set(token,reason);
+  };
+  RETURN_REASONS.forEach(reason=>{
+    add(reason,reason);
+    add(getReturnReasonLabelForLocale(reason,'zh-CN'),reason);
+    add(getReturnReasonLabelForLocale(reason,'en-US'),reason);
+    add(getReturnReasonLabelForLocale(reason,'id-ID'),reason);
+  });
+  [
+    ['可二次销售',['可二次销售','二次销售','resaleable','resalable','resale','secondary sale','can be resold','dapat dijual kembali','bisa dijual kembali']],
+    ['彩盒损坏',['彩盒损坏','包装损坏','color box damage','colour box damage','damaged color box','damaged box','box damage','kemasan rusak','kotak rusak','kotak warna rusak']],
+    ['配件缺失',['配件缺失','缺配件','missing parts','missing accessories','accessory missing','aksesori hilang','komponen hilang']],
+    ['硬件故障',['硬件故障','硬件问题','hardware fault','hardware failure','hardware issue','kerusakan hardware','masalah hardware']],
+    ['报废',['报废','scrap','scrapped','discard','write off','write-off','afkir','rusak total']]
+  ].forEach(([reason,labels])=>labels.forEach(label=>add(label,reason)));
+  return aliases;
+}
+
+function normalizeReturnReason(value){
+  return getReturnReasonAliasMap().get(normalizeReasonToken(value))||'';
+}
+
+function showImportPreview(totalRows){
+  const successCount=pendingRecordImports.length;
+  const failedCount=pendingRecordImportErrors.length;
+  const errorRows=pendingRecordImportErrors.slice(0,50).map(e=>`
+    <tr><td>${e.row}</td><td>${esc(e.reason)}</td></tr>
+  `).join('');
+  const moreErrors=failedCount>50?`<div style="margin-top:8px;color:var(--text-muted);font-size:12px">${t('importRecord.moreErrors',{count:failedCount-50})}</div>`:'';
+  const confirmBtn=successCount>0?`<button class="btn btn-primary" onclick="confirmRecordImport()">${t('importRecord.btnConfirmImport')}</button>`:'';
+  const noValid=successCount===0?`<div style="margin-top:10px;color:var(--danger)">${t('importRecord.noValidRows')}</div>`:'';
+  showImportResult(failedCount>0?'warning':'success',`
+    <div style="font-weight:600;margin-bottom:8px">${t('importRecord.previewTitle')}</div>
+    <div>${t('importRecord.previewSummary',{total:totalRows,success:successCount,failed:failedCount})}</div>
+    ${noValid}
+    ${failedCount>0?`
+      <div class="table-container" style="margin-top:12px;max-height:220px;overflow:auto;background:var(--card-bg)">
+        <table class="data-table"><thead><tr><th>${t('importRecord.col.row')}</th><th>${t('importRecord.col.reason')}</th></tr></thead><tbody>${errorRows}</tbody></table>
+      </div>
+      ${moreErrors}
+    `:''}
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">${confirmBtn}</div>
+  `);
+}
+
+async function confirmRecordImport(){
+  if(pendingRecordImports.length===0){
+    showImportResult('error',t('importRecord.noValidRows'));
+    return;
+  }
+  const records=await getRecords();
+  records.push(...pendingRecordImports);
+  await saveRecordsAsync(records);
+  const imported=pendingRecordImports.length;
+  pendingRecordImports=[];
+  pendingRecordImportErrors=[];
+  document.getElementById('import-file-input').value='';
+  showImportResult('success',t('importRecord.importedDrafts',{count:imported}));
+  renderList();
 }
 
 function parseCSV(text){

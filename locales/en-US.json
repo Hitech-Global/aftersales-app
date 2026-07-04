@@ -269,6 +269,8 @@
   "detail": {
     "btnBack": "Back to List",
     "titlePrefix": "RMA Case #",
+    "loading": "Loading details...",
+    "recordNotFound": "RMA case not found",
     "section": {
       "basic": "Basic Information",
       "items": "RMA Items",
@@ -519,15 +521,36 @@
     "title": "Batch Import RMA Cases",
     "guide": {
       "title": "Import Notes",
-      "csvFormat": "Supports CSV files (UTF-8 encoded)",
-      "requiredCols": "Required columns: RMA Date, Platform, SKU, Qty",
-      "optionalCols": "Optional columns: Order No., Return Reason, Issue Description / Notes",
+      "csvFormat": "Supports Excel / CSV files (UTF-8 encoded)",
+      "requiredCols": "Required columns: RMA Date, Platform, SKU, Qty, Return Reason",
+      "optionalCols": "Optional columns: Order No., Issue Description / Notes",
       "draftNote": "Imported records will be saved as drafts. Please edit and submit them for approval from the list."
     },
     "btnDownloadTemplate": "Download Import Template",
-    "dropHint": "Click to choose a file or drag a CSV file here",
-    "fileFormat": "Supports .csv files",
-    "btnClose": "Close"
+    "dropHint": "Click to choose a file or drag an Excel / CSV file here",
+    "fileFormat": "Supports .xlsx / .csv files",
+    "btnClose": "Close",
+    "btnConfirmImport": "Import Valid Rows",
+    "previewTitle": "Import Preview",
+    "previewSummary": "Read {total} rows: {success} valid, {failed} failed",
+    "moreErrors": "{count} more failed rows are hidden",
+    "noValidRows": "No valid rows to import",
+    "importedDrafts": "Imported {count} draft records. Please edit and submit them for approval from the list.",
+    "col": {
+      "row": "Row",
+      "reason": "Failure Reason"
+    },
+    "error": {
+      "fileType": "Please select an Excel or CSV file",
+      "emptyFile": "The file is empty or invalid",
+      "missingRequiredCols": "Missing required columns: RMA Date, Platform, SKU, Qty, Return Reason. Current headers: {headers}",
+      "dateRequired": "RMA date is required",
+      "platformRequired": "Platform is required",
+      "skuRequired": "SKU is required",
+      "qtyInvalid": "Qty must be greater than 0",
+      "returnReasonRequired": "Return reason is required",
+      "returnReasonInvalid": "Invalid return reason. Please use one of the values in the template."
+    }
   },
   "users": {
     "title": "Users",

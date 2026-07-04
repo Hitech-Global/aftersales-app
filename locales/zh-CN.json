@@ -269,6 +269,8 @@
   "detail": {
     "btnBack": "返回列表",
     "titlePrefix": "售后记录 #",
+    "loading": "正在加载详情...",
+    "recordNotFound": "未找到该售后记录",
     "section": {
       "basic": "基本信息",
       "items": "售后明细",
@@ -519,15 +521,36 @@
     "title": "批量导入售后记录",
     "guide": {
       "title": "导入说明",
-      "csvFormat": "支持 CSV 文件（UTF-8 编码）",
-      "requiredCols": "必填列：售后日期, 平台, SKU, 数量",
-      "optionalCols": "可选列：订单号, 退货原因, 问题说明/备注",
+      "csvFormat": "支持 Excel / CSV 文件（UTF-8 编码）",
+      "requiredCols": "必填列：售后日期, 平台, SKU, 数量, 退货原因",
+      "optionalCols": "可选列：订单号, 问题说明/备注",
       "draftNote": "导入的记录将自动保存为草稿状态，请到列表中编辑并提交审批"
     },
     "btnDownloadTemplate": "下载导入模板",
-    "dropHint": "点击选择文件或拖拽 CSV 文件到此处",
-    "fileFormat": "支持 .csv 格式",
-    "btnClose": "关闭"
+    "dropHint": "点击选择文件或拖拽 Excel / CSV 文件到此处",
+    "fileFormat": "支持 .xlsx / .csv 格式",
+    "btnClose": "关闭",
+    "btnConfirmImport": "确认导入合法数据",
+    "previewTitle": "导入预览",
+    "previewSummary": "共读取 {total} 行，成功 {success} 行，失败 {failed} 行",
+    "moreErrors": "还有 {count} 条失败明细未显示",
+    "noValidRows": "没有可导入的合法数据",
+    "importedDrafts": "成功导入 {count} 条草稿记录，请到列表中编辑并提交审批",
+    "col": {
+      "row": "行号",
+      "reason": "失败原因"
+    },
+    "error": {
+      "fileType": "请选择 Excel 或 CSV 格式的文件",
+      "emptyFile": "文件为空或格式不正确",
+      "missingRequiredCols": "缺少必填列：售后日期、平台、SKU、数量、退货原因。当前表头：{headers}",
+      "dateRequired": "售后日期不能为空",
+      "platformRequired": "平台不能为空",
+      "skuRequired": "SKU不能为空",
+      "qtyInvalid": "数量必须大于0",
+      "returnReasonRequired": "退货原因不能为空",
+      "returnReasonInvalid": "退货原因无效，请使用模板中的可选值"
+    }
   },
   "users": {
     "title": "用户管理",
