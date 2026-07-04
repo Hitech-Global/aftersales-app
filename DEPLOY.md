@@ -121,13 +121,13 @@ curl https://aftersales-app.onrender.com/api/auth/feishu/status
 # 应返回: {"feishuEnabled":true,...}
 
 curl https://aftersales-app.onrender.com/api/version
-# 应返回: {"version":"3.5.7-render-latest","entry":"server.js","frontend":"index.html",...}
+# 应返回: {"version":"3.5.8-render-latest","entry":"server.js","frontend":"index.html",...}
 
 # 打开浏览器访问
 open https://aftersales-app.onrender.com
 ```
 
-页面左下角应显示 `v3.5.7 Render Latest`。如果仍显示旧版本，说明 Render 没有部署当前仓库最新代码，请在 Render Dashboard 手动点 **Manual Deploy → Clear build cache & deploy**。
+页面左下角应显示 `v3.5.8 Render Latest`。如果仍显示旧版本，说明 Render 没有部署当前仓库最新代码，请在 Render Dashboard 手动点 **Manual Deploy → Clear build cache & deploy**。
 
 ---
 

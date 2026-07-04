@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.7"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.8"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -387,7 +387,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <p data-i18n="login.subtitle"></p>
 
       <!-- 加载中 -->
-      <div class="login-loading" id="login-loading">
+      <div class="login-loading" id="login-loading" style="display:flex">
         <span class="spinner"></span> <span data-i18n="login.verifying"></span>
       </div>
 
@@ -395,7 +395,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <div class="login-error" id="login-error"></div>
 
       <!-- 飞书登录面板 -->
-      <div id="login-panel-feishu" style="display:block">
+      <div id="login-panel-feishu" style="display:none">
         <div id="login-feishu-status" style="margin-bottom:16px;">
           <!-- 动态填充：飞书配置状态 -->
         </div>
@@ -412,7 +412,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       </div>
 
       <!-- 本地登录 -->
-      <div id="login-panel-admin" style="display:block; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border)">
+      <div id="login-panel-admin" style="display:none; margin-top:20px; padding-top:16px; border-top:1px dashed var(--border)">
         <input type="text" id="login-username" data-i18n-placeholder="login.usernamePlaceholder" autofocus>
         <input type="password" id="login-password" data-i18n-placeholder="login.passwordPlaceholder" onkeydown="if(event.key==='Enter')adminLogin()">
         <button onclick="adminLogin()" style="width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit" data-i18n="login.btnLocal"></button>
@@ -428,7 +428,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.7 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.8 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1844,12 +1844,25 @@ let feishuConfig = {
   configured: false
 };
 
+function setLoginPanelsVisible(show) {
+  const feishuPanel = document.getElementById('login-panel-feishu');
+  if (feishuPanel) feishuPanel.style.display = show ? 'block' : 'none';
+  if (!show) setLocalLoginVisible(false);
+}
+
+function setLoginBootState(loading) {
+  showLoginLoading(loading);
+  setLoginPanelsVisible(!loading);
+}
+
 // 页面初始化时检测飞书配置状态
-async function checkFeishuStatus() {
+async function checkFeishuStatus(options = {}) {
+  const reveal = options.reveal !== false;
   const statusEl = document.getElementById('login-feishu-status');
   const btnLogin = document.getElementById('btn-feishu-login');
   const hint = document.getElementById('login-feishu-hint');
   const ready = document.getElementById('login-feishu-ready');
+  if (reveal) setLoginBootState(true);
   
   try {
     const resp = await fetch('/api/auth/feishu/status');
@@ -1869,6 +1882,12 @@ async function checkFeishuStatus() {
         if (btnLogin) btnLogin.style.display = 'none';
         setLocalLoginVisible(true);
       }
+    } else {
+      if (statusEl) statusEl.innerHTML = '';
+      if (hint) hint.style.display = 'block';
+      if (ready) ready.style.display = 'none';
+      if (btnLogin) btnLogin.style.display = 'none';
+      setLocalLoginVisible(true);
     }
   } catch (e) {
     // 后端不可用，使用 Mock 模式
@@ -1881,6 +1900,10 @@ async function checkFeishuStatus() {
   
   // 更新侧边栏状态
   updateFeishuStatusBadge();
+  if (reveal) {
+    setLoginPanelsVisible(true);
+    showLoginLoading(false);
+  }
 }
 
 function updateFeishuStatusBadge() {
@@ -1935,6 +1958,9 @@ async function initiateFeishuLogin() {
 
 // 处理飞书 OAuth 回调
 async function handleFeishuCallback(encodedUserData) {
+  setLoginBootState(true);
+  const errEl = document.getElementById('login-error');
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
   try {
     // 修复：atob 返回二进制串（Latin-1），需用 TextDecoder 转 UTF-8
     const binary = atob(encodedUserData);
@@ -2007,6 +2033,7 @@ async function handleFeishuCallback(encodedUserData) {
   } catch (e) {
     console.error('[Feishu] 回调处理失败:', e);
     showLoginError('登录处理失败，请重试');
+    await checkFeishuStatus();
   }
 }
 
@@ -2020,6 +2047,7 @@ function logout() {
   
   document.getElementById('app-shell').classList.add('hidden');
   document.getElementById('page-login').classList.remove('hidden');
+  setLoginBootState(true);
   
   // 清空登录错误
   const errEl = document.getElementById('login-error');
@@ -4719,7 +4747,7 @@ function resolveColumns(headers){
   // 处理飞书登录回调
   const feishuUserData = urlParams.get('feishu_user');
   if (feishuUserData && !getCurrentUser()) {
-    handleFeishuCallback(feishuUserData);
+    await handleFeishuCallback(feishuUserData);
     // 清理 URL 参数（不影响页面状态）
     if (window.history && window.history.replaceState) {
       const cleanUrl = window.location.pathname + window.location.hash;
@@ -4743,7 +4771,11 @@ function resolveColumns(headers){
 
   // 登录页初始化
   // 检测飞书配置状态
-  checkFeishuStatus();
+  if (getCurrentUser()) {
+    checkFeishuStatus({reveal:false});
+  } else {
+    await checkFeishuStatus();
+  }
 
   // 点击页面其他区域关闭飞书通讯录搜索下拉
   document.addEventListener('click', function(e) {

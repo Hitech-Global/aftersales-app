@@ -33,7 +33,7 @@ Render 重新部署后，打开 `/api/version`，应看到：
 
 ```json
 {
-  "version": "3.5.7-render-latest",
+  "version": "3.5.8-render-latest",
   "entry": "server.js",
   "frontend": "index.html"
 }
