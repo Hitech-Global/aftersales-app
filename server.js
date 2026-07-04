@@ -25,7 +25,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.5.6-render-latest';
+const APP_VERSION = '3.5.7-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';

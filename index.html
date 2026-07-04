@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.6"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.7"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -103,7 +103,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .date-input{width:100%;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;background:var(--card-bg);cursor:pointer}
 .date-picker-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-radius:6px;font-size:15px;line-height:1}
 .date-picker-btn:hover{background:var(--primary-light);color:var(--primary)}
-.native-date-input{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
+.custom-date-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:450;width:258px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.18);padding:10px;display:none}
+.custom-date-panel.open{display:block}
+.custom-date-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.custom-date-title{font-size:13px;font-weight:600;color:var(--text)}
+.custom-date-nav{display:flex;gap:4px}
+.custom-date-nav button{width:26px;height:26px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;color:var(--text-secondary);font-size:14px}
+.custom-date-nav button:hover{background:var(--primary-light);color:var(--primary)}
+.custom-date-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.custom-date-weekday{height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);font-weight:600}
+.custom-date-day{height:30px;border:none;background:transparent;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text)}
+.custom-date-day:hover{background:var(--primary-light);color:var(--primary)}
+.custom-date-day.muted{color:var(--text-muted);opacity:.55}
+.custom-date-day.today{border:1px solid var(--primary)}
+.custom-date-day.selected{background:var(--primary);color:#fff;font-weight:600}
+.custom-date-footer{display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+.custom-date-footer button{border:none;background:transparent;color:var(--primary);font-size:12px;cursor:pointer;padding:4px 6px;border-radius:4px}
+.custom-date-footer button:hover{background:var(--primary-light)}
 .filter-actions{display:flex;gap:8px}
 
 .table-container{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto}
@@ -412,7 +428,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.6 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.7 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1523,8 +1539,6 @@ function normalizeDateInput(input){
   const storage=dateToStorage(input.dataset.value || input.value);
   input.dataset.value=storage;
   input.value=storage?formatDateInputDisplay(storage):'';
-  const picker=input.parentElement&&input.parentElement.querySelector('.native-date-input');
-  if(picker) picker.value=storage;
   return storage;
 }
 function getDateInputValue(id){
@@ -1538,8 +1552,115 @@ function setDateInputValue(id,value){
   const storage=value?dateToStorage(value):'';
   input.dataset.value=storage;
   input.value=storage?formatDateInputDisplay(storage):'';
-  const picker=input.parentElement&&input.parentElement.querySelector('.native-date-input');
-  if(picker) picker.value=storage;
+  const panel=input.parentElement&&input.parentElement.querySelector('.custom-date-panel');
+  if(panel) renderCustomDatePanel(input);
+}
+let activeDateInput=null;
+function getDateLocale(){
+  return window.__i18n&&window.__i18n.getLocale?window.__i18n.getLocale():'zh-CN';
+}
+function getDatePanelLabels(){
+  const locale=getDateLocale();
+  const labels={
+    'zh-CN':{clear:'清除',today:'今天',prev:'上个月',next:'下个月'},
+    'en-US':{clear:'Clear',today:'Today',prev:'Previous month',next:'Next month'},
+    'id-ID':{clear:'Hapus',today:'Hari ini',prev:'Bulan sebelumnya',next:'Bulan berikutnya'}
+  };
+  return labels[locale]||labels['zh-CN'];
+}
+function getDateWeekdays(){
+  const locale=getDateLocale();
+  const base=new Date(2026,0,4); // Sunday
+  return Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(locale,{weekday:'short'}).format(new Date(base.getFullYear(),base.getMonth(),base.getDate()+i)));
+}
+function sameStorageDate(a,b){ return dateToStorage(a)===dateToStorage(b); }
+function addMonths(date,delta){ return new Date(date.getFullYear(),date.getMonth()+delta,1); }
+function renderCustomDatePanel(input){
+  const wrapper=input.parentElement;
+  const panel=wrapper&&wrapper.querySelector('.custom-date-panel');
+  if(!panel) return;
+  const locale=getDateLocale();
+  const labels=getDatePanelLabels();
+  const selected=input.dataset.value||dateToStorage(input.value);
+  let view=panel.dataset.view?parseDateValue(panel.dataset.view):null;
+  if(!view){
+    view=selected?parseDateValue(selected):new Date();
+    view=new Date(view.getFullYear(),view.getMonth(),1);
+  }
+  panel.dataset.view=formatDateLocal(view);
+  const monthTitle=new Intl.DateTimeFormat(locale,{year:'numeric',month:'long'}).format(view);
+  const firstDay=new Date(view.getFullYear(),view.getMonth(),1);
+  const gridStart=new Date(firstDay);
+  gridStart.setDate(firstDay.getDate()-firstDay.getDay());
+  const today=formatDateLocal(new Date());
+  let html=`<div class="custom-date-header">
+    <div class="custom-date-title">${esc(monthTitle)}</div>
+    <div class="custom-date-nav">
+      <button type="button" data-date-nav="-1" aria-label="${escAttr(labels.prev)}">&#x2039;</button>
+      <button type="button" data-date-nav="1" aria-label="${escAttr(labels.next)}">&#x203A;</button>
+    </div>
+  </div><div class="custom-date-grid">`;
+  getDateWeekdays().forEach(w=>{ html+=`<div class="custom-date-weekday">${esc(w)}</div>`; });
+  for(let i=0;i<42;i++){
+    const d=new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+i);
+    const storage=formatDateLocal(d);
+    const classes=['custom-date-day'];
+    if(d.getMonth()!==view.getMonth()) classes.push('muted');
+    if(storage===today) classes.push('today');
+    if(selected&&storage===selected) classes.push('selected');
+    html+=`<button type="button" class="${classes.join(' ')}" data-date-value="${storage}">${d.getDate()}</button>`;
+  }
+  html+=`</div><div class="custom-date-footer">
+    <button type="button" data-date-clear="true">${esc(labels.clear)}</button>
+    <button type="button" data-date-today="true">${esc(labels.today)}</button>
+  </div>`;
+  panel.innerHTML=html;
+  panel.querySelectorAll('[data-date-nav]').forEach(btn=>{
+    btn.onclick=()=>{
+      const delta=Number(btn.dataset.dateNav);
+      const next=addMonths(parseDateValue(panel.dataset.view)||new Date(),delta);
+      panel.dataset.view=formatDateLocal(next);
+      renderCustomDatePanel(input);
+    };
+  });
+  panel.querySelectorAll('[data-date-value]').forEach(btn=>{
+    btn.onclick=()=>{
+      input.dataset.value=btn.dataset.dateValue;
+      input.value=formatDateInputDisplay(btn.dataset.dateValue);
+      closeCustomDatePanel();
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+  });
+  const clearBtn=panel.querySelector('[data-date-clear]');
+  if(clearBtn) clearBtn.onclick=()=>{
+    input.dataset.value='';
+    input.value='';
+    closeCustomDatePanel();
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  const todayBtn=panel.querySelector('[data-date-today]');
+  if(todayBtn) todayBtn.onclick=()=>{
+    const storage=formatDateLocal(new Date());
+    input.dataset.value=storage;
+    input.value=formatDateInputDisplay(storage);
+    closeCustomDatePanel();
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+}
+function openCustomDatePanel(input){
+  document.querySelectorAll('.custom-date-panel.open').forEach(p=>p.classList.remove('open'));
+  activeDateInput=input;
+  const panel=input.parentElement&&input.parentElement.querySelector('.custom-date-panel');
+  if(!panel) return;
+  const base=input.dataset.value||dateToStorage(input.value)||formatDateLocal(new Date());
+  const d=parseDateValue(base)||new Date();
+  panel.dataset.view=formatDateLocal(new Date(d.getFullYear(),d.getMonth(),1));
+  renderCustomDatePanel(input);
+  panel.classList.add('open');
+}
+function closeCustomDatePanel(){
+  document.querySelectorAll('.custom-date-panel.open').forEach(p=>p.classList.remove('open'));
+  activeDateInput=null;
 }
 function enhanceDateInput(input){
   if(!input||input.dataset.dateEnhanced==='true') return;
@@ -1548,37 +1669,29 @@ function enhanceDateInput(input){
   wrapper.className='date-picker-wrap';
   input.parentNode.insertBefore(wrapper,input);
   wrapper.appendChild(input);
-  const picker=document.createElement('input');
-  picker.type='date';
-  picker.className='native-date-input';
-  picker.tabIndex=-1;
-  picker.value=input.dataset.value||dateToStorage(input.value);
   const button=document.createElement('button');
   button.type='button';
   button.className='date-picker-btn';
   button.innerHTML='&#x1F4C5;';
-  const openPicker=()=>{
-    picker.value=input.dataset.value||dateToStorage(input.value);
-    try{
-      if(typeof picker.showPicker==='function') picker.showPicker();
-      else { picker.focus(); picker.click(); }
-    }catch(e){
-      picker.focus();
-      picker.click();
-    }
-  };
+  const panel=document.createElement('div');
+  panel.className='custom-date-panel';
+  const openPicker=()=>openCustomDatePanel(input);
   input.addEventListener('click',openPicker);
+  input.addEventListener('focus',openPicker);
   input.addEventListener('input',()=>{ input.dataset.value=''; });
   button.addEventListener('click',openPicker);
-  picker.addEventListener('change',()=>{
-    input.dataset.value=picker.value;
-    input.value=picker.value?formatDateInputDisplay(picker.value):'';
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-  });
   wrapper.appendChild(button);
-  wrapper.appendChild(picker);
+  wrapper.appendChild(panel);
   normalizeDateInput(input);
 }
+document.addEventListener('click',e=>{
+  if(!activeDateInput) return;
+  const wrapper=activeDateInput.parentElement;
+  if(wrapper&&!wrapper.contains(e.target)) closeCustomDatePanel();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeCustomDatePanel();
+});
 function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-bad'; if(rate>=2)return'rate-warn'; return'rate-good'; }
 
 // ==================== FEISHU NOTIFICATION ====================
@@ -4710,6 +4823,8 @@ function applyDateInputLocale() {
     input.value = input.dataset.value ? formatDateInputDisplay(input.dataset.value) : input.value;
     const btn=input.parentElement&&input.parentElement.querySelector('.date-picker-btn');
     if(btn) btn.setAttribute('aria-label', t('date.openPicker'));
+    const panel=input.parentElement&&input.parentElement.querySelector('.custom-date-panel');
+    if(panel&&panel.classList.contains('open')) renderCustomDatePanel(input);
   });
 }
 
