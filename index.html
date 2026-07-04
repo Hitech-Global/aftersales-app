@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.5"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.5.6"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -412,7 +412,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.5 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.5.6 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1313,15 +1313,17 @@ function makeUniqueUsername(base, users){
 }
 async function findUserByFeishuIdentity(users, userData){
   const openId = String(userData.feishu_open_id || '').trim();
+  const userId = String(userData.feishu_user_id || userData.user_id || '').trim();
   const unionId = String(userData.feishu_union_id || '').trim();
-  if (openId || unionId) {
+  if (openId || userId || unionId) {
     try {
-      const dbUser = await findUserByFeishuAsync(openId, unionId);
+      const dbUser = await findUserByFeishuAsync(openId || userId, unionId);
       if (dbUser) return dbUser;
     } catch(e) { console.warn('DB lookup failed, falling back to local:', e.message); }
   }
   return users.find(u =>
     (openId && u.feishu_open_id === openId) ||
+    (userId && (u.feishu_user_id === userId || u.user_id === userId)) ||
     (unionId && u.feishu_union_id === unionId)
   );
 }
@@ -1604,16 +1606,14 @@ async function sendApprovalNotification(record) {
   }
 
   // 检查飞书绑定
-  if (!approver.feishu_open_id) {
-    console.warn('[Notify] 审批人 ' + approver.name + ' 未绑定飞书账号，无法发送通知');
-    showFlash(t('flash.approvalSubmitFeishuNotBound', {name: approver.name}), 'warning');
-    return {success:false, error:'approver_not_bound', approverId, approverName:approver.name, level};
+  if (!approver.feishu_open_id && !approver.feishu_user_id && !approver.open_id && !approver.user_id) {
+    console.warn('[Notify] 审批人 ' + approver.name + ' 本地缓存未发现飞书绑定，将交由后端按用户表再次解析');
   }
 
   try {
     const resp = await fetch('/api/notify/approval', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         recordId: record.id,
         record: record,
@@ -1621,9 +1621,9 @@ async function sendApprovalNotification(record) {
         approvers: [{
           id: approver.id,
           name: approver.name,
-          feishu_open_id: approver.feishu_open_id,
+          feishu_open_id: approver.feishu_open_id || approver.open_id || '',
           feishu_union_id: approver.feishu_union_id || '',
-          feishu_user_id: approver.feishu_user_id || ''
+          feishu_user_id: approver.feishu_user_id || approver.user_id || ''
         }]
       })
     });
@@ -1638,13 +1638,18 @@ async function sendApprovalNotification(record) {
     } else {
       const detail = (result.results && result.results.failed && result.results.failed[0] && result.results.failed[0].reason)
                     || result.error || result.message || '';
+      const failedCode = result.results && result.results.failed && result.results.failed[0] && result.results.failed[0].code;
       console.error('[Notify] 通知发送失败:', result.message || result.error, detail, result);
-      showFlash(t('flash.feishuNotifyFailed') + (detail ? ' ' + detail : ''), 'warning');
+      if (failedCode === 'APPROVER_NOT_BOUND' || failedCode === 'USER_NOT_BOUND') {
+        showFlash(t('flash.approvalSubmitFeishuNotBound', {name: approver.name}), 'warning');
+      } else {
+        showFlash(t('flash.feishuNotifyFailed'), 'warning');
+      }
     }
     return result;
   } catch (e) {
     console.error('[Notify] 后端不可用，飞书通知发送失败:', e.message);
-    showFlash(t('flash.feishuServiceUnavailable'), 'warning');
+    showFlash(t('flash.feishuNotifyFailed'), 'warning');
     return {success:false, error:e.message};
   }
 }
@@ -1846,6 +1851,7 @@ async function handleFeishuCallback(encodedUserData) {
         role_id: await getDefaultFeishuRoleId(),
         status: 'active',
         feishu_open_id: userData.feishu_open_id,
+        feishu_user_id: userData.feishu_user_id || userData.user_id || '',
         feishu_union_id: userData.feishu_union_id,
         feishu_name: userData.feishu_name || '',
         feishu_email: userData.feishu_email || '',
@@ -1862,6 +1868,7 @@ async function handleFeishuCallback(encodedUserData) {
       // 更新已有用户的飞书信息
       let changed = false;
       if (!localUser.feishu_open_id) { localUser.feishu_open_id = userData.feishu_open_id; changed = true; }
+      if (!localUser.feishu_user_id && (userData.feishu_user_id || userData.user_id)) { localUser.feishu_user_id = userData.feishu_user_id || userData.user_id; changed = true; }
       if (!localUser.feishu_union_id) { localUser.feishu_union_id = userData.feishu_union_id; changed = true; }
       if (!localUser.feishu_name || localUser.feishu_name !== userData.feishu_name) { localUser.feishu_name = userData.feishu_name; changed = true; }
       if ((userData.feishu_email || '') !== (localUser.feishu_email || '')) { localUser.feishu_email = userData.feishu_email || ''; changed = true; }
@@ -4070,12 +4077,34 @@ async function renderUsers(){
       <td style="font-size:12px;color:${u.feishu_open_id?'var(--primary)':'var(--text-muted)'}">${feishuBound}</td>
       <td class="cell-date">${formatDate(u.created_at)}</td>
       <td class="cell-actions">
-        <button class="action-btn" title="编辑" onclick="openUserModal('${u.id}')">&#x270F;</button>
-        ${u.id!=='user_admin'?`<button class="action-btn action-delete" title="删除" onclick="deleteUser('${u.id}')">&#x1F5D1;</button>`:''}
+        <button class="action-btn" title="${t('users.action.testFeishu')}" onclick="sendFeishuTestNotification('${u.id}')">&#x1F514;</button>
+        <button class="action-btn" title="${t('users.action.edit')}" onclick="openUserModal('${u.id}')">&#x270F;</button>
+        ${u.id!=='user_admin'?`<button class="action-btn action-delete" title="${t('users.action.delete')}" onclick="deleteUser('${u.id}')">&#x1F5D1;</button>`:''}
       </td></tr>`;
   });
   html+=`</tbody></table></div>`;
   area.innerHTML=html;
+}
+
+async function sendFeishuTestNotification(userId){
+  if(!requirePermission('user_manage')) return;
+  try{
+    const resp = await fetch('/api/notify/feishu-test', {
+      method:'POST',
+      headers:getAuthHeaders(),
+      body:JSON.stringify({ userId })
+    });
+    const result = await resp.json();
+    if(result.success){
+      showFlash(t('flash.feishuTestSent'),'success');
+    }else{
+      console.error('[FeishuTest] failed:', result);
+      showFlash((result.error || result.message) ? t('flash.feishuTestFailed') + ' ' + (result.error || result.message) : t('flash.feishuTestFailed'),'warning');
+    }
+  }catch(e){
+    console.error('[FeishuTest] error:', e);
+    showFlash(t('flash.feishuTestFailed') + ' ' + e.message,'warning');
+  }
 }
 
 async function openUserModal(userId){
@@ -4329,6 +4358,7 @@ async function saveUser(e){
       users[idx].role_id=roleId; 
       users[idx].status=status; 
       users[idx].feishu_open_id=feishuOpenId;
+      users[idx].feishu_user_id = users[idx].feishu_user_id || feishuInfo.user_id || '';
       users[idx].feishu_name = users[idx].feishu_name || username;
       users[idx].feishu_email = users[idx].feishu_email || (feishuInfo.email || '');
     }
@@ -4341,6 +4371,7 @@ async function saveUser(e){
       role_id:roleId, 
       status, 
       feishu_open_id: feishuOpenId,
+      feishu_user_id: feishuInfo.user_id || '',
       feishu_name: feishuInfo.en_name || feishuInfo.name || username,
       feishu_union_id: feishuInfo.union_id || '',
       feishu_email: feishuInfo.email || '',

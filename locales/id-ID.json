@@ -423,7 +423,8 @@
     "emptyCreateFirst": "Buat Produk Pertama",
     "action": {
       "edit": "Edit",
-      "delete": "Hapus"
+      "delete": "Hapus",
+      "testFeishu": "Tes Notifikasi Lark"
     }
   },
   "productModal": {
@@ -707,7 +708,9 @@
     "noExportData": "Tidak ada data untuk diekspor dengan filter saat ini",
     "noPermissionCreate": "Anda tidak memiliki izin untuk membuat kasus",
     "feishuNotBound": "Persetujuan diajukan, tetapi approver {name} belum menghubungkan akun Feishu. Notifikasi Feishu tidak dapat dikirim. Silakan hubungi admin untuk menghubungkan.",
-    "feishuNotifyFailed": "Persetujuan diajukan, tetapi notifikasi Feishu gagal.",
+    "feishuNotifyFailed": "Persetujuan diajukan, tetapi notifikasi Lark gagal. Periksa binding Lark approver atau izin aplikasi.",
+    "feishuTestSent": "Notifikasi tes Lark berhasil dikirim",
+    "feishuTestFailed": "Notifikasi tes Lark gagal: ",
     "approveSuccess": "Disetujui",
     "rejectSuccess": "Ditolak",
     "fileNotImage": "File {filename} bukan gambar, dilewati",

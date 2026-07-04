@@ -423,7 +423,8 @@
     "emptyCreateFirst": "新建第一个商品",
     "action": {
       "edit": "编辑",
-      "delete": "删除"
+      "delete": "删除",
+      "testFeishu": "测试飞书通知"
     }
   },
   "productModal": {
@@ -707,7 +708,9 @@
     "noExportData": "当前筛选条件下没有可导出的数据",
     "noPermissionCreate": "您没有提交审批的权限",
     "feishuNotBound": "审批已提交，但审批人 {name} 未绑定飞书账号，无法发送飞书通知。请联系管理员绑定。",
-    "feishuNotifyFailed": "审批已提交，但飞书通知发送失败。请检查审批人飞书绑定或应用权限。",
+    "feishuNotifyFailed": "审批已提交，但飞书通知发送失败，请检查审批人飞书绑定或应用权限。",
+    "feishuTestSent": "飞书测试通知已发送",
+    "feishuTestFailed": "飞书测试通知发送失败：",
     "approveSuccess": "审批通过",
     "rejectSuccess": "已拒绝",
     "fileNotImage": "文件 {filename} 不是图片，已跳过",

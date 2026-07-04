@@ -88,6 +88,7 @@ async function initDatabase() {
         role_id VARCHAR(64) REFERENCES roles(id),
         status VARCHAR(32) DEFAULT 'active',
         feishu_open_id VARCHAR(128) DEFAULT '',
+        feishu_user_id VARCHAR(128) DEFAULT '',
         feishu_union_id VARCHAR(128) DEFAULT '',
         feishu_name VARCHAR(128) DEFAULT '',
         feishu_email VARCHAR(255) DEFAULT '',
@@ -173,15 +174,16 @@ async function initDatabase() {
       )
     `);
 
-    // 创建索引
-    await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_open_id ON users(feishu_open_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_union_id ON users(feishu_union_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_records_submitter ON aftersales_records(submitter_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_records_status ON aftersales_records(status)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_records_approver1 ON aftersales_records(approver_level1_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_records_approver2 ON aftersales_records(approver_level2_id)`);
-
     // 迁移：为已有的表添加缺失列
+    const userMigrationColumns = [
+      { name: 'feishu_user_id', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'feishu_raw_name', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'feishu_en_name', type: 'VARCHAR(128) DEFAULT \'\'' }
+    ];
+    for (const col of userMigrationColumns) {
+      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
+    }
+
     const migrationColumns = [
       { name: 'model', type: 'VARCHAR(128) DEFAULT \'\'' },
       { name: 'category', type: 'VARCHAR(64) DEFAULT \'\'' },
@@ -194,6 +196,15 @@ async function initDatabase() {
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
     }
+
+    // 创建索引
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_open_id ON users(feishu_open_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_user_id ON users(feishu_user_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_union_id ON users(feishu_union_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_records_submitter ON aftersales_records(submitter_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_records_status ON aftersales_records(status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_records_approver1 ON aftersales_records(approver_level1_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_records_approver2 ON aftersales_records(approver_level2_id)`);
 
     console.log('[DB] 数据库表初始化完成');
 

@@ -423,7 +423,8 @@
     "emptyCreateFirst": "Create First Product",
     "action": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "testFeishu": "Test Lark Notification"
     }
   },
   "productModal": {
@@ -707,7 +708,9 @@
     "noExportData": "No data to export under the current filters",
     "noPermissionCreate": "You do not have permission to create records",
     "feishuNotBound": "Approval submitted, but approver {name} has not bound Feishu account. Feishu notification cannot be sent. Please contact admin to bind.",
-    "feishuNotifyFailed": "Approval submitted, but Feishu notification failed.",
+    "feishuNotifyFailed": "Approval submitted, but the Lark notification failed. Please check the approver's Lark binding or app permissions.",
+    "feishuTestSent": "Lark test notification sent",
+    "feishuTestFailed": "Lark test notification failed: ",
     "approveSuccess": "Approved",
     "rejectSuccess": "Rejected",
     "fileNotImage": "File {filename} is not an image, skipped",
