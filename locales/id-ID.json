@@ -140,7 +140,11 @@
       "approvalStatus": "Status Approval",
       "allApprovalStatus": "Semua Status Approval",
       "processStatus": "Status Proses",
+      "processType": "Tipe Proses",
       "allProcessStatus": "Semua Status Proses",
+      "allProcessTypes": "Semua Tipe Proses",
+      "processProgress": "Progress Proses",
+      "allProcessProgress": "Semua Progress",
       "startDate": "Tanggal Mulai",
       "endDate": "Tanggal Selesai",
       "risk": "Filter Risiko",
@@ -160,13 +164,15 @@
     "batch": {
       "selected": "{count} item dipilih",
       "selectStatus": "Pilih status proses...",
-      "btnUpdate": "Update Massal",
+      "btnUpdate": "Update Progress Massal",
       "btnCancel": "Batal"
     },
     "col": {
       "id": "ID",
       "approvalStatus": "Status Approval",
       "processStatus": "Status Proses",
+      "processType": "Tipe Proses",
+      "processProgress": "Progress Proses",
       "date": "Tanggal RMA",
       "platform": "Platform",
       "returnReason": "Alasan Retur",
@@ -215,6 +221,19 @@
     "pendingRma": "Menunggu RMA",
     "pendingScrap": "Menunggu Scrap",
     "completed": "Selesai"
+  },
+  "processType": {
+    "erp": "Penerimaan ERP",
+    "color_box": "Ganti Box",
+    "parts": "Lengkapi Aksesori",
+    "rma": "RMA",
+    "scrap": "Scrap"
+  },
+  "processProgress": {
+    "pending": "Menunggu",
+    "processing": "Diproses",
+    "completed": "Selesai",
+    "partial": "Diproses Sebagian"
   },
   "form": {
     "titleNew": "Buat Kasus RMA",
@@ -277,6 +296,7 @@
       "approvalHistory": "Riwayat Approval",
       "approvalAction": "Aksi Approval",
       "approvalFlow": "Alur Approval",
+      "processLogs": "Log Proses / Aktivitas",
       "time": "Info Waktu"
     },
     "label": {
@@ -302,6 +322,9 @@
       "qty": "Qty",
       "returnReason": "Alasan Retur",
       "processStatus": "Status Proses",
+      "processType": "Tipe Proses",
+      "processProgress": "Progress Proses",
+      "erpDate": "Tanggal Penerimaan ERP",
       "desc": "Deskripsi Masalah / Catatan",
       "actions": "Aksi",
       "brand": "Brand"
@@ -842,12 +865,28 @@
     "selectFeishuUser": "Pilih pengguna Lark dari hasil pencarian",
     "roleNameRequired": "Nama role wajib diisi",
     "selectProcessStatus": "Pilih status proses yang ingin diterapkan",
+    "selectProcessProgress": "Pilih progress proses baru",
     "selectOneItem": "Pilih minimal satu item",
+    "onlyApprovedItems": "Hanya item RMA yang sudah disetujui yang dapat diproses.",
+    "enterProcessDate": "Masukkan tanggal proses",
+    "enterErpDate": "Masukkan tanggal penerimaan ERP",
     "platformRequired": "Baris {row}: Silakan pilih platform",
     "quantityMustBePositive": "Baris {row}: Jumlah harus > 0",
     "returnReasonRequired": "Baris {row}: Silakan pilih alasan pengembalian",
     "faultDescriptionRequired": "Baris {row}: Silakan isi deskripsi kerusakan",
     "enterReturnDate": "Masukkan tanggal stock-in retur"
+  },
+  "batchProcess": {
+    "title": "Update Progress Proses Massal",
+    "summary": "{count} item RMA yang sudah disetujui dipilih",
+    "label": {
+      "newProgress": "Progress Baru",
+      "processDate": "Tanggal Proses",
+      "erpDate": "Tanggal Penerimaan ERP",
+      "remark": "Catatan Proses"
+    },
+    "remarkPlaceholder": "Tambahkan catatan proses, alasan pengecualian, atau komentar lanjutan",
+    "btnSubmit": "Konfirmasi Update"
   },
   "confirm": {
     "deleteRecord": "Yakin ingin menghapus catatan ini? Aksi ini tidak dapat dibatalkan.",

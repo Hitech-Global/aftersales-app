@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.5.9"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.6.0"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -428,7 +428,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.5.9 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.6.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -517,8 +517,12 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                 <select class="filter-select" id="status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allApprovalStatus"></option></select>
               </div>
               <div class="filter-group">
-                <label data-i18n="list.filter.processStatus"></label>
+                <label data-i18n="list.filter.processType"></label>
                 <select class="filter-select" id="process-status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessStatus"></option></select>
+              </div>
+              <div class="filter-group">
+                <label data-i18n="list.filter.processProgress"></label>
+                <select class="filter-select" id="process-progress-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessProgress"></option></select>
               </div>
               <div class="filter-group">
                 <label data-i18n="list.filter.risk"></label>
@@ -559,16 +563,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             </div>
             <div class="batch-bar" id="batch-bar">
               <span class="batch-info"><span data-i18n="list.batch.selected" data-i18n-params='{"count":0}'></span></span>
-              <select class="filter-select" id="batch-process-status" style="width:auto">
-                <option value="" data-i18n="list.batch.selectStatus"></option>
-                <option value="待ERP入库" data-i18n="process.pendingErp"></option>
-                <option value="待换彩盒" data-i18n="process.pendingColorBox"></option>
-                <option value="待补配件" data-i18n="process.pendingParts"></option>
-                <option value="待RMA" data-i18n="process.pendingRma"></option>
-                <option value="待报废" data-i18n="process.pendingScrap"></option>
-                <option value="已处理" data-i18n="process.completed"></option>
-              </select>
-              <button class="btn btn-primary btn-sm" onclick="batchUpdateProcessStatus()" data-i18n="list.batch.btnUpdate"></button>
+              <button class="btn btn-primary btn-sm" onclick="openBatchProcessModal()" data-i18n="list.batch.btnUpdate"></button>
               <button class="btn btn-secondary btn-sm" onclick="clearBatchSelection()" data-i18n="list.batch.btnCancel"></button>
             </div>
             <div id="table-area"></div>
@@ -883,7 +878,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <div class="detail-section" id="approval-form-section">
         <h3 data-i18n="approvalModal.section.operation"></h3>
         <div class="form-grid">
-          <div class="form-group"><label data-i18n="approvalModal.label.returnDate"></label><input type="text" class="date-input" id="appr-return-date" inputmode="numeric" onblur="normalizeDateInput(this)"></div>
+          <div class="form-group" id="appr-return-date-group"><label data-i18n="approvalModal.label.returnDate"></label><input type="text" class="date-input" id="appr-return-date" inputmode="numeric" onblur="normalizeDateInput(this)"></div>
           <div class="form-group form-group-full"><label data-i18n="approvalModal.label.comment"></label> <span class="required">*</span><textarea id="appr-comment" rows="3" required data-i18n-placeholder="approvalModal.commentPlaceholder"></textarea></div>
         </div>
         <div style="margin-top:12px">
@@ -903,6 +898,55 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <button type="button" class="btn btn-danger btn-lg" id="btn-reject" onclick="doApproval('reject')" data-i18n="approvalModal.btnReject"></button>
         <button type="button" class="btn btn-secondary btn-lg" onclick="closeApprovalModal()" data-i18n="approvalModal.btnCancel"></button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 批量处理售后明细弹窗 -->
+<div id="batch-process-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeBatchProcessModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 data-i18n="batchProcess.title"></h3>
+      <button class="modal-close" onclick="closeBatchProcessModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="batch-process-summary" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label data-i18n="batchProcess.label.newProgress"></label>
+          <select id="batch-new-progress" onchange="onBatchProgressChange()">
+            <option value="processing" data-i18n="processProgress.processing"></option>
+            <option value="completed" data-i18n="processProgress.completed"></option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="batchProcess.label.processDate"></label>
+          <input type="text" class="date-input" id="batch-process-date" inputmode="numeric" onblur="normalizeDateInput(this)">
+        </div>
+        <div class="form-group" id="batch-erp-date-group" style="display:none">
+          <label data-i18n="batchProcess.label.erpDate"></label>
+          <input type="text" class="date-input" id="batch-erp-date" inputmode="numeric" onblur="normalizeDateInput(this)">
+        </div>
+        <div class="form-group form-group-full">
+          <label data-i18n="batchProcess.label.remark"></label>
+          <textarea id="batch-process-remark" rows="3" data-i18n-placeholder="batchProcess.remarkPlaceholder"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label style="font-size:14px;font-weight:500;color:var(--text-secondary)" data-i18n="approvalModal.label.attachments"></label>
+        <div id="batch-appr-attachments" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+        <div class="attachment-upload-area" style="margin-top:8px" onclick="triggerAttachmentUpload('batch')" ondragover="handleApprovalDragOver(event)" ondragleave="handleApprovalDragLeave(event)" ondrop="handleApprovalDrop(event,'batch')">
+          <span style="color:var(--text-muted)">&#x1F4CE; <span data-i18n="approvalModal.attachmentHint"></span></span>
+        </div>
+        <input type="file" id="batch-appr-file-input" class="file-input-hidden" accept="image/*" multiple onchange="handleFileSelect(event,'batch')">
+      </div>
+      <div id="batch-appr-storage-warning" style="margin-top:8px;font-size:11px;color:var(--warning);display:none">
+        &#x26A0; <span data-i18n="approvalModal.storageWarning"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeBatchProcessModal()" data-i18n="approvalModal.btnCancel"></button>
+      <button class="btn btn-primary" onclick="submitBatchProcess()" data-i18n="batchProcess.btnSubmit"></button>
     </div>
   </div>
 </div>
@@ -1032,6 +1076,12 @@ async function getRecords(){
         migrated=true;
         const defaultPlatform=r.platform||'';
         r.items=r.items.map(it=>({...it,platform:it.platform||defaultPlatform}));
+      }
+      if((r.items||[]).some(it=>!it.process_type||!it.process_progress)){
+        migrated=true;
+        r.items=r.items.map(it=>normalizeProcessItem(it));
+      }else{
+        r.items=r.items.map(it=>normalizeProcessItem(it));
       }
       if(r.platform&&!r.platforms){
         migrated=true;
@@ -1474,6 +1524,74 @@ function getDefaultAccessiblePage(){
 }
 
 // ==================== UTILITIES ====================
+const PROCESS_TYPE_VALUES = ['erp','color_box','parts','rma','scrap'];
+const PROCESS_PROGRESS_VALUES = ['pending','processing','completed'];
+const LEGACY_STATUS_TO_PROCESS = {
+  '待ERP入库':{type:'erp',progress:'pending'}, 'pending_erp':{type:'erp',progress:'pending'},
+  'ERP入库':{type:'erp',progress:'pending'}, 'erp':{type:'erp',progress:'pending'},
+  '待换彩盒':{type:'color_box',progress:'pending'}, 'pending_color_box':{type:'color_box',progress:'pending'},
+  '换彩盒':{type:'color_box',progress:'pending'}, 'color_box':{type:'color_box',progress:'pending'},
+  '待补配件':{type:'parts',progress:'pending'}, 'pending_parts':{type:'parts',progress:'pending'},
+  '补配件':{type:'parts',progress:'pending'}, 'parts':{type:'parts',progress:'pending'},
+  '待RMA':{type:'rma',progress:'pending'}, 'pending_rma':{type:'rma',progress:'pending'},
+  'RMA':{type:'rma',progress:'pending'}, 'rma':{type:'rma',progress:'pending'},
+  '待报废':{type:'scrap',progress:'pending'}, 'pending_scrap':{type:'scrap',progress:'pending'},
+  '报废':{type:'scrap',progress:'pending'}, 'scrap':{type:'scrap',progress:'pending'},
+  '已处理':{type:'erp',progress:'completed'}, 'completed':{type:'erp',progress:'completed'},
+  '处理中':{type:'erp',progress:'processing'}, 'processing':{type:'erp',progress:'processing'},
+  '待处理':{type:'erp',progress:'pending'}, 'pending':{type:'erp',progress:'pending'}
+};
+const PROCESS_TYPE_TO_LEGACY_PENDING = {
+  erp:'待ERP入库', color_box:'待换彩盒', parts:'待补配件', rma:'待RMA', scrap:'待报废'
+};
+const RETURN_REASON_TO_PROCESS_TYPE = {
+  '可二次销售':'erp', '彩盒损坏':'color_box', '配件缺失':'parts', '硬件故障':'rma', '报废':'scrap'
+};
+function normalizeProcessItem(item){
+  if(!item) return item;
+  const legacy = item.process_status || item.processStatus || '';
+  const mapped = LEGACY_STATUS_TO_PROCESS[legacy] || {};
+  if(!item.process_type) item.process_type = (legacy==='已处理'||legacy==='completed' ? RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] : mapped.type) || RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] || 'erp';
+  if(!item.process_progress) item.process_progress = mapped.progress || 'pending';
+  if(item.process_progress === 'completed' && !item.process_completed_date){
+    item.process_completed_date = item.process_status_updated_at || item.process_status_date || new Date().toISOString();
+  }
+  item.process_status = item.process_progress === 'completed' ? '已处理' : (PROCESS_TYPE_TO_LEGACY_PENDING[item.process_type] || '待ERP入库');
+  return item;
+}
+function itemProcessType(item){ normalizeProcessItem(item); return item.process_type || 'erp'; }
+function itemProcessProgress(item){ normalizeProcessItem(item); return item.process_progress || 'pending'; }
+function itemLegacyProcessStatus(item){ normalizeProcessItem(item); return item.process_status || ''; }
+function tProcessType(type){ return t('processType.' + (type || 'erp')); }
+function tProcessProgress(progress){ return t('processProgress.' + (progress || 'pending')); }
+function renderProcessTypeBadge(type){ return `<span class="ps-badge ps-${PROCESS_TYPE_TO_LEGACY_PENDING[type]||'待ERP入库'}">${tProcessType(type)}</span>`; }
+function renderProcessProgressBadge(progress){
+  const legacy = progress === 'completed' ? '已处理' : (progress === 'processing' ? '待RMA' : '待ERP入库');
+  return `<span class="ps-badge ps-${legacy}">${tProcessProgress(progress)}</span>`;
+}
+function hasOpenErpItems(record){
+  return (record?.items||[]).some(it=>itemProcessType(it)==='erp' && itemProcessProgress(it)!=='completed');
+}
+function pendingErpQuantity(record){
+  return (record?.items||[]).reduce((sum,it)=>sum+(itemProcessType(it)==='erp' && itemProcessProgress(it)!=='completed' ? (Number(it.quantity)||0) : 0),0);
+}
+function addProcessLog(record, itemIndex, log){
+  if(!record.process_logs) record.process_logs=[];
+  record.process_logs.push({item_index:itemIndex, ...log});
+}
+function getRecordProcessSummary(items){
+  const normalized=(items||[]).map(normalizeProcessItem);
+  if(normalized.length===0) return '<span style="color:var(--text-muted)">-</span>';
+  if(normalized.every(it=>itemProcessProgress(it)==='completed')){
+    return renderProcessProgressBadge('completed');
+  }
+  const open=normalized.filter(it=>itemProcessProgress(it)!=='completed');
+  const typeSet=[...new Set(open.map(it=>itemProcessType(it)))];
+  return typeSet.map(type=>{
+    const count=open.filter(it=>itemProcessType(it)===type).length;
+    return `${renderProcessTypeBadge(type)}${count>1?`<span style="font-size:11px;color:var(--text-muted);margin-left:2px">(${count})</span>`:''}`;
+  }).join(' ') + (normalized.some(it=>itemProcessProgress(it)==='completed')?` <span style="font-size:12px;color:var(--text-muted)">${t('processProgress.partial')}</span>`:'');
+}
 function showFlash(msg,type='info'){
   const container=document.getElementById('toast-container');
   if(!container){ console.log('[Toast]', type, msg); return; }
@@ -2208,10 +2326,10 @@ let chartTrend30=null, chartReasonTop5=null, chartSkuTop10=null;
 
 function asArray(value){ return Array.isArray(value)?value:[]; }
 function recordDateKey(record){ return dateToStorage(record.aftersales_date || record.created_at); }
-function itemProcessStatus(item){ return item.process_status || item.processStatus || ''; }
+function itemProcessStatus(item){ return itemLegacyProcessStatus(item); }
 function isPendingApproval(record){ return ['待一级审批','待二级审批','待三级审批'].includes(record.status); }
-function isPendingProcessItem(item){ const ps=itemProcessStatus(item); return Boolean(ps) && ps!=='已处理' && ps!=='completed'; }
-function isPendingRmaItem(item){ const ps=itemProcessStatus(item); return ps==='待RMA' || ps==='pending_rma'; }
+function isPendingProcessItem(item){ return itemProcessProgress(item)!=='completed'; }
+function isPendingRmaItem(item){ return itemProcessType(item)==='rma' && itemProcessProgress(item)!=='completed'; }
 function itemAgeStartDate(item, record){ return item.process_status_date || item.process_status_updated_at || record.created_at || record.aftersales_date; }
 function isOverdueItem(item, record, days=7){
   if(!isPendingProcessItem(item)) return false;
@@ -2262,7 +2380,7 @@ async function renderOverview(){
     const pendingProcessCount=allItems.filter(x=>isPendingProcessItem(x.item)).length;
     const overdueCount=allItems.filter(x=>isOverdueItem(x.item,x.record)).length;
     const pendingRmaCount=allItems.filter(x=>isPendingRmaItem(x.item)).length;
-    const completedItems=allItems.filter(x=>itemProcessStatus(x.item)==='已处理'&&x.item.process_completed_date);
+    const completedItems=allItems.filter(x=>itemProcessProgress(x.item)==='completed'&&x.item.process_completed_date);
     const avgDays=completedItems.length
       ?(completedItems.reduce((sum,x)=>{
         const done=parseDateValue(x.item.process_completed_date);
@@ -2389,12 +2507,14 @@ function jumpFromOverview(type){
   }
   document.getElementById('search-input').value='';
   document.getElementById('status-filter').value='';
-  document.getElementById('process-status-filter').value=type==='pendingRma'?'待RMA':'';
+  document.getElementById('process-status-filter').value=type==='pendingRma'?'rma':'';
+  const progressFilter=document.getElementById('process-progress-filter');
+  if(progressFilter) progressFilter.value='';
   document.getElementById('list-risk-filter').value=type==='pendingProcess'?'pending':(type==='overdue'?'overdue':'');
   document.getElementById('brand-filter').value=brandF;
   setDateInputValue('list-start-date',startD);
   setDateInputValue('list-end-date',endD);
-  pendingListPreset={brand:brandF,startD,endD,processStatus:type==='pendingRma'?'待RMA':'',risk:type==='pendingProcess'?'pending':(type==='overdue'?'overdue':'')};
+  pendingListPreset={brand:brandF,startD,endD,processType:type==='pendingRma'?'rma':'',processProgress:'',risk:type==='pendingProcess'?'pending':(type==='overdue'?'overdue':'')};
   listPage=1;
   showPage('list');
 }
@@ -2418,7 +2538,15 @@ function updateStatusFilter(){
 
 function updateProcessStatusFilter(){
   const sel=document.getElementById('process-status-filter'), cur=sel.value;
-  sel.innerHTML=`<option value="">${t('list.filter.allProcessStatus')}</option>`+PROCESS_STATUSES.map(s=>`<option value="${s}">${tProcessStatus(s)}</option>`).join('');
+  sel.innerHTML=`<option value="">${t('list.filter.allProcessTypes')}</option>`+PROCESS_TYPE_VALUES.map(s=>`<option value="${s}">${tProcessType(s)}</option>`).join('');
+  sel.value=cur;
+}
+
+function updateProcessProgressFilter(){
+  const sel=document.getElementById('process-progress-filter');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">${t('list.filter.allProcessProgress')}</option>`+PROCESS_PROGRESS_VALUES.map(s=>`<option value="${s}">${tProcessProgress(s)}</option>`).join('');
   sel.value=cur;
 }
 
@@ -2435,10 +2563,12 @@ function switchListMode(mode){
 }
 
 async function renderList(){
-  await updateBrandFilter(); updateStatusFilter(); updateProcessStatusFilter();
+  await updateBrandFilter(); updateStatusFilter(); updateProcessStatusFilter(); updateProcessProgressFilter();
   if(pendingListPreset){
     document.getElementById('brand-filter').value=pendingListPreset.brand||'';
-    document.getElementById('process-status-filter').value=pendingListPreset.processStatus||'';
+    document.getElementById('process-status-filter').value=pendingListPreset.processType||'';
+    const progressFilter=document.getElementById('process-progress-filter');
+    if(progressFilter) progressFilter.value=pendingListPreset.processProgress||'';
     document.getElementById('list-risk-filter').value=pendingListPreset.risk||'';
     setDateInputValue('list-start-date',pendingListPreset.startD||'');
     setDateInputValue('list-end-date',pendingListPreset.endD||'');
@@ -2449,6 +2579,7 @@ async function renderList(){
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
   const psFilter=document.getElementById('process-status-filter').value;
+  const progressFilter=document.getElementById('process-progress-filter')?.value || '';
   const riskFilter=document.getElementById('list-risk-filter').value;
   const startD=getDateInputValue('list-start-date');
   const endD=getDateInputValue('list-end-date');
@@ -2457,7 +2588,8 @@ async function renderList(){
   let filtered=records;
   if(status) filtered=filtered.filter(r=>r.status===status);
   if(brand) filtered=filtered.filter(r=>r.brand===brand);
-  if(psFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.process_status===psFilter));
+  if(psFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessType(it)===psFilter));
+  if(progressFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessProgress(it)===progressFilter));
   if(riskFilter==='pending') filtered=filtered.filter(r=>(r.items||[]).some(it=>isPendingProcessItem(it)));
   if(riskFilter==='overdue') filtered=filtered.filter(r=>(r.items||[]).some(it=>isOverdueItem(it,r)));
   if(startD||endD){
@@ -2500,17 +2632,18 @@ async function renderList(){
     // ===== 按售后明细模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
-      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processStatus')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
+      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processType')}</th><th>${t('list.col.processProgress')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
-        const showItem=!psFilter||it.process_status===psFilter;
+        const showItem=(!psFilter||itemProcessType(it)===psFilter)&&(!progressFilter||itemProcessProgress(it)===progressFilter);
         if(!showItem) return;
         html+=`<tr>
-          <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${r.id}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
+          <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
           <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
-          <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
+          <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
+          <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(it.platform||'-')}</td>
           <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
@@ -2538,10 +2671,7 @@ async function renderList(){
       const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
       const faultDescs=items.map(it=>(it.fault_description||'').substring(0,30)).join('; ');
       const totalQty=r.total_quantity||items.reduce((s,it)=>s+(it.quantity||0),0);
-      // Process status distribution
-      const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
-      const psCell=psSet.length===0?'<span style="color:var(--text-muted)">-</span>'
-        :psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
+      const psCell=getRecordProcessSummary(items);
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
@@ -2564,6 +2694,27 @@ async function renderList(){
     area.innerHTML=html;
   }
   renderListPagination(total);
+}
+
+function renderProcessLogsHTML(record){
+  const logs=record.process_logs||[];
+  if(logs.length===0) return '';
+  const items=record.items||[];
+  return `<div class="detail-section"><h3>${t('detail.section.processLogs')}</h3>
+    <div class="approval-timeline">
+      ${logs.slice().reverse().map(log=>{
+        const item=items[log.item_index]||{};
+        return `<div class="approval-timeline-item">
+          <div style="font-size:13px;font-weight:600">${esc(log.operator_name||'-')} · ${tProcessType(log.process_type)} · ${tProcessProgress(log.old_progress)} &#x2192; ${tProcessProgress(log.new_progress)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${esc(item.sku_code||'-')} / ${esc(item.order_no||'-')}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('batchProcess.label.processDate')}: ${formatDate(log.process_date)} · ${t('detail.label.createdAt')}: ${formatDateTime(log.processed_at)}</div>
+          ${log.erp_return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('batchProcess.label.erpDate')}: ${formatDate(log.erp_return_date)}</div>`:''}
+          ${log.remark?`<div style="font-size:13px;margin-top:4px">${esc(log.remark)}</div>`:''}
+          ${(log.attachments||[]).length>0?renderAttachmentsHTML(log.attachments):''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
 // ===== 批量操作函数 =====
@@ -2594,27 +2745,105 @@ function clearBatchSelection(){
 }
 
 async function batchUpdateProcessStatus(){
-  const newStatus=document.getElementById('batch-process-status').value;
-  if(!newStatus){ showFlash(t('validation.selectProcessStatus'),'warning'); return; }
+  openBatchProcessModal();
+}
+
+function getSelectedItemRefs(records){
+  return [...document.querySelectorAll('.item-checkbox:checked')].map(cb=>{
+    const rid=cb.dataset.recordId;
+    const idx=parseInt(cb.dataset.itemIndex,10);
+    const record=records.find(x=>String(x.id)===String(rid));
+    return {record, item:record?.items?.[idx], itemIndex:idx};
+  }).filter(ref=>ref.record&&ref.item);
+}
+
+async function openBatchProcessModal(){
   const checked=document.querySelectorAll('.item-checkbox:checked');
   if(checked.length===0){ showFlash(t('validation.selectOneItem'),'warning'); return; }
   const records=await getRecords();
+  const refs=getSelectedItemRefs(records);
+  if(refs.some(ref=>ref.record.status!=='审批通过')){
+    showFlash(t('validation.onlyApprovedItems'),'warning');
+    return;
+  }
+  pendingAttachments=[];
+  approvalAttachmentTarget='batch';
+  document.getElementById('batch-process-summary').textContent=t('batchProcess.summary',{count:refs.length});
+  document.getElementById('batch-new-progress').value='processing';
+  setDateInputValue('batch-process-date',formatDateLocal(new Date()));
+  setDateInputValue('batch-erp-date','');
+  document.getElementById('batch-process-remark').value='';
+  renderPendingAttachments();
+  onBatchProgressChange();
+  document.getElementById('batch-process-modal').classList.remove('hidden');
+}
+
+function closeBatchProcessModal(){
+  document.getElementById('batch-process-modal').classList.add('hidden');
+  pendingAttachments=[];
+  approvalAttachmentTarget='modal';
+}
+
+async function onBatchProgressChange(){
+  const progress=document.getElementById('batch-new-progress').value;
+  const records=await getRecords();
+  const refs=getSelectedItemRefs(records);
+  const needsErpDate=progress==='completed'&&refs.some(ref=>itemProcessType(ref.item)==='erp');
+  document.getElementById('batch-erp-date-group').style.display=needsErpDate?'block':'none';
+  applyDateInputLocale();
+}
+
+async function submitBatchProcess(){
+  const progress=document.getElementById('batch-new-progress').value;
+  const processDate=normalizeDateInput(document.getElementById('batch-process-date'));
+  const erpDateEl=document.getElementById('batch-erp-date');
+  const erpDate=erpDateEl ? normalizeDateInput(erpDateEl) : '';
+  const remark=document.getElementById('batch-process-remark').value.trim();
+  if(!progress){ showFlash(t('validation.selectProcessProgress'),'warning'); return; }
+  if(!processDate){ showFlash(t('validation.enterProcessDate'),'warning'); return; }
+  const records=await getRecords();
+  const refs=getSelectedItemRefs(records);
+  if(refs.length===0){ showFlash(t('validation.selectOneItem'),'warning'); return; }
+  if(refs.some(ref=>ref.record.status!=='审批通过')){
+    showFlash(t('validation.onlyApprovedItems'),'warning');
+    return;
+  }
+  const needsErpDate=progress==='completed'&&refs.some(ref=>itemProcessType(ref.item)==='erp');
+  if(needsErpDate&&!erpDate){ showFlash(t('validation.enterErpDate'),'warning'); return; }
   const now=new Date().toISOString();
+  const user=getCurrentUser();
   let updated=0;
-  checked.forEach(cb=>{
-    const rid=parseInt(cb.dataset.recordId);
-    const idx=parseInt(cb.dataset.itemIndex);
-    const r=records.find(x=>x.id===rid);
-    if(r&&r.items[idx]&&r.items[idx].process_status!=='已处理'){
-      r.items[idx].process_status=newStatus;
-      if(newStatus==='已处理') r.items[idx].process_completed_date=now;
-      r.items[idx].process_status_updated_at=now;
-      r.updated_at=now;
-      updated++;
+  refs.forEach(ref=>{
+    const item=normalizeProcessItem(ref.item);
+    const oldProgress=itemProcessProgress(item);
+    const type=itemProcessType(item);
+    item.process_progress=progress;
+    item.process_status=progress==='completed'?'已处理':PROCESS_TYPE_TO_LEGACY_PENDING[type];
+    item.process_status_updated_at=now;
+    item.process_handled_date=processDate;
+    if(progress==='completed') item.process_completed_date=now;
+    if(type==='erp'&&progress==='completed'){
+      item.return_stockin_date=erpDate;
+      item.process_completed_date=erpDate;
     }
+    addProcessLog(ref.record, ref.itemIndex, {
+      operator_id:user?.id||'',
+      operator_name:user?.name||'',
+      processed_at:now,
+      process_date:processDate,
+      process_type:type,
+      old_progress:oldProgress,
+      new_progress:progress,
+      remark,
+      attachments:pendingAttachments.slice(),
+      erp_return_date:type==='erp'&&progress==='completed'?erpDate:null
+    });
+    ref.record.updated_at=now;
+    updated++;
   });
   await saveRecordsAsync(records);
   showFlash(t('flash.batchProcessUpdated',{count:updated}),'success');
+  closeBatchProcessModal();
   clearBatchSelection();
   renderList();
 }
@@ -2636,6 +2865,8 @@ function clearListFilter(){
   document.getElementById('search-input').value='';
   document.getElementById('status-filter').value='';
   document.getElementById('process-status-filter').value='';
+  const progressFilter=document.getElementById('process-progress-filter');
+  if(progressFilter) progressFilter.value='';
   document.getElementById('list-risk-filter').value='';
   document.getElementById('brand-filter').value='';
   setDateInputValue('list-start-date','');
@@ -2667,7 +2898,7 @@ async function renderDetail(id){
   }
   const products=await getProducts();
   const productBySku=new Map(products.map(p=>[String(p.sku_code||'').toLowerCase(),p]));
-  const pendingErpQty=(r.items||[]).reduce((sum,it)=>sum+(it.process_status==='待ERP入库'?(Number(it.quantity)||0):0),0);
+  const pendingErpQty=pendingErpQuantity(r);
   currentApprovalRecordId=r.id;
   approvalAttachmentTarget='detail';
   pendingAttachments=[];
@@ -2752,7 +2983,7 @@ async function renderDetail(id){
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processStatus')}</th><th>${t('detail.col.desc')}</th></tr></thead>
+        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
             <td>${esc(it.platform||'-')}</td>
@@ -2761,7 +2992,9 @@ async function renderDetail(id){
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
             <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
-            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'<span style="color:var(--text-muted)">-</span>'}</td>
+            <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
+            <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
+            <td class="cell-date">${it.return_stockin_date?formatDate(it.return_stockin_date):'-'}</td>
             <td>${esc(it.fault_description||'-')}</td>
           </tr>`).join('')}</tbody>
         </table>
@@ -2770,6 +3003,7 @@ async function renderDetail(id){
     ${approversHTML}
     ${approvalActionHTML}
     ${historyHTML}
+    ${renderProcessLogsHTML(r)}
     <div class="detail-section"><h3>${t('detail.section.time')}</h3>
       <div class="detail-grid">
         <div class="detail-item"><span class="detail-label">${t('detail.label.createdAt')}</span><span class="detail-value">${formatDateTime(r.created_at)}</span></div>
@@ -2973,7 +3207,9 @@ async function submitForApproval(e){
 
   // 为每个明细自动分配处理状态
   items.forEach(it=>{
-    it.process_status=REASON_TO_PROCESS[it.return_reason]||'待ERP入库';
+    it.process_type=RETURN_REASON_TO_PROCESS_TYPE[it.return_reason]||'erp';
+    it.process_progress='pending';
+    it.process_status=PROCESS_TYPE_TO_LEGACY_PENDING[it.process_type]||'待ERP入库';
     it.process_status_date=now;
   });
 
@@ -3033,6 +3269,12 @@ async function saveAsDraft(){
   const totalQty=items.reduce((s,it)=>s+it.quantity,0);
   const user=getCurrentUser();
   const now=new Date().toISOString();
+  items.forEach(it=>{
+    it.process_type=RETURN_REASON_TO_PROCESS_TYPE[it.return_reason]||'erp';
+    it.process_progress='pending';
+    it.process_status=PROCESS_TYPE_TO_LEGACY_PENDING[it.process_type]||'待ERP入库';
+    it.process_status_date=now;
+  });
 
   const record={
     id:await nextId(),
@@ -3093,7 +3335,7 @@ function canApproveRecord(record){
 
 async function executeApproval(recordId, action, comment, returnDate, attachments){
   const records=await getRecords();
-  const idx=records.findIndex(r=>r.id===recordId);
+  const idx=records.findIndex(r=>String(r.id)===String(recordId));
   if(idx<0) return false;
   const record=records[idx];
   const user=getCurrentUser();
@@ -3128,6 +3370,31 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
     }else{
       record.status='审批通过';
       record.current_approval_level=0;
+      if(returnDate){
+        (record.items||[]).forEach((item,itemIndex)=>{
+          normalizeProcessItem(item);
+          if(itemProcessType(item)==='erp'&&itemProcessProgress(item)!=='completed'){
+            const oldProgress=itemProcessProgress(item);
+            item.process_progress='completed';
+            item.process_status='已处理';
+            item.return_stockin_date=returnDate;
+            item.process_completed_date=returnDate;
+            item.process_status_updated_at=now;
+            addProcessLog(record,itemIndex,{
+              operator_id:user.id,
+              operator_name:user.name,
+              processed_at:now,
+              process_date:returnDate,
+              process_type:'erp',
+              old_progress:oldProgress,
+              new_progress:'completed',
+              remark:comment||'',
+              attachments:attachments||[],
+              erp_return_date:returnDate
+            });
+          }
+        });
+      }
     }
   }
 
@@ -3189,8 +3456,7 @@ async function renderApproval(){
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
-      const psSet=[...new Set(items.map(it=>it.process_status).filter(Boolean))];
-      const psCell=psSet.length===0?'-':psSet.map(ps=>{const c=items.filter(it=>it.process_status===ps).length;return `<span class="ps-badge ps-${ps}">${tProcessStatus(ps)}${c>1?'('+c+')':''}</span>`;}).join(' ');
+      const psCell=getRecordProcessSummary(items);
       const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       const currentApprover=getCurrentApproverText(r);
       html+=`<tr class="row-clickable" onclick="showPage('detail','${escAttr(String(r.id))}')">
@@ -3272,9 +3538,10 @@ async function openLegacyApprovalModal(recordId){
       <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${record.status}">${tApprovalStatus(record.status)}</span></span></div>
     </div>
     <div style="margin-top:10px">
-      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processStatus')}</th><th>${t('approvalModal.col.erpScreenshot')}</th><th>${t('detail.col.actions')}</th></tr></thead>
+      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
         <tbody>${(record.items||[]).map((it,i)=>{
-          const isResaleable=(it.return_reason)==='可二次销售';
+          normalizeProcessItem(it);
+          const isOpenErp=itemProcessType(it)==='erp'&&itemProcessProgress(it)!=='completed';
           const screenshots=it.erp_screenshots||[];
           return `<tr>
             <td>${i+1}</td>
@@ -3283,12 +3550,12 @@ async function openLegacyApprovalModal(recordId){
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
             <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
-            <td>${it.process_status?`<span class="ps-badge ps-${it.process_status}">${tProcessStatus(it.process_status)}</span>`:'-'}</td>
+            <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
+            <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
             <td id="erp-cell-${i}">
               ${screenshots.map(s=>`<img src="${s}" class="erp-screenshot-thumb" onclick="previewErpScreenshot(this)">`).join('')}
-              ${isResaleable&&it.process_status==='待ERP入库'?`<span class="erp-upload-btn" onclick="triggerErpUpload(${i})">上传截图</span>`:''}
+              ${isOpenErp?`<span class="erp-upload-btn" onclick="triggerErpUpload(${i})">${t('approvalModal.btnUploadScreenshot')}</span>`:''}
             </td>
-            <td>${isResaleable&&it.process_status==='待ERP入库'?`<button class="btn btn-sm btn-primary" onclick="markItemProcessed(${i})">标记已处理</button>`:''}</td>
           </tr>`;
         }).join('')}</tbody>
       </table>
@@ -3340,10 +3607,11 @@ async function doApproval(action, source='modal'){
   const returnDateEl=document.getElementById(prefix+'-return-date');
   const comment=commentEl ? commentEl.value.trim() : '';
   const recordsForValidation=await getRecords();
-  const recordForValidation=recordsForValidation.find(r=>r.id===currentApprovalRecordId);
-  const pendingErpQty=(recordForValidation?.items||[]).reduce((sum,it)=>sum+(it.process_status==='待ERP入库'?(Number(it.quantity)||0):0),0);
+  const recordForValidation=recordsForValidation.find(r=>String(r.id)===String(currentApprovalRecordId));
+  const pendingErpQty=pendingErpQuantity(recordForValidation);
+  const willFinishApproval=action==='approve'&&recordForValidation&&findNextApprovalLevel(recordForValidation, recordForValidation.current_approval_level)===0;
   const returnDate=returnDateEl ? normalizeDateInput(returnDateEl) : '';
-  if(pendingErpQty>0 && !returnDate) return showFlash(t('validation.enterReturnDate'),'warning');
+  if(willFinishApproval&&pendingErpQty>0 && !returnDate) return showFlash(t('validation.enterReturnDate'),'warning');
   // Save pending ERP screenshots before approval
   if(Object.keys(pendingErpScreenshots).length>0){
     const records=recordsForValidation;
@@ -3373,7 +3641,7 @@ async function doApproval(action, source='modal'){
 
 async function triggerErpUpload(itemIndex){
   const records=await getRecords();
-  const record=records.find(r=>r.id===currentApprovalRecordId);
+  const record=records.find(r=>String(r.id)===String(currentApprovalRecordId));
   if(!canApproveRecord(record)){ showFlash(t('error.onlyCurrentApproverUpload'),'danger'); return; }
   const input=document.createElement('input');
   input.type='file';
@@ -3409,20 +3677,37 @@ function previewErpScreenshot(imgEl){
 
 async function markItemProcessed(itemIndex){
   const records=await getRecords();
-  const record=records.find(r=>r.id===currentApprovalRecordId);
+  const record=records.find(r=>String(r.id)===String(currentApprovalRecordId));
   if(!record||!record.items[itemIndex]) return;
   if(!canApproveRecord(record)){ showFlash(t('error.onlyCurrentApprover'),'danger'); return; }
   const item=record.items[itemIndex];
-  if(item.process_status!=='待ERP入库'){
+  normalizeProcessItem(item);
+  if(itemProcessType(item)!=='erp'||itemProcessProgress(item)==='completed'){
     showFlash(t('error.onlyErpStatus'),'warning'); return;
   }
   if(pendingErpScreenshots[itemIndex]){
     item.erp_screenshots=pendingErpScreenshots[itemIndex];
   }
   const now=new Date().toISOString();
+  const oldProgress=itemProcessProgress(item);
+  item.process_progress='completed';
   item.process_status='已处理';
   item.process_completed_date=now;
   item.process_status_updated_at=now;
+  item.return_stockin_date=formatDateLocal(new Date());
+  const user=getCurrentUser();
+  addProcessLog(record,itemIndex,{
+    operator_id:user?.id||'',
+    operator_name:user?.name||'',
+    processed_at:now,
+    process_date:item.return_stockin_date,
+    process_type:'erp',
+    old_progress:oldProgress,
+    new_progress:'completed',
+    remark:'',
+    attachments:[],
+    erp_return_date:item.return_stockin_date
+  });
   record.updated_at=now;
   await saveRecordsAsync(records);
   showFlash(t('flash.markProcessed'),'success');
@@ -3437,7 +3722,9 @@ function setApprovalAttachmentTarget(target){
 
 function getApprovalEl(baseId, target){
   const activeTarget=target||approvalAttachmentTarget||'modal';
-  return document.getElementById(activeTarget==='detail'?'detail-'+baseId:baseId);
+  if(activeTarget==='detail') return document.getElementById('detail-'+baseId);
+  if(activeTarget==='batch') return document.getElementById('batch-'+baseId);
+  return document.getElementById(baseId);
 }
 
 function triggerAttachmentUpload(target='modal'){
@@ -3695,7 +3982,7 @@ function processImportFile(file){
       pendingRecordImports.push({
         id:importNextId++,
         aftersales_date, platforms:[platform],
-        items:[{platform, sku_code:sku, order_no, quantity, return_reason, fault_description:fault_desc, process_status:REASON_TO_PROCESS[return_reason]||'待ERP入库', process_status_date:now}],
+        items:[{platform, sku_code:sku, order_no, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
         total_quantity:quantity,
         brand:prod?prod.brand:'',
         model:prod?prod.model:'',
@@ -3992,6 +4279,7 @@ async function exportAftersalesExcel(){
   const brandF = document.getElementById('brand-filter').value;
   const statusF = document.getElementById('status-filter').value;
   const processStatusF = document.getElementById('process-status-filter').value;
+  const processProgressF = document.getElementById('process-progress-filter')?.value || '';
   const startDate = getDateInputValue('list-start-date');
   const endDate = getDateInputValue('list-end-date');
 
@@ -4003,7 +4291,7 @@ async function exportAftersalesExcel(){
   if(endDate) filtered = filtered.filter(r => r.aftersales_date <= endDate);
   if(search) filtered = filtered.filter(r => {
     const items = r.items || [];
-    return (r.id||'').toLowerCase().includes(search) ||
+    return String(r.id||'').toLowerCase().includes(search) ||
       (r.brand||'').toLowerCase().includes(search) ||
       (r.submitter_name||'').toLowerCase().includes(search) ||
       items.some(it => (it.order_no||'').toLowerCase().includes(search) || (it.sku_code||'').toLowerCase().includes(search) || (it.model||'').toLowerCase().includes(search));
@@ -4013,8 +4301,11 @@ async function exportAftersalesExcel(){
   if(processStatusF){
     filtered = filtered.filter(r => {
       const items = r.items || [];
-      return items.some(it => it.process_status === processStatusF);
+      return items.some(it => itemProcessType(it) === processStatusF);
     });
+  }
+  if(processProgressF){
+    filtered = filtered.filter(r => (r.items || []).some(it => itemProcessProgress(it) === processProgressF));
   }
 
   // 判断当前视图模式：按售后单 or 按明细
@@ -4022,7 +4313,7 @@ async function exportAftersalesExcel(){
 
   const headers = [
     '售后单号','售后日期','平台','品牌','SKU','型号','数量','订单号',
-    '问题类型','问题说明','审批状态','处理状态','提交人','创建时间','更新时间'
+    '问题类型','问题说明','审批状态','处理类型','处理进度','ERP入库日期','提交人','创建时间','更新时间'
   ];
 
   let rows = [];
@@ -4045,7 +4336,9 @@ async function exportAftersalesExcel(){
           it.return_reason || '',
           it.fault_description || '',
           r.status || '',
-          it.process_status || '',
+          tProcessType(itemProcessType(it)),
+          tProcessProgress(itemProcessProgress(it)),
+          it.return_stockin_date || '',
           r.submitter_name || '',
           formatDateTime(r.created_at),
           formatDateTime(r.updated_at)
@@ -4070,7 +4363,9 @@ async function exportAftersalesExcel(){
         items.map(it => it.return_reason||'').filter(Boolean).join('、'),
         items.map(it => it.fault_description||'').filter(Boolean).join('；') || items[0]?.fault_description || '',
         r.status || '',
-        [...new Set(items.map(it => it.process_status||'').filter(Boolean))].join('、'),
+        [...new Set(items.map(it => tProcessType(itemProcessType(it))).filter(Boolean))].join('、'),
+        [...new Set(items.map(it => tProcessProgress(itemProcessProgress(it))).filter(Boolean))].join('、'),
+        [...new Set(items.map(it => it.return_stockin_date||'').filter(Boolean))].join('、'),
         r.submitter_name || '',
         formatDateTime(r.created_at),
         formatDateTime(r.updated_at)

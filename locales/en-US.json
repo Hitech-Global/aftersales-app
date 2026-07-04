@@ -140,7 +140,11 @@
       "approvalStatus": "Approval Status",
       "allApprovalStatus": "All Approval Statuses",
       "processStatus": "Processing Status",
+      "processType": "Processing Type",
       "allProcessStatus": "All Processing Statuses",
+      "allProcessTypes": "All Processing Types",
+      "processProgress": "Processing Progress",
+      "allProcessProgress": "All Progress",
       "startDate": "Start Date",
       "endDate": "End Date",
       "risk": "Risk Filter",
@@ -160,13 +164,15 @@
     "batch": {
       "selected": "{count} items selected",
       "selectStatus": "Select processing status...",
-      "btnUpdate": "Batch Update",
+      "btnUpdate": "Batch Update Progress",
       "btnCancel": "Cancel"
     },
     "col": {
       "id": "ID",
       "approvalStatus": "Approval Status",
       "processStatus": "Processing Status",
+      "processType": "Processing Type",
+      "processProgress": "Processing Progress",
       "date": "RMA Date",
       "platform": "Platform",
       "returnReason": "Return Reason",
@@ -215,6 +221,19 @@
     "pendingRma": "Pending RMA",
     "pendingScrap": "Pending Disposal",
     "completed": "Completed"
+  },
+  "processType": {
+    "erp": "ERP Receipt",
+    "color_box": "Replace Box",
+    "parts": "Supply Parts",
+    "rma": "RMA",
+    "scrap": "Scrap"
+  },
+  "processProgress": {
+    "pending": "Pending",
+    "processing": "Processing",
+    "completed": "Completed",
+    "partial": "Partially Processing"
   },
   "form": {
     "titleNew": "Create RMA Case",
@@ -277,6 +296,7 @@
       "approvalHistory": "Approval History",
       "approvalAction": "Approval Decision",
       "approvalFlow": "Approval Flow",
+      "processLogs": "Processing Logs / Activity",
       "time": "Time Info"
     },
     "label": {
@@ -302,6 +322,9 @@
       "qty": "Qty",
       "returnReason": "Return Reason",
       "processStatus": "Processing Status",
+      "processType": "Processing Type",
+      "processProgress": "Processing Progress",
+      "erpDate": "ERP Receipt Date",
       "desc": "Issue Description / Notes",
       "actions": "Actions",
       "brand": "Brand"
@@ -842,12 +865,28 @@
     "selectFeishuUser": "Select a Lark user from search results",
     "roleNameRequired": "Role name is required",
     "selectProcessStatus": "Select the processing status to apply",
+    "selectProcessProgress": "Select the new processing progress",
     "selectOneItem": "Select at least one item",
+    "onlyApprovedItems": "Only approved RMA items can be processed.",
+    "enterProcessDate": "Enter the processing date",
+    "enterErpDate": "Enter the ERP receipt date",
     "platformRequired": "Row {row}: Please select platform",
     "quantityMustBePositive": "Row {row}: Quantity must be > 0",
     "returnReasonRequired": "Row {row}: Please select return reason",
     "faultDescriptionRequired": "Row {row}: Please fill in fault description",
     "enterReturnDate": "Enter the return stock-in date"
+  },
+  "batchProcess": {
+    "title": "Batch Update Processing Progress",
+    "summary": "{count} approved RMA items selected",
+    "label": {
+      "newProgress": "New Progress",
+      "processDate": "Processing Date",
+      "erpDate": "ERP Receipt Date",
+      "remark": "Processing Notes"
+    },
+    "remarkPlaceholder": "Add processing notes, exception reasons, or follow-up comments",
+    "btnSubmit": "Confirm Update"
   },
   "confirm": {
     "deleteRecord": "Are you sure you want to delete this record? This action cannot be undone.",
