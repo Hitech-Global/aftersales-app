@@ -1057,7 +1057,41 @@
   },
   "dictionaries": {
     "title": "Dictionaries",
-    "categories": "Categories"
+    "categories": "Categories",
+    "category": {
+      "return_reason": "Return Reason",
+      "platform": "Platform",
+      "return_method": "Return Method",
+      "common": "Common"
+    },
+    "col": {
+      "name": "Name",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "itemsCount": "({count} items)",
+    "empty": "No items in this category",
+    "btnAdd": "+ Add Item",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "btnSave": "Save",
+    "btnDelete": "Delete",
+    "modal": {
+      "title": "Add Dictionary Item",
+      "code": "Code",
+      "codeHint": "(letters/digits, no spaces; the unique system value)",
+      "name": "Name"
+    },
+    "confirmDelete": "Delete this dictionary item?",
+    "saveSuccess": "Saved",
+    "saveFailed": "Save failed",
+    "addSuccess": "Added",
+    "addFailed": "Add failed",
+    "deleteSuccess": "Deleted",
+    "deleteFailed": "Delete failed",
+    "codeRequired": "Code is required",
+    "nameRequired": "Name is required",
+    "loadFailed": "Load failed: "
   },
   "toast": {
     "close": "Close"

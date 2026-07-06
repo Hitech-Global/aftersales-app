@@ -1057,7 +1057,41 @@
   },
   "dictionaries": {
     "title": "字典管理",
-    "categories": "字典类别"
+    "categories": "字典类别",
+    "category": {
+      "return_reason": "退货原因",
+      "platform": "平台",
+      "return_method": "退货方式",
+      "common": "通用类别"
+    },
+    "col": {
+      "name": "名称",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "itemsCount": "（{count} 项）",
+    "empty": "该类别下暂无字典项",
+    "btnAdd": "+ 新增字典项",
+    "enabled": "启用",
+    "disabled": "停用",
+    "btnSave": "保存",
+    "btnDelete": "删除",
+    "modal": {
+      "title": "新增字典项",
+      "code": "代码",
+      "codeHint": "（英文/数字，不含空格，作为系统内唯一值）",
+      "name": "名称"
+    },
+    "confirmDelete": "确定删除该字典项？",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败",
+    "addSuccess": "新增成功",
+    "addFailed": "新增失败",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败",
+    "codeRequired": "代码不能为空",
+    "nameRequired": "名称不能为空",
+    "loadFailed": "加载失败: "
   },
   "toast": {
     "close": "关闭"

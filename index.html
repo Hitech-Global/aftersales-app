@@ -5936,12 +5936,31 @@ async function deleteApprovalFlow(id, name) {
 }
 
 // ==================== 字典管理 ====================
-const DICT_CATEGORIES = [
-  { id: 'return_reason', label: '退货原因' },
-  { id: 'platform', label: '平台' },
-  { id: 'return_method', label: '退货方式' },
-  { id: 'common', label: '通用类别' }
-];
+const DICT_CATEGORY_IDS = ['return_reason', 'platform', 'return_method', 'common'];
+function _dictGetCategoryLabel(id) {
+  // 从 i18n 取类别名,跟随顶部语言切换
+  try {
+    const t = (window.t ? window.t : (k) => k);
+    const v = t('dictionaries.category.' + id);
+    if (v && v !== 'dictionaries.category.' + id) return v;
+  } catch (e) {}
+  // 后备: 用 _dictFallbackLabels
+  return _dictFallbackLabels[id] || id;
+}
+const _dictFallbackLabels = { return_reason: '退货原因', platform: '平台', return_method: '退货方式', common: '通用类别' };
+function _dictLangShort() {
+  const loc = (window.__i18n && window.__i18n.getLocale) ? window.__i18n.getLocale() : 'zh-CN';
+  if (loc === 'en-US') return 'en';
+  if (loc === 'id-ID') return 'id';
+  return 'zh';
+}
+function _dictCurrentName(item) {
+  if (!item) return '';
+  const lang = _dictLangShort();
+  if (lang === 'en') return item.label_en || item.label_zh || item.label_id || item.code;
+  if (lang === 'id') return item.label_id || item.label_zh || item.label_en || item.code;
+  return item.label_zh || item.label_en || item.label_id || item.code;
+}
 let _dictAll = [];
 let _dictCurrent = 'return_reason';
 let _dictCache = {};
@@ -5956,17 +5975,17 @@ async function renderDictionaries() {
     _dictRenderSidebar();
     _dictRenderItems();
   } catch (e) {
-    document.getElementById('dict-items-area').innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">加载失败: ' + esc(e.message) + '</div>';
+    document.getElementById('dict-items-area').innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">' + esc(t('dictionaries.loadFailed') + e.message) + '</div>';
   }
 }
 
 function _dictRenderSidebar() {
   const el = document.getElementById('dict-category-list');
   let h = '';
-  DICT_CATEGORIES.forEach(c => {
-    const cnt = (_dictCache[c.id] || []).length;
-    h += '<div class="dict-cat-item ' + (c.id === _dictCurrent ? 'active' : '') + '" onclick="selectDictCategory(\'' + c.id + '\')">';
-    h += '<span>' + esc(c.label) + '</span><span class="dict-cat-count">' + cnt + '</span></div>';
+  DICT_CATEGORY_IDS.forEach(id => {
+    const cnt = (_dictCache[id] || []).length;
+    h += '<div class="dict-cat-item ' + (id === _dictCurrent ? 'active' : '') + '" onclick="selectDictCategory(\'' + id + '\')">';
+    h += '<span>' + esc(_dictGetCategoryLabel(id)) + '</span><span class="dict-cat-count">' + cnt + '</span></div>';
   });
   el.innerHTML = h;
 }
@@ -5974,32 +5993,31 @@ function _dictRenderSidebar() {
 function _dictRenderItems() {
   const area = document.getElementById('dict-items-area');
   const list = _dictCache[_dictCurrent] || [];
-  const cat = DICT_CATEGORIES.find(c => c.id === _dictCurrent);
+  const catLabel = _dictGetCategoryLabel(_dictCurrent);
+  const cntSuffix = t('dictionaries.itemsCount', { count: list.length });
   let h = '<div class="dict-main-header">';
-  h += '<span style="font-size:15px;font-weight:600">' + esc(cat.label) + ' <span style="font-weight:400;color:var(--text-muted);font-size:13px">（' + list.length + ' 项）</span></span>';
-  h += '<button class="af-btn af-btn-primary af-btn-sm" onclick="showDictAddForm()">+ 新增字典项</button>';
+  h += '<span style="font-size:15px;font-weight:600">' + esc(catLabel) + ' <span style="font-weight:400;color:var(--text-muted);font-size:13px">' + esc(cntSuffix) + '</span></span>';
+  h += '<button class="af-btn af-btn-primary af-btn-sm" onclick="showDictAddForm()">' + esc(t('dictionaries.btnAdd')) + '</button>';
   h += '</div>';
 
   if (list.length === 0) {
-    h += '<div style="padding:40px;text-align:center;color:var(--text-muted)">该类别下暂无字典项</div>';
+    h += '<div style="padding:40px;text-align:center;color:var(--text-muted)">' + esc(t('dictionaries.empty')) + '</div>';
     area.innerHTML = h;
     return;
   }
 
   h += '<table class="dict-table"><thead><tr>';
-  h += '<th style="width:60px">排序</th>';
-  h += '<th>代码（值）</th>';
-  h += '<th>中文名</th><th>English</th><th>Bahasa</th>';
-  h += '<th style="width:90px">状态</th><th style="width:140px">操作</th>';
+  h += '<th>' + esc(t('dictionaries.col.name')) + '</th>';
+  h += '<th style="width:120px">' + esc(t('dictionaries.col.status')) + '</th>';
+  h += '<th style="width:160px">' + esc(t('dictionaries.col.actions')) + '</th>';
   h += '</tr></thead><tbody>';
   list.forEach(d => {
-    h += '<tr><td><input class="dict-input" type="number" value="' + d.sort_order + '" onchange="updateDictField(\'' + d.id + '\',\'sort_order\',parseInt(this.value)||0)"></td>';
-    h += '<td><code style="font-size:12px;color:var(--text-muted)">' + esc(d.code) + '</code></td>';
-    h += '<td><input class="dict-input" value="' + esc(d.label_zh || '') + '" onchange="updateDictField(\'' + d.id + '\',\'label_zh\',this.value)"></td>';
-    h += '<td><input class="dict-input" value="' + esc(d.label_en || '') + '" onchange="updateDictField(\'' + d.id + '\',\'label_en\',this.value)"></td>';
-    h += '<td><input class="dict-input" value="' + esc(d.label_id || '') + '" onchange="updateDictField(\'' + d.id + '\',\'label_id\',this.value)"></td>';
-    h += '<td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><div class="af-toggle ' + (d.enabled ? 'af-toggle-on' : 'af-toggle-off') + '" onclick="toggleDictEnabled(\'' + d.id + '\')"><div class="af-toggle-knob"></div></div><span style="font-size:12px">' + (d.enabled ? '启用' : '停用') + '</span></label></td>';
-    h += '<td><div class="dict-actions-cell"><button class="af-btn af-btn-secondary af-btn-sm" onclick="updateDictField(\'' + d.id + '\',null,null,true)">保存</button><button class="af-btn af-btn-danger af-btn-sm" onclick="deleteDictItem(\'' + d.id + '\')">删除</button></div></td>';
+    const displayName = _dictCurrentName(d) || d.code;
+    h += '<tr>';
+    h += '<td><input class="dict-input" value="' + esc(displayName) + '" onchange="updateDictName(\'' + d.id + '\',this.value)"></td>';
+    const statusText = d.enabled ? t('dictionaries.enabled') : t('dictionaries.disabled');
+    h += '<td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><div class="af-toggle ' + (d.enabled ? 'af-toggle-on' : 'af-toggle-off') + '" onclick="toggleDictEnabled(\'' + d.id + '\')"><div class="af-toggle-knob"></div></div><span style="font-size:12px">' + esc(statusText) + '</span></label></td>';
+    h += '<td><div class="dict-actions-cell"><button class="af-btn af-btn-secondary af-btn-sm" onclick="updateDictName(\'' + d.id + '\',null,true)">' + esc(t('dictionaries.btnSave')) + '</button><button class="af-btn af-btn-danger af-btn-sm" onclick="deleteDictItem(\'' + d.id + '\')">' + esc(t('dictionaries.btnDelete')) + '</button></div></td>';
     h += '</tr>';
   });
   h += '</tbody></table>';
@@ -6012,31 +6030,39 @@ function selectDictCategory(id) {
   _dictRenderItems();
 }
 
-async function updateDictField(id, field, value, saveAll) {
+// 编辑/保存: 名称只输入一个值,按当前语言写到对应的 label_*;同时同步给另两种语言(保证下拉项在所有语言下都能显示)。
+async function updateDictName(id, value, saveNow) {
   const item = _dictAll.find(d => d.id === id);
   if (!item) return;
-  if (saveAll) {
-    const row = document.querySelector('tr:has(button[onclick*="' + id + '"])');
+  if (value !== null && value !== undefined) {
+    const lang = _dictLangShort();
+    item.label_zh = value;
+    item.label_en = value;
+    item.label_id = value;
+    // (实际只按当前语言写是允许的,但为保持下拉多语言可见,这里同步写入三列)
+  }
+  if (saveNow) {
     try {
       const resp = await fetch('/api/dictionaries/' + encodeURIComponent(id), {
         method: 'PUT',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          label_zh: item.label_zh, label_en: item.label_en, label_id: item.label_id,
-          sort_order: item.sort_order, enabled: item.enabled
+          label_zh: item.label_zh,
+          label_en: item.label_en,
+          label_id: item.label_id,
+          sort_order: item.sort_order || 0,
+          enabled: item.enabled
         })
       });
       if (resp.ok) {
         Object.assign(item, await resp.json());
-        toast('保存成功', 'success');
+        toast(t('dictionaries.saveSuccess'), 'success');
       } else {
         const err = await resp.json();
-        toast('保存失败: ' + (err.error || ''), 'error');
+        toast(t('dictionaries.saveFailed') + (err.error || ''), 'error');
       }
-    } catch (e) { toast('保存失败: ' + e.message, 'error'); }
-    return;
+    } catch (e) { toast(t('dictionaries.saveFailed') + e.message, 'error'); }
   }
-  item[field] = value;
 }
 
 async function toggleDictEnabled(id) {
@@ -6050,11 +6076,11 @@ async function toggleDictEnabled(id) {
       body: JSON.stringify({ enabled: item.enabled })
     });
     _dictRenderItems();
-  } catch (e) { toast('操作失败: ' + e.message, 'error'); }
+  } catch (e) { toast(t('dictionaries.deleteFailed') + e.message, 'error'); }
 }
 
 async function deleteDictItem(id) {
-  if (!confirm('确定删除该字典项？')) return;
+  if (!confirm(t('dictionaries.confirmDelete'))) return;
   try {
     const resp = await fetch('/api/dictionaries/' + encodeURIComponent(id), {
       method: 'DELETE',
@@ -6062,40 +6088,43 @@ async function deleteDictItem(id) {
     });
     if (resp.ok) {
       await renderDictionaries();
-      toast('删除成功', 'success');
+      toast(t('dictionaries.deleteSuccess'), 'success');
     } else {
       const err = await resp.json();
-      toast('删除失败: ' + (err.error || ''), 'error');
+      toast(t('dictionaries.deleteFailed') + (err.error || ''), 'error');
     }
-  } catch (e) { toast('删除失败: ' + e.message, 'error'); }
+  } catch (e) { toast(t('dictionaries.deleteFailed') + e.message, 'error'); }
 }
 
 function showDictAddForm() {
-  const code = prompt('请输入新字典项的代码（英文/数字，不含空格）：');
-  if (!code) return;
-  const zh = prompt('中文名：') || '';
-  const en = prompt('English name (可选)：') || '';
-  const id_label = prompt('Nama Bahasa Indonesia (可选)：') || '';
-  const cat = DICT_CATEGORIES.find(c => c.id === _dictCurrent);
-  if (!confirm('将在「' + cat.label + '」类别下新增：\n代码: ' + code + '\n中文: ' + zh + '\n英文: ' + en + '\n印尼: ' + id_label)) return;
-  createDictItem(code, zh, en, id_label);
+  const code = prompt(t('dictionaries.modal.code') + t('dictionaries.modal.codeHint') + '：');
+  if (!code || !code.trim()) {
+    if (code !== null) toast(t('dictionaries.codeRequired'), 'error');
+    return;
+  }
+  const name = prompt(t('dictionaries.modal.name') + '：');
+  if (!name || !name.trim()) {
+    if (name !== null) toast(t('dictionaries.nameRequired'), 'error');
+    return;
+  }
+  createDictItem(code.trim(), name.trim());
 }
 
-async function createDictItem(code, label_zh, label_en, label_id) {
+async function createDictItem(code, name) {
   try {
     const resp = await fetch('/api/dictionaries', {
       method: 'POST',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category: _dictCurrent, code, label_zh, label_en, label_id, sort_order: 999, enabled: true })
+      body: JSON.stringify({ category: _dictCurrent, code, label_zh: name, label_en: name, label_id: name, sort_order: 0, enabled: true })
     });
     if (resp.ok) {
       await renderDictionaries();
-      toast('新增成功', 'success');
+      toast(t('dictionaries.addSuccess'), 'success');
     } else {
       const err = await resp.json();
-      toast('新增失败: ' + (err.error || ''), 'error');
+      toast(t('dictionaries.addFailed') + (err.error || ''), 'error');
     }
-  } catch (e) { toast('新增失败: ' + e.message, 'error'); }
+  } catch (e) { toast(t('dictionaries.addFailed') + e.message, 'error'); }
 }
 
 function toast(msg, type) {
@@ -6118,9 +6147,15 @@ async function loadDictOptions(category) {
 
 function getDictLabel(item, lang) {
   if (!item) return '';
-  if (lang === 'en') return item.label_en || item.label_zh || item.code;
-  if (lang === 'id') return item.label_id || item.label_zh || item.code;
-  return item.label_zh || item.label_en || item.code;
+  if (!lang) {
+    const loc = (window.__i18n && window.__i18n.getLocale) ? window.__i18n.getLocale() : 'zh-CN';
+    if (loc === 'en-US') lang = 'en';
+    else if (loc === 'id-ID') lang = 'id';
+    else lang = 'zh';
+  }
+  if (lang === 'en') return item.label_en || item.label_zh || item.label_id || item.code;
+  if (lang === 'id') return item.label_id || item.label_zh || item.label_en || item.code;
+  return item.label_zh || item.label_en || item.label_id || item.code;
 }
 
 function fillDictSelect(selectEl, items, currentValue, lang) {

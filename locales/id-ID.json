@@ -1057,7 +1057,41 @@
   },
   "dictionaries": {
     "title": "Manajemen Kamus",
-    "categories": "Kategori"
+    "categories": "Kategori",
+    "category": {
+      "return_reason": "Alasan Pengembalian",
+      "platform": "Platform",
+      "return_method": "Metode Pengembalian",
+      "common": "Umum"
+    },
+    "col": {
+      "name": "Nama",
+      "status": "Status",
+      "actions": "Tindakan"
+    },
+    "itemsCount": "({count} item)",
+    "empty": "Belum ada item dalam kategori ini",
+    "btnAdd": "+ Tambah Item",
+    "enabled": "Aktif",
+    "disabled": "Nonaktif",
+    "btnSave": "Simpan",
+    "btnDelete": "Hapus",
+    "modal": {
+      "title": "Tambah Item Kamus",
+      "code": "Kode",
+      "codeHint": "(huruf/angka, tanpa spasi; nilai unik sistem)",
+      "name": "Nama"
+    },
+    "confirmDelete": "Hapus item kamus ini?",
+    "saveSuccess": "Tersimpan",
+    "saveFailed": "Gagal menyimpan",
+    "addSuccess": "Berhasil ditambah",
+    "addFailed": "Gagal menambah",
+    "deleteSuccess": "Berhasil dihapus",
+    "deleteFailed": "Gagal menghapus",
+    "codeRequired": "Kode wajib diisi",
+    "nameRequired": "Nama wajib diisi",
+    "loadFailed": "Gagal memuat: "
   },
   "toast": {
     "close": "Tutup"
