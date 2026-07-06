@@ -253,6 +253,7 @@ app.use('/api/records', apiAuth);
 app.use('/api/products', apiAuth);
 app.use('/api/sales', apiAuth);
 app.use('/api/notify', apiAuth);
+app.use('/api/approval-flows', apiAuth);
 
 // ==================== 数据库 CRUD API ====================
 
@@ -653,6 +654,65 @@ app.post('/api/sales', async (req, res) => {
       results.push(result.rows[0]);
     }
     res.json(results);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- 审批流 API ----
+app.get('/api/approval-flows', requireLogin, async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM approval_flows ORDER BY created_at ASC');
+    const rows = result.rows.map(r => ({
+      ...r,
+      nodes: typeof r.nodes === 'string' ? JSON.parse(r.nodes || '[]') : (r.nodes || [])
+    }));
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/approval-flows', requireApiPermission('system_config'), async (req, res) => {
+  try {
+    const { id, name, scope, enabled, nodes } = req.body;
+    if (!name) return res.status(400).json({ error: '流程名称不能为空' });
+    const result = await query(
+      `INSERT INTO approval_flows (id, name, scope, enabled, nodes, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *`,
+      [id || ('flow_' + Date.now()), name, scope || '全部售后记录', enabled !== undefined ? enabled : false,
+       JSON.stringify(nodes || [])]
+    );
+    const row = result.rows[0];
+    res.json({ ...row, nodes: typeof row.nodes === 'string' ? JSON.parse(row.nodes || '[]') : (row.nodes || []) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/approval-flows/:id', requireApiPermission('system_config'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, scope, enabled, nodes } = req.body;
+    const fields = ['updated_at = NOW()'];
+    const values = [];
+    let idx = 1;
+    const add = (field, val) => { if (val !== undefined) { fields.push(`${field} = $${idx++}`); values.push(val); } };
+    add('name', name);
+    add('scope', scope);
+    add('enabled', enabled);
+    add('nodes', nodes !== undefined ? JSON.stringify(nodes) : undefined);
+    values.push(id);
+    const result = await query(
+      `UPDATE approval_flows SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: '审批流不存在' });
+    const row = result.rows[0];
+    res.json({ ...row, nodes: typeof row.nodes === 'string' ? JSON.parse(row.nodes || '[]') : (row.nodes || []) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/approval-flows/:id', requireApiPermission('system_config'), async (req, res) => {
+  try {
+    if (req.params.id === 'flow_standard') return res.status(400).json({ error: '不能删除标准审批流' });
+    const result = await query('DELETE FROM approval_flows WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: '审批流不存在' });
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

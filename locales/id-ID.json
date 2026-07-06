@@ -54,7 +54,8 @@
     "approval": "Persetujuan RMA",
     "products": "Produk",
     "users": "Pengguna",
-    "roles": "Role"
+    "roles": "Role",
+    "approvalFlows": "Alur Persetujuan"
   },
   "page": {
     "title": {
@@ -64,7 +65,8 @@
       "products": "Produk",
       "approval": "Persetujuan RMA",
       "users": "Pengguna",
-      "roles": "Role"
+      "roles": "Role",
+      "approvalFlows": "Alur Persetujuan"
     }
   },
   "overview": {
@@ -1041,6 +1043,10 @@
       "editUser": "Edit Pengguna",
       "newUser": "Pengguna Baru"
     }
+  },
+  "approvalFlows": {
+    "title": "Manajemen Alur Persetujuan",
+    "btnNew": "Buat Alur Baru"
   },
   "toast": {
     "close": "Tutup"

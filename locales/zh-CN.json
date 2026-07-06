@@ -54,7 +54,8 @@
     "approval": "售后记录审批",
     "products": "商品管理",
     "users": "用户管理",
-    "roles": "角色管理"
+    "roles": "角色管理",
+    "approvalFlows": "审批流管理"
   },
   "page": {
     "title": {
@@ -64,7 +65,8 @@
       "products": "商品管理",
       "approval": "售后记录审批",
       "users": "用户管理",
-      "roles": "角色管理"
+      "roles": "角色管理",
+      "approvalFlows": "审批流管理"
     }
   },
   "overview": {
@@ -1041,6 +1043,10 @@
       "editUser": "编辑用户",
       "newUser": "新建用户"
     }
+  },
+  "approvalFlows": {
+    "title": "审批流管理",
+    "btnNew": "新建审批流"
   },
   "toast": {
     "close": "关闭"

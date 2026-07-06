@@ -375,6 +375,50 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .erp-screenshot-thumb{width:48px;height:48px;border:1px solid var(--border);border-radius:4px;object-fit:cover;cursor:pointer}
 .erp-upload-btn{font-size:11px;color:var(--primary);cursor:pointer;text-decoration:underline}
 .btn-sm{padding:4px 10px;font-size:12px}
+/* 审批流管理 */
+.af-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.af-stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:14px 18px;text-align:center}
+.af-stat-num{font-size:22px;font-weight:700}
+.af-stat-label{font-size:12px;color:var(--text-muted);margin-top:4px}
+.af-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;overflow:hidden}
+.af-table{width:100%;border-collapse:collapse;font-size:13px}
+.af-table th{padding:10px 16px;text-align:left;font-weight:600;background:var(--bg-alt);border-bottom:1px solid var(--border);white-space:nowrap}
+.af-table td{padding:10px 16px;border-bottom:1px solid var(--border)}
+.af-table tr{cursor:pointer;transition:background .15s}
+.af-table tr:hover{background:var(--bg-alt)}
+.af-table tr.selected{background:rgba(46,125,50,.08)}
+.af-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600}
+.af-badge-on{background:rgba(46,125,50,.12);color:var(--primary)}
+.af-badge-off{background:rgba(0,0,0,.08);color:var(--text-muted)}
+.af-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s}
+.af-btn-primary{background:var(--primary);color:#fff}
+.af-btn-primary:hover{background:var(--primary-dark)}
+.af-btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+.af-btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.af-btn-sm{padding:3px 10px;font-size:12px}
+.af-btn-danger{background:transparent;border:1px solid #e53935;color:#e53935}
+.af-btn-danger:hover{background:#e53935;color:#fff}
+.af-flow-container{display:flex;align-items:center;gap:0;padding:24px 20px;overflow-x:auto;min-height:120px}
+.af-flow-node{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:120px;padding:14px 18px;border:2px solid var(--border);border-radius:10px;background:var(--card-bg);cursor:pointer;transition:all .2s;text-align:center}
+.af-flow-node:hover{border-color:var(--primary)}
+.af-flow-node.active{border-color:var(--primary);background:rgba(46,125,50,.05);box-shadow:0 2px 8px rgba(46,125,50,.15)}
+.af-flow-node-start,.af-flow-node-end{border-style:dashed;color:var(--text-muted)}
+.af-flow-level-tag{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--primary);color:#fff;font-size:10px;font-weight:600;margin-bottom:4px}
+.af-flow-arrow{font-size:20px;color:var(--text-muted);padding:0 6px;flex-shrink:0}
+.af-config-panel{padding:20px;border-top:1px solid var(--border)}
+.af-config-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.af-config-label{width:100px;font-size:13px;color:var(--text-secondary);flex-shrink:0;text-align:right}
+.af-config-input,.af-config-select{flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg);color:var(--text)}
+.af-config-input:focus,.af-config-select:focus{outline:none;border-color:var(--primary)}
+.af-config-hint{font-size:11px;color:var(--text-muted);margin-top:4px;margin-left:112px}
+.af-toggle{position:relative;width:36px;height:20px;border-radius:10px;cursor:pointer;transition:background .2s}
+.af-toggle-on{background:var(--primary)}
+.af-toggle-off{background:var(--border)}
+.af-toggle-knob{position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+.af-toggle-on .af-toggle-knob{left:18px}
+.af-toggle-off .af-toggle-knob{left:2px}
+.af-node-actions{display:flex;gap:4px;flex-shrink:0}
+.af-empty{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
 </style>
 </head>
 <body>
@@ -738,6 +782,17 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             <button class="btn btn-primary" onclick="openRoleModal()" data-i18n="roles.btnNew"></button>
           </div>
           <div id="roles-table-area"></div>
+        </div>
+
+        <!-- 审批流管理 -->
+        <div id="page-approval-flows" class="page">
+          <div class="page-header">
+            <h2 data-i18n="approvalFlows.title"></h2>
+            <div style="display:flex;gap:8px">
+              <button class="af-btn af-btn-primary af-btn-sm" onclick="createApprovalFlow()">+ <span data-i18n="approvalFlows.btnNew"></span></button>
+            </div>
+          </div>
+          <div id="approval-flows-area"></div>
         </div>
       </div>
     </div>
@@ -1511,7 +1566,8 @@ const PAGE_PERMISSIONS = {
   products: 'product_view',
   approval: ['approval_level1', 'approval_level2', 'approval_level3', 'record_view'],
   users: 'user_manage',
-  roles: 'role_manage'
+  roles: 'role_manage',
+  'approval-flows': 'system_config'
 };
 function canAccessPage(page){
   const requiredPerm = PAGE_PERMISSIONS[page];
@@ -2233,6 +2289,7 @@ function renderSidebar(){
     {id:'system', title:t('nav.group.system'), items:[
       {id:'users', icon:'&#x1F464;', label:t('nav.users'), perm:'user_manage'},
       {id:'roles', icon:'&#x1F6E1;', label:t('nav.roles'), perm:'role_manage'},
+      {id:'approval-flows', icon:'&#x2696;', label:t('nav.approvalFlows'), perm:'system_config'},
     ]}
   ];
   let html='';
@@ -2266,7 +2323,7 @@ function showPage(page, recordId=null){
   }
   setSidebarActive(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles')};
+  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
@@ -2279,6 +2336,7 @@ function showPage(page, recordId=null){
   else if(page==='approval'){ document.getElementById('page-approval').classList.add('active'); renderApproval(); }
   else if(page==='users'){ document.getElementById('page-users').classList.add('active'); renderUsers(); }
   else if(page==='roles'){ document.getElementById('page-roles').classList.add('active'); renderRoles(); }
+  else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); renderApprovalFlows(); }
 }
 
 function updatePermissionedUI(){
@@ -5387,6 +5445,323 @@ window.__i18n_test = async function() {
   }
   return { total, errors, errorList };
 };
+
+// ==================== 审批流管理 ====================
+let _afFlows = [];
+let _afCurrentIdx = 0;
+let _afSelectedNode = -1;
+let _afUsers = [];
+let _afRoles = [];
+
+async function renderApprovalFlows() {
+  const area = document.getElementById('approval-flows-area');
+  if (!area) return;
+  area.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">加载中...</div>';
+  try {
+    const [flowResp, userResp, roleResp] = await Promise.all([
+      fetch('/api/approval-flows', { headers: getAuthHeaders() }),
+      fetch('/api/users', { headers: getAuthHeaders() }),
+      fetch('/api/roles', { headers: getAuthHeaders() })
+    ]);
+    _afFlows = await flowResp.json();
+    _afUsers = await userResp.json();
+    _afRoles = await roleResp.json();
+    if (!Array.isArray(_afFlows)) _afFlows = [];
+    _afCurrentIdx = 0;
+    _afSelectedNode = -1;
+    _afRenderPage();
+  } catch (e) {
+    area.innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">加载失败: ' + esc(e.message) + '</div>';
+  }
+}
+
+function _afUsersWithPerm(perm) {
+  return (_afUsers || []).filter(u => u.status === 'active').filter(u => {
+    const role = (_afRoles || []).find(r => r.id === u.role_id);
+    if (!role) return false;
+    let perms = role.permissions;
+    if (typeof perms === 'string') { try { perms = JSON.parse(perms); } catch(_) { perms = []; } }
+    return Array.isArray(perms) && perms.includes(perm);
+  });
+}
+
+function _afPermLabel(perm) {
+  const map = { approval_level1: '一级审批权限', approval_level2: '二级审批权限', approval_level3: '三级审批权限' };
+  return map[perm] || perm;
+}
+
+function _afRenderPage() {
+  const area = document.getElementById('approval-flows-area');
+  const enabled = _afFlows.filter(f => f.enabled).length;
+  const disabled = _afFlows.length - enabled;
+  let h = '';
+
+  // 统计卡片
+  h += '<div class="af-stats">';
+  h += '<div class="af-stat-card"><div class="af-stat-num" style="color:var(--primary)">' + _afFlows.length + '</div><div class="af-stat-label">流程总数</div></div>';
+  h += '<div class="af-stat-card"><div class="af-stat-num" style="color:var(--primary)">' + enabled + '</div><div class="af-stat-label">启用中</div></div>';
+  h += '<div class="af-stat-card"><div class="af-stat-num" style="color:var(--text-muted)">' + disabled + '</div><div class="af-stat-label">已停用</div></div>';
+  h += '<div class="af-stat-card"><div class="af-stat-num" style="color:var(--text-muted)">' + _afFlows.reduce((s, f) => s + (f.nodes ? f.nodes.length : 0), 0) + '</div><div class="af-stat-label">审批节点总数</div></div>';
+  h += '</div>';
+
+  // 流程列表
+  h += '<div class="af-card">';
+  h += '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">';
+  h += '<span style="font-size:15px;font-weight:600">审批流列表</span>';
+  h += '<span style="font-size:12px;color:var(--text-muted)">新建时自动复制标准售后审批流配置</span>';
+  h += '</div>';
+  h += '<table class="af-table"><thead><tr><th>流程名称</th><th>适用范围</th><th>审批层级</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  _afFlows.forEach((f, i) => {
+    h += '<tr class="' + (i === _afCurrentIdx ? 'selected' : '') + '" onclick="selectFlow(' + i + ')">';
+    h += '<td style="font-weight:600">' + esc(f.name) + '</td>';
+    h += '<td>' + esc(f.scope || '-') + '</td>';
+    h += '<td>' + (f.nodes ? f.nodes.length : 0) + ' 级</td>';
+    h += '<td><span class="af-badge ' + (f.enabled ? 'af-badge-on' : 'af-badge-off') + '">' + (f.enabled ? '启用' : '停用') + '</span></td>';
+    h += '<td onclick="event.stopPropagation()">';
+    if (f.id !== 'flow_standard') {
+      h += '<button class="af-btn af-btn-danger af-btn-sm" onclick="deleteApprovalFlow(\'' + esc(f.id) + '\',\'' + esc(f.name).replace(/'/g, "\\'") + '\')">删除</button>';
+    } else {
+      h += '<span style="font-size:11px;color:var(--text-muted)">默认流程</span>';
+    }
+    h += '</td></tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // 流程编辑器
+  if (_afFlows.length > 0 && _afFlows[_afCurrentIdx]) {
+    const flow = _afFlows[_afCurrentIdx];
+    h += '<div class="af-card">';
+    // 编辑器头部
+    h += '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">';
+    h += '<div style="display:flex;align-items:center;gap:12px">';
+    h += '<input class="af-config-input" style="width:220px;font-weight:600;font-size:15px" value="' + esc(flow.name) + '" id="af-flow-name" onchange="updateFlowField(\'name\',this.value)">';
+    h += '<span class="af-badge ' + (flow.enabled ? 'af-badge-on' : 'af-badge-off') + '">' + (flow.enabled ? '启用' : '停用') + '</span>';
+    h += '</div>';
+    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<span style="font-size:12px;color:var(--text-muted)">启用/停用</span>';
+    h += '<div class="af-toggle ' + (flow.enabled ? 'af-toggle-on' : 'af-toggle-off') + '" onclick="toggleFlowEnabled()"><div class="af-toggle-knob"></div></div>';
+    h += '<button class="af-btn af-btn-primary af-btn-sm" onclick="saveFlow()">保存</button>';
+    h += '</div></div>';
+
+    // 适用范围
+    h += '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">';
+    h += '<span style="font-size:13px;color:var(--text-secondary);width:80px;text-align:right">适用范围</span>';
+    h += '<input class="af-config-input" value="' + esc(flow.scope || '') + '" id="af-flow-scope" onchange="updateFlowField(\'scope\',this.value)" style="max-width:400px">';
+    h += '</div>';
+
+    // 可视化流程节点
+    h += '<div class="af-flow-container" id="af-flow-container">';
+    h += '<div class="af-flow-node af-flow-node-start"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">起始</div><div style="font-size:14px;font-weight:600">提交申请</div></div>';
+    (flow.nodes || []).forEach((node, i) => {
+      h += '<div class="af-flow-arrow">&#x2192;</div>';
+      h += '<div class="af-flow-node ' + (i === _afSelectedNode ? 'active' : '') + '" onclick="selectFlowNode(' + i + ')">';
+      h += '<div class="af-flow-level-tag">L' + (i + 1) + '</div>';
+      h += '<div style="font-size:14px;font-weight:600">' + esc(node.title || ('审批层级' + (i + 1))) + '</div>';
+      h += '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px">' + esc(_afPermLabel(node.permission)) + '</div>';
+      h += '</div>';
+    });
+    h += '<div class="af-flow-arrow">&#x2192;</div>';
+    h += '<div class="af-flow-node af-flow-node-end"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">结束</div><div style="font-size:14px;font-weight:600">审批完成</div></div>';
+    h += '</div>';
+
+    // 节点操作栏
+    h += '<div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">';
+    h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="addFlowNode()">+ 添加审批层级</button>';
+    h += '<span style="font-size:11px;color:var(--text-muted);margin-left:auto">点击节点查看和编辑配置</span>';
+    h += '</div>';
+
+    // 节点配置面板
+    if (_afSelectedNode >= 0 && _afSelectedNode < (flow.nodes || []).length) {
+      h += _afRenderNodeConfig(flow.nodes[_afSelectedNode], _afSelectedNode, flow.nodes.length);
+    } else {
+      h += '<div class="af-empty" style="padding:24px">点击上方审批节点查看和编辑配置</div>';
+    }
+    h += '</div>';
+  }
+
+  area.innerHTML = h;
+}
+
+function _afRenderNodeConfig(node, idx, total) {
+  const users = _afUsersWithPerm(node.permission);
+  let h = '<div class="af-config-panel">';
+  h += '<div style="font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">';
+  h += '<span>节点配置 - L' + (idx + 1) + '</span>';
+  h += '<div class="af-node-actions">';
+  if (idx > 0) h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="moveFlowNode(' + idx + ',-1)">&#x2191; 上移</button>';
+  if (idx < total - 1) h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="moveFlowNode(' + idx + ',1)">&#x2193; 下移</button>';
+  h += '<button class="af-btn af-btn-danger af-btn-sm" onclick="deleteFlowNode(' + idx + ')">&#x2715; 删除层级</button>';
+  h += '</div></div>';
+
+  // 层级名称
+  h += '<div class="af-config-row"><span class="af-config-label">层级名称</span>';
+  h += '<input class="af-config-input" value="' + esc(node.title || '') + '" onchange="updateNodeField(' + idx + ',\'title\',this.value)"></div>';
+
+  // 审批权限
+  h += '<div class="af-config-row"><span class="af-config-label">审批权限</span>';
+  h += '<select class="af-config-select" onchange="updateNodeField(' + idx + ',\'permission\',this.value)">';
+  ['approval_level1', 'approval_level2', 'approval_level3'].forEach(p => {
+    h += '<option value="' + p + '"' + (node.permission === p ? ' selected' : '') + '>' + esc(_afPermLabel(p)) + '</option>';
+  });
+  h += '</select></div>';
+  h += '<div class="af-config-hint">审批人列表自动筛选具有对应权限的在职用户</div>';
+
+  // 审批人
+  h += '<div class="af-config-row"><span class="af-config-label">审批人</span>';
+  h += '<select class="af-config-select" onchange="updateNodeField(' + idx + ',\'approver_id\',this.value)">';
+  h += '<option value="">请选择</option>';
+  users.forEach(u => {
+    h += '<option value="' + esc(u.id) + '"' + (node.approver_id === u.id ? ' selected' : '') + '>' + esc(u.name) + ' (' + esc(u.username) + ')</option>';
+  });
+  h += '</select></div>';
+  h += '<div class="af-config-hint">当前有 ' + users.length + ' 名用户具有此权限</div>';
+
+  // 备选审批人
+  h += '<div class="af-config-row"><span class="af-config-label">备选审批人</span>';
+  h += '<select class="af-config-select" onchange="updateNodeField(' + idx + ',\'backup_approver_id\',this.value)">';
+  h += '<option value="">无</option>';
+  users.forEach(u => {
+    h += '<option value="' + esc(u.id) + '"' + (node.backup_approver_id === u.id ? ' selected' : '') + '>' + esc(u.name) + ' (' + esc(u.username) + ')</option>';
+  });
+  h += '</select></div>';
+
+  h += '</div>';
+  return h;
+}
+
+function selectFlow(idx) {
+  _afCurrentIdx = idx;
+  _afSelectedNode = -1;
+  _afRenderPage();
+}
+
+function selectFlowNode(idx) {
+  _afSelectedNode = idx;
+  _afRenderPage();
+}
+
+function updateFlowField(field, value) {
+  if (!_afFlows[_afCurrentIdx]) return;
+  _afFlows[_afCurrentIdx][field] = value;
+}
+
+function updateNodeField(nodeIdx, field, value) {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow || !flow.nodes || !flow.nodes[nodeIdx]) return;
+  flow.nodes[nodeIdx][field] = value;
+  if (field === 'permission') {
+    flow.nodes[nodeIdx].approver_id = '';
+    flow.nodes[nodeIdx].backup_approver_id = '';
+    _afRenderPage();
+  }
+}
+
+function addFlowNode() {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow) return;
+  if (!flow.nodes) flow.nodes = [];
+  const lvl = flow.nodes.length + 1;
+  const perm = lvl <= 3 ? 'approval_level' + lvl : 'approval_level3';
+  flow.nodes.push({ level: lvl, title: '审批层级' + lvl, permission: perm });
+  _afSelectedNode = flow.nodes.length - 1;
+  _afRenderPage();
+}
+
+function moveFlowNode(idx, dir) {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow || !flow.nodes) return;
+  const ni = idx + dir;
+  if (ni < 0 || ni >= flow.nodes.length) return;
+  const tmp = flow.nodes[idx];
+  flow.nodes[idx] = flow.nodes[ni];
+  flow.nodes[ni] = tmp;
+  _afSelectedNode = ni;
+  _afRenderPage();
+}
+
+function deleteFlowNode(idx) {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow || !flow.nodes) return;
+  if (flow.nodes.length <= 1) { alert('至少保留一个审批层级'); return; }
+  flow.nodes.splice(idx, 1);
+  _afSelectedNode = -1;
+  _afRenderPage();
+}
+
+function toggleFlowEnabled() {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow) return;
+  flow.enabled = !flow.enabled;
+  _afRenderPage();
+}
+
+async function saveFlow() {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow) return;
+  try {
+    const resp = await fetch('/api/approval-flows/' + encodeURIComponent(flow.id), {
+      method: 'PUT',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: flow.name, scope: flow.scope, enabled: flow.enabled, nodes: flow.nodes })
+    });
+    if (resp.ok) {
+      alert('保存成功');
+    } else {
+      const err = await resp.json();
+      alert('保存失败: ' + (err.error || '未知错误'));
+    }
+  } catch (e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
+async function createApprovalFlow() {
+  const standard = _afFlows.find(f => f.id === 'flow_standard') || _afFlows[0];
+  if (!standard) { alert('未找到标准审批流，无法复制'); return; }
+  const newFlow = {
+    id: 'flow_' + Date.now(),
+    name: '新审批流（复制自标准流）',
+    scope: standard.scope || '全部售后记录',
+    enabled: false,
+    nodes: JSON.parse(JSON.stringify(standard.nodes || []))
+  };
+  try {
+    const resp = await fetch('/api/approval-flows', {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(newFlow)
+    });
+    if (resp.ok) {
+      await renderApprovalFlows();
+      _afCurrentIdx = _afFlows.length - 1;
+      _afRenderPage();
+      alert('已创建新审批流（复制自标准流配置），请编辑名称和配置后启用');
+    } else {
+      const err = await resp.json();
+      alert('创建失败: ' + (err.error || '未知错误'));
+    }
+  } catch (e) {
+    alert('创建失败: ' + e.message);
+  }
+}
+
+async function deleteApprovalFlow(id, name) {
+  if (!confirm('确定删除审批流「' + name + '」？')) return;
+  try {
+    const resp = await fetch('/api/approval-flows/' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (resp.ok) {
+      await renderApprovalFlows();
+    } else {
+      const err = await resp.json();
+      alert('删除失败: ' + (err.error || '未知错误'));
+    }
+  } catch (e) {
+    alert('删除失败: ' + e.message);
+  }
+}
 </script>
 </body>
 </html>

@@ -174,6 +174,18 @@ async function initDatabase() {
       )
     `);
 
+    await query(`
+      CREATE TABLE IF NOT EXISTS approval_flows (
+        id VARCHAR(64) PRIMARY KEY,
+        name VARCHAR(128) NOT NULL,
+        scope VARCHAR(255) DEFAULT '全部售后记录',
+        enabled BOOLEAN DEFAULT true,
+        nodes JSONB DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     // 迁移：为已有的表添加缺失列
     const userMigrationColumns = [
       { name: 'feishu_user_id', type: 'VARCHAR(128) DEFAULT \'\'' },
@@ -252,6 +264,22 @@ async function initDatabase() {
       );
 
       console.log('[DB] 已插入默认角色和管理员账号');
+    }
+
+    // 插入默认标准售后审批流（如果不存在）
+    const { rows: flowRows } = await query('SELECT COUNT(*) as cnt FROM approval_flows');
+    if (parseInt(flowRows[0].cnt) === 0) {
+      const defaultNodes = JSON.stringify([
+        { level: 1, title: '一级审批', permission: 'approval_level1' },
+        { level: 2, title: '二级审批', permission: 'approval_level2' },
+        { level: 3, title: '三级审批', permission: 'approval_level3' }
+      ]);
+      await query(
+        `INSERT INTO approval_flows (id, name, scope, enabled, nodes) VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (id) DO NOTHING`,
+        ['flow_standard', '标准售后审批流', '全部售后记录', true, defaultNodes]
+      );
+      console.log('[DB] 已插入默认标准售后审批流');
     }
 
     return true;
