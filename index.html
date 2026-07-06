@@ -1058,6 +1058,32 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
   </div>
 </div>
 
+<!-- 字典新增弹窗 -->
+<div id="dict-add-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeDictAddForm()">
+  <div class="modal-panel" style="max-width:480px">
+    <div class="modal-header">
+      <h3 id="dict-add-title" data-i18n="dictionaries.modal.title">新增字典项</h3>
+      <button type="button" class="modal-close" onclick="closeDictAddForm()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" style="margin-bottom:14px">
+        <label class="form-label" data-i18n="dictionaries.modal.name">名称</label>
+        <input id="dict-add-name" class="form-input" type="text" autocomplete="off" maxlength="50" placeholder="">
+        <div id="dict-add-name-hint" class="form-hint" style="display:none"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:6px">
+        <label class="form-label" data-i18n="dictionaries.modal.code">代码</label>
+        <input id="dict-add-code" class="form-input" type="text" autocomplete="off" maxlength="40" placeholder="">
+        <div class="form-hint" data-i18n="dictionaries.modal.codeHint">（英文/数字，不含空格，作为系统内唯一值）</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDictAddForm()" data-i18n="common.cancel">取消</button>
+      <button type="button" id="dict-add-submit" class="btn btn-primary" onclick="submitDictAddForm()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- 图片预览遮罩 -->
 <div id="image-preview-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;cursor:zoom-out" onclick="closeImagePreview()">
   <img id="image-preview-img" style="max-width:90%;max-height:90%;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.5)" alt="preview">
@@ -6097,17 +6123,89 @@ async function deleteDictItem(id) {
 }
 
 function showDictAddForm() {
-  const code = prompt(t('dictionaries.modal.code') + t('dictionaries.modal.codeHint') + '：');
-  if (!code || !code.trim()) {
-    if (code !== null) toast(t('dictionaries.codeRequired'), 'error');
+  const nameEl = document.getElementById('dict-add-name');
+  const codeEl = document.getElementById('dict-add-code');
+  const hintEl = document.getElementById('dict-add-name-hint');
+  const submitBtn = document.getElementById('dict-add-submit');
+  const titleEl = document.getElementById('dict-add-title');
+  if (!nameEl) { console.error('dict-add modal not found'); return; }
+  // 重置
+  nameEl.value = '';
+  codeEl.value = '';
+  codeEl.readOnly = false;
+  if (hintEl) { hintEl.style.display = 'none'; hintEl.textContent = ''; }
+  if (titleEl) titleEl.textContent = t('dictionaries.modal.title');
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = t('dictionaries.btnSave') || '保存';
+  }
+  document.getElementById('dict-add-modal').classList.remove('hidden');
+  setTimeout(() => nameEl.focus(), 50);
+  // 名称输入时自动生成 code 提示
+  nameEl.oninput = () => {
+    const name = nameEl.value.trim();
+    if (!name) { codeEl.value = ''; return; }
+    // 只在用户没手动改过 code 时才覆盖
+    if (!codeEl.dataset.touched) {
+      codeEl.value = _dictSlugify(name);
+    }
+  };
+  codeEl.oninput = () => { codeEl.dataset.touched = '1'; };
+}
+
+function closeDictAddForm() {
+  const m = document.getElementById('dict-add-modal');
+  if (m) m.classList.add('hidden');
+  const nameEl = document.getElementById('dict-add-name');
+  const codeEl = document.getElementById('dict-add-code');
+  if (nameEl) nameEl.oninput = null;
+  if (codeEl) { codeEl.oninput = null; codeEl.dataset.touched = ''; }
+}
+
+function _dictSlugify(s) {
+  if (!s) return '';
+  // 中文：pinyin 库不在前端；用时间戳后缀保证不重复
+  const hasCJK = /[　-鿿]/.test(s);
+  if (hasCJK) {
+    // 留空,让后端用默认占位 / 由用户手动填
+    return '';
+  }
+  return s.toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40);
+}
+
+async function submitDictAddForm() {
+  const nameEl = document.getElementById('dict-add-name');
+  const codeEl = document.getElementById('dict-add-code');
+  const submitBtn = document.getElementById('dict-add-submit');
+  const hintEl = document.getElementById('dict-add-name-hint');
+  const name = nameEl.value.trim();
+  if (!name) {
+    if (hintEl) { hintEl.textContent = t('dictionaries.nameRequired'); hintEl.style.display = 'block'; }
+    nameEl.focus();
     return;
   }
-  const name = prompt(t('dictionaries.modal.name') + '：');
-  if (!name || !name.trim()) {
-    if (name !== null) toast(t('dictionaries.nameRequired'), 'error');
+  // 名称中含 CJK 时，code 不能为空且不能与现有重复
+  const hasCJK = /[　-鿿]/.test(name);
+  let code = codeEl.value.trim();
+  if (!code) {
+    if (hasCJK) {
+      if (hintEl) { hintEl.textContent = t('dictionaries.codeRequired'); hintEl.style.display = 'block'; }
+      codeEl.focus();
+      return;
+    }
+    code = _dictSlugify(name);
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(code)) {
+    if (hintEl) { hintEl.textContent = t('dictionaries.codeRequired'); hintEl.style.display = 'block'; }
+    codeEl.focus();
     return;
   }
-  createDictItem(code.trim(), name.trim());
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = t('dictionaries.btnSave') + '…'; }
+  await createDictItem(code, name);
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('dictionaries.btnSave') || '保存'; }
 }
 
 async function createDictItem(code, name) {
@@ -6118,10 +6216,11 @@ async function createDictItem(code, name) {
       body: JSON.stringify({ category: _dictCurrent, code, label_zh: name, label_en: name, label_id: name, sort_order: 0, enabled: true })
     });
     if (resp.ok) {
+      closeDictAddForm();
       await renderDictionaries();
       toast(t('dictionaries.addSuccess'), 'success');
     } else {
-      const err = await resp.json();
+      const err = await resp.json().catch(() => ({}));
       toast(t('dictionaries.addFailed') + (err.error || ''), 'error');
     }
   } catch (e) { toast(t('dictionaries.addFailed') + e.message, 'error'); }
