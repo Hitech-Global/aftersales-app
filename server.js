@@ -12,6 +12,8 @@ const express = require('express');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+const multer = require('multer');
 const { query, initDatabase } = require('./db');
 
 // ==================== 加载环境变量 ====================
@@ -25,7 +27,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.6.0-render-latest';
+const APP_VERSION = '3.7.0-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -254,6 +256,30 @@ app.use('/api/products', apiAuth);
 app.use('/api/sales', apiAuth);
 app.use('/api/notify', apiAuth);
 app.use('/api/approval-flows', apiAuth);
+app.use('/api/dictionaries', apiAuth);
+app.use('/api/attachments', apiAuth);
+
+// ==================== 附件上传 ====================
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const id = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    cb(null, id + ext);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar)$/i;
+    if (allowed.test(file.originalname)) cb(null, true);
+    else cb(new Error('不支持的文件类型'));
+  }
+});
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // ==================== 数据库 CRUD API ====================
 
@@ -723,6 +749,119 @@ app.get('/api/db/status', (req, res) => {
     configured: Boolean(dbUrl),
     connected: Boolean(require('./db').getPool())
   });
+});
+
+// ==================== 字典 API ====================
+app.get('/api/dictionaries', requireLogin, async (req, res) => {
+  try {
+    const { category } = req.query;
+    const sql = category
+      ? 'SELECT * FROM dictionaries WHERE category = $1 ORDER BY sort_order ASC, created_at ASC'
+      : 'SELECT * FROM dictionaries ORDER BY category, sort_order ASC';
+    const params = category ? [category] : [];
+    const result = await query(sql, params);
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/dictionaries', requireApiPermission('system_config'), async (req, res) => {
+  try {
+    const { category, code, label_zh, label_en, label_id, sort_order, enabled } = req.body;
+    if (!category || !code) return res.status(400).json({ error: '类别和代码不能为空' });
+    const id = 'dict_' + category + '_' + code + '_' + Date.now().toString(36);
+    const result = await query(
+      `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING *`,
+      [id, category, code, label_zh || '', label_en || '', label_id || '', sort_order || 0, enabled !== false]
+    );
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/dictionaries/:id', requireApiPermission('system_config'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { label_zh, label_en, label_id, sort_order, enabled } = req.body;
+    const fields = ['updated_at = NOW()'];
+    const values = [];
+    let idx = 1;
+    const add = (f, v) => { if (v !== undefined) { fields.push(`${f} = $${idx++}`); values.push(v); } };
+    add('label_zh', label_zh);
+    add('label_en', label_en);
+    add('label_id', label_id);
+    add('sort_order', sort_order);
+    add('enabled', enabled);
+    values.push(id);
+    const result = await query(
+      `UPDATE dictionaries SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: '字典项不存在' });
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/dictionaries/:id', requireApiPermission('system_config'), async (req, res) => {
+  try {
+    const result = await query('DELETE FROM dictionaries WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: '字典项不存在' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== 附件 API ====================
+app.post('/api/attachments/upload', upload.array('files', 10), async (req, res) => {
+  try {
+    const { record_id, item_index } = req.body;
+    if (!record_id) {
+      req.files.forEach(f => fs.unlink(f.path, () => {}));
+      return res.status(400).json({ error: '缺少 record_id' });
+    }
+    const uploadedBy = req.user ? (req.user.id || req.user.username || '') : '';
+    const saved = [];
+    for (const f of req.files) {
+      const id = 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const result = await query(
+        `INSERT INTO attachments (id, record_id, item_index, filename, original_name, mime_type, size, path, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [id, record_id, item_index ? parseInt(item_index) : null, f.filename, f.originalname, f.mimetype, f.size, '/uploads/' + f.filename, uploadedBy]
+      );
+      saved.push(result.rows[0]);
+    }
+    res.json(saved);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/attachments/record/:recordId', requireLogin, async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT * FROM attachments WHERE record_id = $1 ORDER BY uploaded_at ASC',
+      [req.params.recordId]
+    );
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/attachments/:id', requireLogin, async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM attachments WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: '附件不存在' });
+    const att = result.rows[0];
+    const filePath = path.join(__dirname, att.path.replace(/^\/uploads\//, 'uploads/'));
+    fs.unlink(filePath, () => {});
+    await query('DELETE FROM attachments WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 全局 multer 错误处理
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError || /不支持的文件类型/.test(err.message)) {
+    return res.status(400).json({ error: err.message });
+  }
+  next(err);
 });
 
 let tenantAccessToken = null;

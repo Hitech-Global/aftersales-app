@@ -55,7 +55,8 @@
     "products": "商品管理",
     "users": "用户管理",
     "roles": "角色管理",
-    "approvalFlows": "审批流管理"
+    "approvalFlows": "审批流管理",
+    "dictionaries": "字典管理"
   },
   "page": {
     "title": {
@@ -66,7 +67,8 @@
       "approval": "售后记录审批",
       "users": "用户管理",
       "roles": "角色管理",
-      "approvalFlows": "审批流管理"
+      "approvalFlows": "审批流管理",
+      "dictionaries": "字典管理"
     }
   },
   "overview": {
@@ -179,6 +181,7 @@
       "platform": "平台",
       "returnReason": "退货原因",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "订单号",
       "qty": "数量",
       "description": "问题说明",
@@ -251,10 +254,12 @@
     "col": {
       "platform": "平台",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "订单号",
       "qty": "数量",
       "returnReason": "退货原因",
       "description": "问题说明/备注",
+      "attachment": "附件",
       "actions": "操作"
     },
     "btnAddRow": "+ 添加明细行",
@@ -320,6 +325,7 @@
       "index": "#",
       "platform": "平台",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "订单号",
       "qty": "数量",
       "returnReason": "退货原因",
@@ -328,6 +334,7 @@
       "processProgress": "处理进度",
       "erpDate": "ERP入库日期",
       "desc": "问题说明/备注",
+      "attachment": "附件",
       "actions": "操作",
       "brand": "品牌"
     },
@@ -1047,6 +1054,10 @@
   "approvalFlows": {
     "title": "审批流管理",
     "btnNew": "新建审批流"
+  },
+  "dictionaries": {
+    "title": "字典管理",
+    "categories": "字典类别"
   },
   "toast": {
     "close": "关闭"

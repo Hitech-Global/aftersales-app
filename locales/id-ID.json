@@ -55,7 +55,8 @@
     "products": "Produk",
     "users": "Pengguna",
     "roles": "Role",
-    "approvalFlows": "Alur Persetujuan"
+    "approvalFlows": "Alur Persetujuan",
+    "dictionaries": "Kamus"
   },
   "page": {
     "title": {
@@ -66,7 +67,8 @@
       "approval": "Persetujuan RMA",
       "users": "Pengguna",
       "roles": "Role",
-      "approvalFlows": "Alur Persetujuan"
+      "approvalFlows": "Alur Persetujuan",
+      "dictionaries": "Kamus"
     }
   },
   "overview": {
@@ -179,6 +181,7 @@
       "platform": "Platform",
       "returnReason": "Alasan Retur",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "No. Pesanan",
       "qty": "Qty",
       "description": "Deskripsi Masalah",
@@ -251,10 +254,12 @@
     "col": {
       "platform": "Platform",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "No. Pesanan",
       "qty": "Qty",
       "returnReason": "Alasan Retur",
       "description": "Deskripsi Masalah / Catatan",
+      "attachment": "Lampiran",
       "actions": "Aksi"
     },
     "btnAddRow": "+ Tambah Item",
@@ -320,6 +325,7 @@
       "index": "#",
       "platform": "Platform",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "No. Pesanan",
       "qty": "Qty",
       "returnReason": "Alasan Retur",
@@ -328,6 +334,7 @@
       "processProgress": "Progress Proses",
       "erpDate": "Tanggal Penerimaan ERP",
       "desc": "Deskripsi Masalah / Catatan",
+      "attachment": "Lampiran",
       "actions": "Aksi",
       "brand": "Brand"
     },
@@ -1047,6 +1054,10 @@
   "approvalFlows": {
     "title": "Manajemen Alur Persetujuan",
     "btnNew": "Buat Alur Baru"
+  },
+  "dictionaries": {
+    "title": "Manajemen Kamus",
+    "categories": "Kategori"
   },
   "toast": {
     "close": "Tutup"

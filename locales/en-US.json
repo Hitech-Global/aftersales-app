@@ -55,7 +55,8 @@
     "products": "Products",
     "users": "Users",
     "roles": "Roles",
-    "approvalFlows": "Approval Flow"
+    "approvalFlows": "Approval Flow",
+    "dictionaries": "Dictionaries"
   },
   "page": {
     "title": {
@@ -66,7 +67,8 @@
       "approval": "RMA Approvals",
       "users": "Users",
       "roles": "Roles",
-      "approvalFlows": "Approval Flow"
+      "approvalFlows": "Approval Flow",
+      "dictionaries": "Dictionaries"
     }
   },
   "overview": {
@@ -179,6 +181,7 @@
       "platform": "Platform",
       "returnReason": "Return Reason",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "Order No.",
       "qty": "Qty",
       "description": "Issue Description",
@@ -251,10 +254,12 @@
     "col": {
       "platform": "Platform",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "Order No.",
       "qty": "Qty",
       "returnReason": "Return Reason",
       "description": "Issue Description / Notes",
+      "attachment": "Attachments",
       "actions": "Actions"
     },
     "btnAddRow": "+ Add Item",
@@ -320,6 +325,7 @@
       "index": "#",
       "platform": "Platform",
       "sku": "SKU",
+      "snCode": "SN Code",
       "orderNo": "Order No.",
       "qty": "Qty",
       "returnReason": "Return Reason",
@@ -328,6 +334,7 @@
       "processProgress": "Processing Progress",
       "erpDate": "ERP Receipt Date",
       "desc": "Issue Description / Notes",
+      "attachment": "Attachments",
       "actions": "Actions",
       "brand": "Brand"
     },
@@ -1047,6 +1054,10 @@
   "approvalFlows": {
     "title": "Approval Flow Management",
     "btnNew": "New Approval Flow"
+  },
+  "dictionaries": {
+    "title": "Dictionaries",
+    "categories": "Categories"
   },
   "toast": {
     "close": "Close"

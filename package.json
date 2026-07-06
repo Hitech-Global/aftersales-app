@@ -11,8 +11,14 @@
     "axios": "^1.7.0",
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
+    "multer": "^2.2.0",
     "pg": "^8.13.0"
   },
-  "keywords": ["aftersales", "feishu", "lark", "management"],
+  "keywords": [
+    "aftersales",
+    "feishu",
+    "lark",
+    "management"
+  ],
   "license": "MIT"
 }

@@ -186,6 +186,39 @@ async function initDatabase() {
       )
     `);
 
+    await query(`
+      CREATE TABLE IF NOT EXISTS dictionaries (
+        id VARCHAR(64) PRIMARY KEY,
+        category VARCHAR(64) NOT NULL,
+        code VARCHAR(128) NOT NULL,
+        label_zh VARCHAR(255) DEFAULT '',
+        label_en VARCHAR(255) DEFAULT '',
+        label_id VARCHAR(255) DEFAULT '',
+        sort_order INTEGER DEFAULT 0,
+        enabled BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(category, code)
+      )
+    `);
+    await query(`CREATE INDEX IF NOT EXISTS idx_dict_category ON dictionaries(category, sort_order)`);
+
+    await query(`
+      CREATE TABLE IF NOT EXISTS attachments (
+        id VARCHAR(64) PRIMARY KEY,
+        record_id VARCHAR(64) NOT NULL,
+        item_index INTEGER,
+        filename VARCHAR(255) NOT NULL,
+        original_name VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(128) DEFAULT '',
+        size BIGINT DEFAULT 0,
+        path VARCHAR(512) NOT NULL,
+        uploaded_by VARCHAR(64) DEFAULT '',
+        uploaded_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await query(`CREATE INDEX IF NOT EXISTS idx_attach_record ON attachments(record_id, item_index)`);
+
     // 迁移：为已有的表添加缺失列
     const userMigrationColumns = [
       { name: 'feishu_user_id', type: 'VARCHAR(128) DEFAULT \'\'' },
@@ -204,6 +237,7 @@ async function initDatabase() {
       { name: 'approver_level3_id', type: 'VARCHAR(64) DEFAULT \'\'' },
       { name: 'approver_level3_name', type: 'VARCHAR(128) DEFAULT \'\'' },
       { name: 'approval_history', type: 'JSONB DEFAULT \'[]\'' },
+      { name: 'sn_code', type: 'VARCHAR(255) DEFAULT \'\'' },
     ];
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
@@ -280,6 +314,37 @@ async function initDatabase() {
         ['flow_standard', '标准售后审批流', '全部售后记录', true, defaultNodes]
       );
       console.log('[DB] 已插入默认标准售后审批流');
+    }
+
+    // 插入默认字典数据（如果不存在）
+    const { rows: dictCount } = await query('SELECT COUNT(*) as cnt FROM dictionaries');
+    if (parseInt(dictCount[0].cnt) === 0) {
+      const defaultDicts = [
+        { category: 'return_reason', code: 'resellable', zh: '可二次销售', en: 'Resellable', id: 'Dapat Dijual Ulang', sort: 1 },
+        { category: 'return_reason', code: 'box_damage', zh: '彩盒损坏', en: 'Box Damaged', id: 'Kemasan Rusak', sort: 2 },
+        { category: 'return_reason', code: 'accessory_missing', zh: '配件缺失', en: 'Accessory Missing', id: 'Aksesori Hilang', sort: 3 },
+        { category: 'return_reason', code: 'hardware_fault', zh: '硬件故障', en: 'Hardware Fault', id: 'Kerusakan Hardware', sort: 4 },
+        { category: 'return_reason', code: 'scrapped', zh: '报废', en: 'Scrapped', id: 'Dibuang', sort: 5 },
+        { category: 'return_reason', code: 'human_damage', zh: '人为损坏', en: 'Human Damage', id: 'Kerusakan oleh Manusia', sort: 6 },
+        { category: 'return_reason', code: 'other', zh: '其他', en: 'Other', id: 'Lainnya', sort: 99 },
+        { category: 'platform', code: 'shopee', zh: 'Shopee', en: 'Shopee', id: 'Shopee', sort: 1 },
+        { category: 'platform', code: 'lazada', zh: 'Lazada', en: 'Lazada', id: 'Lazada', sort: 2 },
+        { category: 'platform', code: 'tiktok', zh: 'TikTok', en: 'TikTok', id: 'TikTok', sort: 3 },
+        { category: 'platform', code: 'tokopedia', zh: 'Tokopedia', en: 'Tokopedia', id: 'Tokopedia', sort: 4 },
+        { category: 'platform', code: 'offline', zh: '线下门店', en: 'Offline Store', id: 'Toko Offline', sort: 5 },
+        { category: 'platform', code: 'other', zh: '其他', en: 'Other', id: 'Lainnya', sort: 99 },
+        { category: 'return_method', code: 'pickup', zh: '上门取件', en: 'Pickup', id: 'Penjemputan', sort: 1 },
+        { category: 'return_method', code: 'customer_send', zh: '客户送修', en: 'Customer Drop-off', id: 'Kirim Pelanggan', sort: 2 },
+        { category: 'return_method', code: 'express_cod', zh: '快递到付', en: 'Express (Freight Collect)', id: 'Ekspres (Bayar Tujuan)', sort: 3 },
+      ];
+      for (const d of defaultDicts) {
+        await query(
+          `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true) ON CONFLICT (category, code) DO NOTHING`,
+          ['dict_' + d.category + '_' + d.code, d.category, d.code, d.zh, d.en, d.id, d.sort]
+        );
+      }
+      console.log('[DB] 已插入默认字典数据');
     }
 
     return true;

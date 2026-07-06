@@ -419,6 +419,40 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .af-toggle-off .af-toggle-knob{left:2px}
 .af-node-actions{display:flex;gap:4px;flex-shrink:0}
 .af-empty{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
+/* 字典管理 */
+.dict-layout{display:grid;grid-template-columns:220px 1fr;gap:16px;min-height:500px}
+.dict-sidebar{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;height:fit-content}
+.dict-sidebar-title{font-size:13px;font-weight:600;color:var(--text-secondary);padding:4px 8px 8px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.dict-cat-item{padding:10px 12px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:space-between;transition:all .15s;margin-bottom:2px}
+.dict-cat-item:hover{background:var(--bg-alt)}
+.dict-cat-item.active{background:rgba(46,125,50,.1);color:var(--primary);font-weight:600}
+.dict-cat-count{font-size:11px;background:var(--bg-alt);color:var(--text-muted);padding:1px 6px;border-radius:8px}
+.dict-cat-item.active .dict-cat-count{background:var(--primary);color:#fff}
+.dict-main{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.dict-main-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.dict-table{width:100%;border-collapse:collapse;font-size:13px}
+.dict-table th{padding:10px 14px;text-align:left;font-weight:600;background:var(--bg-alt);border-bottom:1px solid var(--border);white-space:nowrap}
+.dict-table td{padding:8px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.dict-table tr:last-child td{border-bottom:none}
+.dict-input{padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;width:100%;background:var(--card-bg);color:var(--text)}
+.dict-input:focus{outline:none;border-color:var(--primary)}
+.dict-actions-cell{display:flex;gap:4px}
+/* 附件上传 */
+.atch-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.atch-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--bg-alt);border:1px solid var(--border);border-radius:4px;font-size:12px;max-width:180px;cursor:pointer}
+.atch-chip:hover{border-color:var(--primary)}
+.atch-chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.atch-chip-del{color:#e53935;cursor:pointer;font-weight:bold;padding:0 2px}
+.atch-upload-btn{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;padding:2px 6px}
+.atch-upload-btn:hover{color:var(--primary-dark)}
+.atch-preview-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.atch-preview-box{background:#fff;border-radius:8px;max-width:90%;max-height:90%;display:flex;flex-direction:column;overflow:hidden}
+.atch-preview-bar{padding:8px 12px;background:#f5f5f5;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd;font-size:13px}
+.atch-preview-bar button{background:none;border:1px solid #ddd;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-left:4px}
+.atch-preview-content{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;background:#fafafa}
+.atch-preview-content img{max-width:100%;max-height:80vh;object-fit:contain}
+.atch-preview-content iframe{width:80vw;height:80vh;border:none;background:#fff}
+.atch-empty{font-size:12px;color:var(--text-muted);font-style:italic}
 </style>
 </head>
 <body>
@@ -636,13 +670,15 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                   <div class="detail-items-table-wrapper">
                     <table class="detail-items-table" id="detail-items-table">
                       <thead><tr>
-                        <th style="width:11%"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
-                        <th style="width:13%"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
-                        <th style="width:14%" data-i18n="form.col.orderNo"></th>
-                        <th style="width:7%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
+                        <th style="width:9%"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
+                        <th style="width:12%"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
+                        <th style="width:11%" data-i18n="form.col.snCode"></th>
+                        <th style="width:12%" data-i18n="form.col.orderNo"></th>
+                        <th style="width:6%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
                         <th style="width:10%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
-                        <th style="width:33%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
-                        <th style="width:5%" data-i18n="form.col.actions"></th>
+                        <th style="width:25%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
+                        <th style="width:11%" data-i18n="form.col.attachment"></th>
+                        <th style="width:4%" data-i18n="form.col.actions"></th>
                       </tr></thead>
                       <tbody id="detail-items-tbody"></tbody>
                     </table>
@@ -793,6 +829,22 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
             </div>
           </div>
           <div id="approval-flows-area"></div>
+        </div>
+
+        <!-- 字典管理 -->
+        <div id="page-dictionaries" class="page">
+          <div class="page-header">
+            <h2 data-i18n="dictionaries.title"></h2>
+          </div>
+          <div class="dict-layout">
+            <div class="dict-sidebar">
+              <div class="dict-sidebar-title" data-i18n="dictionaries.categories"></div>
+              <div id="dict-category-list"></div>
+            </div>
+            <div class="dict-main">
+              <div id="dict-items-area"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1567,7 +1619,8 @@ const PAGE_PERMISSIONS = {
   approval: ['approval_level1', 'approval_level2', 'approval_level3', 'record_view'],
   users: 'user_manage',
   roles: 'role_manage',
-  'approval-flows': 'system_config'
+  'approval-flows': 'system_config',
+  'dictionaries': 'system_config'
 };
 function canAccessPage(page){
   const requiredPerm = PAGE_PERMISSIONS[page];
@@ -2289,6 +2342,7 @@ function renderSidebar(){
     {id:'system', title:t('nav.group.system'), items:[
       {id:'users', icon:'&#x1F464;', label:t('nav.users'), perm:'user_manage'},
       {id:'roles', icon:'&#x1F6E1;', label:t('nav.roles'), perm:'role_manage'},
+      {id:'dictionaries', icon:'&#x1F4D6;', label:t('nav.dictionaries'), perm:'system_config'},
       {id:'approval-flows', icon:'&#x2696;', label:t('nav.approvalFlows'), perm:'system_config'},
     ]}
   ];
@@ -2323,7 +2377,7 @@ function showPage(page, recordId=null){
   }
   setSidebarActive(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows')};
+  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
@@ -2337,6 +2391,7 @@ function showPage(page, recordId=null){
   else if(page==='users'){ document.getElementById('page-users').classList.add('active'); renderUsers(); }
   else if(page==='roles'){ document.getElementById('page-roles').classList.add('active'); renderRoles(); }
   else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); renderApprovalFlows(); }
+  else if(page==='dictionaries'){ document.getElementById('page-dictionaries').classList.add('active'); renderDictionaries(); }
 }
 
 function updatePermissionedUI(){
@@ -2690,7 +2745,7 @@ async function renderList(){
     // ===== 按售后明细模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
-      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processType')}</th><th>${t('list.col.processProgress')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
+      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processType')}</th><th>${t('list.col.processProgress')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.snCode')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
@@ -2706,6 +2761,7 @@ async function renderList(){
           <td>${esc(it.platform||'-')}</td>
           <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
+          <td>${esc(it.sn_code||'-')}</td>
           <td>${esc(it.order_no||'-')}</td>
           <td>${it.quantity||0}</td>
           <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
@@ -3041,12 +3097,13 @@ async function renderDetail(id){
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th></tr></thead>
+        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
             <td>${esc(it.platform||'-')}</td>
             <td>${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
+            <td>${esc(it.sn_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
             <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
@@ -3054,6 +3111,7 @@ async function renderDetail(id){
             <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
             <td class="cell-date">${it.return_stockin_date?formatDate(it.return_stockin_date):'-'}</td>
             <td>${esc(it.fault_description||'-')}</td>
+            <td id="detail-item-atts-${i}" data-item-record="${esc(r.id)}" data-item-index="${i}"></td>
           </tr>`).join('')}</tbody>
         </table>
       </div>
@@ -3071,6 +3129,16 @@ async function renderDetail(id){
   `;
   applyDateInputLocale();
   renderPendingAttachments();
+  // Load attachments for each item
+  try {
+    const atts = await fetchRecordAttachments(r.id);
+    (r.items || []).forEach((it, i) => {
+      const cell = document.getElementById('detail-item-atts-' + i);
+      if (!cell) return;
+      const itemAtts = atts.filter(a => (a.item_index === null && i === 0) || a.item_index === i);
+      cell.innerHTML = renderAttachmentChips(itemAtts, false);
+    });
+  } catch (e) { /* ignore */ }
   }catch(err){
     console.error('[detail] render failed', err);
     detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage('list')">${t('detail.btnBack')}</button></div>`;
@@ -3082,14 +3150,60 @@ function openRecordForm(){
   if(!hasPermission('record_create')){ showFlash(t('flash.noPermissionCreate'),'warning'); return; }
   resetForm();
   document.getElementById('record-form-modal').classList.remove('hidden');
+  // Preload dictionaries
+  Promise.all([refreshReturnReasonsFromDict(), loadDictOptions('platform')]).then(([_, platforms]) => {
+    _platformCache = platforms;
+    refreshPlatformSelects();
+  });
 }
+
+let _platformCache = [];
 
 function closeRecordForm(){
   document.getElementById('record-form-modal').classList.add('hidden');
 }
 
+function refreshPlatformSelects(){
+  loadDictOptions('platform').then(opts => {
+    document.querySelectorAll('#detail-items-tbody select.platform-select').forEach(sel => {
+      const cur = sel.value;
+      const ph = t('form.option.pleaseSelect');
+      let h = '<option value="">' + ph + '</option>';
+      opts.forEach(o => {
+        h += '<option value="' + esc(o.code) + '"' + (cur === o.code ? ' selected' : '') + '>' + esc(getDictLabel(o)) + '</option>';
+      });
+      // Fallback: hard-coded if dict empty
+      if (opts.length === 0) {
+        h += '<option value="Shopee"' + (cur === 'Shopee' ? ' selected' : '') + '>Shopee</option>';
+        h += '<option value="TikTok"' + (cur === 'TikTok' ? ' selected' : '') + '>TikTok</option>';
+        h += '<option value="Offline Store"' + (cur === 'Offline Store' ? ' selected' : '') + '>Offline Store</option>';
+      }
+      sel.innerHTML = h;
+    });
+    // Refresh return reason selects
+    document.querySelectorAll('#detail-items-tbody select.type-select').forEach(sel => {
+      const cur = sel.value;
+      let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+      RETURN_REASONS.forEach(r => {
+        h += '<option value="' + esc(r) + '"' + (cur === r ? ' selected' : '') + '>' + esc(tReturnReason(r)) + '</option>';
+      });
+      sel.innerHTML = h;
+    });
+  });
+}
+
 // ==================== DETAIL ITEMS TABLE ====================
-const RETURN_REASONS=['可二次销售','彩盒损坏','配件缺失','硬件故障','报废'];
+const DEFAULT_RETURN_REASONS=['可二次销售','彩盒损坏','配件缺失','硬件故障','报废'];
+let RETURN_REASONS=[...DEFAULT_RETURN_REASONS];
+async function refreshReturnReasonsFromDict(){
+  const opts = await loadDictOptions('return_reason');
+  if (opts.length > 0) {
+    // 取字典 label_zh 作为值（保持兼容旧逻辑）
+    RETURN_REASONS = opts.map(o => o.label_zh || o.code);
+  } else {
+    RETURN_REASONS = [...DEFAULT_RETURN_REASONS];
+  }
+}
 const PROCESS_STATUSES = ['待ERP入库','待换彩盒','待补配件','待RMA','待报废','已处理'];
 function refreshProcessStatuses() {
   // 保持内部值为中文不变
@@ -3110,30 +3224,83 @@ const RETURN_REASON_LOCALE_FALLBACKS={
   'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap'}
 };
 
-function addDetailItem(platform, sku, orderNo, qty, returnReason, faultDesc){
+function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments){
   const tbody=document.getElementById('detail-items-tbody');
   const idx=tbody.children.length;
   const tr=document.createElement('tr');
+  tr.dataset.index=idx;
+  // Build platform options from cache (or fallback)
+  const platformOpts = _platformCache || [];
+  let platformHtml = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+  if (platformOpts.length > 0) {
+    platformOpts.forEach(o => {
+      platformHtml += '<option value="' + esc(o.code) + '"' + (platform === o.code ? ' selected' : '') + '>' + esc(getDictLabel(o)) + '</option>';
+    });
+  } else {
+    platformHtml += '<option value="Shopee"' + (platform === 'Shopee' ? ' selected' : '') + '>Shopee</option>';
+    platformHtml += '<option value="TikTok"' + (platform === 'TikTok' ? ' selected' : '') + '>TikTok</option>';
+    platformHtml += '<option value="Offline Store"' + (platform === 'Offline Store' ? ' selected' : '') + '>Offline Store</option>';
+  }
+  // Build return reason options
+  let reasonHtml = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+  RETURN_REASONS.forEach(r => {
+    reasonHtml += '<option value="' + esc(r) + '"' + (returnReason === r ? ' selected' : '') + '>' + esc(tReturnReason(r)) + '</option>';
+  });
   tr.innerHTML=`
-    <td><select class="platform-select">
-      <option value="">${t('form.option.pleaseSelect')}</option>
-      <option value="Shopee" ${platform==='Shopee'?'selected':''}>Shopee</option>
-      <option value="TikTok" ${platform==='TikTok'?'selected':''}>TikTok</option>
-      <option value="Offline Store" ${platform==='Offline Store'?'selected':''}>Offline Store</option>
-    </select></td>
+    <td><select class="platform-select" data-dict="platform">${platformHtml}</select></td>
     <td><input type="text" class="sku-input" list="sku-datalist" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
+    <td><input type="text" class="sn-input" placeholder="SN Code" value="${esc(snCode||'')}"></td>
     <td><input type="text" class="order-input" placeholder="${t('form.col.orderNo')}" value="${esc(orderNo||'')}"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
-    <td><select class="type-select" onchange="updateDetailTotalQty()">
-      <option value="">${t('form.option.pleaseSelect')}</option>
-      ${RETURN_REASONS.map(r=>`<option value="${r}" ${returnReason===r?'selected':''}>${tReturnReason(r)}</option>`).join('')}
-    </select></td>
+    <td><select class="type-select" onchange="updateDetailTotalQty()">${reasonHtml}</select></td>
     <td><input type="text" class="fault-input" placeholder="${t('form.descPlaceholder')}" value="${esc(faultDesc||'')}"></td>
+    <td>
+      <div class="atch-cell" data-attach-list>
+        <span class="atch-empty">无附件</span>
+      </div>
+      <label class="atch-upload-btn" data-upload-trigger="${idx}">📎 上传<input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" style="display:none" data-item-attach></label>
+    </td>
     <td><button type="button" class="btn-delete-row" title="${t('list.action.delete')}" onclick="removeDetailItem(this)">&times;</button></td>`;
   tr.dataset.index=idx;
   tbody.appendChild(tr);
+  // Render existing attachments
+  if (attachments && attachments.length > 0) {
+    const cell = tr.querySelector('.atch-cell');
+    cell.innerHTML = renderAttachmentChips(attachments, true);
+  }
+  // Bind file input change
+  const fileInput = tr.querySelector('input[data-item-attach]');
+  fileInput.addEventListener('change', async function(e){
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    await _handleItemAttachmentUpload(tr, files);
+    e.target.value = '';
+  });
   updateDetailTotalQty();
 }
+
+async function _handleItemAttachmentUpload(tr, files) {
+  // 分配/使用记录的 id
+  let recordId = tr.dataset.recordId || currentEditingRecordId;
+  if (!recordId) {
+    // 还没 recordId，先给一个临时 id，等提交时再关联
+    recordId = await nextId();
+    currentEditingRecordId = recordId;
+  }
+  const itemIdx = parseInt(tr.dataset.index);
+  try {
+    await uploadRecordAttachments(recordId, itemIdx, files);
+    const all = await fetchRecordAttachments(recordId);
+    const itemAtts = all.filter(a => (a.item_index === null && itemIdx === 0) || a.item_index === itemIdx);
+    const cell = tr.querySelector('.atch-cell');
+    cell.innerHTML = renderAttachmentChips(itemAtts, true);
+    toast('已上传 ' + files.length + ' 个附件', 'success');
+  } catch (e) {
+    toast('上传失败: ' + e.message, 'error');
+  }
+}
+
+let currentEditingRecordId = null;
 
 function removeDetailItem(btn){
   const tbody=document.getElementById('detail-items-tbody');
@@ -3158,11 +3325,12 @@ function collectDetailItems(){
   document.querySelectorAll('#detail-items-tbody tr').forEach(tr=>{
     const platform=tr.querySelector('.platform-select').value;
     const sku=tr.querySelector('.sku-input').value.trim();
+    const snCode=tr.querySelector('.sn-input') ? tr.querySelector('.sn-input').value.trim() : '';
     const orderNo=tr.querySelector('.order-input').value.trim();
     const qty=parseInt(tr.querySelector('.qty-input').value)||0;
     const returnReason=tr.querySelector('.type-select').value;
     const faultDesc=tr.querySelector('.fault-input').value.trim();
-    items.push({platform,sku_code:sku,order_no:orderNo,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
+    items.push({platform,sku_code:sku,sn_code:snCode,order_no:orderNo,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
   });
   return items;
 }
@@ -3185,6 +3353,7 @@ function resetForm(){
   document.getElementById('detail-items-tbody').innerHTML='';
   updateSkuDatalist();
   populateApproverSelects();
+  currentEditingRecordId = null;
   addDetailItem(); // start with one empty row
 }
 
@@ -3919,8 +4088,8 @@ function openImportDialog(){
 function closeImportDialog(){ document.getElementById('import-modal').classList.add('hidden'); }
 
 function downloadImportTemplate(){
-  const headers=['售后日期','平台','SKU','订单号','数量','退货原因（必填）','问题说明/备注'];
-  const example=['2026-01-15','Shopee','SKU-APPLE-001','SH20260115001','2','可二次销售','屏幕裂纹'];
+  const headers=['售后日期','平台','SKU','SN Code','订单号','数量','退货原因（必填）','问题说明/备注'];
+  const example=['2026-01-15','Shopee','SKU-APPLE-001','SN12345','SH20260115001','2','可二次销售','屏幕裂纹'];
   if(typeof XLSX!=='undefined'){
     const ws=XLSX.utils.aoa_to_sheet([headers, example]);
     ws['!cols']=[{wch:14},{wch:14},{wch:18},{wch:20},{wch:10},{wch:18},{wch:28}];
@@ -3997,6 +4166,7 @@ function processImportFile(file){
       if(k.includes('售后日期')||k.includes('日期')||k.includes('rmadate')||k.includes('tanggalrma')) colMap.date=i;
       else if(k.includes('平台')||k.includes('platform')) colMap.platform=i;
       else if(k.includes('订单号')) colMap.order=i;
+      else if(k.includes('sn')||k.includes('序列号')) colMap.sn=i;
       else if(k.includes('sku')) colMap.sku=i;
       else if(k.includes('数量')||k.includes('qty')||k.includes('quantity')) colMap.qty=i;
       else if(k.includes('退货原因')||k.includes('退货类型')||k.includes('售后类型')||k.includes('类型')||k.includes('returnreason')||k.includes('alasanretur')) colMap.type=i;
@@ -4017,6 +4187,7 @@ function processImportFile(file){
       const aftersales_date=getVal(row,colMap.date);
       const platform=getVal(row,colMap.platform);
       const order_no=getVal(row,colMap.order);
+      const sn_code=getVal(row,colMap.sn);
       const sku=getVal(row,colMap.sku);
       const qtyRaw=getVal(row,colMap.qty);
       const quantity=parseInt(qtyRaw,10);
@@ -4040,7 +4211,7 @@ function processImportFile(file){
       pendingRecordImports.push({
         id:importNextId++,
         aftersales_date, platforms:[platform],
-        items:[{platform, sku_code:sku, order_no, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
+        items:[{platform, sku_code:sku, sn_code, order_no, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
         total_quantity:quantity,
         brand:prod?prod.brand:'',
         model:prod?prod.model:'',
@@ -4370,7 +4541,7 @@ async function exportAftersalesExcel(){
   const isDetailView = listMode === 'item';
 
   const headers = [
-    '售后单号','售后日期','平台','品牌','SKU','型号','数量','订单号',
+    '售后单号','售后日期','平台','品牌','SKU','SN Code','型号','数量','订单号',
     '问题类型','问题说明','审批状态','处理类型','处理进度','ERP入库日期','提交人','创建时间','更新时间'
   ];
 
@@ -4388,6 +4559,7 @@ async function exportAftersalesExcel(){
           (it.platform || platforms[0] || ''),
           r.brand || '',
           it.sku_code || '',
+          it.sn_code || '',
           it.model || '',
           it.quantity || 1,
           it.order_no || '',
@@ -5761,6 +5933,293 @@ async function deleteApprovalFlow(id, name) {
   } catch (e) {
     alert('删除失败: ' + e.message);
   }
+}
+
+// ==================== 字典管理 ====================
+const DICT_CATEGORIES = [
+  { id: 'return_reason', label: '退货原因' },
+  { id: 'platform', label: '平台' },
+  { id: 'return_method', label: '退货方式' },
+  { id: 'common', label: '通用类别' }
+];
+let _dictAll = [];
+let _dictCurrent = 'return_reason';
+let _dictCache = {};
+
+async function renderDictionaries() {
+  if (!document.getElementById('dict-category-list')) return;
+  try {
+    const resp = await fetch('/api/dictionaries', { headers: getAuthHeaders() });
+    _dictAll = await resp.json() || [];
+    _dictCache = {};
+    _dictAll.forEach(d => { (_dictCache[d.category] = _dictCache[d.category] || []).push(d); });
+    _dictRenderSidebar();
+    _dictRenderItems();
+  } catch (e) {
+    document.getElementById('dict-items-area').innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">加载失败: ' + esc(e.message) + '</div>';
+  }
+}
+
+function _dictRenderSidebar() {
+  const el = document.getElementById('dict-category-list');
+  let h = '';
+  DICT_CATEGORIES.forEach(c => {
+    const cnt = (_dictCache[c.id] || []).length;
+    h += '<div class="dict-cat-item ' + (c.id === _dictCurrent ? 'active' : '') + '" onclick="selectDictCategory(\'' + c.id + '\')">';
+    h += '<span>' + esc(c.label) + '</span><span class="dict-cat-count">' + cnt + '</span></div>';
+  });
+  el.innerHTML = h;
+}
+
+function _dictRenderItems() {
+  const area = document.getElementById('dict-items-area');
+  const list = _dictCache[_dictCurrent] || [];
+  const cat = DICT_CATEGORIES.find(c => c.id === _dictCurrent);
+  let h = '<div class="dict-main-header">';
+  h += '<span style="font-size:15px;font-weight:600">' + esc(cat.label) + ' <span style="font-weight:400;color:var(--text-muted);font-size:13px">（' + list.length + ' 项）</span></span>';
+  h += '<button class="af-btn af-btn-primary af-btn-sm" onclick="showDictAddForm()">+ 新增字典项</button>';
+  h += '</div>';
+
+  if (list.length === 0) {
+    h += '<div style="padding:40px;text-align:center;color:var(--text-muted)">该类别下暂无字典项</div>';
+    area.innerHTML = h;
+    return;
+  }
+
+  h += '<table class="dict-table"><thead><tr>';
+  h += '<th style="width:60px">排序</th>';
+  h += '<th>代码（值）</th>';
+  h += '<th>中文名</th><th>English</th><th>Bahasa</th>';
+  h += '<th style="width:90px">状态</th><th style="width:140px">操作</th>';
+  h += '</tr></thead><tbody>';
+  list.forEach(d => {
+    h += '<tr><td><input class="dict-input" type="number" value="' + d.sort_order + '" onchange="updateDictField(\'' + d.id + '\',\'sort_order\',parseInt(this.value)||0)"></td>';
+    h += '<td><code style="font-size:12px;color:var(--text-muted)">' + esc(d.code) + '</code></td>';
+    h += '<td><input class="dict-input" value="' + esc(d.label_zh || '') + '" onchange="updateDictField(\'' + d.id + '\',\'label_zh\',this.value)"></td>';
+    h += '<td><input class="dict-input" value="' + esc(d.label_en || '') + '" onchange="updateDictField(\'' + d.id + '\',\'label_en\',this.value)"></td>';
+    h += '<td><input class="dict-input" value="' + esc(d.label_id || '') + '" onchange="updateDictField(\'' + d.id + '\',\'label_id\',this.value)"></td>';
+    h += '<td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><div class="af-toggle ' + (d.enabled ? 'af-toggle-on' : 'af-toggle-off') + '" onclick="toggleDictEnabled(\'' + d.id + '\')"><div class="af-toggle-knob"></div></div><span style="font-size:12px">' + (d.enabled ? '启用' : '停用') + '</span></label></td>';
+    h += '<td><div class="dict-actions-cell"><button class="af-btn af-btn-secondary af-btn-sm" onclick="updateDictField(\'' + d.id + '\',null,null,true)">保存</button><button class="af-btn af-btn-danger af-btn-sm" onclick="deleteDictItem(\'' + d.id + '\')">删除</button></div></td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  area.innerHTML = h;
+}
+
+function selectDictCategory(id) {
+  _dictCurrent = id;
+  _dictRenderSidebar();
+  _dictRenderItems();
+}
+
+async function updateDictField(id, field, value, saveAll) {
+  const item = _dictAll.find(d => d.id === id);
+  if (!item) return;
+  if (saveAll) {
+    const row = document.querySelector('tr:has(button[onclick*="' + id + '"])');
+    try {
+      const resp = await fetch('/api/dictionaries/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label_zh: item.label_zh, label_en: item.label_en, label_id: item.label_id,
+          sort_order: item.sort_order, enabled: item.enabled
+        })
+      });
+      if (resp.ok) {
+        Object.assign(item, await resp.json());
+        toast('保存成功', 'success');
+      } else {
+        const err = await resp.json();
+        toast('保存失败: ' + (err.error || ''), 'error');
+      }
+    } catch (e) { toast('保存失败: ' + e.message, 'error'); }
+    return;
+  }
+  item[field] = value;
+}
+
+async function toggleDictEnabled(id) {
+  const item = _dictAll.find(d => d.id === id);
+  if (!item) return;
+  item.enabled = !item.enabled;
+  try {
+    await fetch('/api/dictionaries/' + encodeURIComponent(id), {
+      method: 'PUT',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: item.enabled })
+    });
+    _dictRenderItems();
+  } catch (e) { toast('操作失败: ' + e.message, 'error'); }
+}
+
+async function deleteDictItem(id) {
+  if (!confirm('确定删除该字典项？')) return;
+  try {
+    const resp = await fetch('/api/dictionaries/' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (resp.ok) {
+      await renderDictionaries();
+      toast('删除成功', 'success');
+    } else {
+      const err = await resp.json();
+      toast('删除失败: ' + (err.error || ''), 'error');
+    }
+  } catch (e) { toast('删除失败: ' + e.message, 'error'); }
+}
+
+function showDictAddForm() {
+  const code = prompt('请输入新字典项的代码（英文/数字，不含空格）：');
+  if (!code) return;
+  const zh = prompt('中文名：') || '';
+  const en = prompt('English name (可选)：') || '';
+  const id_label = prompt('Nama Bahasa Indonesia (可选)：') || '';
+  const cat = DICT_CATEGORIES.find(c => c.id === _dictCurrent);
+  if (!confirm('将在「' + cat.label + '」类别下新增：\n代码: ' + code + '\n中文: ' + zh + '\n英文: ' + en + '\n印尼: ' + id_label)) return;
+  createDictItem(code, zh, en, id_label);
+}
+
+async function createDictItem(code, label_zh, label_en, label_id) {
+  try {
+    const resp = await fetch('/api/dictionaries', {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: _dictCurrent, code, label_zh, label_en, label_id, sort_order: 999, enabled: true })
+    });
+    if (resp.ok) {
+      await renderDictionaries();
+      toast('新增成功', 'success');
+    } else {
+      const err = await resp.json();
+      toast('新增失败: ' + (err.error || ''), 'error');
+    }
+  } catch (e) { toast('新增失败: ' + e.message, 'error'); }
+}
+
+function toast(msg, type) {
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 18px;border-radius:6px;color:#fff;font-size:14px;z-index:10000;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+  div.style.background = type === 'error' ? '#e53935' : (type === 'success' ? '#2e7d32' : '#333');
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2500);
+}
+
+// ==================== 字典选项加载（下拉用）====================
+async function loadDictOptions(category) {
+  try {
+    const resp = await fetch('/api/dictionaries?category=' + encodeURIComponent(category), { headers: getAuthHeaders() });
+    const list = await resp.json() || [];
+    return list.filter(d => d.enabled);
+  } catch (e) { return []; }
+}
+
+function getDictLabel(item, lang) {
+  if (!item) return '';
+  if (lang === 'en') return item.label_en || item.label_zh || item.code;
+  if (lang === 'id') return item.label_id || item.label_zh || item.code;
+  return item.label_zh || item.label_en || item.code;
+}
+
+function fillDictSelect(selectEl, items, currentValue, lang) {
+  if (!selectEl) return;
+  const placeholder = selectEl.getAttribute('data-placeholder') || '请选择';
+  let h = '<option value="">' + esc(placeholder) + '</option>';
+  items.forEach(it => {
+    const sel = (currentValue !== undefined && it.code === currentValue) ? ' selected' : '';
+    h += '<option value="' + esc(it.code) + '"' + sel + '>' + esc(getDictLabel(it, lang)) + '</option>';
+  });
+  selectEl.innerHTML = h;
+}
+
+// ==================== 附件管理 ====================
+async function uploadRecordAttachments(recordId, itemIndex, files, onProgress) {
+  const fd = new FormData();
+  for (const f of files) fd.append('files', f);
+  fd.append('record_id', recordId);
+  if (itemIndex !== null && itemIndex !== undefined) fd.append('item_index', String(itemIndex));
+  const resp = await fetch('/api/attachments/upload', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: fd
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || '上传失败');
+  }
+  return await resp.json();
+}
+
+async function fetchRecordAttachments(recordId) {
+  const resp = await fetch('/api/attachments/record/' + encodeURIComponent(recordId), { headers: getAuthHeaders() });
+  if (!resp.ok) return [];
+  return await resp.json();
+}
+
+async function deleteAttachment(id) {
+  const resp = await fetch('/api/attachments/' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  return resp.ok;
+}
+
+function renderAttachmentChips(attachments, editable) {
+  if (!attachments || attachments.length === 0) {
+    return '<span class="atch-empty">无附件</span>';
+  }
+  let h = '<div class="atch-list">';
+  attachments.forEach(a => {
+    const isImg = /\.(jpe?g|png|gif|webp|bmp)$/i.test(a.original_name);
+    h += '<span class="atch-chip" onclick="previewAttachment(\'' + esc(a.id) + '\',\'' + esc(a.mime_type) + '\',\'' + esc(a.original_name) + '\',\'' + esc(a.path) + '\')" title="' + esc(a.original_name) + '">';
+    h += (isImg ? '🖼️ ' : '📄 ') + '<span class="atch-chip-name">' + esc(a.original_name) + '</span>';
+    if (editable) h += '<span class="atch-chip-del" onclick="event.stopPropagation();handleDeleteAttachment(\'' + esc(a.id) + '\',this)" title="删除">×</span>';
+    h += '</span>';
+  });
+  h += '</div>';
+  return h;
+}
+
+async function handleDeleteAttachment(id, btnEl) {
+  if (!confirm('确定删除该附件？')) return;
+  if (await deleteAttachment(id)) {
+    const listEl = btnEl.closest('.atch-list') || btnEl.closest('[data-attach-list]');
+    if (listEl) {
+      btnEl.closest('.atch-chip').remove();
+      if (listEl.children.length === 0 && listEl.parentElement) {
+        const old = listEl.parentElement;
+        old.innerHTML = '<span class="atch-empty">无附件</span>';
+      }
+    }
+    toast('已删除', 'success');
+  } else {
+    toast('删除失败', 'error');
+  }
+}
+
+function previewAttachment(id, mime, name, path) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const isImg = /^(jpe?g|png|gif|webp|bmp)$/.test(ext);
+  const isPdf = ext === 'pdf';
+  const url = path;
+  let body = '';
+  if (isImg) {
+    body = '<img src="' + esc(url) + '" alt="' + esc(name) + '">';
+  } else if (isPdf) {
+    body = '<iframe src="' + esc(url) + '" title="' + esc(name) + '"></iframe>';
+  } else if (/^(docx?|xlsx?|pptx?)$/.test(ext)) {
+    // 用 Google Docs Viewer 预览 Office 文件
+    body = '<iframe src="https://docs.google.com/gview?url=' + encodeURIComponent(location.origin + url) + '&embedded=true" title="' + esc(name) + '"></iframe>';
+  } else {
+    body = '<div style="padding:40px;text-align:center"><p>该文件类型不支持在线预览</p><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:var(--primary);text-decoration:underline">下载文件</a></div>';
+  }
+  const ov = document.createElement('div');
+  ov.className = 'atch-preview-overlay';
+  ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = '<div class="atch-preview-box"><div class="atch-preview-bar"><span>📎 ' + esc(name) + '</span><div><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:#333;text-decoration:underline;font-size:13px;margin-right:12px">下载</a><button onclick="this.closest(\'.atch-preview-overlay\').remove()">关闭</button></div></div><div class="atch-preview-content">' + body + '</div></div>';
+  document.body.appendChild(ov);
 }
 </script>
 </body>
