@@ -280,7 +280,11 @@
     "flow": {
       "noEnabled": "No enabled approval flow. Please enable one in Approval Flow Management.",
       "emptyNodes": "This approval flow has no levels configured.",
-      "notAssigned": "Not assigned"
+      "notAssigned": "Not assigned",
+      "loading": "Loading approval flow…",
+      "autoTag": "Auto",
+      "multipleHint": "Multiple enabled flows detected. The system will automatically apply the flow below.",
+      "singleHint": "The flow below is automatically applied based on Approval Flow Management."
     },
     "skuPlaceholder": "Enter SKU...",
     "orderPlaceholder": "Order No.",
@@ -790,7 +794,7 @@
     "selectAftersalesDate": "Please select aftersales date",
     "addAtLeastOneDetail": "Please add at least one detail item",
     "selectAtLeastOneApprover": "Please select at least one approver",
-    "selectApprovalFlow": "Please select an approval flow",
+    "selectApprovalFlow": "No enabled approval flow. Cannot submit. Please enable one in Approval Flow Management.",
     "flowNoApprover": "The selected flow has no approver. Please configure it in Approval Flow Management.",
     "approvalSubmitted": "Approval submitted, waiting for ",
     "fillAftersalesDate": "Please fill in aftersales date",

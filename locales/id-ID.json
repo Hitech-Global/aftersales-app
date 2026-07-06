@@ -280,7 +280,11 @@
     "flow": {
       "noEnabled": "Tidak ada alur persetujuan yang aktif. Harap aktifkan di Manajemen Alur Persetujuan.",
       "emptyNodes": "Alur persetujuan ini belum memiliki level yang dikonfigurasi.",
-      "notAssigned": "Belum ditentukan"
+      "notAssigned": "Belum ditentukan",
+      "loading": "Memuat alur persetujuan…",
+      "autoTag": "Otomatis",
+      "multipleHint": "Terdeteksi beberapa alur aktif. Sistem akan otomatis menerapkan alur di bawah ini.",
+      "singleHint": "Alur di bawah ini diterapkan secara otomatis berdasarkan Manajemen Alur Persetujuan."
     },
     "skuPlaceholder": "Masukkan SKU...",
     "orderPlaceholder": "No. Pesanan",
@@ -790,7 +794,7 @@
     "selectAftersalesDate": "Silakan pilih tanggal aftersales",
     "addAtLeastOneDetail": "Silakan tambah setidaknya satu detail",
     "selectAtLeastOneApprover": "Silakan pilih setidaknya satu approver",
-    "selectApprovalFlow": "Silakan pilih alur persetujuan",
+    "selectApprovalFlow": "Tidak ada alur persetujuan yang aktif. Tidak dapat mengajukan. Harap aktifkan satu di Manajemen Alur Persetujuan.",
     "flowNoApprover": "Alur yang dipilih belum memiliki approver. Harap konfigurasikan di Manajemen Alur Persetujuan.",
     "approvalSubmitted": "Persetujuan diajukan, menunggu ",
     "fillAftersalesDate": "Silakan isi tanggal aftersales",

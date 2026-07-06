@@ -177,6 +177,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .approval-flow-preview .afp-node .afp-lvl{font-size:10px;font-weight:600;color:var(--text-muted);background:var(--bg-secondary);padding:2px 6px;border-radius:8px}
 .approval-flow-preview .afp-node.missing{opacity:.55;background:transparent}
 .approval-flow-preview .afp-arrow{color:var(--text-muted);font-size:12px}
+.approval-flow-card{margin-top:6px;padding:12px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;display:block}
+.afc-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.afc-icon{font-size:18px;line-height:1}
+.afc-name{font-size:14px;font-weight:600;color:var(--text)}
+.afc-tag{font-size:11px;padding:2px 8px;background:var(--primary);color:#fff;border-radius:10px;font-weight:500}
+.approval-flow-card.empty{padding:14px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-secondary)}
+.approval-flow-card.empty .afc-name{font-weight:500}
 input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .form-actions{display:flex;gap:12px;margin-top:8px}
 
@@ -697,9 +704,16 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                   <legend data-i18n="form.section.approvers"></legend>
                   <div class="form-group">
                     <label data-i18n="form.label.approvalFlow"></label>
-                    <select id="f-approval-flow" onchange="onApprovalFlowChange()"><option value="" data-i18n="form.option.pleaseSelect"></option></select>
+                    <!-- 不再让用户手动选择审批流；由系统按「审批流管理」中的配置自动应用 -->
+                    <div id="f-approval-flow-card" class="approval-flow-card">
+                      <div class="afc-header">
+                        <span class="afc-icon">&#x2696;&#xFE0F;</span>
+                        <span id="f-approval-flow-name" class="afc-name" data-i18n="form.flow.loading"></span>
+                        <span id="f-approval-flow-tag" class="afc-tag" style="display:none" data-i18n="form.flow.autoTag"></span>
+                      </div>
+                      <div id="f-approval-flow-preview" class="approval-flow-preview"></div>
+                    </div>
                   </div>
-                  <div id="f-approval-flow-preview" class="approval-flow-preview" style="display:none"></div>
                   <div style="font-size:12px;color:var(--text-muted);margin-top:8px" data-i18n="form.hint.approverRule"></div>
                 </fieldset>
                 <div class="form-actions" style="margin-top:8px">
@@ -3181,9 +3195,12 @@ function openRecordForm(){
   if(!hasPermission('record_create')){ showFlash(t('flash.noPermissionCreate'),'warning'); return; }
   resetForm();
   document.getElementById('record-form-modal').classList.remove('hidden');
-  // Preload dictionaries
-  Promise.all([refreshReturnReasonsFromDict(), loadDictOptions('platform')]).then(([_, platforms]) => {
-    _platformCache = platforms;
+  // Preload dictionaries + approval flow (并行加载,避免其中一个失败阻塞另一个)
+  Promise.all([
+    refreshReturnReasonsFromDict().catch(() => {}),
+    loadDictOptions('platform').then(p => _platformCache = p).catch(() => { _platformCache = []; }),
+    populateApproverSelects()
+  ]).finally(() => {
     refreshPlatformSelects();
   });
 }
@@ -3383,7 +3400,7 @@ function resetForm(){
   setDateInputValue('f-aftersales-date',today);
   document.getElementById('detail-items-tbody').innerHTML='';
   updateSkuDatalist();
-  populateApproverSelects();
+  // populateApproverSelects 由 openRecordForm 统一调用,这里不再重复请求
   currentEditingRecordId = null;
   addDetailItem(); // start with one empty row
 }
@@ -3398,42 +3415,58 @@ async function updateSkuDatalist(filter){
 }
 
 async function populateApproverSelects(){
-  // 改为: 加载所有 enabled 审批流,填充 #f-approval-flow
-  const sel = document.getElementById('f-approval-flow');
-  if (!sel) return;
-  const cur = sel.value;
+  // 加载所有 enabled 审批流,自动取第一条作为当前生效流程,只读展示节点预览
+  const card = document.getElementById('f-approval-flow-card');
+  const nameEl = document.getElementById('f-approval-flow-name');
+  const tagEl = document.getElementById('f-approval-flow-tag');
+  const preview = document.getElementById('f-approval-flow-preview');
+  if (!card || !nameEl || !preview) return;
+  nameEl.textContent = t('form.flow.loading');
+  tagEl.style.display = 'none';
+  card.classList.remove('empty');
+  preview.innerHTML = '';
+  preview.style.display = 'none';
   try {
     const resp = await fetch('/api/approval-flows', { headers: getAuthHeaders() });
-    const flows = await resp.json() || [];
+    const flows = (await resp.json()) || [];
     const enabled = flows.filter(f => f.enabled);
-    let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
-    enabled.forEach(f => {
-      h += '<option value="' + esc(f.id) + '"' + (cur === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>';
-    });
     if (enabled.length === 0) {
-      h += '<option value="" disabled>' + t('form.flow.noEnabled') + '</option>';
+      _approvalFlowsCache = [];
+      _activeFlowId = '';
+      card.classList.add('empty');
+      nameEl.textContent = t('form.flow.noEnabled');
+      tagEl.style.display = 'none';
+      preview.style.display = 'none';
+      preview.innerHTML = '';
+      return;
     }
-    sel.innerHTML = h;
-    sel.value = cur;
+    // 自动应用规则: 仅 1 条时取它; 超过 1 条时按 created_at 升序取最早的那条(稳定的默认流)
+    enabled.sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+    const active = enabled[0];
     _approvalFlowsCache = enabled;
-    // 触发预览
-    onApprovalFlowChange();
+    _activeFlowId = active.id;
+    nameEl.textContent = active.name || active.id;
+    tagEl.style.display = '';
+    renderFlowPreview(active);
   } catch (e) {
     console.error('加载审批流失败:', e);
+    card.classList.add('empty');
+    nameEl.textContent = t('form.flow.noEnabled');
   }
 }
 
 let _approvalFlowsCache = [];
+let _activeFlowId = '';
 
-function onApprovalFlowChange() {
-  const sel = document.getElementById('f-approval-flow');
+function getActiveFlow(){
+  if (!_activeFlowId) return null;
+  return _approvalFlowsCache.find(f => f.id === _activeFlowId) || null;
+}
+
+function renderFlowPreview(flow){
   const preview = document.getElementById('f-approval-flow-preview');
-  if (!sel || !preview) return;
-  const fid = sel.value;
-  if (!fid) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
-  const flow = _approvalFlowsCache.find(f => f.id === fid);
-  if (!flow) { preview.style.display = 'none'; return; }
-  const nodes = flow.nodes || [];
+  if (!preview) return;
+  const nodes = (flow && flow.nodes) || [];
   if (nodes.length === 0) {
     preview.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">' + t('form.flow.emptyNodes') + '</span>';
     preview.style.display = 'block';
@@ -3472,8 +3505,8 @@ async function submitForApproval(e){
     if(!it.fault_description){ showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})}`,'warning'); return; }
   }
 
-  // 校验审批流
-  const flowId = document.getElementById('f-approval-flow').value;
+  // 校验审批流(由系统自动应用,用户无需选择)
+  const flowId = _activeFlowId;
   if(!flowId){ showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
   const flow = _approvalFlowsCache.find(f => f.id === flowId);
   if(!flow){ showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
@@ -3556,7 +3589,7 @@ async function saveAsDraft(){
     if(!items[i].quantity||items[i].quantity<1) items[i].quantity=1;
   }
 
-  const flowId = document.getElementById('f-approval-flow').value;
+  const flowId = _activeFlowId;
 
   const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
   const firstSku=items[0].sku_code;
@@ -5604,6 +5637,11 @@ async function switchLanguage(locale) {
   refreshAllPermissions();
   applyStaticI18n();
   applyDateInputLocale();
+  // 表单浮层独立于 page 体系,需手动重渲染审批流卡片以应用新语言
+  const formModal = document.getElementById('record-form-modal');
+  if (formModal && !formModal.classList.contains('hidden')) {
+    populateApproverSelects();
+  }
   // 重新渲染当前页面
   const user = getCurrentUser();
   if (user) {
