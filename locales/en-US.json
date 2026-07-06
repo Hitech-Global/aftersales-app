@@ -268,7 +268,8 @@
       "date": "RMA Date",
       "approverL1": "Level 1 Approver",
       "approverL2": "Level 2 Approver",
-      "approverL3": "Level 3 Approver"
+      "approverL3": "Level 3 Approver",
+      "approvalFlow": "Approval Flow"
     },
     "option": {
       "pleaseSelect": "Select"
@@ -276,6 +277,11 @@
     "btnSubmit": "Submit for Approval",
     "btnSaveDraft": "Save Draft",
     "btnCancel": "Cancel",
+    "flow": {
+      "noEnabled": "No enabled approval flow. Please enable one in Approval Flow Management.",
+      "emptyNodes": "This approval flow has no levels configured.",
+      "notAssigned": "Not assigned"
+    },
     "skuPlaceholder": "Enter SKU...",
     "orderPlaceholder": "Order No.",
     "descPlaceholder": "Issue Description / Notes",
@@ -784,6 +790,8 @@
     "selectAftersalesDate": "Please select aftersales date",
     "addAtLeastOneDetail": "Please add at least one detail item",
     "selectAtLeastOneApprover": "Please select at least one approver",
+    "selectApprovalFlow": "Please select an approval flow",
+    "flowNoApprover": "The selected flow has no approver. Please configure it in Approval Flow Management.",
     "approvalSubmitted": "Approval submitted, waiting for ",
     "fillAftersalesDate": "Please fill in aftersales date",
     "noLevelPermission": "You do not have permission for this approval level",

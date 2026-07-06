@@ -403,6 +403,43 @@ app.post('/api/roles', requireApiPermission('role_manage'), async (req, res) => 
 });
 
 // ---- 售后记录 API ----
+
+// 根据 approval_flow_id 展开为 approver_level1/2/3 字段
+async function resolveFlowApprovers(flowId) {
+  if (!flowId) return null;
+  try {
+    const { rows } = await query('SELECT id, name, nodes FROM approval_flows WHERE id = $1', [flowId]);
+    if (!rows.length) return { _deleted: true };
+    const flow = rows[0];
+    const nodes = typeof flow.nodes === 'string' ? JSON.parse(flow.nodes || '[]') : (flow.nodes || []);
+    // 查所有相关用户拿到 name
+    const ids = [...new Set(nodes.slice(0, 3).map(n => n.approver_id).filter(Boolean))];
+    let nameMap = {};
+    if (ids.length) {
+      const ur = await query('SELECT id, name FROM users WHERE id = ANY($1::text[])', [ids]);
+      ur.rows.forEach(u => { nameMap[u.id] = u.name; });
+    }
+    const out = {
+      approval_flow_id: flow.id,
+      approval_flow_name: flow.name,
+      approver_level1_id: '', approver_level1_name: '',
+      approver_level2_id: '', approver_level2_name: '',
+      approver_level3_id: '', approver_level3_name: ''
+    };
+    for (let i = 0; i < 3; i++) {
+      const n = nodes[i];
+      if (n && n.approver_id) {
+        out['approver_level' + (i + 1) + '_id'] = n.approver_id;
+        out['approver_level' + (i + 1) + '_name'] = nameMap[n.approver_id] || '';
+      }
+    }
+    return out;
+  } catch (e) {
+    console.error('[resolveFlowApprovers] error:', e.message);
+    return null;
+  }
+}
+
 app.get('/api/records', requireApiPermission('record_view'), async (req, res) => {
   try {
     const { status, submitter_id, page, pageSize } = req.query;
@@ -424,6 +461,15 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
     }
 
     const result = await query(sql, values);
+    // 若行内有 approval_flow_id 且 level1/2/3 字段为空,按 flow 自动展开(老数据兼容)
+    for (const r of result.rows) {
+      if (r.approval_flow_id && !r.approver_level1_id) {
+        const expanded = await resolveFlowApprovers(r.approval_flow_id);
+        if (expanded && !expanded._deleted) {
+          Object.assign(r, expanded);
+        }
+      }
+    }
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -432,19 +478,42 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
   try {
     const { id, submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
       total_quantity, current_approval_level,
+      approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
       approver_level3_id, approver_level3_name, approval_history } = req.body;
+
+    // 如果指定了 approval_flow_id,优先用 flow 展开 level1/2/3
+    let flowLevel1Id = approver_level1_id, flowLevel1Name = approver_level1_name;
+    let flowLevel2Id = approver_level2_id, flowLevel2Name = approver_level2_name;
+    let flowLevel3Id = approver_level3_id, flowLevel3Name = approver_level3_name;
+    let flowName = '';
+    if (approval_flow_id) {
+      const expanded = await resolveFlowApprovers(approval_flow_id);
+      if (expanded && !expanded._deleted) {
+        flowLevel1Id = expanded.approver_level1_id;
+        flowLevel1Name = expanded.approver_level1_name;
+        flowLevel2Id = expanded.approver_level2_id;
+        flowLevel2Name = expanded.approver_level2_name;
+        flowLevel3Id = expanded.approver_level3_id;
+        flowLevel3Name = expanded.approver_level3_name;
+        flowName = expanded.approval_flow_name;
+      } else if (expanded && expanded._deleted) {
+        return res.status(400).json({ error: '所选审批流已被删除' });
+      }
+    }
 
     const result = await query(
       `INSERT INTO aftersales_records (id, submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
         total_quantity, current_approval_level,
+        approval_flow_id, approval_flow_name,
         approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
         approver_level3_id, approver_level3_name, approval_history)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
       [id, submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []),
        total_quantity || 0, current_approval_level || 0,
-       approver_level1_id || '', approver_level1_name || '', approver_level2_id || '', approver_level2_name || '',
-       approver_level3_id || '', approver_level3_name || '', JSON.stringify(approval_history || [])]
+       approval_flow_id || '', flowName,
+       flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '',
+       flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || [])]
     );
     res.json(result.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -454,9 +523,30 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
   try {
     const { submitter_name, aftersales_date, status, brand, model, category, platforms, items,
       total_quantity, current_approval_level,
+      approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
       approver_level3_id, approver_level3_name,
       approval_level1_status, approval_level2_status, approval_history } = req.body;
+
+    // 若指定 approval_flow_id,优先用 flow 展开
+    let flowLevel1Id = approver_level1_id, flowLevel1Name = approver_level1_name;
+    let flowLevel2Id = approver_level2_id, flowLevel2Name = approver_level2_name;
+    let flowLevel3Id = approver_level3_id, flowLevel3Name = approver_level3_name;
+    let flowName;
+    if (approval_flow_id !== undefined) {
+      const expanded = await resolveFlowApprovers(approval_flow_id);
+      if (expanded && !expanded._deleted) {
+        flowLevel1Id = expanded.approver_level1_id;
+        flowLevel1Name = expanded.approver_level1_name;
+        flowLevel2Id = expanded.approver_level2_id;
+        flowLevel2Name = expanded.approver_level2_name;
+        flowLevel3Id = expanded.approver_level3_id;
+        flowLevel3Name = expanded.approver_level3_name;
+        flowName = expanded.approval_flow_name;
+      } else if (expanded && expanded._deleted) {
+        return res.status(400).json({ error: '所选审批流已被删除' });
+      }
+    }
 
     const fields = ['updated_at = NOW()'];
     const values = [];
@@ -475,12 +565,16 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     add('items', items !== undefined ? JSON.stringify(items) : undefined);
     add('total_quantity', total_quantity);
     add('current_approval_level', current_approval_level);
-    add('approver_level1_id', approver_level1_id);
-    add('approver_level1_name', approver_level1_name);
-    add('approver_level2_id', approver_level2_id);
-    add('approver_level2_name', approver_level2_name);
-    add('approver_level3_id', approver_level3_id);
-    add('approver_level3_name', approver_level3_name);
+    if (approval_flow_id !== undefined) {
+      add('approval_flow_id', approval_flow_id);
+      if (flowName !== undefined) add('approval_flow_name', flowName);
+    }
+    add('approver_level1_id', flowLevel1Id);
+    add('approver_level1_name', flowLevel1Name);
+    add('approver_level2_id', flowLevel2Id);
+    add('approver_level2_name', flowLevel2Name);
+    add('approver_level3_id', flowLevel3Id);
+    add('approver_level3_name', flowLevel3Name);
     add('approval_level1_status', approval_level1_status);
     add('approval_level2_status', approval_level2_status);
     add('approval_history', approval_history !== undefined ? JSON.stringify(approval_history) : undefined);

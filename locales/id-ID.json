@@ -268,7 +268,8 @@
       "date": "Tanggal RMA",
       "approverL1": "Approver Level 1",
       "approverL2": "Approver Level 2",
-      "approverL3": "Approver Level 3"
+      "approverL3": "Approver Level 3",
+      "approvalFlow": "Alur Persetujuan"
     },
     "option": {
       "pleaseSelect": "Pilih"
@@ -276,6 +277,11 @@
     "btnSubmit": "Ajukan Approval",
     "btnSaveDraft": "Simpan Draft",
     "btnCancel": "Batal",
+    "flow": {
+      "noEnabled": "Tidak ada alur persetujuan yang aktif. Harap aktifkan di Manajemen Alur Persetujuan.",
+      "emptyNodes": "Alur persetujuan ini belum memiliki level yang dikonfigurasi.",
+      "notAssigned": "Belum ditentukan"
+    },
     "skuPlaceholder": "Masukkan SKU...",
     "orderPlaceholder": "No. Pesanan",
     "descPlaceholder": "Deskripsi Masalah / Catatan",
@@ -784,6 +790,8 @@
     "selectAftersalesDate": "Silakan pilih tanggal aftersales",
     "addAtLeastOneDetail": "Silakan tambah setidaknya satu detail",
     "selectAtLeastOneApprover": "Silakan pilih setidaknya satu approver",
+    "selectApprovalFlow": "Silakan pilih alur persetujuan",
+    "flowNoApprover": "Alur yang dipilih belum memiliki approver. Harap konfigurasikan di Manajemen Alur Persetujuan.",
     "approvalSubmitted": "Persetujuan diajukan, menunggu ",
     "fillAftersalesDate": "Silakan isi tanggal aftersales",
     "noLevelPermission": "Anda tidak memiliki izin untuk level persetujuan ini",

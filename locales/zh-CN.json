@@ -268,7 +268,8 @@
       "date": "售后日期",
       "approverL1": "一级审批人",
       "approverL2": "二级审批人",
-      "approverL3": "三级审批人"
+      "approverL3": "三级审批人",
+      "approvalFlow": "审批流"
     },
     "option": {
       "pleaseSelect": "请选择"
@@ -276,6 +277,11 @@
     "btnSubmit": "📤 提交审批",
     "btnSaveDraft": "💾 保存草稿",
     "btnCancel": "取消",
+    "flow": {
+      "noEnabled": "暂无可用的审批流,请先在「审批流管理」中启用",
+      "emptyNodes": "该审批流尚未配置任何审批层级",
+      "notAssigned": "未指定审批人"
+    },
     "skuPlaceholder": "输入SKU…",
     "orderPlaceholder": "订单号",
     "descPlaceholder": "问题说明/备注",
@@ -784,6 +790,8 @@
     "selectAftersalesDate": "请选择售后日期",
     "addAtLeastOneDetail": "请至少添加一条售后明细",
     "selectAtLeastOneApprover": "请至少选择一位审批人",
+    "selectApprovalFlow": "请先选择一条审批流",
+    "flowNoApprover": "所选审批流尚未配置任何审批人,请在「审批流管理」中完善",
     "approvalSubmitted": "审批已提交，等待",
     "fillAftersalesDate": "请至少填写售后日期",
     "noLevelPermission": "你没有该级别的审批权限",

@@ -153,6 +153,8 @@ async function initDatabase() {
         approver_level2_name VARCHAR(128) DEFAULT '',
         approver_level3_id VARCHAR(64) DEFAULT '',
         approver_level3_name VARCHAR(128) DEFAULT '',
+        approval_flow_id VARCHAR(64) DEFAULT '',
+        approval_flow_name VARCHAR(255) DEFAULT '',
         approval_level1_status VARCHAR(32) DEFAULT 'pending',
         approval_level2_status VARCHAR(32) DEFAULT 'pending',
         approval_history JSONB DEFAULT '[]',
@@ -238,6 +240,8 @@ async function initDatabase() {
       { name: 'approver_level3_name', type: 'VARCHAR(128) DEFAULT \'\'' },
       { name: 'approval_history', type: 'JSONB DEFAULT \'[]\'' },
       { name: 'sn_code', type: 'VARCHAR(255) DEFAULT \'\'' },
+      { name: 'approval_flow_id', type: 'VARCHAR(64) DEFAULT \'\'' },
+      { name: 'approval_flow_name', type: 'VARCHAR(255) DEFAULT \'\'' },
     ];
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
@@ -251,6 +255,7 @@ async function initDatabase() {
     await query(`CREATE INDEX IF NOT EXISTS idx_records_status ON aftersales_records(status)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver1 ON aftersales_records(approver_level1_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver2 ON aftersales_records(approver_level2_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_records_flow ON aftersales_records(approval_flow_id)`);
 
     console.log('[DB] 数据库表初始化完成');
 

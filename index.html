@@ -172,6 +172,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .form-group label{font-size:14px;font-weight:500;color:var(--text-secondary)}
 .required{color:var(--danger)}
 .form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--card-bg);width:100%}
+.approval-flow-preview{margin-top:10px;padding:12px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.approval-flow-preview .afp-node{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;font-size:12px}
+.approval-flow-preview .afp-node .afp-lvl{font-size:10px;font-weight:600;color:var(--text-muted);background:var(--bg-secondary);padding:2px 6px;border-radius:8px}
+.approval-flow-preview .afp-node.missing{opacity:.55;background:transparent}
+.approval-flow-preview .afp-arrow{color:var(--text-muted);font-size:12px}
 input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .form-actions{display:flex;gap:12px;margin-top:8px}
 
@@ -690,11 +695,11 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                 </fieldset>
                 <fieldset class="form-section">
                   <legend data-i18n="form.section.approvers"></legend>
-                  <div class="form-grid">
-                    <div class="form-group"><label data-i18n="form.label.approverL1"></label><select id="f-approver-level1"><option value="" data-i18n="form.option.pleaseSelect"></option></select></div>
-                    <div class="form-group"><label data-i18n="form.label.approverL2"></label><select id="f-approver-level2"><option value="" data-i18n="form.option.pleaseSelect"></option></select></div>
-                    <div class="form-group"><label data-i18n="form.label.approverL3"></label><select id="f-approver-level3"><option value="" data-i18n="form.option.pleaseSelect"></option></select></div>
+                  <div class="form-group">
+                    <label data-i18n="form.label.approvalFlow"></label>
+                    <select id="f-approval-flow" onchange="onApprovalFlowChange()"><option value="" data-i18n="form.option.pleaseSelect"></option></select>
                   </div>
+                  <div id="f-approval-flow-preview" class="approval-flow-preview" style="display:none"></div>
                   <div style="font-size:12px;color:var(--text-muted);margin-top:8px" data-i18n="form.hint.approverRule"></div>
                 </fieldset>
                 <div class="form-actions" style="margin-top:8px">
@@ -3393,29 +3398,59 @@ async function updateSkuDatalist(filter){
 }
 
 async function populateApproverSelects(){
-  const users=await getUsers(); const roles=await getRoles();
-  const activeUsers = users.filter(u=>u.status==='active');
-  function getUsersWithPerm(perm){
-    return activeUsers.filter(u=>{ const role=roles.find(r=>r.id===u.role_id); return role&&(role.permissions||[]).includes(perm); });
+  // 改为: 加载所有 enabled 审批流,填充 #f-approval-flow
+  const sel = document.getElementById('f-approval-flow');
+  if (!sel) return;
+  const cur = sel.value;
+  try {
+    const resp = await fetch('/api/approval-flows', { headers: getAuthHeaders() });
+    const flows = await resp.json() || [];
+    const enabled = flows.filter(f => f.enabled);
+    let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+    enabled.forEach(f => {
+      h += '<option value="' + esc(f.id) + '"' + (cur === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>';
+    });
+    if (enabled.length === 0) {
+      h += '<option value="" disabled>' + t('form.flow.noEnabled') + '</option>';
+    }
+    sel.innerHTML = h;
+    sel.value = cur;
+    _approvalFlowsCache = enabled;
+    // 触发预览
+    onApprovalFlowChange();
+  } catch (e) {
+    console.error('加载审批流失败:', e);
   }
-  renderApproverSelect('f-approver-level1', getUsersWithPerm('approval_level1'));
-  renderApproverSelect('f-approver-level2', getUsersWithPerm('approval_level2'));
-  renderApproverSelect('f-approver-level3', getUsersWithPerm('approval_level3'));
 }
 
-function renderApproverSelect(id, users){
-  const sel=document.getElementById(id), cur=sel.value;
-  sel.innerHTML='<option value="">'+t('form.option.pleaseSelect')+'</option>'+users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)} (${esc(u.username)})</option>`).join('');
-  sel.value=cur;
-}
+let _approvalFlowsCache = [];
 
-function updateApproverOptions(){
-  // No longer restricts same person across levels — any combination is allowed
-}
-
-function getApproverName(selId){
-  const sel=document.getElementById(selId);
-  return sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text.replace(/\s*\(.*\)/,''):'';
+function onApprovalFlowChange() {
+  const sel = document.getElementById('f-approval-flow');
+  const preview = document.getElementById('f-approval-flow-preview');
+  if (!sel || !preview) return;
+  const fid = sel.value;
+  if (!fid) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
+  const flow = _approvalFlowsCache.find(f => f.id === fid);
+  if (!flow) { preview.style.display = 'none'; return; }
+  const nodes = flow.nodes || [];
+  if (nodes.length === 0) {
+    preview.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">' + t('form.flow.emptyNodes') + '</span>';
+    preview.style.display = 'block';
+    return;
+  }
+  let h = '';
+  nodes.forEach((n, i) => {
+    if (i > 0) h += '<span class="afp-arrow">→</span>';
+    const name = n.approver_name || (n.approver_id ? '(' + n.approver_id + ')' : t('form.flow.notAssigned'));
+    h += '<span class="afp-node' + (n.approver_id ? '' : ' missing') + '">';
+    h += '<span class="afp-lvl">L' + (i + 1) + '</span>';
+    h += esc(n.title || (t('detail.label.level' + (i + 1)) || ('L' + (i + 1))));
+    h += ' · <strong>' + esc(name) + '</strong>';
+    h += '</span>';
+  });
+  preview.innerHTML = h;
+  preview.style.display = 'flex';
 }
 
 async function submitForApproval(e){
@@ -3423,9 +3458,6 @@ async function submitForApproval(e){
   if(!requirePermission('record_create')) return;
 
   const aftersalesDate=getDateInputValue('f-aftersales-date');
-  const a1=document.getElementById('f-approver-level1').value;
-  const a2=document.getElementById('f-approver-level2').value;
-  const a3=document.getElementById('f-approver-level3').value;
 
   if(!aftersalesDate){ showFlash(t('flash.selectAftersalesDate'),'warning'); return; }
 
@@ -3440,11 +3472,16 @@ async function submitForApproval(e){
     if(!it.fault_description){ showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})}`,'warning'); return; }
   }
 
-  // 至少选择一个审批人
-  if(!a1&&!a2&&!a3){ showFlash(t('flash.selectAtLeastOneApprover'),'warning'); return; }
-
-  // 找到第一个有值的审批级别
-  const firstLevel = a1 ? 1 : (a2 ? 2 : 3);
+  // 校验审批流
+  const flowId = document.getElementById('f-approval-flow').value;
+  if(!flowId){ showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
+  const flow = _approvalFlowsCache.find(f => f.id === flowId);
+  if(!flow){ showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
+  const flowNodes = (flow.nodes || []).slice(0, 3);
+  // 第一个有 approver_id 的级别作为起始
+  const firstIdx = flowNodes.findIndex(n => n.approver_id);
+  if(firstIdx < 0){ showFlash(t('flash.flowNoApprover'),'warning'); return; }
+  const firstLevel = firstIdx + 1;
   const levelNames = {1:'一级', 2:'二级', 3:'三级'};
 
   // Collect unique platforms from items
@@ -3477,18 +3514,26 @@ async function submitForApproval(e){
     category:product?product.category:'',
     submitter_id:user.id,
     submitter_name:user.name,
-    approver_level1_id:a1,
-    approver_level1_name:a1?getApproverName('f-approver-level1'):'',
-    approver_level2_id:a2,
-    approver_level2_name:a2?getApproverName('f-approver-level2'):'',
-    approver_level3_id:a3,
-    approver_level3_name:a3?getApproverName('f-approver-level3'):'',
+    approval_flow_id: flowId,
     status:'待'+levelNames[firstLevel]+'审批',
     current_approval_level:firstLevel,
     approval_history:[],
     created_at:now,
     updated_at:now
   };
+  // 客户端计算 approver_level* (供前端 sendApprovalNotification 使用,后端会从 flow 重新算)
+  const allUsers = await getUsers();
+  flowNodes.forEach((n, i) => {
+    const lvl = i + 1;
+    if (n && n.approver_id) {
+      record['approver_level' + lvl + '_id'] = n.approver_id;
+      const u = allUsers.find(u => u.id === n.approver_id);
+      record['approver_level' + lvl + '_name'] = u ? u.name : '';
+    } else {
+      record['approver_level' + lvl + '_id'] = '';
+      record['approver_level' + lvl + '_name'] = '';
+    }
+  });
   const records=await getRecords();
   records.push(record);
   await saveRecordsAsync(records);
@@ -3511,9 +3556,7 @@ async function saveAsDraft(){
     if(!items[i].quantity||items[i].quantity<1) items[i].quantity=1;
   }
 
-  const a1=document.getElementById('f-approver-level1').value;
-  const a2=document.getElementById('f-approver-level2').value;
-  const a3=document.getElementById('f-approver-level3').value;
+  const flowId = document.getElementById('f-approval-flow').value;
 
   const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
   const firstSku=items[0].sku_code;
@@ -3540,9 +3583,7 @@ async function saveAsDraft(){
     category:product?product.category:'',
     submitter_id:user.id,
     submitter_name:user.name,
-    approver_level1_id:a1||'', approver_level1_name:a1?getApproverName('f-approver-level1'):'',
-    approver_level2_id:a2||'', approver_level2_name:a2?getApproverName('f-approver-level2'):'',
-    approver_level3_id:a3||'', approver_level3_name:a3?getApproverName('f-approver-level3'):'',
+    approval_flow_id: flowId || '',
     status:'草稿',
     current_approval_level:0,
     approval_history:[],
