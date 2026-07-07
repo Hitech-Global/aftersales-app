@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.1"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.2"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -345,10 +345,30 @@ select option{background:var(--card-bg);color:var(--text)}
 .detail-items-table select option{background:var(--card-bg);color:var(--text)}
 .detail-items-table .qty-input{text-align:center}
 .detail-items-table .btn-delete-row{background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1;border-radius:4px}
+/* ===== 新建售后记录 - 主内容区全屏弹窗(不覆盖左侧导航栏,覆盖右侧整个内容区) ===== */
+.record-fs-overlay{position:fixed;top:0;right:0;bottom:0;left:220px;background:var(--bg);z-index:200;display:flex;flex-direction:column;overflow:hidden}
+.record-fs-overlay.hidden{display:none}
+.record-fs-panel{display:flex;flex-direction:column;width:100%;height:100%;background:var(--card-bg)}
+.record-fs-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)}
+.record-fs-header h3{margin:0;font-size:18px}
+.record-fs-body{flex:1 1 auto;overflow-y:auto;padding:24px}
+.record-fs-footer{flex-shrink:0;display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid var(--border);background:var(--card-bg)}
+/* 离线渠道店铺/客户自动补全输入框 */
+.shop-ac-wrap{position:relative}
+.shop-autocomplete{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box}
+.shop-autocomplete:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(46,125,50,.1)}
+.shop-ac-dropdown{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:50;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:240px;overflow-y:auto}
+.shop-ac-dropdown.hidden{display:none}
+.shop-ac-item{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shop-ac-item:last-child{border-bottom:none}
+.shop-ac-item:hover,.shop-ac-item.active{background:var(--primary-light)}
+.shop-ac-sub{color:var(--text-muted);font-size:11px;margin-left:6px}
+.shop-ac-empty{padding:10px;color:var(--text-muted);font-size:13px}
 .detail-items-table .btn-delete-row:hover{background:#fde8e8}
 
 @media(max-width:768px){
   .sidebar{width:0;overflow:hidden}
+  .record-fs-overlay{left:0}
   .stats-grid{flex-wrap:wrap}.stat-card{flex:1 1 calc(50% - 4px);min-width:80px}
   .filter-form{flex-direction:column;align-items:stretch}
   .filter-actions{width:100%;justify-content:flex-end}
@@ -524,7 +544,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -668,15 +688,14 @@ select option{background:var(--card-bg);color:var(--text)}
         </div>
 
         <!-- 新建记录弹窗 -->
-        <div id="record-form-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeRecordForm()">
-          <div class="modal-panel modal-xlarge">
-            <div class="modal-header">
+        <div id="record-form-modal" class="record-fs-overlay hidden" onclick="if(event.target===this)closeRecordForm()">
+          <form class="record-fs-panel" onsubmit="submitForApproval(event)">
+            <div class="record-fs-header">
               <h3 id="form-title" data-i18n="form.titleNew"></h3>
               <button type="button" class="modal-close" onclick="closeRecordForm()">&times;</button>
             </div>
-            <div class="modal-body">
-              <form class="record-form" onsubmit="submitForApproval(event)">
-                <datalist id="sku-datalist"></datalist>
+            <div class="record-fs-body">
+              <datalist id="sku-datalist"></datalist>
                 <fieldset class="form-section">
                   <legend data-i18n="form.section.basic"></legend>
                   <div class="form-grid">
@@ -723,13 +742,13 @@ select option{background:var(--card-bg);color:var(--text)}
                   </div>
                   <div style="font-size:12px;color:var(--text-muted);margin-top:8px" data-i18n="form.hint.approverRule"></div>
                 </fieldset>
-                <div class="form-actions" style="margin-top:8px">
-                  <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn" data-i18n="form.btnSubmit"></button>
-                  <button type="button" class="btn btn-secondary btn-lg" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
-                  <button type="button" class="btn btn-secondary btn-lg" onclick="closeRecordForm()" data-i18n="form.btnCancel"></button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div class="record-fs-footer form-actions">
+                <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn" data-i18n="form.btnSubmit"></button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="closeRecordForm()" data-i18n="form.btnCancel"></button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -3391,38 +3410,139 @@ async function onPlatformChange(selectEl){
 }
 
 // 加载店铺/客户选项并可选地预选
-async function _loadShopOptions(shopSelect, platformCode, selectedCode){
-  try{
-    // 离线渠道：从妙搭 Webhook 同步的 customers 表取数（不走字典管理）
-    if (platformCode && platformCode.toLowerCase().includes('offline')) {
-      try {
-        const resp = await fetch('/api/customers?limit=1000');
-        const data = await resp.json();
-        const customers = (data && data.customers) || [];
-        let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
-        customers.forEach(c => {
-          const val = c.external_customer_id || c.id;
-          const label = c.customer_name || val;
-          h += '<option value="' + esc(val) + '"' + (selectedCode === val ? ' selected' : '') + '>' + esc(label) + '</option>';
-        });
-        shopSelect.innerHTML = h;
-        return;
-      } catch(e2) {
-        console.error('[loadShopOptions] 加载同步客户失败:', e2);
-        shopSelect.innerHTML = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
-        return;
-      }
+async function _loadShopOptions(shopEl, platformCode, selectedCode){
+  const tr = shopEl.closest('tr');
+  const isOffline = platformCode && platformCode.toLowerCase().includes('offline');
+
+  // 未选择平台: 还原为禁用下拉,提示先选渠道
+  if(!platformCode){
+    let sel = shopEl;
+    if(shopEl.tagName !== 'SELECT'){
+      sel = document.createElement('select');
+      sel.className = 'shop-select';
+      sel.setAttribute('data-dict','shop_customer');
+      shopEl.replaceWith(sel);
     }
-    // 其他渠道：从字典管理取数
+    sel.disabled = true;
+    sel.innerHTML = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
+    return;
+  }
+
+  // 离线渠道: 使用妙搭同步客户表,改为「输入即搜索」自动补全输入框(不走字典下拉)
+  if(isOffline){
+    let input = shopEl;
+    if(shopEl.tagName !== 'INPUT'){
+      input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'shop-select shop-autocomplete';
+      input.setAttribute('data-dict','shop_customer');
+      input.setAttribute('autocomplete','off');
+      input.placeholder = (t('form.shopCustomerPlaceholder') !== 'form.shopCustomerPlaceholder') ? t('form.shopCustomerPlaceholder') : '输入客户名称搜索';
+      shopEl.replaceWith(input);
+    }
+    input.disabled = false;
+    input.value = selectedCode || '';
+    input.dataset.customerId = '';
+    attachShopAutocomplete(input, tr);
+    return;
+  }
+
+  // 其他渠道: 从字典管理取数,使用下拉
+  let sel = shopEl;
+  if(shopEl.tagName !== 'SELECT'){
+    sel = document.createElement('select');
+    sel.className = 'shop-select';
+    sel.setAttribute('data-dict','shop_customer');
+    shopEl.replaceWith(sel);
+  }
+  sel.disabled = false;
+  try{
     const shops = await loadDictOptions('shop_customer', platformCode);
     let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
     shops.forEach(o => {
       h += '<option value="' + esc(o.code) + '"' + (selectedCode === o.code ? ' selected' : '') + '>' + esc(getDictLabel(o)) + '</option>';
     });
-    shopSelect.innerHTML = h;
+    sel.innerHTML = h;
   }catch(e){
-    shopSelect.innerHTML = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+    sel.innerHTML = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
   }
+}
+
+// 离线渠道店铺/客户: 输入客户名实时搜索 customers 表,下拉提供选择
+function attachShopAutocomplete(input, tr){
+  if(input._acBound) return;
+  input._acBound = true;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'shop-ac-wrap';
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+  const dd = document.createElement('div');
+  dd.className = 'shop-ac-dropdown hidden';
+  wrap.appendChild(dd);
+
+  let debounceTimer = null;
+  let activeIndex = -1;
+
+  const updateActive = (items) => {
+    items.forEach((it,i) => it.classList.toggle('active', i === activeIndex));
+    if(items[activeIndex]) items[activeIndex].scrollIntoView({block:'nearest'});
+  };
+  const choose = (item) => {
+    input.value = item.dataset.name || '';
+    input.dataset.customerId = item.dataset.id || '';
+    dd.classList.add('hidden');
+  };
+  const render = (customers) => {
+    if(!customers || !customers.length){
+      dd.innerHTML = '<div class="shop-ac-empty">' + ((t('form.shopCustomerNoMatch') !== 'form.shopCustomerNoMatch') ? t('form.shopCustomerNoMatch') : '无匹配客户') + '</div>';
+      dd.classList.remove('hidden');
+      return;
+    }
+    dd.innerHTML = customers.map((c, i) => {
+      const name = c.customer_name || c.external_customer_id || '';
+      const sub = [c.country, c.contact_person].filter(Boolean).join(' · ');
+      return '<div class="shop-ac-item' + (i === activeIndex ? ' active' : '') + '" data-id="' + esc(c.external_customer_id || '') + '" data-name="' + esc(name) + '">' + esc(name) + (sub ? '<span class="shop-ac-sub">' + esc(sub) + '</span>' : '') + '</div>';
+    }).join('');
+    dd.classList.remove('hidden');
+  };
+  const search = async (term) => {
+    try{
+      const resp = await fetch('/api/customers?search=' + encodeURIComponent(term) + '&limit=20');
+      const data = await resp.json();
+      render((data && data.customers) || []);
+    }catch(e){
+      dd.classList.add('hidden');
+    }
+  };
+
+  input.addEventListener('input', () => {
+    const term = input.value.trim();
+    input.dataset.customerId = '';
+    activeIndex = -1;
+    if(!term){ dd.classList.add('hidden'); dd.innerHTML = ''; return; }
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => search(term), 250);
+  });
+  input.addEventListener('focus', () => {
+    const term = input.value.trim();
+    if(term && dd.classList.contains('hidden')) search(term);
+  });
+  input.addEventListener('keydown', (e) => {
+    const items = dd.querySelectorAll('.shop-ac-item');
+    if(!items.length) return;
+    if(e.key === 'ArrowDown'){ e.preventDefault(); activeIndex = Math.min(activeIndex + 1, items.length - 1); updateActive(items); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); activeIndex = Math.max(activeIndex - 1, 0); updateActive(items); }
+    else if(e.key === 'Enter'){ if(activeIndex >= 0){ e.preventDefault(); choose(items[activeIndex]); } }
+    else if(e.key === 'Escape'){ dd.classList.add('hidden'); }
+  });
+  dd.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.shop-ac-item');
+    if(!item) return;
+    e.preventDefault();
+    choose(item);
+  });
+  input.addEventListener('blur', () => { setTimeout(() => dd.classList.add('hidden'), 150); });
 }
 
 async function _handleItemAttachmentUpload(tr, files) {

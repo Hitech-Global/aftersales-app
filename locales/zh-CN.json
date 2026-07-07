@@ -279,6 +279,8 @@
       "pleaseSelect": "请选择",
       "selectPlatformFirst": "请先选择渠道"
     },
+    "shopCustomerPlaceholder": "输入客户名称搜索",
+    "shopCustomerNoMatch": "无匹配客户",
     "btnSubmit": "📤 提交审批",
     "btnSaveDraft": "💾 保存草稿",
     "btnCancel": "取消",

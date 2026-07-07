@@ -279,6 +279,8 @@
       "pleaseSelect": "Pilih",
       "selectPlatformFirst": "Pilih saluran dulu"
     },
+    "shopCustomerPlaceholder": "Cari nama pelanggan",
+    "shopCustomerNoMatch": "Tidak ada pelanggan cocok",
     "btnSubmit": "Ajukan Approval",
     "btnSaveDraft": "Simpan Draft",
     "btnCancel": "Batal",

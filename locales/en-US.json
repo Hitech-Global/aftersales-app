@@ -279,6 +279,8 @@
       "pleaseSelect": "Select",
       "selectPlatformFirst": "Select channel first"
     },
+    "shopCustomerPlaceholder": "Search by customer name",
+    "shopCustomerNoMatch": "No matching customer",
     "btnSubmit": "Submit for Approval",
     "btnSaveDraft": "Save Draft",
     "btnCancel": "Cancel",
