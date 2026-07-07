@@ -205,7 +205,6 @@ async function initDatabase() {
       )
     `);
     await query(`CREATE INDEX IF NOT EXISTS idx_dict_category ON dictionaries(category, sort_order)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_dict_parent ON dictionaries(parent_code) WHERE parent_code <> ''`);
 
     await query(`
       CREATE TABLE IF NOT EXISTS attachments (
@@ -251,6 +250,7 @@ async function initDatabase() {
 
     // 迁移：为 dictionaries 表添加 parent_code 列（用于 shop_customer 与 platform 联动）
     await query(`ALTER TABLE dictionaries ADD COLUMN IF NOT EXISTS parent_code VARCHAR(128) DEFAULT ''`).catch(() => {});
+    await query(`CREATE INDEX IF NOT EXISTS idx_dict_parent ON dictionaries(parent_code) WHERE parent_code <> ''`).catch(() => {});
 
     // 创建索引
     await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_open_id ON users(feishu_open_id)`);
@@ -346,22 +346,35 @@ async function initDatabase() {
         { category: 'return_method', code: 'pickup', zh: '上门取件', en: 'Pickup', id: 'Penjemputan', sort: 1 },
         { category: 'return_method', code: 'customer_send', zh: '客户送修', en: 'Customer Drop-off', id: 'Kirim Pelanggan', sort: 2 },
         { category: 'return_method', code: 'express_cod', zh: '快递到付', en: 'Express (Freight Collect)', id: 'Ekspres (Bayar Tujuan)', sort: 3 },
-        // 店铺/客户（parent_code 关联 platform code）
-        { category: 'shop_customer', code: 'shopee_store_01', zh: 'Shopee 官方店', en: 'Shopee Official Store', id: 'Shopee Official Store', sort: 1, parent_code: 'shopee' },
-        { category: 'shop_customer', code: 'shopee_store_02', zh: 'Shopee 旗舰店', en: 'Shopee Flagship Store', id: 'Shopee Flagship Store', sort: 2, parent_code: 'shopee' },
-        { category: 'shop_customer', code: 'tiktok_store_01', zh: 'TikTok 官方店', en: 'TikTok Official Store', id: 'TikTok Official Store', sort: 1, parent_code: 'tiktok' },
-        { category: 'shop_customer', code: 'lazada_store_01', zh: 'Lazada 官方店', en: 'Lazada Official Store', id: 'Lazada Official Store', sort: 1, parent_code: 'lazada' },
-        { category: 'shop_customer', code: 'tokopedia_store_01', zh: 'Tokopedia 官方店', en: 'Tokopedia Official Store', id: 'Tokopedia Official Store', sort: 1, parent_code: 'tokopedia' },
-        { category: 'shop_customer', code: 'offline_dealer_01', zh: '经销商A', en: 'Dealer A', id: 'Dealer A', sort: 1, parent_code: 'offline' },
-        { category: 'shop_customer', code: 'offline_dealer_02', zh: '客户自送', en: 'Customer Walk-in', id: 'Customer Walk-in', sort: 2, parent_code: 'offline' },
       ];
       for (const d of defaultDicts) {
         await query(
           `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, parent_code)
            VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8) ON CONFLICT (category, code) DO NOTHING`,
-          ['dict_' + d.category + '_' + d.code, d.category, d.code, d.zh, d.en, d.id, d.sort, d.parent_code || '']
+          ['dict_' + d.category + '_' + d.code, d.category, d.code, d.zh, d.en, d.id, d.sort, '']
         );
       }
+      console.log('[DB] 已插入默认字典数据');
+    }
+
+    // 始终尝试插入默认 shop_customer 数据（ON CONFLICT DO NOTHING 保证幂等）
+    const defaultShopCustomer = [
+      { code: 'shopee_store_01', zh: 'Shopee 官方店', en: 'Shopee Official Store', id: 'Shopee Official Store', sort: 1, parent_code: 'shopee' },
+      { code: 'shopee_store_02', zh: 'Shopee 旗舰店', en: 'Shopee Flagship Store', id: 'Shopee Flagship Store', sort: 2, parent_code: 'shopee' },
+      { code: 'tiktok_store_01', zh: 'TikTok 官方店', en: 'TikTok Official Store', id: 'TikTok Official Store', sort: 1, parent_code: 'tiktok' },
+      { code: 'lazada_store_01', zh: 'Lazada 官方店', en: 'Lazada Official Store', id: 'Lazada Official Store', sort: 1, parent_code: 'lazada' },
+      { code: 'tokopedia_store_01', zh: 'Tokopedia 官方店', en: 'Tokopedia Official Store', id: 'Tokopedia Official Store', sort: 1, parent_code: 'tokopedia' },
+      { code: 'offline_dealer_01', zh: '经销商A', en: 'Dealer A', id: 'Dealer A', sort: 1, parent_code: 'offline' },
+      { code: 'offline_dealer_02', zh: '客户自送', en: 'Customer Walk-in', id: 'Customer Walk-in', sort: 2, parent_code: 'offline' },
+    ];
+    for (const d of defaultShopCustomer) {
+      await query(
+        `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, parent_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8) ON CONFLICT (category, code) DO NOTHING`,
+        ['dict_shop_customer_' + d.code, 'shop_customer', d.code, d.zh, d.en, d.id, d.sort, d.parent_code]
+      );
+    }
+    console.log('[DB] 已确保 shop_customer 默认数据存在');
       console.log('[DB] 已插入默认字典数据');
     }
 
