@@ -327,7 +327,17 @@ function verifyWebhookSignature(req, res, next) {
     console.warn('[Webhook] 请求方法=%s, 路径=%s, 时间戳头=%s', req.method, req.path, timestamp);
     console.warn('[Webhook] 请求头:', JSON.stringify(req.headers, null, 2));
     console.warn('[Webhook] 原始 Body (前 2KB):', (req.rawBody || '').slice(0, 2048));
-    return res.status(401).json({ error: '签名校验失败' });
+    return res.status(401).json({
+      error: '签名校验失败',
+      debug: {
+        received_signature: signature,
+        expected_signature: expected,
+        sign_payload_preview: signPayload.slice(0, 500),
+        timestamp_header: timestamp,
+        raw_body_length: (req.rawBody || '').length,
+        raw_body_preview: (req.rawBody || '').slice(0, 500)
+      }
+    });
   }
 
   console.log('[Webhook] 签名校验通过');
@@ -489,6 +499,7 @@ app.get('/api/webhooks/customer-sync/status', async (req, res) => {
       success: true,
       webhook_url: `${APP_BASE_URL}/api/webhooks/customer-sync`,
       webhook_secret_configured: !!WEBHOOK_SECRET,
+      webhook_secret_prefix: WEBHOOK_SECRET ? WEBHOOK_SECRET.slice(0, 8) + '***' : null,
       total_customers: parseInt(countRows[0].total),
       last_synced_at: lastSyncRows[0].last_synced_at || null,
       recent_customers: recentRows
@@ -496,6 +507,45 @@ app.get('/api/webhooks/customer-sync/status', async (req, res) => {
   } catch (err) {
     console.error('[Webhook] 状态查询失败:', err.message);
     res.status(500).json({ error: '状态查询失败', detail: err.message });
+  }
+});
+
+// 诊断接口：不校验签名，返回请求头、raw body 和多种签名计算结果，用于联调
+// 注意：不会泄露 secret 本身，仅返回前缀
+app.post('/api/webhooks/customer-sync/debug', async (req, res) => {
+  try {
+    const signature = req.headers['x-webhook-signature'];
+    const timestamp = req.headers['x-webhook-timestamp'];
+    const rawBody = req.rawBody || '';
+
+    const computeSignatures = (secret) => {
+      if (!secret) return null;
+      return {
+        v1_dot: crypto.createHmac('sha256', secret).update(timestamp + '.' + rawBody).digest('hex'),
+        v1_concat: crypto.createHmac('sha256', secret).update(timestamp + rawBody).digest('hex'),
+        v1_base64_dot: crypto.createHmac('sha256', secret).update(timestamp + '.' + rawBody).digest('base64'),
+        v1_base64_concat: crypto.createHmac('sha256', secret).update(timestamp + rawBody).digest('base64')
+      };
+    };
+
+    const signatures = computeSignatures(WEBHOOK_SECRET);
+
+    res.status(200).json({
+      success: true,
+      message: 'Webhook 诊断信息（未校验签名）',
+      webhook_secret_configured: !!WEBHOOK_SECRET,
+      webhook_secret_prefix: WEBHOOK_SECRET ? WEBHOOK_SECRET.slice(0, 8) + '***' : null,
+      timestamp_header: timestamp,
+      received_signature: signature,
+      computed_signatures: signatures,
+      raw_body_length: rawBody.length,
+      raw_body_preview: rawBody.slice(0, 1000),
+      parsed_body: req.body,
+      headers: req.headers
+    });
+  } catch (err) {
+    console.error('[Webhook] 诊断接口失败:', err.message);
+    res.status(500).json({ error: '诊断接口失败', detail: err.message });
   }
 });
 
