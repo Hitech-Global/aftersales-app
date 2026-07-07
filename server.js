@@ -172,6 +172,20 @@ console.log('========================================\n');
 
 // ==================== Express 初始化 ====================
 const app = express();
+
+// Webhook raw body 必须在 express.json() 之前处理，否则 JSON 解析器会消费请求流
+// 导致 Webhook 路由无法读取原始 body 而超时
+app.use('/api/webhooks/customer-sync', express.raw({ type: 'application/json' }), (req, res, next) => {
+  req.rawBody = (req.body || '').toString('utf8');
+  try {
+    req.body = req.rawBody ? JSON.parse(req.rawBody) : {};
+  } catch (err) {
+    console.warn('[Webhook] JSON 解析失败:', err.message);
+    req.body = {};
+  }
+  next();
+});
+
 app.use(express.json());
 
 function sendNoCacheHtml(res, fileName) {
@@ -265,8 +279,10 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
 /**
  * HMAC-SHA256 签名校验中间件
  * 读取 X-Webhook-Signature 和 X-Webhook-Timestamp 头，
- * 用 WEBHOOK_SECRET 对 timestamp + rawBody 计算 HMAC，
+ * 用 WEBHOOK_SECRET 对 timestamp + "." + rawBody 计算 HMAC，
  * 与请求头中的签名比对。
+ *
+ * 妙搭签名算法: HMAC-SHA256(timestamp + "." + body, secret)
  */
 function verifyWebhookSignature(req, res, next) {
   if (!WEBHOOK_SECRET) {
@@ -283,26 +299,31 @@ function verifyWebhookSignature(req, res, next) {
   }
 
   // 防重放：timestamp 超过 5 分钟则拒绝
-  // 支持 Unix 秒 / 毫秒 / ISO 8601 字符串
+  // 支持 Unix 秒 / 毫秒；秒级时间戳 < 1e12，毫秒级 > 1e12
   let ts = Number(timestamp);
-  if (isNaN(ts) || ts < 1000000000000) {
-    // 不是毫秒，按秒解析
-    ts = ts / 1000;
+  if (isNaN(ts)) {
+    console.warn('[Webhook] Timestamp 无效:', timestamp);
+    return res.status(401).json({ error: 'Timestamp 无效' });
   }
-  if (!ts || Math.abs(Date.now() / 1000 - ts) > 300) {
+  if (ts > 1000000000000) {
+    ts = ts / 1000; // 毫秒转秒
+  }
+  if (Math.abs(Date.now() / 1000 - ts) > 300) {
     console.warn('[Webhook] Timestamp 超时或无效:', timestamp);
     return res.status(401).json({ error: 'Timestamp 超时或无效' });
   }
 
-  // 计算 HMAC: HMAC-SHA256(secret, timestamp + rawBody)
+  // 计算 HMAC: HMAC-SHA256(secret, timestamp + "." + rawBody)
   const rawBody = req.rawBody || '';
+  const signPayload = timestamp + '.' + rawBody;
   const expected = crypto
     .createHmac('sha256', WEBHOOK_SECRET)
-    .update(timestamp + rawBody)
+    .update(signPayload)
     .digest('hex');
 
   if (signature !== expected) {
     console.warn('[Webhook] 签名不匹配: received=%s expected=%s', signature, expected);
+    console.warn('[Webhook] 签名 payload (前 2KB):', signPayload.slice(0, 2048));
     console.warn('[Webhook] 请求方法=%s, 路径=%s, 时间戳头=%s', req.method, req.path, timestamp);
     console.warn('[Webhook] 请求头:', JSON.stringify(req.headers, null, 2));
     console.warn('[Webhook] 原始 Body (前 2KB):', (req.rawBody || '').slice(0, 2048));
@@ -312,13 +333,6 @@ function verifyWebhookSignature(req, res, next) {
   console.log('[Webhook] 签名校验通过');
   next();
 }
-
-// 拦截 raw body 供 HMAC 校验使用
-app.use('/api/webhooks/customer-sync', (req, res, next) => {
-  req.rawBody = '';
-  req.on('data', (chunk) => { req.rawBody += chunk; });
-  req.on('end', next);
-});
 
 app.post('/api/webhooks/customer-sync', verifyWebhookSignature, async (req, res) => {
   try {
