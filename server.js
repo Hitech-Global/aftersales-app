@@ -283,7 +283,12 @@ function verifyWebhookSignature(req, res, next) {
   }
 
   // 防重放：timestamp 超过 5 分钟则拒绝
-  const ts = Number(timestamp);
+  // 支持 Unix 秒 / 毫秒 / ISO 8601 字符串
+  let ts = Number(timestamp);
+  if (isNaN(ts) || ts < 1000000000000) {
+    // 不是毫秒，按秒解析
+    ts = ts / 1000;
+  }
   if (!ts || Math.abs(Date.now() / 1000 - ts) > 300) {
     console.warn('[Webhook] Timestamp 超时或无效:', timestamp);
     return res.status(401).json({ error: 'Timestamp 超时或无效' });
@@ -298,6 +303,9 @@ function verifyWebhookSignature(req, res, next) {
 
   if (signature !== expected) {
     console.warn('[Webhook] 签名不匹配: received=%s expected=%s', signature, expected);
+    console.warn('[Webhook] 请求方法=%s, 路径=%s, 时间戳头=%s', req.method, req.path, timestamp);
+    console.warn('[Webhook] 请求头:', JSON.stringify(req.headers, null, 2));
+    console.warn('[Webhook] 原始 Body (前 2KB):', (req.rawBody || '').slice(0, 2048));
     return res.status(401).json({ error: '签名校验失败' });
   }
 
@@ -316,7 +324,13 @@ app.post('/api/webhooks/customer-sync', verifyWebhookSignature, async (req, res)
   try {
     const { event, timestamp, source, data } = req.body;
 
+    console.log('[Webhook] 收到妙搭推送: event=%s, source=%s, headers=%o', event, source, {
+      'x-webhook-signature': req.headers['x-webhook-signature'],
+      'x-webhook-timestamp': req.headers['x-webhook-timestamp']
+    });
+
     if (!data || !data.id) {
+      console.warn('[Webhook] 请求缺少 data.id');
       return res.status(400).json({ error: '缺少 data.id 字段' });
     }
 
@@ -375,6 +389,99 @@ app.post('/api/webhooks/customer-sync', verifyWebhookSignature, async (req, res)
   } catch (err) {
     console.error('[Webhook] 客户同步失败:', err.message);
     res.status(500).json({ error: '客户同步失败', detail: err.message });
+  }
+});
+
+// ==================== 客户查询接口（妙搭同步验证用）====================
+app.get('/api/customers', requireLogin, async (req, res) => {
+  try {
+    const { status, source, search, limit = '50', offset = '0' } = req.query;
+    const conditions = ['1=1'];
+    const params = [];
+
+    if (status) {
+      params.push(status);
+      conditions.push(`status = $${params.length}`);
+    }
+    if (source) {
+      params.push(source);
+      conditions.push(`source = $${params.length}`);
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      conditions.push(`(external_customer_id ILIKE $${params.length} OR customer_name ILIKE $${params.length} OR phone ILIKE $${params.length} OR email ILIKE $${params.length})`);
+    }
+
+    const countSql = `SELECT COUNT(*) as total FROM customers WHERE ${conditions.join(' AND ')}`;
+    const dataSql = `
+      SELECT id, external_customer_id, customer_name, contact_person, phone, email,
+             country, address, status, source, last_synced_at, created_at, updated_at
+      FROM customers
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY updated_at DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
+
+    const [{ rows: countRows }, { rows: customers }] = await Promise.all([
+      query(countSql, params),
+      query(dataSql, [...params, parseInt(limit), parseInt(offset)])
+    ]);
+
+    res.status(200).json({
+      success: true,
+      total: parseInt(countRows[0].total),
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      customers
+    });
+  } catch (err) {
+    console.error('[Customers] 查询失败:', err.message);
+    res.status(500).json({ error: '查询失败', detail: err.message });
+  }
+});
+
+app.get('/api/customers/:externalId', requireLogin, async (req, res) => {
+  try {
+    const { externalId } = req.params;
+    const { rows } = await query(`
+      SELECT id, external_customer_id, customer_name, contact_person, phone, email,
+             country, address, status, source, last_synced_at, created_at, updated_at
+      FROM customers
+      WHERE external_customer_id = $1
+    `, [externalId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: '客户不存在' });
+    }
+
+    res.status(200).json({ success: true, customer: rows[0] });
+  } catch (err) {
+    console.error('[Customers] 查询失败:', err.message);
+    res.status(500).json({ error: '查询失败', detail: err.message });
+  }
+});
+
+// 无认证状态接口：仅返回客户统计与最后同步时间，用于快速验证
+app.get('/api/webhooks/customer-sync/status', async (req, res) => {
+  try {
+    const { rows: countRows } = await query('SELECT COUNT(*) as total FROM customers');
+    const { rows: lastSyncRows } = await query('SELECT MAX(last_synced_at) as last_synced_at FROM customers');
+    const { rows: recentRows } = await query(`
+      SELECT external_customer_id, customer_name, status, last_synced_at
+      FROM customers ORDER BY last_synced_at DESC LIMIT 5
+    `);
+
+    res.status(200).json({
+      success: true,
+      webhook_url: `${APP_BASE_URL}/api/webhooks/customer-sync`,
+      webhook_secret_configured: !!WEBHOOK_SECRET,
+      total_customers: parseInt(countRows[0].total),
+      last_synced_at: lastSyncRows[0].last_synced_at || null,
+      recent_customers: recentRows
+    });
+  } catch (err) {
+    console.error('[Webhook] 状态查询失败:', err.message);
+    res.status(500).json({ error: '状态查询失败', detail: err.message });
   }
 });
 
