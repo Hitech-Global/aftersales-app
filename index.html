@@ -286,6 +286,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .user-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500}
 .user-status-active{background:#e8f5e9;color:#2e7d32}
 .user-status-disabled{background:#f5f5f5;color:#757575}
+.country-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;background:#e3f2fd;color:#1565c0}
 
 /* Product status badge */
 .prod-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500}
@@ -5095,12 +5096,11 @@ async function loadCustomers() {
     }
 
     let html = `<div class="table-container"><table class="data-table"><thead><tr>
-      <th>${t('customers.col.extId')}</th>
+      <th>${t('customers.col.country')}</th>
       <th>${t('customers.col.name')}</th>
       <th>${t('customers.col.contact')}</th>
       <th>${t('customers.col.phone')}</th>
       <th>${t('customers.col.email')}</th>
-      <th>${t('customers.col.country')}</th>
       <th>${t('customers.col.status')}</th>
       <th>${t('customers.col.source')}</th>
       <th>${t('customers.col.lastSync')}</th>
@@ -5109,12 +5109,11 @@ async function loadCustomers() {
     customers.forEach(c => {
       const statusClass = c.status === 'active' ? 'user-status-active' : 'user-status-disabled';
       html += `<tr>
-        <td class="cell-name" style="font-size:12px">${esc(c.external_customer_id)}</td>
-        <td>${esc(c.customer_name || '-')}</td>
+        <td><span class="country-tag">${esc(c.country || '-')}</span></td>
+        <td class="cell-name">${esc(c.customer_name || '-')}</td>
         <td>${esc(c.contact_person || '-')}</td>
         <td>${esc(c.phone || '-')}</td>
         <td style="font-size:12px">${esc(c.email || '-')}</td>
-        <td>${esc(c.country || '-')}</td>
         <td><span class="user-status ${statusClass}">${c.status === 'active' ? t('customers.statusActive') : t('customers.statusInactive')}</span></td>
         <td style="font-size:12px;color:var(--text-muted)">${esc(c.source || '-')}</td>
         <td class="cell-date">${formatDate(c.last_synced_at)}</td>
