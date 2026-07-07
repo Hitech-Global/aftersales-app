@@ -180,7 +180,7 @@
       "processType": "处理类型",
       "processProgress": "处理进度",
       "date": "售后日期",
-      "platform": "平台",
+      "platform": "渠道",
       "shopCustomer": "店铺/客户",
       "returnReason": "退货原因",
       "sku": "SKU",
@@ -277,7 +277,7 @@
     },
     "option": {
       "pleaseSelect": "请选择",
-      "selectPlatformFirst": "请先选择平台"
+      "selectPlatformFirst": "请先选择渠道"
     },
     "btnSubmit": "📤 提交审批",
     "btnSaveDraft": "💾 保存草稿",
@@ -822,7 +822,7 @@
     "approval": "审批",
     "adminLoggedIn": " 已登录",
     "validation": {
-      "platformRequired": "第 {row} 行请选择平台",
+      "platformRequired": "第 {row} 行请选择渠道",
       "skuRequired": "第 {row} 行请输入 SKU",
       "quantityMustBePositive": "第 {row} 行数量必须大于 0",
       "returnReasonRequired": "第 {row} 行请选择退货原因",
@@ -873,7 +873,7 @@
   "validation": {
     "selectDate": "请选择售后日期",
     "minOneItem": "请至少添加一条售后明细",
-    "rowPlatform": "第{row}行：请选择平台",
+    "rowPlatform": "第{row}行：请选择渠道",
     "rowSku": "第{row}行：请填写SKU",
     "rowQty": "第{row}行：数量必须大于0",
     "rowReturnReason": "第{row}行：请选择退货原因",
@@ -897,7 +897,7 @@
     "onlyApprovedItems": "只能处理审批通过的售后明细。",
     "enterProcessDate": "请填写处理日期",
     "enterErpDate": "请填写ERP入库日期",
-    "platformRequired": "第{row}行：请选择平台",
+    "platformRequired": "第{row}行：请选择渠道",
     "quantityMustBePositive": "第{row}行：数量必须大于0",
     "returnReasonRequired": "第{row}行：请选择退货原因",
     "faultDescriptionRequired": "第{row}行：请填写问题说明",

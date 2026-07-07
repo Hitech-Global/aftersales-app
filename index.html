@@ -3388,6 +3388,27 @@ async function onPlatformChange(selectEl){
 // 加载店铺/客户选项并可选地预选
 async function _loadShopOptions(shopSelect, platformCode, selectedCode){
   try{
+    // 离线渠道：从妙搭 Webhook 同步的 customers 表取数（不走字典管理）
+    if (platformCode && platformCode.toLowerCase().includes('offline')) {
+      try {
+        const resp = await fetch('/api/customers?limit=1000');
+        const data = await resp.json();
+        const customers = (data && data.customers) || [];
+        let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+        customers.forEach(c => {
+          const val = c.external_customer_id || c.id;
+          const label = c.customer_name || val;
+          h += '<option value="' + esc(val) + '"' + (selectedCode === val ? ' selected' : '') + '>' + esc(label) + '</option>';
+        });
+        shopSelect.innerHTML = h;
+        return;
+      } catch(e2) {
+        console.error('[loadShopOptions] 加载同步客户失败:', e2);
+        shopSelect.innerHTML = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+        return;
+      }
+    }
+    // 其他渠道：从字典管理取数
     const shops = await loadDictOptions('shop_customer', platformCode);
     let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
     shops.forEach(o => {

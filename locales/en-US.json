@@ -180,7 +180,7 @@
       "processType": "Processing Type",
       "processProgress": "Processing Progress",
       "date": "RMA Date",
-      "platform": "Platform",
+      "platform": "Channel",
       "shopCustomer": "Shop/Customer",
       "returnReason": "Return Reason",
       "sku": "SKU",
@@ -277,7 +277,7 @@
     },
     "option": {
       "pleaseSelect": "Select",
-      "selectPlatformFirst": "Select platform first"
+      "selectPlatformFirst": "Select channel first"
     },
     "btnSubmit": "Submit for Approval",
     "btnSaveDraft": "Save Draft",
@@ -822,7 +822,7 @@
     "approval": "Approval",
     "adminLoggedIn": " logged in",
     "validation": {
-      "platformRequired": "Select a platform on row {row}",
+      "platformRequired": "Select a channel on row {row}",
       "skuRequired": "Enter SKU on row {row}",
       "quantityMustBePositive": "Quantity on row {row} must be greater than 0",
       "returnReasonRequired": "Select a return reason on row {row}",
@@ -873,7 +873,7 @@
   "validation": {
     "selectDate": "Select an RMA date",
     "minOneItem": "Add at least one RMA item",
-    "rowPlatform": "Row {row}: select a platform",
+    "rowPlatform": "Row {row}: select a channel",
     "rowSku": "Row {row}: enter SKU",
     "rowQty": "Row {row}: quantity must be greater than 0",
     "rowReturnReason": "Row {row}: select a return reason",
@@ -897,7 +897,7 @@
     "onlyApprovedItems": "Only approved RMA items can be processed.",
     "enterProcessDate": "Enter the processing date",
     "enterErpDate": "Enter the ERP receipt date",
-    "platformRequired": "Row {row}: Please select platform",
+    "platformRequired": "Row {row}: Please select channel",
     "quantityMustBePositive": "Row {row}: Quantity must be > 0",
     "returnReasonRequired": "Row {row}: Please select return reason",
     "faultDescriptionRequired": "Row {row}: Please fill in fault description",

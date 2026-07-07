@@ -180,7 +180,7 @@
       "processType": "Tipe Proses",
       "processProgress": "Progress Proses",
       "date": "Tanggal RMA",
-      "platform": "Platform",
+      "platform": "Saluran",
       "shopCustomer": "Toko/Pelanggan",
       "returnReason": "Alasan Retur",
       "sku": "SKU",
@@ -277,7 +277,7 @@
     },
     "option": {
       "pleaseSelect": "Pilih",
-      "selectPlatformFirst": "Pilih platform dulu"
+      "selectPlatformFirst": "Pilih saluran dulu"
     },
     "btnSubmit": "Ajukan Approval",
     "btnSaveDraft": "Simpan Draft",
@@ -822,7 +822,7 @@
     "approval": "Persetujuan",
     "adminLoggedIn": " sudah login",
     "validation": {
-      "platformRequired": "Pilih platform pada baris {row}",
+      "platformRequired": "Pilih saluran pada baris {row}",
       "skuRequired": "Masukkan SKU pada baris {row}",
       "quantityMustBePositive": "Qty pada baris {row} harus lebih dari 0",
       "returnReasonRequired": "Pilih alasan retur pada baris {row}",
@@ -873,7 +873,7 @@
   "validation": {
     "selectDate": "Pilih tanggal RMA",
     "minOneItem": "Tambahkan minimal satu item RMA",
-    "rowPlatform": "Baris {row}: pilih platform",
+    "rowPlatform": "Baris {row}: pilih saluran",
     "rowSku": "Baris {row}: isi SKU",
     "rowQty": "Baris {row}: qty harus lebih dari 0",
     "rowReturnReason": "Baris {row}: pilih alasan retur",
@@ -897,7 +897,7 @@
     "onlyApprovedItems": "Hanya item RMA yang sudah disetujui yang dapat diproses.",
     "enterProcessDate": "Masukkan tanggal proses",
     "enterErpDate": "Masukkan tanggal penerimaan ERP",
-    "platformRequired": "Baris {row}: Silakan pilih platform",
+    "platformRequired": "Baris {row}: Silakan pilih saluran",
     "quantityMustBePositive": "Baris {row}: Jumlah harus > 0",
     "returnReasonRequired": "Baris {row}: Silakan pilih alasan pengembalian",
     "faultDescriptionRequired": "Baris {row}: Silakan isi deskripsi kerusakan",
