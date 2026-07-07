@@ -255,7 +255,7 @@
       "approverRule": "Approver harus memiliki izin sesuai level approval. Satu orang hanya boleh ditetapkan pada satu level."
     },
     "col": {
-      "platform": "Platform",
+      "platform": "Saluran",
       "sku": "SKU",
       "snCode": "SN Code",
       "orderNo": "No. Pesanan",
@@ -338,7 +338,7 @@
     },
     "col": {
       "index": "#",
-      "platform": "Platform",
+      "platform": "Saluran",
       "shopCustomer": "Toko/Pelanggan",
       "sku": "SKU",
       "snCode": "SN Code",
@@ -379,7 +379,7 @@
       "status": "Status Approval",
       "processStatus": "Status Proses",
       "date": "Tanggal RMA",
-      "platform": "Platform",
+      "platform": "Saluran",
       "totalQty": "Total Qty",
       "currentLevel": "Level Saat Ini",
       "actions": "Aksi",
@@ -420,7 +420,7 @@
     "btnCancel": "Batal",
     "col": {
       "index": "#",
-      "platform": "Platform",
+      "platform": "Saluran",
       "sku": "SKU",
       "orderNo": "No. Pesanan",
       "qty": "Qty",

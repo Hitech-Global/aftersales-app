@@ -255,7 +255,7 @@
       "approverRule": "Approvers must have permission for the assigned approval level. The same user can only be assigned to one level."
     },
     "col": {
-      "platform": "Platform",
+      "platform": "Channel",
       "sku": "SKU",
       "snCode": "SN Code",
       "orderNo": "Order No.",
@@ -338,7 +338,7 @@
     },
     "col": {
       "index": "#",
-      "platform": "Platform",
+      "platform": "Channel",
       "shopCustomer": "Shop/Customer",
       "sku": "SKU",
       "snCode": "SN Code",
@@ -379,7 +379,7 @@
       "status": "Approval Status",
       "processStatus": "Processing Status",
       "date": "RMA Date",
-      "platform": "Platform",
+      "platform": "Channel",
       "totalQty": "Total Qty",
       "currentLevel": "Current Level",
       "actions": "Actions",
@@ -420,7 +420,7 @@
     "btnCancel": "Cancel",
     "col": {
       "index": "#",
-      "platform": "Platform",
+      "platform": "Channel",
       "sku": "SKU",
       "orderNo": "Order No.",
       "qty": "Qty",
