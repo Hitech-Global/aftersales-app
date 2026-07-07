@@ -351,8 +351,11 @@ select option{background:var(--card-bg);color:var(--text)}
 .record-fs-panel{display:flex;flex-direction:column;width:100%;height:100%;background:var(--card-bg)}
 .record-fs-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)}
 .record-fs-header h3{margin:0;font-size:18px}
-.record-fs-body{flex:1 1 auto;overflow-y:auto;padding:24px}
+.record-fs-body{flex:1 1 auto;overflow-y:auto;padding:24px 24px 90px}
 .record-fs-footer{flex-shrink:0;display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid var(--border);background:var(--card-bg)}
+/* 全屏弹窗内的 select 强制浅色渲染,确保原生下拉弹窗不因 overflow 裁切后显示异常 */
+.record-fs-panel select{color-scheme:light!important;-webkit-color-scheme:light!important}
+.record-fs-panel select option{background:#fff;color:#1f2329}
 /* 离线渠道店铺/客户自动补全输入框 */
 .shop-ac-wrap{position:relative}
 .shop-autocomplete{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box}
@@ -713,8 +716,8 @@ select option{background:var(--card-bg);color:var(--text)}
                         <th style="width:10%" data-i18n="form.col.snCode"></th>
                         <th style="width:11%" data-i18n="form.col.orderNo"></th>
                         <th style="width:5%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
-                        <th style="width:9%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
-                        <th style="width:22%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
+                        <th style="width:12%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
+                        <th style="width:19%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
                         <th style="width:10%" data-i18n="form.col.attachment"></th>
                         <th style="width:4%" data-i18n="form.col.actions"></th>
                       </tr></thead>
@@ -3330,6 +3333,17 @@ const RETURN_REASON_LOCALE_FALLBACKS={
   'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap'}
 };
 
+// 下拉框获得焦点时自动将所在行滚到可视区上方,确保原生弹窗有足够展开空间(不被底部固定栏遮挡)
+function scrollSelectIntoView(selectEl){
+  const tr = selectEl.closest('tr');
+  if(!tr) return;
+  const body = document.querySelector('.record-fs-body');
+  if(!body) return;
+  // 预留约200px空间给下拉弹窗(6个option * ~30px + 边距)
+  const offset = selectEl.getBoundingClientRect().top - body.getBoundingClientRect().top - body.clientHeight + 200;
+  if(offset > 0) body.scrollTop += offset;
+}
+
 function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments, shopCustomer){
   const tbody=document.getElementById('detail-items-tbody');
   const idx=tbody.children.length;
@@ -3356,13 +3370,13 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     reasonHtml += '<option value="' + esc(r) + '"' + (returnReason === r ? ' selected' : '') + '>' + esc(tReturnReason(r)) + '</option>';
   });
   tr.innerHTML=`
-    <td><select class="platform-select" data-dict="platform" onchange="onPlatformChange(this)">${platformHtml}</select></td>
+    <td><select class="platform-select" data-dict="platform" onchange="onPlatformChange(this)" onfocus="scrollSelectIntoView(this)">${platformHtml}</select></td>
     <td><select class="shop-select" data-dict="shop_customer" ${isShopDisabled ? 'disabled' : ''}>${shopHtml}</select></td>
     <td><input type="text" class="sku-input" list="sku-datalist" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
     <td><input type="text" class="sn-input" placeholder="SN Code" value="${esc(snCode||'')}"></td>
     <td><input type="text" class="order-input" placeholder="${t('form.col.orderNo')}" value="${esc(orderNo||'')}"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
-    <td><select class="type-select" onchange="updateDetailTotalQty()">${reasonHtml}</select></td>
+    <td><select class="type-select" onchange="updateDetailTotalQty()" onfocus="scrollSelectIntoView(this)">${reasonHtml}</select></td>
     <td><input type="text" class="fault-input" placeholder="${t('form.descPlaceholder')}" value="${esc(faultDesc||'')}"></td>
     <td>
       <div class="atch-cell" data-attach-list>
