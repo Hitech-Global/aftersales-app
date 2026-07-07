@@ -21,3 +21,5 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: WEBHOOK_SECRET
+        sync: false

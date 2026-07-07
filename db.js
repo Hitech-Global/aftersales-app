@@ -222,6 +222,29 @@ async function initDatabase() {
     `);
     await query(`CREATE INDEX IF NOT EXISTS idx_attach_record ON attachments(record_id, item_index)`);
 
+    // 客户表（妙搭 Webhook 同步）
+    await query(`
+      CREATE TABLE IF NOT EXISTS customers (
+        id VARCHAR(64) PRIMARY KEY,
+        external_customer_id VARCHAR(128) NOT NULL UNIQUE,
+        customer_name VARCHAR(255) NOT NULL DEFAULT '',
+        contact_person VARCHAR(255) DEFAULT '',
+        phone VARCHAR(64) DEFAULT '',
+        email VARCHAR(255) DEFAULT '',
+        country VARCHAR(128) DEFAULT '',
+        address TEXT DEFAULT '',
+        status VARCHAR(32) NOT NULL DEFAULT 'active',
+        source VARCHAR(64) DEFAULT '',
+        last_synced_at TIMESTAMP DEFAULT NOW(),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await query(`CREATE INDEX IF NOT EXISTS idx_customers_ext_id ON customers(external_customer_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_customers_source ON customers(source)`);
+    console.log('[DB] customers 表已创建');
+
     // 迁移：为已有的表添加缺失列
     const userMigrationColumns = [
       { name: 'feishu_user_id', type: 'VARCHAR(128) DEFAULT \'\'' },
@@ -375,8 +398,6 @@ async function initDatabase() {
       );
     }
     console.log('[DB] 已确保 shop_customer 默认数据存在');
-      console.log('[DB] 已插入默认字典数据');
-    }
 
     return true;
   } catch (err) {

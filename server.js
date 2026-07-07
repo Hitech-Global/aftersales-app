@@ -27,7 +27,7 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.7.0-render-latest';
+const APP_VERSION = '3.8.0-render-latest';
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -258,6 +258,125 @@ app.use('/api/notify', apiAuth);
 app.use('/api/approval-flows', apiAuth);
 app.use('/api/dictionaries', apiAuth);
 app.use('/api/attachments', apiAuth);
+
+// ==================== 妙搭 Webhook 客户同步 ====================
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
+
+/**
+ * HMAC-SHA256 签名校验中间件
+ * 读取 X-Webhook-Signature 和 X-Webhook-Timestamp 头，
+ * 用 WEBHOOK_SECRET 对 timestamp + rawBody 计算 HMAC，
+ * 与请求头中的签名比对。
+ */
+function verifyWebhookSignature(req, res, next) {
+  if (!WEBHOOK_SECRET) {
+    console.warn('[Webhook] WEBHOOK_SECRET 未配置，跳过签名校验（仅限开发环境）');
+    return next();
+  }
+
+  const signature = req.headers['x-webhook-signature'];
+  const timestamp = req.headers['x-webhook-timestamp'];
+
+  if (!signature || !timestamp) {
+    console.warn('[Webhook] 缺少签名头 X-Webhook-Signature 或 X-Webhook-Timestamp');
+    return res.status(401).json({ error: '缺少签名验证头' });
+  }
+
+  // 防重放：timestamp 超过 5 分钟则拒绝
+  const ts = Number(timestamp);
+  if (!ts || Math.abs(Date.now() / 1000 - ts) > 300) {
+    console.warn('[Webhook] Timestamp 超时或无效:', timestamp);
+    return res.status(401).json({ error: 'Timestamp 超时或无效' });
+  }
+
+  // 计算 HMAC: HMAC-SHA256(secret, timestamp + rawBody)
+  const rawBody = req.rawBody || '';
+  const expected = crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(timestamp + rawBody)
+    .digest('hex');
+
+  if (signature !== expected) {
+    console.warn('[Webhook] 签名不匹配: received=%s expected=%s', signature, expected);
+    return res.status(401).json({ error: '签名校验失败' });
+  }
+
+  console.log('[Webhook] 签名校验通过');
+  next();
+}
+
+// 拦截 raw body 供 HMAC 校验使用
+app.use('/api/webhooks/customer-sync', (req, res, next) => {
+  req.rawBody = '';
+  req.on('data', (chunk) => { req.rawBody += chunk; });
+  req.on('end', next);
+});
+
+app.post('/api/webhooks/customer-sync', verifyWebhookSignature, async (req, res) => {
+  try {
+    const { event, timestamp, source, data } = req.body;
+
+    if (!data || !data.id) {
+      return res.status(400).json({ error: '缺少 data.id 字段' });
+    }
+
+    const validEvents = ['customer.created', 'customer.updated'];
+    if (!validEvents.includes(event)) {
+      return res.status(400).json({ error: `不支持的 event 类型: ${event}` });
+    }
+
+    if (source !== 'miaoda-distribution') {
+      return res.status(400).json({ error: `不支持的 source: ${source}` });
+    }
+
+    // 字段映射
+    const externalId = data.id;
+    const customerName = data.customerName || '';
+    const contactPerson = data.contactPerson || '';
+    const phone = data.phoneNumber || '';
+    const email = data.email || '';
+    const country = data.country || '';
+    const address = data.address || '';
+    const status = data.status === 'inactive' ? 'inactive' : (data.status || 'active');
+    const lastSyncedAt = timestamp || new Date().toISOString();
+
+    // 生成内部 ID（基于 external_customer_id 的确定性 ID）
+    const internalId = 'cust_' + crypto.createHash('md5').update(externalId).digest('hex').substring(0, 12);
+
+    // Upsert: ON CONFLICT(external_customer_id) DO UPDATE
+    const result = await query(`
+      INSERT INTO customers (
+        id, external_customer_id, customer_name, contact_person,
+        phone, email, country, address, status, source, last_synced_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (external_customer_id) DO UPDATE SET
+        customer_name = EXCLUDED.customer_name,
+        contact_person = EXCLUDED.contact_person,
+        phone = EXCLUDED.phone,
+        email = EXCLUDED.email,
+        country = EXCLUDED.country,
+        address = EXCLUDED.address,
+        status = EXCLUDED.status,
+        source = EXCLUDED.source,
+        last_synced_at = EXCLUDED.last_synced_at,
+        updated_at = NOW()
+    `, [internalId, externalId, customerName, contactPerson, phone, email, country, address, status, source, lastSyncedAt]);
+
+    const isInsert = result.rowCount === 1;
+    console.log(`[Webhook] 客户同步成功: event=${event}, externalId=${externalId}, action=${isInsert ? 'insert' : 'update'}`);
+
+    res.status(200).json({
+      success: true,
+      message: `客户同步成功 (${isInsert ? '新建' : '更新'})`,
+      customer_id: internalId,
+      external_customer_id: externalId,
+      event
+    });
+  } catch (err) {
+    console.error('[Webhook] 客户同步失败:', err.message);
+    res.status(500).json({ error: '客户同步失败', detail: err.message });
+  }
+});
 
 // ==================== 附件上传 ====================
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
