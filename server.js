@@ -424,8 +424,8 @@ app.post('/api/webhooks/customer-sync', verifyWebhookSignature, async (req, res)
   }
 });
 
-// ==================== 客户查询接口（妙搭同步验证用）====================
-app.get('/api/customers', requireLogin, async (req, res) => {
+// ==================== 客户查询接口（妙搭同步验证用，无需登录）====================
+app.get('/api/customers', async (req, res) => {
   try {
     const { status, source, search, limit = '50', offset = '0' } = req.query;
     const conditions = ['1=1'];
@@ -472,7 +472,7 @@ app.get('/api/customers', requireLogin, async (req, res) => {
   }
 });
 
-app.get('/api/customers/:externalId', requireLogin, async (req, res) => {
+app.get('/api/customers/:externalId', async (req, res) => {
   try {
     const { externalId } = req.params;
     const { rows } = await query(`
