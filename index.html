@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.0"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.1"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -336,8 +336,13 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .detail-items-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
 .detail-items-table th{padding:8px 6px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
 .detail-items-table td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top}
-.detail-items-table input,.detail-items-table select{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);box-sizing:border-box}
+/* 全局:强制所有原生下拉控件在浅色页面下使用浅色外观,避免 macOS/浏览器深色模式下弹窗变深灰 */
+select{color-scheme:light}
+select option{background:var(--card-bg);color:var(--text)}
+.detail-items-table input,.detail-items-table select{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box;color-scheme:light}
 .detail-items-table input:focus,.detail-items-table select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(46,125,50,.1)}
+/* 强制原生下拉弹窗在浅色页面下使用浅色背景,避免 macOS/浏览器深色模式下出现深灰弹窗与页面风格冲突 */
+.detail-items-table select option{background:var(--card-bg);color:var(--text)}
 .detail-items-table .qty-input{text-align:center}
 .detail-items-table .btn-delete-row{background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1;border-radius:4px}
 .detail-items-table .btn-delete-row:hover{background:#fde8e8}
@@ -519,7 +524,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
