@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.2"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.3"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -331,10 +331,12 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 @keyframes modalIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
 
 /* Detail items table in form */
-.detail-items-table-wrapper{overflow-x:auto}
+/* 表格列宽合计 100%, 不需要横向滚动; 设为 visible 避免成为滚动容器, 否则 sticky 表头相对它定位会失效 */
+.detail-items-table-wrapper{overflow:visible}
 .detail-items-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
 .detail-items-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
-.detail-items-table th{padding:8px 6px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
+/* 表头固定: 滚动时吸附在内容区顶部, 与输入行用阴影清晰分隔, 不再视觉重叠 */
+.detail-items-table th{position:sticky;top:0;z-index:5;background:#fafbfc;padding:10px 6px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,.06)}
 .detail-items-table td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top}
 /* 全局:强制所有原生下拉控件在浅色页面下使用浅色外观,避免 macOS/浏览器深色模式下弹窗变深灰 */
 select{color-scheme:light}
@@ -360,7 +362,8 @@ select option{background:var(--card-bg);color:var(--text)}
 .shop-ac-wrap{position:relative}
 .shop-autocomplete{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box}
 .shop-autocomplete:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(46,125,50,.1)}
-.shop-ac-dropdown{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:50;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:240px;overflow-y:auto}
+/* 下拉框挂到 body, 用 JS 设 position:fixed + 视口坐标, 脱离表格/滚动容器/弹窗的 overflow 裁剪, 永远显示在最上层 */
+.shop-ac-dropdown{position:fixed;z-index:99999;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:260px;overflow-y:auto}
 .shop-ac-dropdown.hidden{display:none}
 .shop-ac-item{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .shop-ac-item:last-child{border-bottom:none}
@@ -547,7 +550,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -3266,6 +3269,8 @@ let _platformCache = [];
 
 function closeRecordForm(){
   document.getElementById('record-form-modal').classList.add('hidden');
+  // 清理可能残留的客户搜索自动补全下拉(已挂到 body 上)
+  document.querySelectorAll('.shop-ac-dropdown').forEach(el => el.remove());
 }
 
 function refreshPlatformSelects(){
@@ -3487,17 +3492,45 @@ function attachShopAutocomplete(input, tr){
   if(input._acBound) return;
   input._acBound = true;
 
-  const wrap = document.createElement('div');
-  wrap.className = 'shop-ac-wrap';
-  input.parentNode.insertBefore(wrap, input);
-  wrap.appendChild(input);
+  // 下拉框挂到 body(脱离表格/滚动容器/弹窗的 overflow 裁剪), 用 position:fixed 定位到输入框正下方
   const dd = document.createElement('div');
   dd.className = 'shop-ac-dropdown hidden';
-  wrap.appendChild(dd);
+  document.body.appendChild(dd);
 
   let debounceTimer = null;
   let activeIndex = -1;
+  let cleanup = null;
 
+  const positionDropdown = () => {
+    const r = input.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.left = r.left + 'px';
+    dd.style.top = (r.bottom + 2) + 'px';
+    dd.style.width = r.width + 'px';
+    dd.style.maxWidth = r.width + 'px';
+  };
+  const showDropdown = () => {
+    positionDropdown();
+    dd.classList.remove('hidden');
+    // 跟随滚动(含弹窗内部滚动, 捕获阶段)/缩放实时重定位, 避免下拉框脱离输入框
+    const onScroll = () => { if(!dd.classList.contains('hidden')) positionDropdown(); };
+    const onResize = () => { if(!dd.classList.contains('hidden')) positionDropdown(); };
+    const onDocDown = (e) => {
+      if(!dd.classList.contains('hidden') && !dd.contains(e.target) && e.target !== input) hideDropdown();
+    };
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onResize);
+    document.addEventListener('mousedown', onDocDown);
+    cleanup = () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('mousedown', onDocDown);
+    };
+  };
+  const hideDropdown = () => {
+    dd.classList.add('hidden');
+    if(cleanup){ cleanup(); cleanup = null; }
+  };
   const updateActive = (items) => {
     items.forEach((it,i) => it.classList.toggle('active', i === activeIndex));
     if(items[activeIndex]) items[activeIndex].scrollIntoView({block:'nearest'});
@@ -3505,12 +3538,12 @@ function attachShopAutocomplete(input, tr){
   const choose = (item) => {
     input.value = item.dataset.name || '';
     input.dataset.customerId = item.dataset.id || '';
-    dd.classList.add('hidden');
+    hideDropdown();
   };
   const render = (customers) => {
     if(!customers || !customers.length){
       dd.innerHTML = '<div class="shop-ac-empty">' + ((t('form.shopCustomerNoMatch') !== 'form.shopCustomerNoMatch') ? t('form.shopCustomerNoMatch') : '无匹配客户') + '</div>';
-      dd.classList.remove('hidden');
+      showDropdown();
       return;
     }
     dd.innerHTML = customers.map((c, i) => {
@@ -3518,7 +3551,7 @@ function attachShopAutocomplete(input, tr){
       const sub = [c.country, c.contact_person].filter(Boolean).join(' · ');
       return '<div class="shop-ac-item' + (i === activeIndex ? ' active' : '') + '" data-id="' + esc(c.external_customer_id || '') + '" data-name="' + esc(name) + '">' + esc(name) + (sub ? '<span class="shop-ac-sub">' + esc(sub) + '</span>' : '') + '</div>';
     }).join('');
-    dd.classList.remove('hidden');
+    showDropdown();
   };
   const search = async (term) => {
     try{
@@ -3526,7 +3559,7 @@ function attachShopAutocomplete(input, tr){
       const data = await resp.json();
       render((data && data.customers) || []);
     }catch(e){
-      dd.classList.add('hidden');
+      hideDropdown();
     }
   };
 
@@ -3534,7 +3567,7 @@ function attachShopAutocomplete(input, tr){
     const term = input.value.trim();
     input.dataset.customerId = '';
     activeIndex = -1;
-    if(!term){ dd.classList.add('hidden'); dd.innerHTML = ''; return; }
+    if(!term){ hideDropdown(); dd.innerHTML = ''; return; }
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => search(term), 250);
   });
@@ -3548,7 +3581,7 @@ function attachShopAutocomplete(input, tr){
     if(e.key === 'ArrowDown'){ e.preventDefault(); activeIndex = Math.min(activeIndex + 1, items.length - 1); updateActive(items); }
     else if(e.key === 'ArrowUp'){ e.preventDefault(); activeIndex = Math.max(activeIndex - 1, 0); updateActive(items); }
     else if(e.key === 'Enter'){ if(activeIndex >= 0){ e.preventDefault(); choose(items[activeIndex]); } }
-    else if(e.key === 'Escape'){ dd.classList.add('hidden'); }
+    else if(e.key === 'Escape'){ hideDropdown(); }
   });
   dd.addEventListener('mousedown', (e) => {
     const item = e.target.closest('.shop-ac-item');
@@ -3556,7 +3589,7 @@ function attachShopAutocomplete(input, tr){
     e.preventDefault();
     choose(item);
   });
-  input.addEventListener('blur', () => { setTimeout(() => dd.classList.add('hidden'), 150); });
+  input.addEventListener('blur', () => { setTimeout(() => hideDropdown(), 150); });
 }
 
 async function _handleItemAttachmentUpload(tr, files) {
