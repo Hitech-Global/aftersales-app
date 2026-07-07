@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.6.0"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.0"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -518,7 +518,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.6.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.0 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -865,6 +865,24 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
               <div id="dict-items-area"></div>
             </div>
           </div>
+        </div>
+
+        <!-- 客户管理 -->
+        <div id="page-customers" class="page">
+          <div class="page-header">
+            <h2 data-i18n="customers.title"></h2>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="customer-search-input" placeholder="" data-i18n-placeholder="customers.searchPlaceholder" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;width:220px">
+              <select id="customer-status-filter" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px">
+                <option value="" data-i18n="customers.filterAll"></option>
+                <option value="active" data-i18n="customers.filterActive"></option>
+                <option value="inactive" data-i18n="customers.filterInactive"></option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="loadCustomers()" data-i18n="customers.btnRefresh"></button>
+            </div>
+          </div>
+          <div id="customers-table-area"></div>
+          <div id="customers-pagination" style="display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:8px 0;font-size:13px;color:var(--text-secondary)"></div>
         </div>
       </div>
     </div>
@@ -1670,7 +1688,8 @@ const PAGE_PERMISSIONS = {
   users: 'user_manage',
   roles: 'role_manage',
   'approval-flows': 'system_config',
-  'dictionaries': 'system_config'
+  'dictionaries': 'system_config',
+  'customers': 'system_config'
 };
 function canAccessPage(page){
   const requiredPerm = PAGE_PERMISSIONS[page];
@@ -2392,6 +2411,7 @@ function renderSidebar(){
     {id:'system', title:t('nav.group.system'), items:[
       {id:'users', icon:'&#x1F464;', label:t('nav.users'), perm:'user_manage'},
       {id:'roles', icon:'&#x1F6E1;', label:t('nav.roles'), perm:'role_manage'},
+      {id:'customers', icon:'&#x1F3E2;', label:t('nav.customers'), perm:'system_config'},
       {id:'dictionaries', icon:'&#x1F4D6;', label:t('nav.dictionaries'), perm:'system_config'},
       {id:'approval-flows', icon:'&#x2696;', label:t('nav.approvalFlows'), perm:'system_config'},
     ]}
@@ -2427,7 +2447,7 @@ function showPage(page, recordId=null){
   }
   setSidebarActive(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries')};
+  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries'), 'customers':t('page.title.customers')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
@@ -2442,6 +2462,7 @@ function showPage(page, recordId=null){
   else if(page==='roles'){ document.getElementById('page-roles').classList.add('active'); renderRoles(); }
   else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); renderApprovalFlows(); }
   else if(page==='dictionaries'){ document.getElementById('page-dictionaries').classList.add('active'); renderDictionaries(); }
+  else if(page==='customers'){ document.getElementById('page-customers').classList.add('active'); renderCustomers(); }
 }
 
 function updatePermissionedUI(){
@@ -5035,6 +5056,100 @@ async function deleteProduct(id){
     showFlash(t('flash.deleteFailed') + e.message,'danger');
   }
 }
+
+// ==================== CUSTOMER MANAGEMENT ====================
+let _customerPage = 0;
+let _customerLimit = 20;
+
+async function renderCustomers() {
+  _customerPage = 0;
+  await loadCustomers();
+}
+
+async function loadCustomers() {
+  const area = document.getElementById('customers-table-area');
+  const pagDiv = document.getElementById('customers-pagination');
+  area.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted)">${t('customers.loading')}</div>`;
+  pagDiv.innerHTML = '';
+
+  const search = document.getElementById('customer-search-input')?.value || '';
+  const status = document.getElementById('customer-status-filter')?.value || '';
+  const params = new URLSearchParams({ limit: _customerLimit, offset: _customerPage * _customerLimit });
+  if (search) params.set('search', search);
+  if (status) params.set('status', status);
+
+  try {
+    const resp = await fetch(`/api/customers?${params.toString()}`, { headers: getAuthHeaders() });
+    const result = await resp.json();
+
+    if (!result.success) {
+      area.innerHTML = `<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(result.error || t('customers.loadError'))}</p></div>`;
+      return;
+    }
+
+    const { customers, total, limit, offset } = result;
+
+    if (customers.length === 0) {
+      area.innerHTML = `<div class="empty-state"><div class="empty-icon">&#x1F3E2;</div><p>${t('customers.empty')}</p></div>`;
+      return;
+    }
+
+    let html = `<div class="table-container"><table class="data-table"><thead><tr>
+      <th>${t('customers.col.extId')}</th>
+      <th>${t('customers.col.name')}</th>
+      <th>${t('customers.col.contact')}</th>
+      <th>${t('customers.col.phone')}</th>
+      <th>${t('customers.col.email')}</th>
+      <th>${t('customers.col.country')}</th>
+      <th>${t('customers.col.status')}</th>
+      <th>${t('customers.col.source')}</th>
+      <th>${t('customers.col.lastSync')}</th>
+    </tr></thead><tbody>`;
+
+    customers.forEach(c => {
+      const statusClass = c.status === 'active' ? 'user-status-active' : 'user-status-disabled';
+      html += `<tr>
+        <td class="cell-name" style="font-size:12px">${esc(c.external_customer_id)}</td>
+        <td>${esc(c.customer_name || '-')}</td>
+        <td>${esc(c.contact_person || '-')}</td>
+        <td>${esc(c.phone || '-')}</td>
+        <td style="font-size:12px">${esc(c.email || '-')}</td>
+        <td>${esc(c.country || '-')}</td>
+        <td><span class="user-status ${statusClass}">${c.status === 'active' ? t('customers.statusActive') : t('customers.statusInactive')}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${esc(c.source || '-')}</td>
+        <td class="cell-date">${formatDate(c.last_synced_at)}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    area.innerHTML = html;
+
+    // Pagination
+    const totalPages = Math.ceil(total / limit);
+    if (totalPages > 1) {
+      let pagHtml = `<span>${t('customers.totalCount', { count: total })}</span>`;
+      if (_customerPage > 0) pagHtml += `<button class="btn btn-sm" onclick="prevCustomers()">${t('customers.prevPage')}</button>`;
+      pagHtml += `<span>${_customerPage + 1} / ${totalPages}</span>`;
+      if (_customerPage < totalPages - 1) pagHtml += `<button class="btn btn-sm" onclick="nextCustomers()">${t('customers.nextPage')}</button>`;
+      pagDiv.innerHTML = pagHtml;
+    } else {
+      pagDiv.innerHTML = `<span>${t('customers.totalCount', { count: total })}</span>`;
+    }
+  } catch (err) {
+    area.innerHTML = `<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message)}</p></div>`;
+  }
+}
+
+function prevCustomers() { _customerPage--; loadCustomers(); }
+function nextCustomers() { _customerPage++; loadCustomers(); }
+
+// Auto-search on input
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('customer-search-input');
+  const statusFilter = document.getElementById('customer-status-filter');
+  if (searchInput) searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadCustomers(); });
+  if (statusFilter) statusFilter.addEventListener('change', () => loadCustomers());
+});
 
 // ==================== USER MANAGEMENT ====================
 async function renderUsers(){

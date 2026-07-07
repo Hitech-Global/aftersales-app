@@ -56,7 +56,8 @@
     "users": "Pengguna",
     "roles": "Role",
     "approvalFlows": "Alur Persetujuan",
-    "dictionaries": "Kamus"
+    "dictionaries": "Kamus",
+    "customers": "Pelanggan"
   },
   "page": {
     "title": {
@@ -68,7 +69,8 @@
       "users": "Pengguna",
       "roles": "Role",
       "approvalFlows": "Alur Persetujuan",
-      "dictionaries": "Kamus"
+      "dictionaries": "Kamus",
+      "customers": "Pelanggan"
     }
   },
   "overview": {
@@ -1116,5 +1118,32 @@
   },
   "date": {
     "openPicker": "Pilih tanggal"
+  },
+  "customers": {
+    "title": "Manajemen Pelanggan",
+    "searchPlaceholder": "Cari nama / ID / telepon / email pelanggan",
+    "filterAll": "Semua Status",
+    "filterActive": "Aktif",
+    "filterInactive": "Nonaktif",
+    "btnRefresh": "Refresh",
+    "loading": "Memuat...",
+    "empty": "Belum ada data pelanggan. Menunggu sinkronisasi Miaoda.",
+    "loadError": "Gagal memuat data pelanggan",
+    "col": {
+      "extId": "ID Eksternal",
+      "name": "Nama Pelanggan",
+      "contact": "Kontak",
+      "phone": "Telepon",
+      "email": "Email",
+      "country": "Negara",
+      "status": "Status",
+      "source": "Sumber",
+      "lastSync": "Sinkronisasi Terakhir"
+    },
+    "statusActive": "Aktif",
+    "statusInactive": "Nonaktif",
+    "totalCount": "Total {{count}} data",
+    "prevPage": "Sebelumnya",
+    "nextPage": "Berikutnya"
   }
 }

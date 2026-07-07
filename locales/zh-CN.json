@@ -56,7 +56,8 @@
     "users": "用户管理",
     "roles": "角色管理",
     "approvalFlows": "审批流管理",
-    "dictionaries": "字典管理"
+    "dictionaries": "字典管理",
+    "customers": "客户管理"
   },
   "page": {
     "title": {
@@ -68,7 +69,8 @@
       "users": "用户管理",
       "roles": "角色管理",
       "approvalFlows": "审批流管理",
-      "dictionaries": "字典管理"
+      "dictionaries": "字典管理",
+      "customers": "客户管理"
     }
   },
   "overview": {
@@ -1116,5 +1118,32 @@
   },
   "date": {
     "openPicker": "选择日期"
+  },
+  "customers": {
+    "title": "客户管理",
+    "searchPlaceholder": "搜索客户名称/编号/电话/邮箱",
+    "filterAll": "全部状态",
+    "filterActive": "活跃",
+    "filterInactive": "停用",
+    "btnRefresh": "刷新",
+    "loading": "加载中...",
+    "empty": "暂无客户数据，等待妙搭推送同步",
+    "loadError": "加载客户数据失败",
+    "col": {
+      "extId": "外部编号",
+      "name": "客户名称",
+      "contact": "联系人",
+      "phone": "电话",
+      "email": "邮箱",
+      "country": "国家",
+      "status": "状态",
+      "source": "来源",
+      "lastSync": "最后同步"
+    },
+    "statusActive": "活跃",
+    "statusInactive": "停用",
+    "totalCount": "共 {{count}} 条",
+    "prevPage": "上一页",
+    "nextPage": "下一页"
   }
 }

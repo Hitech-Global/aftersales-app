@@ -56,7 +56,8 @@
     "users": "Users",
     "roles": "Roles",
     "approvalFlows": "Approval Flow",
-    "dictionaries": "Dictionaries"
+    "dictionaries": "Dictionaries",
+    "customers": "Customers"
   },
   "page": {
     "title": {
@@ -68,7 +69,8 @@
       "users": "Users",
       "roles": "Roles",
       "approvalFlows": "Approval Flow",
-      "dictionaries": "Dictionaries"
+      "dictionaries": "Dictionaries",
+      "customers": "Customers"
     }
   },
   "overview": {
@@ -1116,5 +1118,32 @@
   },
   "date": {
     "openPicker": "Select date"
+  },
+  "customers": {
+    "title": "Customer Management",
+    "searchPlaceholder": "Search customer name / ID / phone / email",
+    "filterAll": "All Status",
+    "filterActive": "Active",
+    "filterInactive": "Inactive",
+    "btnRefresh": "Refresh",
+    "loading": "Loading...",
+    "empty": "No customer data yet. Waiting for Miaoda sync.",
+    "loadError": "Failed to load customer data",
+    "col": {
+      "extId": "External ID",
+      "name": "Customer Name",
+      "contact": "Contact Person",
+      "phone": "Phone",
+      "email": "Email",
+      "country": "Country",
+      "status": "Status",
+      "source": "Source",
+      "lastSync": "Last Synced"
+    },
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "totalCount": "Total {{count}} records",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   }
 }
