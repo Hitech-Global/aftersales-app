@@ -6773,9 +6773,13 @@ async function uploadRecordAttachments(recordId, itemIndex, files, onProgress) {
   for (const f of files) fd.append('files', f);
   fd.append('record_id', recordId);
   if (itemIndex !== null && itemIndex !== undefined) fd.append('item_index', String(itemIndex));
+  // 注意: 不能带 Content-Type: application/json,否则浏览器不会设置 multipart/form-data 的 boundary,
+  // 导致 multer 解析不到文件而上传失败。这里仅保留用户身份头,让浏览器自动设置 multipart 边界。
+  const headers = getAuthHeaders();
+  delete headers['Content-Type'];
   const resp = await fetch('/api/attachments/upload', {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers,
     body: fd
   });
   if (!resp.ok) {
