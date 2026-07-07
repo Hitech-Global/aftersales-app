@@ -1,0 +1,775 @@
+{
+  "app": {
+    "title": "RMA Management System",
+    "sidebarBrand": "RMA Management",
+    "mode": {
+      "cloud": "Cloud Mode",
+      "local": "Local Mode",
+      "feishu": "Lark Mode"
+    },
+    "logout": "Log out"
+  },
+  "login": {
+    "subtitle": "Sign in with your company Lark account",
+    "verifying": "Verifying your identity...",
+    "localModeHint": "Local sign-in mode is enabled",
+    "localAccountLoginHint": "You can sign in with a local account.",
+    "feishuOnlyHint": "Only members of the company Lark organization can sign in.",
+    "btnFeishu": "Sign in with Lark",
+    "btnLocal": "Sign in with a local account",
+    "usernamePlaceholder": "Username",
+    "passwordPlaceholder": "Password",
+    "error": {
+      "connectFeishu": "Unable to connect to Lark. Please sign in with a local account.",
+      "feishuUnavailable": "Lark sign-in is temporarily unavailable",
+      "enterCredentials": "Enter your username and password",
+      "wrongCredentials": "Incorrect username or password, or the account has been disabled",
+      "processFailed": "Sign-in failed. Please try again.",
+      "missingOpenid": "Lark user profile is missing OpenID",
+      "missingCode": "Lark authorization failed: missing authorization code",
+      "invalidState": "Lark sign-in session expired. Please start again.",
+      "notConfigured": "Local sign-in mode is enabled. Please use a local account.",
+      "tokenExchangeFailed": "Failed to exchange Lark token",
+      "getUserFailed": "Failed to get Lark user info",
+      "userInfoInvalid": "Lark returned incomplete user info",
+      "tokenResponseInvalid": "Invalid Lark token response",
+      "serverError": "Server error"
+    }
+  },
+  "nav": {
+    "group": {
+      "aftersales": "After-Sales",
+      "approval": "Approvals",
+      "data": "Master Data",
+      "system": "System"
+    },
+    "overview": "Overview",
+    "list": "RMA Cases",
+    "detail": "RMA Case Details",
+    "approval": "RMA Approvals",
+    "products": "Products",
+    "users": "Users",
+    "roles": "Roles"
+  },
+  "page": {
+    "title": {
+      "overview": "Overview",
+      "list": "RMA Cases",
+      "detail": "RMA Case Details",
+      "products": "Products",
+      "approval": "RMA Approvals",
+      "users": "Users",
+      "roles": "Roles"
+    }
+  },
+  "overview": {
+    "filter": {
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "brand": "Brand",
+      "allBrands": "All Brands"
+    },
+    "btnReset": "Reset",
+    "btnDownloadTemplate": "Download Sales Template",
+    "btnImportSales": "Import Sales Data",
+    "chart": {
+      "reasonTop5": "Top 5 Return Reasons",
+      "skuTop10": "Top 10 RMA SKUs",
+      "label": {
+        "count": "Qty",
+        "times": "RMA Count"
+      },
+      "noData": "No data"
+    },
+    "section": {
+      "brandCompare": "By Brand"
+    },
+    "card": {
+      "total": "Total RMA Cases",
+      "pending": "Pending Items",
+      "returnRate": "Overall Return Rate",
+      "defectRate": "Overall Defect Rate"
+    },
+    "metric": {
+      "avgDays": "Avg. Processing Days",
+      "overdue": "Overdue Items (7+ Days)"
+    },
+    "empty": "No data yet. Create an RMA case or import sales data first.",
+    "col": {
+      "detailTotal": "Total Items",
+      "pending": "Pending",
+      "completed": "Completed",
+      "overdue": "Overdue",
+      "avgDays": "Avg. Processing Days",
+      "shipment": "Total Shipments",
+      "sales": "Total Sales",
+      "returnRate": "Return Rate",
+      "defectRate": "Defect Rate"
+    },
+    "period": {
+      "all": "All"
+    }
+  },
+  "list": {
+    "title": "RMA Case List",
+    "btnExport": "Export to Excel",
+    "filter": {
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Search order no., SKU, brand, or model...",
+      "brand": "Brand",
+      "allBrands": "All Brands",
+      "approvalStatus": "Approval Status",
+      "allApprovalStatus": "All Approval Statuses",
+      "processStatus": "Processing Status",
+      "allProcessStatus": "All Processing Statuses",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "btnSearch": "Search",
+    "btnClear": "Clear",
+    "sectionTitle": "RMA Cases",
+    "mode": {
+      "byRecord": "By Case",
+      "byItem": "By Item"
+    },
+    "btnManual": "Create Manually",
+    "btnBatchImport": "Batch Import",
+    "batch": {
+      "selected": "{count} items selected",
+      "selectStatus": "Select processing status...",
+      "btnUpdate": "Batch Update",
+      "btnCancel": "Cancel"
+    },
+    "col": {
+      "id": "ID",
+      "approvalStatus": "Approval Status",
+      "processStatus": "Processing Status",
+      "date": "RMA Date",
+      "platform": "Platform",
+      "returnReason": "Return Reason",
+      "sku": "SKU",
+      "orderNo": "Order No.",
+      "qty": "Qty",
+      "description": "Issue Description",
+      "submitter": "Submitted By",
+      "updatedAt": "Updated At",
+      "actions": "Actions"
+    },
+    "empty": {
+      "noRecords": "No RMA cases yet",
+      "noMatch": "No matching results found",
+      "createFirst": "Create First Case"
+    },
+    "action": {
+      "view": "View",
+      "approve": "Approve",
+      "delete": "Delete"
+    },
+    "pagination": {
+      "perPage": "/ page",
+      "total": "{count} total",
+      "first": "First",
+      "prev": "Previous",
+      "next": "Next",
+      "last": "Last"
+    }
+  },
+  "status": {
+    "draft": "Draft",
+    "pendingLevel1": "Pending Level 1 Approval",
+    "level1Approved": "Level 1 Approved",
+    "pendingLevel2": "Pending Level 2 Approval",
+    "level2Approved": "Level 2 Approved",
+    "pendingLevel3": "Pending Level 3 Approval",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "process": {
+    "pendingErp": "Pending ERP Receipt",
+    "pendingColorBox": "Pending Box Replacement",
+    "pendingParts": "Pending Parts",
+    "pendingRma": "Pending RMA",
+    "pendingScrap": "Pending Disposal",
+    "completed": "Completed"
+  },
+  "form": {
+    "titleNew": "Create RMA Case",
+    "section": {
+      "basic": "Basic Information",
+      "details": "RMA Items",
+      "approvers": "Approver Settings"
+    },
+    "hint": {
+      "minOneItem": "(Add at least one item)",
+      "approverRule": "Approvers must have permission for the assigned approval level. The same user can only be assigned to one level."
+    },
+    "col": {
+      "platform": "Platform",
+      "sku": "SKU",
+      "orderNo": "Order No.",
+      "qty": "Qty",
+      "returnReason": "Return Reason",
+      "description": "Issue Description / Notes",
+      "actions": "Actions"
+    },
+    "btnAddRow": "+ Add Item",
+    "totalQty": "Total Qty:",
+    "label": {
+      "date": "RMA Date",
+      "approverL1": "Level 1 Approver",
+      "approverL2": "Level 2 Approver",
+      "approverL3": "Level 3 Approver"
+    },
+    "option": {
+      "pleaseSelect": "Select"
+    },
+    "btnSubmit": "Submit for Approval",
+    "btnSaveDraft": "Save Draft",
+    "btnCancel": "Cancel",
+    "skuPlaceholder": "Enter SKU...",
+    "orderPlaceholder": "Order No.",
+    "descPlaceholder": "Issue Description / Notes"
+  },
+  "returnReason": {
+    "resaleable": "Resellable",
+    "colorBoxDamage": "Damaged Color Box",
+    "missingParts": "Missing Parts",
+    "hardwareFault": "Hardware Issue",
+    "scrap": "Scrap"
+  },
+  "detail": {
+    "btnBack": "Back to List",
+    "titlePrefix": "RMA Case #",
+    "section": {
+      "basic": "Basic Information",
+      "items": "RMA Items",
+      "approvalHistory": "Approval History",
+      "approvalFlow": "Approval Flow",
+      "time": "Time Info"
+    },
+    "label": {
+      "date": "RMA Date",
+      "status": "Approval Status",
+      "submitter": "Submitted By",
+      "brand": "Brand",
+      "totalQty": "Total Qty",
+      "initiator": "Initiator",
+      "level1": "Level 1",
+      "level2": "Level 2",
+      "level3": "Level 3",
+      "returnDate": "Return Stock-In Date:",
+      "createdAt": "Created At",
+      "updatedAt": "Last Updated"
+    },
+    "col": {
+      "index": "#",
+      "platform": "Platform",
+      "sku": "SKU",
+      "orderNo": "Order No.",
+      "qty": "Qty",
+      "returnReason": "Return Reason",
+      "processStatus": "Processing Status",
+      "desc": "Issue Description / Notes"
+    },
+    "notSet": "Not Set",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "approval": {
+    "title": "RMA Approvals",
+    "filter": {
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Search order no., SKU, brand, or model...",
+      "scope": "Scope",
+      "pending": "Pending My Approval",
+      "done": "Reviewed",
+      "all": "All"
+    },
+    "btnClear": "Clear",
+    "empty": "No approval history",
+    "col": {
+      "createdAt": "Submitted At",
+      "initiator": "Initiator",
+      "approver": "Approver",
+      "status": "Approval Status",
+      "processStatus": "Processing Status",
+      "date": "RMA Date",
+      "platform": "Platform",
+      "totalQty": "Total Qty",
+      "currentLevel": "Current Level",
+      "actions": "Actions"
+    },
+    "levelPrefix": "Level {level}"
+  },
+  "approvalModal": {
+    "title": "RMA Approvals",
+    "section": {
+      "history": "Approval History",
+      "operation": "Approval Decision"
+    },
+    "label": {
+      "returnDate": "Return Stock-In Date",
+      "comment": "Approval Comment",
+      "attachments": "Attachments",
+      "currentStatus": "Current Approval Status",
+      "date": "RMA Date",
+      "submitter": "Submitted By",
+      "brand": "Brand",
+      "totalQty": "Total Qty"
+    },
+    "commentPlaceholder": "Enter approval comments...",
+    "attachmentHint": "Click to choose files or paste images here (Ctrl+V)",
+    "storageWarning": "Note: Images are stored as Base64 in the browser. Keep total size under 2 MB.",
+    "btnApprove": "Approved",
+    "btnReject": "Rejected",
+    "btnCancel": "Cancel",
+    "col": {
+      "index": "#",
+      "platform": "Platform",
+      "sku": "SKU",
+      "orderNo": "Order No.",
+      "qty": "Qty",
+      "returnReason": "Return Reason",
+      "processStatus": "Processing Status",
+      "erpScreenshot": "ERP Stock-In Screenshot",
+      "actions": "Actions"
+    },
+    "btnUploadScreenshot": "Upload Screenshot",
+    "btnMarkProcessed": "Mark as Completed",
+    "flowPrefix": "Approval Flow:",
+    "noHistory": "No approval history"
+  },
+  "products": {
+    "title": "Products",
+    "btnDownloadTemplate": "Download Import Template",
+    "btnBatchImport": "Batch Import",
+    "btnBatchExport": "Batch Export",
+    "btnNew": "+ New Product",
+    "batch": {
+      "selected": "{count} selected",
+      "btnDelete": "Batch Delete",
+      "btnCancel": "Clear Selection"
+    },
+    "filter": {
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Search SKU, brand, model, or category...",
+      "brand": "Brand",
+      "allBrands": "All Brands",
+      "country": "Country",
+      "allCountries": "All Countries",
+      "status": "Status",
+      "statusAll": "All",
+      "statusActive": "Active",
+      "statusDisabled": "Disabled"
+    },
+    "btnSearch": "Search",
+    "btnClear": "Clear",
+    "col": {
+      "skuCode": "SKU Code",
+      "brand": "Brand",
+      "model": "Model",
+      "category": "Category",
+      "country": "Country",
+      "eanCode": "EAN Code",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "empty": "No products yet",
+    "emptyCreateFirst": "Create First Product",
+    "action": {
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "productModal": {
+    "titleNew": "New Product",
+    "titleEdit": "Edit Products",
+    "label": {
+      "country": "Country",
+      "brand": "Brand",
+      "skuCode": "SKU Code",
+      "model": "Model",
+      "category": "Category",
+      "eanCode": "EAN Code",
+      "status": "Status"
+    },
+    "countryPlaceholder": "e.g., China",
+    "brandPlaceholder": "e.g., Apple",
+    "skuPlaceholder": "e.g., IPHONE15-PRO-128",
+    "modelPlaceholder": "e.g., iPhone 15 Pro",
+    "categoryPlaceholder": "e.g., Smartphone",
+    "eanPlaceholder": "e.g., 195949015726",
+    "statusActive": "Active",
+    "statusDisabled": "Disabled",
+    "btnSave": "Save",
+    "btnCancel": "Cancel"
+  },
+  "productImport": {
+    "title": "Batch Import Products",
+    "uploadHint": "Click to upload or drag files here",
+    "fileFormat": "Supports .xlsx / .csv files",
+    "btnDownloadTemplate": "Download Template",
+    "pendingPrefix": "{count} products ready to import",
+    "btnStart": "Start Import",
+    "btnClose": "Close"
+  },
+  "product": {
+    "template": {
+      "sheetName": "Product Import Template",
+      "col": {
+        "skuCode": "SKU Code",
+        "productName": "Product Name",
+        "brand": "Brand",
+        "model": "Model",
+        "category": "Category",
+        "country": "Country",
+        "eanCode": "EAN Code",
+        "status": "Status",
+        "price": "Price"
+      }
+    },
+    "export": {
+      "sheetName": "Product List",
+      "statusActive": "Active",
+      "statusDisabled": "Disabled"
+    }
+  },
+  "export": {
+    "col": {
+      "id": "RMA Case No.",
+      "date": "RMA Date",
+      "platform": "Platform",
+      "brand": "Brand",
+      "sku": "SKU",
+      "model": "Model",
+      "qty": "Qty",
+      "orderNo": "Order No.",
+      "returnReason": "Issue Type",
+      "description": "Issue Description",
+      "approvalStatus": "Approval Status",
+      "processStatus": "Processing Status",
+      "submitter": "Submitted By",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At"
+    },
+    "sheet": {
+      "detail": "RMA Items",
+      "record": "RMA Cases"
+    }
+  },
+  "importRecord": {
+    "title": "Batch Import RMA Cases",
+    "guide": {
+      "title": "Import Notes",
+      "csvFormat": "Supports CSV files (UTF-8 encoded)",
+      "requiredCols": "Required columns: RMA Date, Platform, SKU, Qty",
+      "optionalCols": "Optional columns: Order No., Return Reason, Issue Description / Notes",
+      "draftNote": "Imported records will be saved as drafts. Please edit and submit them for approval from the list."
+    },
+    "btnDownloadTemplate": "Download Import Template",
+    "dropHint": "Click to choose a file or drag a CSV file here",
+    "fileFormat": "Supports .csv files",
+    "btnClose": "Close"
+  },
+  "users": {
+    "title": "Users",
+    "btnNew": "+ New User",
+    "col": {
+      "username": "Username",
+      "name": "Name",
+      "role": "Role",
+      "status": "Status",
+      "feishuBind": "Lark Binding",
+      "createdAt": "Created At",
+      "actions": "Actions"
+    },
+    "empty": "No users yet",
+    "feishu": {
+      "bound": "Bound",
+      "unbound": "Unbound"
+    },
+    "action": {
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "userModal": {
+    "titleNew": "New User",
+    "titleEdit": "Edit User",
+    "label": {
+      "feishuUser": "Lark User",
+      "name": "Name",
+      "password": "Password",
+      "role": "Role",
+      "status": "Status",
+      "feishuUserLabel": "Lark User"
+    },
+    "feishuPlaceholder": "Search Lark members by name, English name, or email...",
+    "namePlaceholder": "Display Name",
+    "passwordHint": "Required for new users; leave blank when editing to keep unchanged",
+    "statusActive": "Active",
+    "statusDisabled": "Disabled",
+    "btnSave": "Save",
+    "btnCancel": "Cancel",
+    "editModeHint": "Bound Lark user (cannot be changed)",
+    "searchLoading": "Searching...",
+    "searchEmpty": "No matching Lark users found",
+    "searchFailed": "Search failed. Check Lark integration status.",
+    "searchPermHint": "Enable the required Contacts permissions in the Lark Developer Console."
+  },
+  "roles": {
+    "title": "Roles",
+    "btnNew": "+ New Role",
+    "col": {
+      "name": "Role Name",
+      "description": "Description",
+      "permissions": "Permissions",
+      "userCount": "Linked Users",
+      "createdAt": "Created At",
+      "actions": "Actions"
+    },
+    "empty": "No roles yet",
+    "action": {
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "roleModal": {
+    "titleNew": "New Role",
+    "titleEdit": "Edit Role",
+    "label": {
+      "name": "Role Name",
+      "desc": "Description",
+      "permissions": "Permission Settings"
+    },
+    "namePlaceholder": "e.g., Operations",
+    "descPlaceholder": "Describe what this role is responsible for",
+    "btnSave": "Save",
+    "btnCancel": "Cancel"
+  },
+  "perm": {
+    "recordView": {
+      "label": "View RMA Cases",
+      "desc": "View dashboard and RMA list"
+    },
+    "recordCreate": {
+      "label": "Create RMA Case",
+      "desc": "Create RMA cases"
+    },
+    "recordEdit": {
+      "label": "Edit RMA Cases",
+      "desc": "Modify RMA cases"
+    },
+    "recordDelete": {
+      "label": "Delete RMA Cases",
+      "desc": "Delete RMA Cases"
+    },
+    "recordImport": {
+      "label": "Import RMA Cases",
+      "desc": "Batch import RMA data"
+    },
+    "recordExport": {
+      "label": "Export RMA Cases",
+      "desc": "Export Excel for factory analysis"
+    },
+    "productView": {
+      "label": "View Products",
+      "desc": "View product catalog"
+    },
+    "productCreate": {
+      "label": "Create Products",
+      "desc": "Create product records"
+    },
+    "productEdit": {
+      "label": "Edit Products",
+      "desc": "Modify product records"
+    },
+    "productDelete": {
+      "label": "Delete Products",
+      "desc": "Delete Products"
+    },
+    "productImport": {
+      "label": "Import Products",
+      "desc": "Batch import product data"
+    },
+    "productExport": {
+      "label": "Export Products",
+      "desc": "Export products to Excel"
+    },
+    "approvalLevel1": {
+      "label": "Level 1 Approval",
+      "desc": "Handle approvals as Level 1 approver"
+    },
+    "approvalLevel2": {
+      "label": "Level 2 Approval",
+      "desc": "Handle approvals as Level 2 approver"
+    },
+    "approvalLevel3": {
+      "label": "Level 3 Approval",
+      "desc": "Handle approvals as Level 3 approver"
+    },
+    "userManage": {
+      "label": "Users",
+      "desc": "Manage system users"
+    },
+    "roleManage": {
+      "label": "Roles",
+      "desc": "Manage roles and permissions"
+    },
+    "systemConfig": {
+      "label": "System Settings",
+      "desc": "Modify system settings"
+    }
+  },
+  "flash": {
+    "noPermission": "You do not have permission to perform this action",
+    "noPagePermission": "You do not have access to this page",
+    "welcome": "Welcome, {name}!",
+    "adminLogin": "Admin {name} has signed in",
+    "submitSuccess": "Submitted for approval. Waiting for Level 1 approval.",
+    "draftSaved": "Draft saved",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "recordDeleted": "Record deleted",
+    "userCreated": "User created",
+    "userUpdated": "User updated",
+    "userDeleted": "User deleted",
+    "productCreated": "Product created",
+    "productUpdated": "Product updated",
+    "productDeleted": "Product deleted",
+    "roleCreated": "Role created",
+    "roleUpdated": "Role updated",
+    "roleDeleted": "Role deleted",
+    "batchProcessUpdated": "Updated processing status for {count} items",
+    "markProcessed": "Marked as completed",
+    "exportSuccess": "Exported {count} records",
+    "batchDeleteSuccess": "Deleted {count} products",
+    "templateDownloaded": "Template downloaded",
+    "importSuccess": "Import complete: {added} added / {updated} updated / {deleted} deleted / {failed} failed",
+    "importComplete": "Read {total} rows. Imported {imported} draft records.",
+    "noExportData": "No data to export under the current filters"
+  },
+  "validation": {
+    "selectDate": "Select an RMA date",
+    "minOneItem": "Add at least one RMA item",
+    "rowPlatform": "Row {row}: select a platform",
+    "rowSku": "Row {row}: enter SKU",
+    "rowQty": "Row {row}: quantity must be greater than 0",
+    "rowReturnReason": "Row {row}: select a return reason",
+    "rowDesc": "Row {row}: enter issue description",
+    "selectApprovers": "Select three approvers",
+    "approversUnique": "The three approvers must be different users",
+    "fillDate": "Enter at least the RMA date",
+    "enterComment": "Enter approval comments",
+    "brandRequired": "Brand is required",
+    "skuRequired": "SKU code is required",
+    "skuDuplicate": "SKU code already exists",
+    "usernameNameRequired": "Username and name are required",
+    "newUserPassword": "Password is required for new users",
+    "usernameDuplicate": "Username already exists",
+    "feishuDuplicate": "This Lark user is already bound. Select another user.",
+    "selectFeishuUser": "Select a Lark user from search results",
+    "roleNameRequired": "Role name is required",
+    "selectProcessStatus": "Select the processing status to apply",
+    "selectOneItem": "Select at least one item"
+  },
+  "confirm": {
+    "deleteRecord": "Delete this record? This action cannot be undone.",
+    "deleteProduct": "Delete this product?",
+    "deleteUser": "Delete this user?",
+    "deleteRole": "Delete this role?",
+    "batchDeleteProducts": "Delete the selected {count} products?",
+    "batchDeleteIrreversible": "This action cannot be undone!",
+    "btnCancel": "Cancel",
+    "btnOk": "Delete",
+    "title": {
+      "batchDelete": "Confirm Batch Delete"
+    }
+  },
+  "error": {
+    "cannotDeleteAdmin": "The super admin cannot be deleted",
+    "roleHasUsers": "This role still has assigned users and cannot be deleted",
+    "productReferenced": "This product is referenced by {count} RMA records and cannot be deleted",
+    "approvalNotOwner": "You are not the approver for this level",
+    "approvalNoPerm": "You do not have approval permission for this level",
+    "onlyCurrentApprover": "Only the current level approver can process this approval",
+    "onlyErpStatus": "Only items in \"Pending ERP Stock-In\" can be marked as completed",
+    "onlyCurrentApproverUpload": "Only the current level approver can upload processing screenshots",
+    "imageSize": "Image exceeds 2 MB. Compress it before uploading.",
+    "notImage": "File {filename} is not an image and was skipped",
+    "pasteImageSize": "The pasted image exceeds 2 MB and was skipped",
+    "selectCsv": "Select a CSV file",
+    "fileEmpty": "The file is empty or incorrectly formatted",
+    "missingRequiredCols": "Missing required columns: RMA Date, Platform, SKU, Qty. Current headers: {headers}",
+    "fileEmptyNoHeader": "The file is empty or missing headers",
+    "noValidData": "No valid product data was parsed",
+    "fileParseFailed": "File parsing failed: {message}",
+    "excelLoadFailed": "Excel library failed to load. Refresh the page and try again.",
+    "columnMismatch": "Column names do not match. Use the downloaded template.",
+    "formatXlsxCsvOnly": "Only .xlsx / .csv files are supported"
+  },
+  "sales": {
+    "template": {
+      "sheet": "Sales Data Template",
+      "col": {
+        "brand": "Brand",
+        "month": "Month",
+        "onlineShipment": "Online Shipments",
+        "onlineSales": "Online Sales",
+        "offlineShipment": "Offline Shipments",
+        "offlineSales": "Offline Sales"
+      }
+    }
+  },
+  "default": {
+    "roleAdmin": "Super Admin",
+    "roleAdminDesc": "Has full system administration access",
+    "roleOperator": "Operations",
+    "roleOperatorDesc": "Business operations access, including approvals and import/export",
+    "roleViewer": "Standard User",
+    "roleViewerDesc": "View and create access",
+    "userAdmin": "Super Admin",
+    "userOperator": "Operations",
+    "userViewer": "Standard User",
+    "feishuUser": "Lark User"
+  },
+  "server": {
+    "appName": "After-Sales Data Portal",
+    "error": {
+      "notLoggedIn": "Not signed in",
+      "noPermission": "You do not have permission for this action",
+      "cannotDeleteAdmin": "The super admin cannot be deleted",
+      "userNotFound": "User not found",
+      "recordNotFound": "Record not found",
+      "productNotFound": "Product not found",
+      "usernameNameRequired": "Username and name are required",
+      "usernameExists": "Username already exists",
+      "noFieldsToUpdate": "No fields to update",
+      "provideProductIds": "Provide the product IDs to delete",
+      "feishuNotConfigured": "Lark is not configured",
+      "missingParams": "Missing required parameters",
+      "feishuTokenFailed": "Failed to get Lark token",
+      "databaseNotConfigured": "Database is not configured"
+    },
+    "skuEmpty": "SKU code is empty",
+    "brandEmpty": "Brand is empty",
+    "skuNotFoundDelete": "The SKU to delete/disable does not exist",
+    "feishuPermHint": "The Lark app is missing Contacts permissions. In the Lark Developer Console > Permissions, enable \"Get basic contact information\" or \"Access contacts as app\".",
+    "notifyMock": "Mock mode: notification recorded (used when Lark is not configured)",
+    "notifySent": "Notified {name}",
+    "notifyFailed": "Failed to send notification",
+    "notifyUnbound": "Lark account is not bound"
+  },
+  "feishuCard": {
+    "title": "RMA Approval Notification",
+    "recordId": "RMA Case No.",
+    "submitter": "Submitted By",
+    "date": "RMA Date",
+    "totalQty": "Total Qty",
+    "skuDetail": "SKU Details",
+    "processSummary": "Processing Status Breakdown",
+    "moreItems": "... {count} items total",
+    "unknown": "Unknown",
+    "btnView": "View / Approve"
+  }
+}

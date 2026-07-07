@@ -785,6 +785,21 @@ app.get('/api/approval-flows', requireLogin, async (req, res) => {
       ...r,
       nodes: typeof r.nodes === 'string' ? JSON.parse(r.nodes || '[]') : (r.nodes || [])
     }));
+    // 兜底: 收集所有 nodes 中的 approver_id / backup_approver_id,从 users 表反查 name 补全
+    const allIds = new Set();
+    rows.forEach(r => (r.nodes || []).forEach(n => {
+      if (n.approver_id) allIds.add(n.approver_id);
+      if (n.backup_approver_id) allIds.add(n.backup_approver_id);
+    }));
+    if (allIds.size) {
+      const ur = await query('SELECT id, name FROM users WHERE id = ANY($1::text[])', [Array.from(allIds)]);
+      const nameMap = {};
+      ur.rows.forEach(u => { nameMap[u.id] = u.name; });
+      rows.forEach(r => (r.nodes || []).forEach(n => {
+        if (n.approver_id && !n.approver_name) n.approver_name = nameMap[n.approver_id] || '';
+        if (n.backup_approver_id && !n.backup_approver_name) n.backup_approver_name = nameMap[n.backup_approver_id] || '';
+      }));
+    }
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审批流管理 - 设计稿</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#2e7d32;--primary-hover:#1b5e20;--primary-light:#e8f5e9;--bg:#f5f6f8;--sidebar-bg:#1a2f1a;--sidebar-text:#b8c5b9;--card-bg:#fff;--border:#e5e6eb;--text:#1f2329;--text-secondary:#646a73;--text-muted:#999;--radius:8px}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+
+.nf-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.nf-table{width:100%;border-collapse:collapse;font-size:13px}
+.nf-table th{padding:10px 14px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;background:#fafbfc;border-bottom:2px solid var(--border);white-space:nowrap}
+.nf-table td{padding:10px 14px;border-bottom:1px solid #f0f1f3;color:var(--text)}
+.nf-table tbody tr{cursor:pointer;transition:background .12s}
+.nf-table tbody tr:hover{background:#f8f9ff}
+.nf-table tbody tr.selected{background:var(--primary-light)}
+.nf-table tbody tr:last-child td{border-bottom:none}
+.nf-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;white-space:nowrap}
+.nf-badge-on{background:#e8f5e9;color:#2e7d32}
+.nf-badge-off{background:#f5f5f5;color:#757575}
+.nf-badge-edit{background:#fff3e0;color:#e65100}
+
+.flow-node{cursor:pointer;transition:all .15s;border:2px solid var(--border);background:#fff;border-radius:10px;padding:14px 16px;text-align:center;min-width:120px;position:relative}
+.flow-node:hover{border-color:#81c784}
+.flow-node.active{border-color:var(--primary);background:var(--primary-light);box-shadow:0 0 0 3px rgba(46,125,50,.1)}
+.flow-node-start,.flow-node-end{border-color:#c8e6c9;background:#f1f8e9}
+.flow-arrow{display:flex;align-items:center;color:#bdbdbd;font-size:20px;padding:0 4px;flex-shrink:0}
+
+.toggle{position:relative;width:40px;height:22px;border-radius:11px;cursor:pointer;transition:background .2s}
+.toggle-on{background:var(--primary)}
+.toggle-off{background:#ccc}
+.toggle-knob{position:absolute;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-on .toggle-knob{left:20px}
+.toggle-off .toggle-knob{left:2px}
+
+.node-config-card{background:#fafbfc;border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.config-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f1f3}
+.config-row:last-child{border-bottom:none}
+.config-label{font-size:13px;color:var(--text-secondary);width:90px;flex-shrink:0;font-weight:500}
+.config-input{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);width:100%;outline:none;transition:border-color .2s;font-family:inherit}
+.config-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
+
+.nf-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .2s;font-family:inherit;text-decoration:none;white-space:nowrap}
+.nf-btn:active{transform:scale(.98)}
+.nf-btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.nf-btn-primary:hover{background:var(--primary-hover)}
+.nf-btn-secondary{background:#fff;color:var(--text-secondary);border-color:var(--border)}
+.nf-btn-secondary:hover{background:var(--bg)}
+.nf-btn-danger{background:#fff;color:#ff3b30;border-color:#ffcdd2}
+.nf-btn-danger:hover{background:#fde8e8}
+.nf-btn-sm{padding:5px 12px;font-size:13px}
+
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;cursor:pointer;transition:all .2s;font-size:14px;color:var(--sidebar-text);margin-bottom:2px}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:var(--primary);color:#fff}
+.nav-group-title{font-size:11px;text-transform:uppercase;color:rgba(255,255,255,.4);padding:0 12px;margin:14px 0 6px;letter-spacing:.5px}
+
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat-num{font-size:26px;font-weight:700;line-height:1.2}
+.stat-label{font-size:12px;color:var(--text-secondary);margin-top:4px}
+
+.app-shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{height:56px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-brand{font-size:16px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px}
+.sidebar-brand .brand-icon{width:28px;height:28px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto}
+.sidebar-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.4);text-align:center}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.page-title{font-size:18px;font-weight:700}
+.user-menu{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 12px;border-radius:6px;transition:background .2s}
+.user-menu:hover{background:var(--bg)}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.user-info{display:flex;flex-direction:column;line-height:1.2}
+.user-name{font-size:13px;font-weight:600;color:var(--text)}
+.user-role{font-size:11px;color:var(--text-muted)}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+.content-inner{max-width:1200px;margin:0 auto}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-header h2{font-size:20px;font-weight:700}
+.page-header-desc{font-size:14px;color:var(--text-secondary);margin-left:8px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">售</div>
+        售后管理系统
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-group-title">售后管理</div>
+      <div class="nav-item"><span style="width:20px;text-align:center">📊</span><span>概览</span></div>
+      <div class="nav-item"><span style="width:20px;text-align:center">📋</span><span>记录列表</span></div>
+      <div class="nav-group-title">审批管理</div>
+      <div class="nav-item"><span style="width:20px;text-align:center">✅</span><span>审批中心</span></div>
+      <div class="nav-group-title">数据管理</div>
+      <div class="nav-item"><span style="width:20px;text-align:center">📦</span><span>产品管理</span></div>
+      <div class="nav-group-title">系统管理</div>
+      <div class="nav-item"><span style="width:20px;text-align:center">👤</span><span>用户管理</span></div>
+      <div class="nav-item"><span style="width:20px;text-align:center">🛡️</span><span>角色管理</span></div>
+      <div class="nav-item active"><span style="width:20px;text-align:center">🔀</span><span>审批流管理</span></div>
+    </div>
+    <div class="sidebar-footer">v3.6.0</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <span class="page-title">审批流管理</span>
+      <div class="user-menu">
+        <div class="user-avatar">管</div>
+        <div class="user-info">
+          <span class="user-name">管理员</span>
+          <span class="user-role">超级管理员</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="content-inner">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div style="display:flex;align-items:center">
+            <h2>审批流管理</h2>
+            <span class="page-header-desc">管理售后记录的审批流程配置</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="nf-btn nf-btn-secondary" onclick="alert('刷新流程列表')">刷新</button>
+            <button class="nf-btn nf-btn-primary" onclick="createNewFlow()" title="基于标准售后审批流配置创建新流程">+ 新建审批流</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-num" style="color:var(--primary)">1</div><div class="stat-label">流程总数</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--primary)">1</div><div class="stat-label">启用中</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--text-muted)">0</div><div class="stat-label">已停用</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:#e65100">0</div><div class="stat-label">本月变更</div></div>
+        </div>
+
+        <!-- Flow List -->
+        <div class="nf-card" style="margin-bottom:16px">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:16px;font-weight:600">审批流列表</span>
+              <span style="font-size:12px;color:var(--text-muted)">新建时自动复制标准售后审批流配置</span>
+            </div>
+            <span style="font-size:13px;color:var(--text-muted)">共 1 条</span>
+          </div>
+          <table class="nf-table">
+            <thead>
+              <tr>
+                <th>流程名称</th><th>适用范围</th><th>审批层级</th><th>状态</th><th>更新时间</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="flow-list-body">
+              <tr class="selected" onclick="selectFlow(0)">
+                <td style="font-weight:600">标准售后审批流</td>
+                <td>全部售后记录</td>
+                <td>3 级</td>
+                <td><span class="nf-badge nf-badge-on">启用</span></td>
+                <td style="font-size:12px;color:var(--text-muted)">2026-07-06 15:00</td>
+                <td><button class="nf-btn nf-btn-secondary nf-btn-sm" onclick="event.stopPropagation();selectFlow(0)">编辑</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Flow Editor -->
+        <div class="nf-card" style="margin-bottom:16px">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span id="flow-name-title" style="font-size:16px;font-weight:600">标准售后审批流</span>
+              <span class="nf-badge nf-badge-edit" id="flow-scope-badge">全部售后记录</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:14px;color:var(--text-secondary)">启用</span>
+                <div class="toggle toggle-on" id="flow-toggle" onclick="toggleFlow()"><div class="toggle-knob"></div></div>
+              </div>
+              <button class="nf-btn nf-btn-secondary nf-btn-sm" onclick="alert('保存流程配置')">保存</button>
+              <button class="nf-btn nf-btn-danger nf-btn-sm" onclick="alert('确认删除此审批流？')">删除</button>
+            </div>
+          </div>
+
+          <div style="padding:28px 20px;background:#fafbfc">
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:18px">审批流程图（点击节点查看/编辑配置）</div>
+            <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;padding:14px 0">
+              <div class="flow-node flow-node-start" onclick="selectNode(0)">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">起始</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">提交申请</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">提交人自动触发</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node active" id="node-1" onclick="selectNode(1)">
+                <div style="display:inline-block;padding:2px 8px;border-radius:10px;background:var(--primary);color:#fff;font-size:11px;margin-bottom:4px">L1</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">一级审批</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">需 approval_level1 权限</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node" id="node-2" onclick="selectNode(2)">
+                <div style="display:inline-block;padding:2px 8px;border-radius:10px;background:var(--primary);color:#fff;font-size:11px;margin-bottom:4px">L2</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">二级审批</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">需 approval_level2 权限</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node" id="node-3" onclick="selectNode(3)">
+                <div style="display:inline-block;padding:2px 8px;border-radius:10px;background:var(--primary);color:#fff;font-size:11px;margin-bottom:4px">L3</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">三级审批</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">需 approval_level3 权限</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node flow-node-end" onclick="selectNode(4)">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">结束</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text)">审批完成</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">系统自动归档</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:center;margin-top:16px">
+              <button class="nf-btn nf-btn-secondary nf-btn-sm" onclick="alert('在当前节点后添加审批层级')">+ 添加审批层级</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Node Config -->
+        <div class="nf-card" style="margin-bottom:16px">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="config-node-title" style="font-size:16px;font-weight:600">一级审批节点配置</span>
+              <span class="nf-badge nf-badge-on">当前编辑</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="nf-btn nf-btn-secondary nf-btn-sm" onclick="alert('上移此审批层级')">上移</button>
+              <button class="nf-btn nf-btn-secondary nf-btn-sm" onclick="alert('下移此审批层级')">下移</button>
+              <button class="nf-btn nf-btn-danger nf-btn-sm" onclick="alert('确认删除此审批层级？')">删除层级</button>
+            </div>
+          </div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px" id="config-grid">
+            <div class="node-config-card">
+              <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">基本信息</div>
+              <div class="config-row"><span class="config-label">层级名称</span><input class="config-input" value="一级审批" id="cfg-name"></div>
+              <div class="config-row"><span class="config-label">审批权限</span>
+                <select class="config-input" id="cfg-perm">
+                  <option value="approval_level1" selected>approval_level1（一级审批权限）</option>
+                  <option value="approval_level2">approval_level2（二级审批权限）</option>
+                  <option value="approval_level3">approval_level3（三级审批权限）</option>
+                </select>
+              </div>
+              <div class="config-row"><span class="config-label">审批人</span>
+                <select class="config-input" id="cfg-approver">
+                  <option value="">请选择</option>
+                  <option>张明 (zhangming) - 主管</option><option>赵强 (zhaoqiang) - 副主管</option><option>钱伟 (qianwei) - 组长</option>
+                </select>
+              </div>
+              <div class="config-row"><span class="config-label">备选审批人</span>
+                <select class="config-input"><option value="">无</option><option>赵强 (zhaoqiang) - 副主管</option><option>钱伟 (qianwei) - 组长</option></select>
+              </div>
+              <div style="margin-top:8px;font-size:12px;color:var(--text-muted);padding:8px 10px;background:#f5f6f8;border-radius:6px">
+                审批人列表自动筛选具有对应权限的在职用户（与记录创建页的审批人选择逻辑一致）
+              </div>
+            </div>
+            <div class="node-config-card">
+              <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">审批条件</div>
+              <div class="config-row"><span class="config-label">触发条件</span>
+                <select class="config-input"><option>全部记录</option><option>退货金额 > 1000</option><option>特定品类</option></select>
+              </div>
+              <div class="config-row"><span class="config-label">跳过规则</span>
+                <select class="config-input"><option>无审批人时跳过</option><option>不可跳过</option><option>金额 < 500 自动通过</option></select>
+              </div>
+              <div class="config-row"><span class="config-label">超时提醒</span>
+                <select class="config-input"><option>48 小时未审批</option><option>24 小时未审批</option><option>72 小时未审批</option><option>不提醒</option></select>
+              </div>
+            </div>
+            <div class="node-config-card" style="grid-column:1/-1">
+              <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">通知设置</div>
+              <div style="display:flex;gap:20px;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" checked> 飞书消息通知</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" checked> 邮件通知</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox"> 短信通知</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" checked> 超时升级提醒</label>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:#9a6d0a;padding:10px 14px;background:#fff8e1;border:1px solid #ffe3a3;border-radius:6px">
+                提示：修改审批流配置后，新提交的售后记录将按新流程执行；已进入审批的记录仍按原流程完成。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Usage Stats -->
+        <div class="nf-card">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px;font-weight:600">审批流使用统计</span>
+          </div>
+          <table class="nf-table">
+            <thead>
+              <tr><th>流程名称</th><th>本月发起</th><th>审批中</th><th>已通过</th><th>已拒绝</th><th>平均耗时</th><th>通过率</th></tr>
+            </thead>
+            <tbody>
+              <tr><td style="font-weight:600">标准售后审批流</td><td>128</td><td>12</td><td>98</td><td>18</td><td style="color:var(--text-secondary)">2.3 天</td><td><span class="nf-badge nf-badge-on">76.6%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var flowData=[
+  {name:"标准售后审批流",scope:"全部售后记录",enabled:true,nodes:[
+    {level:"L1",title:"一级审批",perm:"approval_level1",approver:"张明 (zhangming)"},
+    {level:"L2",title:"二级审批",perm:"approval_level2",approver:"李华 (lihua)"},
+    {level:"L3",title:"三级审批",perm:"approval_level3",approver:"王芳 (wangfang)"}
+  ]}
+];
+var currentFlow=0;
+var flowCounter=1;
+
+function selectFlow(idx){
+  currentFlow=idx;
+  var f=flowData[idx];
+  document.querySelectorAll('#flow-list-body tr').forEach(function(tr,i){tr.classList.toggle('selected',i===idx)});
+  document.getElementById('flow-name-title').textContent=f.name;
+  document.getElementById('flow-scope-badge').textContent=f.scope;
+  var tog=document.getElementById('flow-toggle');
+  tog.className='toggle '+(f.enabled?'toggle-on':'toggle-off');
+  updateFlowNodes();
+  selectNode(1);
+}
+
+function updateFlowNodes(){
+  var f=flowData[currentFlow];
+  var container=document.querySelector('.flow-arrow').parentNode;
+  var nodesHtml='<div class="flow-node flow-node-start" onclick="selectNode(0)">'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">起始</div>'+
+    '<div style="font-size:14px;font-weight:600;color:var(--text)">提交申请</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">提交人自动触发</div></div>';
+  f.nodes.forEach(function(n,i){
+    nodesHtml+='<div class="flow-arrow">→</div>';
+    nodesHtml+='<div class="flow-node" id="node-'+(i+1)+'" onclick="selectNode('+(i+1)+')">'+
+      '<div style="display:inline-block;padding:2px 8px;border-radius:10px;background:var(--primary);color:#fff;font-size:11px;margin-bottom:4px">'+n.level+'</div>'+
+      '<div style="font-size:14px;font-weight:600;color:var(--text)">'+n.title+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">需 '+n.perm+' 权限</div></div>';
+  });
+  nodesHtml+='<div class="flow-arrow">→</div>';
+  nodesHtml+='<div class="flow-node flow-node-end" onclick="selectNode('+(f.nodes.length+1)+')">'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">结束</div>'+
+    '<div style="font-size:14px;font-weight:600;color:var(--text)">审批完成</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">系统自动归档</div></div>';
+  container.innerHTML=nodesHtml;
+}
+
+function toggleFlow(){
+  flowData[currentFlow].enabled=!flowData[currentFlow].enabled;
+  var f=flowData[currentFlow];
+  document.getElementById('flow-toggle').className='toggle '+(f.enabled?'toggle-on':'toggle-off');
+}
+
+function selectNode(idx){
+  document.querySelectorAll('.flow-node').forEach(function(n){n.classList.remove('active')});
+  var f=flowData[currentFlow];
+  if(idx>=1&&idx<=f.nodes.length){
+    var node=document.getElementById('node-'+idx);
+    if(node)node.classList.add('active');
+    var nd=f.nodes[idx-1];
+    document.getElementById('config-node-title').textContent=nd.title+'节点配置';
+    var cfgName=document.getElementById('cfg-name');
+    if(cfgName)cfgName.value=nd.title;
+    var cfgPerm=document.getElementById('cfg-perm');
+    if(cfgPerm)cfgPerm.value=nd.perm;
+  }else{
+    document.getElementById('config-node-title').textContent=idx===0?'起始节点':'结束节点';
+  }
+}
+
+function createNewFlow(){
+  var template=flowData[0];
+  var newName='审批流 '+(++flowCounter);
+  var newFlow=JSON.parse(JSON.stringify(template));
+  newFlow.name=newName;
+  newFlow.enabled=false;
+  flowData.push(newFlow);
+  var tbody=document.getElementById('flow-list-body');
+  var tr=document.createElement('tr');
+  tr.onclick=function(){selectFlow(flowData.length-1)};
+  tr.innerHTML='<td style="font-weight:600">'+newName+'</td>'+
+    '<td>全部售后记录</td>'+
+    '<td>'+newFlow.nodes.length+' 级</td>'+
+    '<td><span class="nf-badge nf-badge-off">停用</span></td>'+
+    '<td style="font-size:12px;color:var(--text-muted)">'+new Date().toLocaleString('zh-CN')+'</td>'+
+    '<td><button class="nf-btn nf-btn-secondary nf-btn-sm" onclick="event.stopPropagation();selectFlow('+(flowData.length-1)+')">编辑</button></td>';
+  tbody.appendChild(tr);
+  selectFlow(flowData.length-1);
+  document.getElementById('flow-name-title').textContent=newName;
+  alert('已基于「标准售后审批流」配置创建新流程，请编辑名称和配置后启用');
+}
+</script>
+</body>
+</html>

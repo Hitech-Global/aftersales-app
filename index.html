@@ -3427,8 +3427,15 @@ async function populateApproverSelects(){
   preview.innerHTML = '';
   preview.style.display = 'none';
   try {
-    const resp = await fetch('/api/approval-flows', { headers: getAuthHeaders() });
-    const flows = (await resp.json()) || [];
+    // 并行加载 flows + users,users 用于把 node.approver_id 解析成中文/英文/印尼文名字
+    const [flowResp, userResp] = await Promise.all([
+      fetch('/api/approval-flows', { headers: getAuthHeaders() }),
+      fetch('/api/users', { headers: getAuthHeaders() }).catch(() => null)
+    ]);
+    const flows = (await flowResp.json()) || [];
+    if (userResp && userResp.ok) {
+      _allUsersCache = (await userResp.json()) || [];
+    }
     const enabled = flows.filter(f => f.enabled);
     if (enabled.length === 0) {
       _approvalFlowsCache = [];
@@ -3457,6 +3464,7 @@ async function populateApproverSelects(){
 
 let _approvalFlowsCache = [];
 let _activeFlowId = '';
+let _allUsersCache = [];
 
 function getActiveFlow(){
   if (!_activeFlowId) return null;
@@ -3475,11 +3483,17 @@ function renderFlowPreview(flow){
   let h = '';
   nodes.forEach((n, i) => {
     if (i > 0) h += '<span class="afp-arrow">→</span>';
-    const name = n.approver_name || (n.approver_id ? '(' + n.approver_id + ')' : t('form.flow.notAssigned'));
+    // 三级 fallback: node.approver_name → _allUsersCache 反查 → 仍没有就用 (id) 或 notAssigned
+    let name = n.approver_name;
+    if (!name && n.approver_id && Array.isArray(_allUsersCache)) {
+      const u = _allUsersCache.find(u => u.id === n.approver_id);
+      if (u) name = u.name;
+    }
+    const displayName = name || (n.approver_id ? '(' + n.approver_id + ')' : t('form.flow.notAssigned'));
     h += '<span class="afp-node' + (n.approver_id ? '' : ' missing') + '">';
     h += '<span class="afp-lvl">L' + (i + 1) + '</span>';
     h += esc(n.title || (t('detail.label.level' + (i + 1)) || ('L' + (i + 1))));
-    h += ' · <strong>' + esc(name) + '</strong>';
+    h += ' · <strong>' + esc(displayName) + '</strong>';
     h += '</span>';
   });
   preview.innerHTML = h;
@@ -5744,6 +5758,19 @@ async function renderApprovalFlows() {
     _afUsers = await userResp.json();
     _afRoles = await roleResp.json();
     if (!Array.isArray(_afFlows)) _afFlows = [];
+    // 补全: 老数据可能没有 approver_name / backup_approver_name,从 users 反查填上
+    _afFlows.forEach(f => {
+      (f.nodes || []).forEach(n => {
+        if (n.approver_id && !n.approver_name) {
+          const u = _afUsers.find(u => u.id === n.approver_id);
+          if (u) n.approver_name = u.name;
+        }
+        if (n.backup_approver_id && !n.backup_approver_name) {
+          const u = _afUsers.find(u => u.id === n.backup_approver_id);
+          if (u) n.backup_approver_name = u.name;
+        }
+      });
+    });
     _afCurrentIdx = 0;
     _afSelectedNode = -1;
     _afRenderPage();
@@ -5928,8 +5955,17 @@ function updateNodeField(nodeIdx, field, value) {
   flow.nodes[nodeIdx][field] = value;
   if (field === 'permission') {
     flow.nodes[nodeIdx].approver_id = '';
+    flow.nodes[nodeIdx].approver_name = '';
     flow.nodes[nodeIdx].backup_approver_id = '';
+    flow.nodes[nodeIdx].backup_approver_name = '';
     _afRenderPage();
+  } else if (field === 'approver_id') {
+    // 同步写入 approver_name,从 _afUsers 中查
+    const u = (_afUsers || []).find(x => x.id === value);
+    flow.nodes[nodeIdx].approver_name = u ? u.name : '';
+  } else if (field === 'backup_approver_id') {
+    const u = (_afUsers || []).find(x => x.id === value);
+    flow.nodes[nodeIdx].backup_approver_name = u ? u.name : '';
   }
 }
 
