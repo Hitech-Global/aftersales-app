@@ -179,6 +179,7 @@
       "processProgress": "Processing Progress",
       "date": "RMA Date",
       "platform": "Platform",
+      "shopCustomer": "Shop/Customer",
       "returnReason": "Return Reason",
       "sku": "SKU",
       "snCode": "SN Code",
@@ -258,6 +259,7 @@
       "orderNo": "Order No.",
       "qty": "Qty",
       "returnReason": "Return Reason",
+      "shopCustomer": "Shop/Customer",
       "description": "Issue Description / Notes",
       "attachment": "Attachments",
       "actions": "Actions"
@@ -272,7 +274,8 @@
       "approvalFlow": "Approval Flow"
     },
     "option": {
-      "pleaseSelect": "Select"
+      "pleaseSelect": "Select",
+      "selectPlatformFirst": "Select platform first"
     },
     "btnSubmit": "Submit for Approval",
     "btnSaveDraft": "Save Draft",
@@ -334,6 +337,7 @@
     "col": {
       "index": "#",
       "platform": "Platform",
+      "shopCustomer": "Shop/Customer",
       "sku": "SKU",
       "snCode": "SN Code",
       "orderNo": "Order No.",
@@ -1074,10 +1078,12 @@
       "return_reason": "Return Reason",
       "platform": "Platform",
       "return_method": "Return Method",
+      "shop_customer": "Shop/Customer",
       "common": "Common"
     },
     "col": {
       "name": "Name",
+      "parentPlatform": "Parent Platform",
       "status": "Status",
       "actions": "Actions"
     },

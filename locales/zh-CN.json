@@ -179,6 +179,7 @@
       "processProgress": "处理进度",
       "date": "售后日期",
       "platform": "平台",
+      "shopCustomer": "店铺/客户",
       "returnReason": "退货原因",
       "sku": "SKU",
       "snCode": "SN Code",
@@ -258,6 +259,7 @@
       "orderNo": "订单号",
       "qty": "数量",
       "returnReason": "退货原因",
+      "shopCustomer": "店铺/客户",
       "description": "问题说明/备注",
       "attachment": "附件",
       "actions": "操作"
@@ -272,7 +274,8 @@
       "approvalFlow": "审批流"
     },
     "option": {
-      "pleaseSelect": "请选择"
+      "pleaseSelect": "请选择",
+      "selectPlatformFirst": "请先选择平台"
     },
     "btnSubmit": "📤 提交审批",
     "btnSaveDraft": "💾 保存草稿",
@@ -334,6 +337,7 @@
     "col": {
       "index": "#",
       "platform": "平台",
+      "shopCustomer": "店铺/客户",
       "sku": "SKU",
       "snCode": "SN Code",
       "orderNo": "订单号",
@@ -1074,10 +1078,12 @@
       "return_reason": "退货原因",
       "platform": "平台",
       "return_method": "退货方式",
+      "shop_customer": "店铺/客户",
       "common": "通用类别"
     },
     "col": {
       "name": "名称",
+      "parentPlatform": "所属平台",
       "status": "状态",
       "actions": "操作"
     },

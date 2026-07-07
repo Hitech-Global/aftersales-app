@@ -179,6 +179,7 @@
       "processProgress": "Progress Proses",
       "date": "Tanggal RMA",
       "platform": "Platform",
+      "shopCustomer": "Toko/Pelanggan",
       "returnReason": "Alasan Retur",
       "sku": "SKU",
       "snCode": "SN Code",
@@ -258,6 +259,7 @@
       "orderNo": "No. Pesanan",
       "qty": "Qty",
       "returnReason": "Alasan Retur",
+      "shopCustomer": "Toko/Pelanggan",
       "description": "Deskripsi Masalah / Catatan",
       "attachment": "Lampiran",
       "actions": "Aksi"
@@ -272,7 +274,8 @@
       "approvalFlow": "Alur Persetujuan"
     },
     "option": {
-      "pleaseSelect": "Pilih"
+      "pleaseSelect": "Pilih",
+      "selectPlatformFirst": "Pilih platform dulu"
     },
     "btnSubmit": "Ajukan Approval",
     "btnSaveDraft": "Simpan Draft",
@@ -334,6 +337,7 @@
     "col": {
       "index": "#",
       "platform": "Platform",
+      "shopCustomer": "Toko/Pelanggan",
       "sku": "SKU",
       "snCode": "SN Code",
       "orderNo": "No. Pesanan",
@@ -1074,10 +1078,12 @@
       "return_reason": "Alasan Pengembalian",
       "platform": "Platform",
       "return_method": "Metode Pengembalian",
+      "shop_customer": "Toko/Pelanggan",
       "common": "Umum"
     },
     "col": {
       "name": "Nama",
+      "parentPlatform": "Platform Induk",
       "status": "Status",
       "actions": "Tindakan"
     },

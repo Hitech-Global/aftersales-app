@@ -682,14 +682,15 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
                   <div class="detail-items-table-wrapper">
                     <table class="detail-items-table" id="detail-items-table">
                       <thead><tr>
-                        <th style="width:9%"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
-                        <th style="width:12%"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
-                        <th style="width:11%" data-i18n="form.col.snCode"></th>
-                        <th style="width:12%" data-i18n="form.col.orderNo"></th>
-                        <th style="width:6%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
-                        <th style="width:10%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
-                        <th style="width:25%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
-                        <th style="width:11%" data-i18n="form.col.attachment"></th>
+                        <th style="width:8%"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
+                        <th style="width:10%"><span data-i18n="form.col.shopCustomer"></span></th>
+                        <th style="width:11%"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
+                        <th style="width:10%" data-i18n="form.col.snCode"></th>
+                        <th style="width:11%" data-i18n="form.col.orderNo"></th>
+                        <th style="width:5%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
+                        <th style="width:9%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
+                        <th style="width:22%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
+                        <th style="width:10%" data-i18n="form.col.attachment"></th>
                         <th style="width:4%" data-i18n="form.col.actions"></th>
                       </tr></thead>
                       <tbody id="detail-items-tbody"></tbody>
@@ -1094,6 +1095,10 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
         <label class="form-label" data-i18n="dictionaries.modal.code">代码</label>
         <input id="dict-add-code" class="form-input" type="text" autocomplete="off" maxlength="40" placeholder="">
         <div class="form-hint" data-i18n="dictionaries.modal.codeHint">（英文/数字，不含空格，作为系统内唯一值）</div>
+      </div>
+      <div class="form-row" id="dict-add-parent-row" style="margin-bottom:6px;display:none">
+        <label class="form-label" data-i18n="dictionaries.col.parentPlatform">所属平台</label>
+        <select id="dict-add-parent" class="form-input"></select>
       </div>
     </div>
     <div class="modal-footer">
@@ -2762,6 +2767,7 @@ async function renderList(){
     const items=r.items||[];
     const itemSearch=items.some(it=>
       (it.platform||'').toLowerCase().includes(search)||
+      (it.shop_customer||'').toLowerCase().includes(search)||
       (it.sku_code||'').toLowerCase().includes(search)||
       (it.order_no||'').toLowerCase().includes(search)||
       (it.fault_description||'').toLowerCase().includes(search)||
@@ -2790,7 +2796,7 @@ async function renderList(){
     // ===== 按售后明细模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
-      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processType')}</th><th>${t('list.col.processProgress')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.snCode')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
+      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processType')}</th><th>${t('list.col.processProgress')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.shopCustomer')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.snCode')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
@@ -2804,6 +2810,7 @@ async function renderList(){
           <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(it.platform||'-')}</td>
+          <td>${esc(it.shop_customer||'-')}</td>
           <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
           <td>${esc(it.sn_code||'-')}</td>
@@ -3142,10 +3149,11 @@ async function renderDetail(id){
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
+        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
             <td>${esc(it.platform||'-')}</td>
+            <td>${esc(it.shop_customer||'-')}</td>
             <td>${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.sn_code||'-')}</td>
@@ -3237,6 +3245,10 @@ function refreshPlatformSelects(){
       });
       sel.innerHTML = h;
     });
+    // Refresh shop selects for rows that already have a platform selected
+    document.querySelectorAll('#detail-items-tbody select.platform-select').forEach(sel => {
+      if (sel.value) onPlatformChange(sel);
+    });
   });
 }
 
@@ -3272,7 +3284,7 @@ const RETURN_REASON_LOCALE_FALLBACKS={
   'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap'}
 };
 
-function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments){
+function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments, shopCustomer){
   const tbody=document.getElementById('detail-items-tbody');
   const idx=tbody.children.length;
   const tr=document.createElement('tr');
@@ -3289,13 +3301,17 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     platformHtml += '<option value="TikTok"' + (platform === 'TikTok' ? ' selected' : '') + '>TikTok</option>';
     platformHtml += '<option value="Offline Store"' + (platform === 'Offline Store' ? ' selected' : '') + '>Offline Store</option>';
   }
+  // Build shop/customer select (disabled until platform is chosen)
+  let shopHtml = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
+  const isShopDisabled = !platform;
   // Build return reason options
   let reasonHtml = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
   RETURN_REASONS.forEach(r => {
     reasonHtml += '<option value="' + esc(r) + '"' + (returnReason === r ? ' selected' : '') + '>' + esc(tReturnReason(r)) + '</option>';
   });
   tr.innerHTML=`
-    <td><select class="platform-select" data-dict="platform">${platformHtml}</select></td>
+    <td><select class="platform-select" data-dict="platform" onchange="onPlatformChange(this)">${platformHtml}</select></td>
+    <td><select class="shop-select" data-dict="shop_customer" ${isShopDisabled ? 'disabled' : ''}>${shopHtml}</select></td>
     <td><input type="text" class="sku-input" list="sku-datalist" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
     <td><input type="text" class="sn-input" placeholder="SN Code" value="${esc(snCode||'')}"></td>
     <td><input type="text" class="order-input" placeholder="${t('form.col.orderNo')}" value="${esc(orderNo||'')}"></td>
@@ -3311,6 +3327,10 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     <td><button type="button" class="btn-delete-row" title="${t('list.action.delete')}" onclick="removeDetailItem(this)">&times;</button></td>`;
   tr.dataset.index=idx;
   tbody.appendChild(tr);
+  // If platform is set, load shop options and pre-select shopCustomer
+  if (platform) {
+    _loadShopOptions(tr.querySelector('.shop-select'), platform, shopCustomer);
+  }
   // Render existing attachments
   if (attachments && attachments.length > 0) {
     const cell = tr.querySelector('.atch-cell');
@@ -3325,6 +3345,36 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     e.target.value = '';
   });
   updateDetailTotalQty();
+}
+
+// 平台变化时刷新店铺/客户下拉选项
+async function onPlatformChange(selectEl){
+  const tr = selectEl.closest('tr');
+  if(!tr) return;
+  const shopSelect = tr.querySelector('.shop-select');
+  if(!shopSelect) return;
+  const platformCode = selectEl.value;
+  if(!platformCode){
+    shopSelect.disabled = true;
+    shopSelect.innerHTML = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
+    return;
+  }
+  shopSelect.disabled = false;
+  await _loadShopOptions(shopSelect, platformCode, '');
+}
+
+// 加载店铺/客户选项并可选地预选
+async function _loadShopOptions(shopSelect, platformCode, selectedCode){
+  try{
+    const shops = await loadDictOptions('shop_customer', platformCode);
+    let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+    shops.forEach(o => {
+      h += '<option value="' + esc(o.code) + '"' + (selectedCode === o.code ? ' selected' : '') + '>' + esc(getDictLabel(o)) + '</option>';
+    });
+    shopSelect.innerHTML = h;
+  }catch(e){
+    shopSelect.innerHTML = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+  }
 }
 
 async function _handleItemAttachmentUpload(tr, files) {
@@ -3372,13 +3422,14 @@ function collectDetailItems(){
   const items=[];
   document.querySelectorAll('#detail-items-tbody tr').forEach(tr=>{
     const platform=tr.querySelector('.platform-select').value;
+    const shopCustomer=tr.querySelector('.shop-select')?tr.querySelector('.shop-select').value:'';
     const sku=tr.querySelector('.sku-input').value.trim();
     const snCode=tr.querySelector('.sn-input') ? tr.querySelector('.sn-input').value.trim() : '';
     const orderNo=tr.querySelector('.order-input').value.trim();
     const qty=parseInt(tr.querySelector('.qty-input').value)||0;
     const returnReason=tr.querySelector('.type-select').value;
     const faultDesc=tr.querySelector('.fault-input').value.trim();
-    items.push({platform,sku_code:sku,sn_code:snCode,order_no:orderNo,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
+    items.push({platform,shop_customer:shopCustomer,sku_code:sku,sn_code:snCode,order_no:orderNo,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
   });
   return items;
 }
@@ -3879,7 +3930,7 @@ async function openLegacyApprovalModal(recordId){
       <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${record.status}">${tApprovalStatus(record.status)}</span></span></div>
     </div>
     <div style="margin-top:10px">
-      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
+      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
         <tbody>${(record.items||[]).map((it,i)=>{
           normalizeProcessItem(it);
           const isOpenErp=itemProcessType(it)==='erp'&&itemProcessProgress(it)!=='completed';
@@ -3887,6 +3938,7 @@ async function openLegacyApprovalModal(recordId){
           return `<tr>
             <td>${i+1}</td>
             <td>${esc(it.platform||'-')}</td>
+            <td>${esc(it.shop_customer||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
@@ -4637,7 +4689,7 @@ async function exportAftersalesExcel(){
     return String(r.id||'').toLowerCase().includes(search) ||
       (r.brand||'').toLowerCase().includes(search) ||
       (r.submitter_name||'').toLowerCase().includes(search) ||
-      items.some(it => (it.order_no||'').toLowerCase().includes(search) || (it.sku_code||'').toLowerCase().includes(search) || (it.model||'').toLowerCase().includes(search));
+      items.some(it => (it.order_no||'').toLowerCase().includes(search) || (it.sku_code||'').toLowerCase().includes(search) || (it.model||'').toLowerCase().includes(search) || (it.shop_customer||'').toLowerCase().includes(search));
   });
 
   // 按处理状态筛选（明细级别）
@@ -4655,7 +4707,7 @@ async function exportAftersalesExcel(){
   const isDetailView = listMode === 'item';
 
   const headers = [
-    '售后单号','售后日期','平台','品牌','SKU','SN Code','型号','数量','订单号',
+    '售后单号','售后日期','平台','店铺/客户','品牌','SKU','SN Code','型号','数量','订单号',
     '问题类型','问题说明','审批状态','处理类型','处理进度','ERP入库日期','提交人','创建时间','更新时间'
   ];
 
@@ -4671,6 +4723,7 @@ async function exportAftersalesExcel(){
           r.id,
           formatDate(r.aftersales_date),
           (it.platform || platforms[0] || ''),
+          (it.shop_customer || ''),
           r.brand || '',
           it.sku_code || '',
           it.sn_code || '',
@@ -4699,6 +4752,7 @@ async function exportAftersalesExcel(){
         r.id,
         formatDate(r.aftersales_date),
         platforms.join('、'),
+        items.map(it => it.shop_customer||'').filter(Boolean).join('、'),
         r.brand || '',
         items.map(it => it.sku_code||'').join('、'),
         items.map(it => it.model||'').filter(Boolean).join('、') || items[0]?.model || '',
@@ -6077,7 +6131,7 @@ async function deleteApprovalFlow(id, name) {
 }
 
 // ==================== 字典管理 ====================
-const DICT_CATEGORY_IDS = ['return_reason', 'platform', 'return_method', 'common'];
+const DICT_CATEGORY_IDS = ['return_reason', 'platform', 'return_method', 'shop_customer', 'common'];
 function _dictGetCategoryLabel(id) {
   // 从 i18n 取类别名,跟随顶部语言切换
   try {
@@ -6088,7 +6142,7 @@ function _dictGetCategoryLabel(id) {
   // 后备: 用 _dictFallbackLabels
   return _dictFallbackLabels[id] || id;
 }
-const _dictFallbackLabels = { return_reason: '退货原因', platform: '平台', return_method: '退货方式', common: '通用类别' };
+const _dictFallbackLabels = { return_reason: '退货原因', platform: '平台', return_method: '退货方式', shop_customer: '店铺/客户', common: '通用类别' };
 function _dictLangShort() {
   const loc = (window.__i18n && window.__i18n.getLocale) ? window.__i18n.getLocale() : 'zh-CN';
   if (loc === 'en-US') return 'en';
@@ -6136,6 +6190,9 @@ function _dictRenderItems() {
   const list = _dictCache[_dictCurrent] || [];
   const catLabel = _dictGetCategoryLabel(_dictCurrent);
   const cntSuffix = t('dictionaries.itemsCount', { count: list.length });
+  const isShopCustomer = (_dictCurrent === 'shop_customer');
+  // 获取平台列表用于父平台下拉
+  const platformList = _dictCache['platform'] || [];
   let h = '<div class="dict-main-header">';
   h += '<span style="font-size:15px;font-weight:600">' + esc(catLabel) + ' <span style="font-weight:400;color:var(--text-muted);font-size:13px">' + esc(cntSuffix) + '</span></span>';
   h += '<button class="af-btn af-btn-primary af-btn-sm" onclick="showDictAddForm()">' + esc(t('dictionaries.btnAdd')) + '</button>';
@@ -6149,6 +6206,9 @@ function _dictRenderItems() {
 
   h += '<table class="dict-table"><thead><tr>';
   h += '<th>' + esc(t('dictionaries.col.name')) + '</th>';
+  if (isShopCustomer) {
+    h += '<th style="width:140px">' + esc(t('dictionaries.col.parentPlatform')) + '</th>';
+  }
   h += '<th style="width:120px">' + esc(t('dictionaries.col.status')) + '</th>';
   h += '<th style="width:160px">' + esc(t('dictionaries.col.actions')) + '</th>';
   h += '</tr></thead><tbody>';
@@ -6156,6 +6216,14 @@ function _dictRenderItems() {
     const displayName = _dictCurrentName(d) || d.code;
     h += '<tr>';
     h += '<td><input class="dict-input" value="' + esc(displayName) + '" onchange="updateDictName(\'' + d.id + '\',this.value)"></td>';
+    if (isShopCustomer) {
+      // 所属平台下拉
+      let opts = '<option value="">' + esc(t('form.option.pleaseSelect')) + '</option>';
+      platformList.forEach(p => {
+        opts += '<option value="' + esc(p.code) + '"' + (d.parent_code === p.code ? ' selected' : '') + '>' + esc(_dictCurrentName(p)) + '</option>';
+      });
+      h += '<td><select class="form-input" style="padding:4px 8px" onchange="updateDictParent(\'' + d.id + '\',this.value)">' + opts + '</select></td>';
+    }
     const statusText = d.enabled ? t('dictionaries.enabled') : t('dictionaries.disabled');
     h += '<td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><div class="af-toggle ' + (d.enabled ? 'af-toggle-on' : 'af-toggle-off') + '" onclick="toggleDictEnabled(\'' + d.id + '\')"><div class="af-toggle-knob"></div></div><span style="font-size:12px">' + esc(statusText) + '</span></label></td>';
     h += '<td><div class="dict-actions-cell"><button class="af-btn af-btn-secondary af-btn-sm" onclick="updateDictName(\'' + d.id + '\',null,true)">' + esc(t('dictionaries.btnSave')) + '</button><button class="af-btn af-btn-danger af-btn-sm" onclick="deleteDictItem(\'' + d.id + '\')">' + esc(t('dictionaries.btnDelete')) + '</button></div></td>';
@@ -6192,7 +6260,8 @@ async function updateDictName(id, value, saveNow) {
           label_en: item.label_en,
           label_id: item.label_id,
           sort_order: item.sort_order || 0,
-          enabled: item.enabled
+          enabled: item.enabled,
+          parent_code: item.parent_code || ''
         })
       });
       if (resp.ok) {
@@ -6220,6 +6289,20 @@ async function toggleDictEnabled(id) {
   } catch (e) { toast(t('dictionaries.deleteFailed') + e.message, 'error'); }
 }
 
+async function updateDictParent(id, parentCode) {
+  const item = _dictAll.find(d => d.id === id);
+  if (!item) return;
+  item.parent_code = parentCode || '';
+  try {
+    await fetch('/api/dictionaries/' + encodeURIComponent(id), {
+      method: 'PUT',
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parent_code: item.parent_code })
+    });
+    toast(t('dictionaries.saveSuccess'), 'success');
+  } catch (e) { toast(t('dictionaries.saveFailed') + e.message, 'error'); }
+}
+
 async function deleteDictItem(id) {
   if (!confirm(t('dictionaries.confirmDelete'))) return;
   try {
@@ -6243,6 +6326,8 @@ function showDictAddForm() {
   const hintEl = document.getElementById('dict-add-name-hint');
   const submitBtn = document.getElementById('dict-add-submit');
   const titleEl = document.getElementById('dict-add-title');
+  const parentRow = document.getElementById('dict-add-parent-row');
+  const parentSel = document.getElementById('dict-add-parent');
   if (!nameEl) { console.error('dict-add modal not found'); return; }
   // 重置
   nameEl.value = '';
@@ -6253,6 +6338,21 @@ function showDictAddForm() {
   if (submitBtn) {
     submitBtn.disabled = false;
     submitBtn.textContent = t('dictionaries.btnSave') || '保存';
+  }
+  // 如果当前分类是 shop_customer,显示所属平台下拉
+  if (parentRow && parentSel) {
+    if (_dictCurrent === 'shop_customer') {
+      const platformList = _dictCache['platform'] || [];
+      let opts = '<option value="">' + esc(t('form.option.pleaseSelect')) + '</option>';
+      platformList.forEach(p => {
+        opts += '<option value="' + esc(p.code) + '">' + esc(_dictCurrentName(p)) + '</option>';
+      });
+      parentSel.innerHTML = opts;
+      parentRow.style.display = '';
+    } else {
+      parentSel.innerHTML = '';
+      parentRow.style.display = 'none';
+    }
   }
   document.getElementById('dict-add-modal').classList.remove('hidden');
   setTimeout(() => nameEl.focus(), 50);
@@ -6319,16 +6419,24 @@ async function submitDictAddForm() {
     return;
   }
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = t('dictionaries.btnSave') + '…'; }
-  await createDictItem(code, name);
+  // 如果是 shop_customer 分类,获取所选父平台
+  let parentCode = '';
+  if (_dictCurrent === 'shop_customer') {
+    const parentSel = document.getElementById('dict-add-parent');
+    if (parentSel) parentCode = parentSel.value || '';
+  }
+  await createDictItem(code, name, parentCode);
   if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = t('dictionaries.btnSave') || '保存'; }
 }
 
-async function createDictItem(code, name) {
+async function createDictItem(code, name, parentCode) {
   try {
+    const body = { category: _dictCurrent, code, label_zh: name, label_en: name, label_id: name, sort_order: 0, enabled: true };
+    if (parentCode) body.parent_code = parentCode;
     const resp = await fetch('/api/dictionaries', {
       method: 'POST',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category: _dictCurrent, code, label_zh: name, label_en: name, label_id: name, sort_order: 0, enabled: true })
+      body: JSON.stringify(body)
     });
     if (resp.ok) {
       closeDictAddForm();
@@ -6351,9 +6459,11 @@ function toast(msg, type) {
 }
 
 // ==================== 字典选项加载（下拉用）====================
-async function loadDictOptions(category) {
+async function loadDictOptions(category, parentCode) {
   try {
-    const resp = await fetch('/api/dictionaries?category=' + encodeURIComponent(category), { headers: getAuthHeaders() });
+    let url = '/api/dictionaries?category=' + encodeURIComponent(category);
+    if (parentCode) url += '&parent_code=' + encodeURIComponent(parentCode);
+    const resp = await fetch(url, { headers: getAuthHeaders() });
     const list = await resp.json() || [];
     return list.filter(d => d.enabled);
   } catch (e) { return []; }

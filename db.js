@@ -198,12 +198,14 @@ async function initDatabase() {
         label_id VARCHAR(255) DEFAULT '',
         sort_order INTEGER DEFAULT 0,
         enabled BOOLEAN DEFAULT true,
+        parent_code VARCHAR(128) DEFAULT '',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(category, code)
       )
     `);
     await query(`CREATE INDEX IF NOT EXISTS idx_dict_category ON dictionaries(category, sort_order)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_dict_parent ON dictionaries(parent_code) WHERE parent_code <> ''`);
 
     await query(`
       CREATE TABLE IF NOT EXISTS attachments (
@@ -246,6 +248,9 @@ async function initDatabase() {
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
     }
+
+    // 迁移：为 dictionaries 表添加 parent_code 列（用于 shop_customer 与 platform 联动）
+    await query(`ALTER TABLE dictionaries ADD COLUMN IF NOT EXISTS parent_code VARCHAR(128) DEFAULT ''`).catch(() => {});
 
     // 创建索引
     await query(`CREATE INDEX IF NOT EXISTS idx_users_feishu_open_id ON users(feishu_open_id)`);
@@ -341,12 +346,20 @@ async function initDatabase() {
         { category: 'return_method', code: 'pickup', zh: '上门取件', en: 'Pickup', id: 'Penjemputan', sort: 1 },
         { category: 'return_method', code: 'customer_send', zh: '客户送修', en: 'Customer Drop-off', id: 'Kirim Pelanggan', sort: 2 },
         { category: 'return_method', code: 'express_cod', zh: '快递到付', en: 'Express (Freight Collect)', id: 'Ekspres (Bayar Tujuan)', sort: 3 },
+        // 店铺/客户（parent_code 关联 platform code）
+        { category: 'shop_customer', code: 'shopee_store_01', zh: 'Shopee 官方店', en: 'Shopee Official Store', id: 'Shopee Official Store', sort: 1, parent_code: 'shopee' },
+        { category: 'shop_customer', code: 'shopee_store_02', zh: 'Shopee 旗舰店', en: 'Shopee Flagship Store', id: 'Shopee Flagship Store', sort: 2, parent_code: 'shopee' },
+        { category: 'shop_customer', code: 'tiktok_store_01', zh: 'TikTok 官方店', en: 'TikTok Official Store', id: 'TikTok Official Store', sort: 1, parent_code: 'tiktok' },
+        { category: 'shop_customer', code: 'lazada_store_01', zh: 'Lazada 官方店', en: 'Lazada Official Store', id: 'Lazada Official Store', sort: 1, parent_code: 'lazada' },
+        { category: 'shop_customer', code: 'tokopedia_store_01', zh: 'Tokopedia 官方店', en: 'Tokopedia Official Store', id: 'Tokopedia Official Store', sort: 1, parent_code: 'tokopedia' },
+        { category: 'shop_customer', code: 'offline_dealer_01', zh: '经销商A', en: 'Dealer A', id: 'Dealer A', sort: 1, parent_code: 'offline' },
+        { category: 'shop_customer', code: 'offline_dealer_02', zh: '客户自送', en: 'Customer Walk-in', id: 'Customer Walk-in', sort: 2, parent_code: 'offline' },
       ];
       for (const d of defaultDicts) {
         await query(
-          `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, true) ON CONFLICT (category, code) DO NOTHING`,
-          ['dict_' + d.category + '_' + d.code, d.category, d.code, d.zh, d.en, d.id, d.sort]
+          `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, parent_code)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8) ON CONFLICT (category, code) DO NOTHING`,
+          ['dict_' + d.category + '_' + d.code, d.category, d.code, d.zh, d.en, d.id, d.sort, d.parent_code || '']
         );
       }
       console.log('[DB] 已插入默认字典数据');

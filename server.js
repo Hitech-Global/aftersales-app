@@ -863,11 +863,18 @@ app.get('/api/db/status', (req, res) => {
 // ==================== 字典 API ====================
 app.get('/api/dictionaries', requireLogin, async (req, res) => {
   try {
-    const { category } = req.query;
-    const sql = category
-      ? 'SELECT * FROM dictionaries WHERE category = $1 ORDER BY sort_order ASC, created_at ASC'
-      : 'SELECT * FROM dictionaries ORDER BY category, sort_order ASC';
-    const params = category ? [category] : [];
+    const { category, parent_code } = req.query;
+    const conditions = [];
+    const params = [];
+    let idx = 1;
+    if (category) { conditions.push(`category = $${idx++}`); params.push(category); }
+    if (parent_code) { conditions.push(`parent_code = $${idx++}`); params.push(parent_code); }
+    let sql;
+    if (conditions.length > 0) {
+      sql = 'SELECT * FROM dictionaries WHERE ' + conditions.join(' AND ') + ' ORDER BY sort_order ASC, created_at ASC';
+    } else {
+      sql = 'SELECT * FROM dictionaries ORDER BY category, sort_order ASC';
+    }
     const result = await query(sql, params);
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -875,13 +882,13 @@ app.get('/api/dictionaries', requireLogin, async (req, res) => {
 
 app.post('/api/dictionaries', requireApiPermission('system_config'), async (req, res) => {
   try {
-    const { category, code, label_zh, label_en, label_id, sort_order, enabled } = req.body;
+    const { category, code, label_zh, label_en, label_id, sort_order, enabled, parent_code } = req.body;
     if (!category || !code) return res.status(400).json({ error: '类别和代码不能为空' });
     const id = 'dict_' + category + '_' + code + '_' + Date.now().toString(36);
     const result = await query(
-      `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING *`,
-      [id, category, code, label_zh || '', label_en || '', label_id || '', sort_order || 0, enabled !== false]
+      `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, parent_code, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING *`,
+      [id, category, code, label_zh || '', label_en || '', label_id || '', sort_order || 0, enabled !== false, parent_code || '']
     );
     res.json(result.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -890,7 +897,7 @@ app.post('/api/dictionaries', requireApiPermission('system_config'), async (req,
 app.put('/api/dictionaries/:id', requireApiPermission('system_config'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { label_zh, label_en, label_id, sort_order, enabled } = req.body;
+    const { label_zh, label_en, label_id, sort_order, enabled, parent_code } = req.body;
     const fields = ['updated_at = NOW()'];
     const values = [];
     let idx = 1;
@@ -900,6 +907,7 @@ app.put('/api/dictionaries/:id', requireApiPermission('system_config'), async (r
     add('label_id', label_id);
     add('sort_order', sort_order);
     add('enabled', enabled);
+    add('parent_code', parent_code);
     values.push(id);
     const result = await query(
       `UPDATE dictionaries SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
