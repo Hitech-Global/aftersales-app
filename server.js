@@ -14,6 +14,7 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 const multer = require('multer');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { query, initDatabase } = require('./db');
 
 // ==================== 加载环境变量 ====================
@@ -33,6 +34,39 @@ const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
 const FEISHU_ORG_ID = process.env.FEISHU_ORG_ID || ''; // 企业组织 ID，用于校验用户是否属于本组织
 const APP_BASE_URL = process.env.BASE_URL || process.env.APP_BASE_URL || `http://localhost:${PORT}`;
+
+// ==================== Cloudflare R2 附件存储配置 ====================
+// 当配置了 R2 凭证时，附件上传到 R2 对象存储（持久化，不受 Render 临时磁盘重启影响）；
+// 未配置时回退到本地 uploads/ 目录（仅开发/兜底用）。
+const R2_CONFIG = {
+  accountId: process.env.R2_ACCOUNT_ID || '',
+  accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  bucket: process.env.R2_BUCKET_NAME || '',
+  publicUrl: (process.env.R2_PUBLIC_URL || '').replace(/\/+$/, ''),
+  endpoint: (process.env.R2_ENDPOINT || (process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : ''))
+};
+const R2_ENABLED = Boolean(R2_CONFIG.accountId && R2_CONFIG.accessKeyId && R2_CONFIG.secretAccessKey && R2_CONFIG.bucket);
+let r2Client = null;
+if (R2_ENABLED) {
+  r2Client = new S3Client({
+    region: 'auto',
+    endpoint: R2_CONFIG.endpoint,
+    credentials: {
+      accessKeyId: R2_CONFIG.accessKeyId,
+      secretAccessKey: R2_CONFIG.secretAccessKey
+    }
+  });
+  console.log('[R2] 已启用 Cloudflare R2 附件存储, 桶:', R2_CONFIG.bucket);
+} else {
+  console.log('[R2] 未配置 R2 凭证, 附件将保存在本地 uploads/ 目录(部署环境下重启会丢失)');
+}
+// 从数据库存储的 path 中解析出 R2 对象 key（与 publicUrl 无关）
+function r2KeyFromPath(p) {
+  if (!p) return null;
+  try { return new URL(p).pathname.replace(/^\/+/, ''); } catch (e) {}
+  return null;
+}
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const FEISHU_APP_NAME = process.env.FEISHU_APP_NAME || '售后数据管理系统';
 const OAUTH_STATE_COOKIE = 'feishu_oauth_state';
@@ -560,14 +594,17 @@ app.post('/api/webhooks/customer-sync/debug', async (req, res) => {
 // ==================== 附件上传 ====================
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const id = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    cb(null, id + ext);
-  }
-});
+// R2 启用时使用内存存储(文件缓冲在内存,随后上传到 R2); 否则用本地磁盘存储作为兜底
+const storage = R2_ENABLED
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+      filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const id = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        cb(null, id + ext);
+      }
+    });
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
@@ -577,7 +614,22 @@ const upload = multer({
     else cb(new Error('不支持的文件类型'));
   }
 });
+// 本地兜底: 保留静态访问(兼容历史本地上传文件)
 app.use('/uploads', express.static(UPLOAD_DIR));
+
+// 将单个文件上传到 R2, 返回可公开访问的 URL
+async function uploadToR2(file) {
+  const ext = path.extname(file.originalname);
+  const key = 'attachments/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + ext;
+  await r2Client.send(new PutObjectCommand({
+    Bucket: R2_CONFIG.bucket,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype || 'application/octet-stream',
+    // 公开桶直链访问, 不需要签名
+  }));
+  return R2_CONFIG.publicUrl + '/' + key;
+}
 
 // ==================== 数据库 CRUD API ====================
 
@@ -1229,22 +1281,30 @@ app.post('/api/attachments/upload', upload.array('files', 10), async (req, res) 
   try {
     const { record_id, item_index } = req.body;
     if (!record_id) {
-      req.files.forEach(f => fs.unlink(f.path, () => {}));
+      if (!R2_ENABLED) req.files.forEach(f => fs.unlink(f.path, () => {}));
       return res.status(400).json({ error: '缺少 record_id' });
     }
     const uploadedBy = req.user ? (req.user.id || req.user.username || '') : '';
     const saved = [];
     for (const f of req.files) {
       const id = 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      // R2 启用时上传对象并返回公开 URL; 否则回退本地磁盘路径
+      let filePath;
+      if (R2_ENABLED) {
+        filePath = await uploadToR2(f);
+      } else {
+        filePath = '/uploads/' + f.filename;
+      }
       const result = await query(
         `INSERT INTO attachments (id, record_id, item_index, filename, original_name, mime_type, size, path, uploaded_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [id, record_id, item_index ? parseInt(item_index) : null, f.filename, f.originalname, f.mimetype, f.size, '/uploads/' + f.filename, uploadedBy]
+        [id, record_id, item_index ? parseInt(item_index) : null, f.originalname, f.originalname, f.mimetype, f.size, filePath, uploadedBy]
       );
       saved.push(result.rows[0]);
     }
     res.json(saved);
   } catch (e) {
+    console.error('[upload] 附件上传失败:', e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -1264,8 +1324,18 @@ app.delete('/api/attachments/:id', requireLogin, async (req, res) => {
     const result = await query('SELECT * FROM attachments WHERE id = $1', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: '附件不存在' });
     const att = result.rows[0];
-    const filePath = path.join(__dirname, att.path.replace(/^\/uploads\//, 'uploads/'));
-    fs.unlink(filePath, () => {});
+    // 删除对象存储中的文件(R2)
+    if (R2_ENABLED && att.path && att.path.indexOf(R2_CONFIG.publicUrl) === 0) {
+      const key = r2KeyFromPath(att.path);
+      if (key) {
+        try { await r2Client.send(new DeleteObjectCommand({ Bucket: R2_CONFIG.bucket, Key: key })); }
+        catch (e2) { console.warn('[R2] 删除对象失败(忽略):', key, e2.message); }
+      }
+    } else if (att.path && att.path.startsWith('/uploads/')) {
+      // 本地兜底删除
+      const filePath = path.join(__dirname, att.path.replace(/^\/uploads\//, 'uploads/'));
+      fs.unlink(filePath, () => {});
+    }
     await query('DELETE FROM attachments WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }

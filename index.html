@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.3"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.4"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -550,7 +550,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.4 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -6880,8 +6880,9 @@ function previewAttachment(id, mime, name, path) {
   } else if (isPdf) {
     body = '<iframe src="' + esc(url) + '" title="' + esc(name) + '"></iframe>';
   } else if (/^(docx?|xlsx?|pptx?)$/.test(ext)) {
-    // 用 Google Docs Viewer 预览 Office 文件
-    body = '<iframe src="https://docs.google.com/gview?url=' + encodeURIComponent(location.origin + url) + '&embedded=true" title="' + esc(name) + '"></iframe>';
+    // 用 Google Docs Viewer 预览 Office 文件; 若已是绝对 URL(如 R2) 直接用, 否则拼本站 origin
+    const viewerUrl = /^https?:\/\//i.test(url) ? url : location.origin + url;
+    body = '<iframe src="https://docs.google.com/gview?url=' + encodeURIComponent(viewerUrl) + '&embedded=true" title="' + esc(name) + '"></iframe>';
   } else {
     body = '<div style="padding:40px;text-align:center"><p>该文件类型不支持在线预览</p><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:var(--primary);text-decoration:underline">下载文件</a></div>';
   }
