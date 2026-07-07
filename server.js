@@ -860,27 +860,6 @@ app.get('/api/db/status', (req, res) => {
   });
 });
 
-// 临时诊断：检查 dictionaries 表结构
-app.get('/api/db/diag', async (req, res) => {
-  try {
-    const { rows } = await query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'dictionaries' ORDER BY ordinal_position");
-    res.json({ columns: rows });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// 临时修复：强制添加 parent_code 列
-app.post('/api/db/fix-parent-code', async (req, res) => {
-  try {
-    await query(`ALTER TABLE dictionaries ADD COLUMN IF NOT EXISTS parent_code VARCHAR(128) DEFAULT ''`);
-    const { rows } = await query("SELECT column_name FROM information_schema.columns WHERE table_name = 'dictionaries' AND column_name = 'parent_code'");
-    res.json({ success: true, columnExists: rows.length > 0 });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 // ==================== 字典 API ====================
 app.get('/api/dictionaries', requireLogin, async (req, res) => {
   try {
