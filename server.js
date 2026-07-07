@@ -321,8 +321,15 @@ function verifyWebhookSignature(req, res, next) {
     .update(signPayload)
     .digest('hex');
 
-  if (signature !== expected) {
-    console.warn('[Webhook] 签名不匹配: received=%s expected=%s', signature, expected);
+  // 妙搭签名值格式为 "sha256=<hex>"，提取 hex 部分比对
+  // 同时兼容纯 hex 格式（调试场景）
+  let receivedSig = signature;
+  if (receivedSig.startsWith('sha256=')) {
+    receivedSig = receivedSig.slice(7);
+  }
+
+  if (receivedSig !== expected) {
+    console.warn('[Webhook] 签名不匹配: received=%s (stripped=%s) expected=%s', signature, receivedSig, expected);
     console.warn('[Webhook] 签名 payload (前 2KB):', signPayload.slice(0, 2048));
     console.warn('[Webhook] 请求方法=%s, 路径=%s, 时间戳头=%s', req.method, req.path, timestamp);
     console.warn('[Webhook] 请求头:', JSON.stringify(req.headers, null, 2));
@@ -331,6 +338,7 @@ function verifyWebhookSignature(req, res, next) {
       error: '签名校验失败',
       debug: {
         received_signature: signature,
+        received_signature_stripped: receivedSig,
         expected_signature: expected,
         sign_payload_preview: signPayload.slice(0, 500),
         timestamp_header: timestamp,
