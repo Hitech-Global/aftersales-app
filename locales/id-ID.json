@@ -295,7 +295,8 @@
       "loading": "Memuat alur persetujuan…",
       "autoTag": "Otomatis",
       "multipleHint": "Terdeteksi beberapa alur aktif. Sistem akan otomatis menerapkan alur di bawah ini.",
-      "singleHint": "Alur di bawah ini diterapkan secara otomatis berdasarkan Manajemen Alur Persetujuan."
+      "singleHint": "Alur di bawah ini diterapkan secara otomatis berdasarkan Manajemen Alur Persetujuan.",
+      "defaultName": "Alur Persetujuan Purna Jual Standar"
     },
     "skuPlaceholder": "Masukkan SKU...",
     "snPlaceholder": "SN Code",

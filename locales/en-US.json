@@ -295,7 +295,8 @@
       "loading": "Loading approval flow…",
       "autoTag": "Auto",
       "multipleHint": "Multiple enabled flows detected. The system will automatically apply the flow below.",
-      "singleHint": "The flow below is automatically applied based on Approval Flow Management."
+      "singleHint": "The flow below is automatically applied based on Approval Flow Management.",
+      "defaultName": "Standard After-Sales Approval Flow"
     },
     "skuPlaceholder": "Enter SKU...",
     "snPlaceholder": "SN Code",

@@ -295,7 +295,8 @@
       "loading": "正在加载审批流…",
       "autoTag": "自动应用",
       "multipleHint": "检测到多个已启用的审批流,系统将按以下流程自动应用",
-      "singleHint": "已根据「审批流管理」配置自动应用以下流程"
+      "singleHint": "已根据「审批流管理」配置自动应用以下流程",
+      "defaultName": "标准售后审批流"
     },
     "skuPlaceholder": "输入SKU…",
     "snPlaceholder": "SN Code",
