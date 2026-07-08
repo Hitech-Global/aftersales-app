@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.5"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.6"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -551,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.5 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.6 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1209,13 +1209,12 @@ select option{background:var(--card-bg);color:var(--text)}
 <script src="locales/i18n.js"></script>
 <script>
 // ==================== DATA LAYER ====================
-const APPROVAL_STATUSES = ['草稿','一级审批通过','二级审批通过','审批通过','审批拒绝'];
+const APPROVAL_STATUSES = ['草稿','审批通过','审批拒绝'];
 function refreshApprovalStatuses() {
   // 保持内部值为中文不变，仅提供显示层翻译映射
 }
 const APPROVAL_STATUS_KEY_MAP = {
-  '草稿':'status.draft','一级审批通过':'status.level1Approved',
-  '二级审批通过':'status.level2Approved','审批通过':'status.approved','审批拒绝':'status.rejected'
+  '草稿':'status.draft','审批通过':'status.approved','审批拒绝':'status.rejected'
 };
 function tApprovalStatus(zh){ return t(APPROVAL_STATUS_KEY_MAP[zh] || zh); }
 const _PERM_CONFIG = [

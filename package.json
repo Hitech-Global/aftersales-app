@@ -1,6 +1,6 @@
 {
   "name": "aftersales-management-system",
-  "version": "3.8.5",
+  "version": "3.8.6",
   "description": "售后数据管理系统 - 飞书集成版",
   "main": "server.js",
   "scripts": {
