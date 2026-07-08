@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.3"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.8"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -371,6 +371,15 @@ select option{background:var(--card-bg);color:var(--text)}
 .shop-ac-item:hover,.shop-ac-item.active{background:var(--primary-light)}
 .shop-ac-sub{color:var(--text-muted);font-size:11px;margin-left:6px}
 .shop-ac-empty{padding:10px;color:var(--text-muted);font-size:13px}
+/* SKU 自动补全下拉 */
+.sku-ac-dropdown{position:fixed;z-index:99999;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:260px;overflow-y:auto;min-width:180px}
+.sku-ac-dropdown.hidden{display:none}
+.sku-ac-item{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.sku-ac-item:last-child{border-bottom:none}
+.sku-ac-item:hover,.sku-ac-item.active{background:var(--primary-light)}
+.sku-ac-main{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sku-ac-sub{color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sku-ac-empty{padding:10px;color:var(--text-muted);font-size:13px}
 .detail-items-table .btn-delete-row:hover{background:#fde8e8}
 
 @media(max-width:768px){
@@ -706,8 +715,7 @@ select option{background:var(--card-bg);color:var(--text)}
               <button type="button" class="modal-close" onclick="closeRecordForm()">&times;</button>
             </div>
             <div class="record-fs-body">
-              <datalist id="sku-datalist"></datalist>
-                <fieldset class="form-section">
+              <fieldset class="form-section">
                   <legend data-i18n="form.section.basic"></legend>
                   <div class="form-grid">
                     <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="text" class="date-input" id="f-aftersales-date" inputmode="numeric" required onblur="normalizeDateInput(this)"></div>
@@ -3314,8 +3322,12 @@ let _platformCache = [];
 
 function closeRecordForm(){
   document.getElementById('record-form-modal').classList.add('hidden');
-  // 清理可能残留的客户搜索自动补全下拉(已挂到 body 上)
+  // 清理可能残留的客户搜索/SKU 自动补全下拉(已挂到 body 上)
   document.querySelectorAll('.shop-ac-dropdown').forEach(el => el.remove());
+  document.querySelectorAll('.sku-ac-dropdown').forEach(el => el.remove());
+  _skuAcDropdown = null;
+  _skuAcActiveInput = null;
+  if(_skuAcCleanup){ _skuAcCleanup(); _skuAcCleanup = null; }
 }
 
 function refreshPlatformSelects(){
@@ -3332,6 +3344,11 @@ function refreshPlatformSelects(){
         h += '<option value="Shopee"' + (cur === 'Shopee' ? ' selected' : '') + '>Shopee</option>';
         h += '<option value="TikTok"' + (cur === 'TikTok' ? ' selected' : '') + '>TikTok</option>';
         h += '<option value="Offline Store"' + (cur === 'Offline Store' ? ' selected' : '') + '>Offline Store</option>';
+      }
+      // 保留当前值: 旧记录的平台可能不在现有字典中,避免刷新后被清空
+      const hasCur = h.includes('value="' + esc(cur) + '"');
+      if (cur && !hasCur) {
+        h += '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>';
       }
       sel.innerHTML = h;
     });
@@ -3412,6 +3429,10 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     platformHtml += '<option value="TikTok"' + (platform === 'TikTok' ? ' selected' : '') + '>TikTok</option>';
     platformHtml += '<option value="Offline Store"' + (platform === 'Offline Store' ? ' selected' : '') + '>Offline Store</option>';
   }
+  // 编辑旧记录时,当前平台值可能不在现有字典/回退选项中,补充为临时选项以正确回显
+  if (platform && !platformOpts.some(o => o.code === platform) && platform !== 'Shopee' && platform !== 'TikTok' && platform !== 'Offline Store') {
+    platformHtml += '<option value="' + esc(platform) + '" selected>' + esc(platform) + '</option>';
+  }
   // Build shop/customer select (disabled until platform is chosen)
   let shopHtml = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
   const isShopDisabled = !platform;
@@ -3423,7 +3444,7 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
   tr.innerHTML=`
     <td><select class="platform-select" data-dict="platform" onchange="onPlatformChange(this)" onfocus="scrollSelectIntoView(this)">${platformHtml}</select></td>
     <td><select class="shop-select" data-dict="shop_customer" ${isShopDisabled ? 'disabled' : ''}>${shopHtml}</select></td>
-    <td><input type="text" class="sku-input" list="sku-datalist" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
+    <td><input type="text" class="sku-input" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" autocomplete="off" onfocus="onSkuFocus(this)" oninput="onSkuInput(this)" onblur="onSkuBlur(this)" onkeydown="onSkuKeydown(event,this)" onchange="onSkuChanged(this)"></td>
     <td><input type="text" class="sn-input" placeholder="${t('form.snPlaceholder')}" value="${esc(snCode||'')}"></td>
     <td><input type="text" class="order-input" placeholder="${t('form.orderPlaceholder')}" value="${esc(orderNo||'')}"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
@@ -3714,13 +3735,16 @@ async function resetForm(recordId){
     document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
     setDateInputValue('f-aftersales-date', record.aftersales_date || formatDateLocal(new Date()));
     document.getElementById('detail-items-tbody').innerHTML='';
-    updateSkuDatalist();
     currentEditingRecordId = recordId;
+    // 先加载平台字典,确保渠道下拉能正确回显(旧记录可能存的是 label 或已不在字典中的 code)
+    const platformOpts = await loadDictOptions('platform').catch(() => []);
+    _platformCache = platformOpts;
     const attsAll = await fetchRecordAttachments(recordId).catch(() => []);
     const items = record.items || [];
     for(let i=0;i<items.length;i++){
       const it=items[i];
-      addDetailItem(it.platform, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], it.shop_customer);
+      const platformCode = resolvePlatformCode(it.platform, platformOpts);
+      addDetailItem(platformCode, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], it.shop_customer);
       // 加载附件
       const tr = document.querySelectorAll('#detail-items-tbody tr')[i];
       if(tr){
@@ -3739,19 +3763,142 @@ async function resetForm(recordId){
   const today=formatDateLocal(new Date());
   setDateInputValue('f-aftersales-date',today);
   document.getElementById('detail-items-tbody').innerHTML='';
-  updateSkuDatalist();
   // populateApproverSelects 由 openRecordForm 统一调用,这里不再重复请求
   currentEditingRecordId = null;
   addDetailItem(); // start with one empty row
 }
 
-async function updateSkuDatalist(filter){
-  const products=await getProducts();
-  const filtered = products.filter(p=>p.status==='active');
-  const dl=document.getElementById('sku-datalist');
-  dl.innerHTML=filtered
-    .filter(p=>!filter||p.sku_code.toLowerCase().includes(filter.toLowerCase())||(p.model||'').toLowerCase().includes(filter.toLowerCase())||(p.brand||'').toLowerCase().includes(filter.toLowerCase()))
-    .map(p=>`<option value="${esc(p.sku_code)}">${esc(p.brand)} - ${esc(p.model)}</option>`).join('');
+function resolvePlatformCode(value, platformList){
+  if(!value) return '';
+  const list = platformList || _platformCache || [];
+  // 直接匹配 code
+  const byCode = list.find(p => p.code === value);
+  if(byCode) return byCode.code;
+  // 按当前语言 label 匹配
+  const byLabel = list.find(p => getDictLabel(p) === value);
+  if(byLabel) return byLabel.code;
+  // 精确不区分大小写匹配
+  const lower = String(value).toLowerCase();
+  const byFuzzy = list.find(p => String(p.code).toLowerCase() === lower || getDictLabel(p).toLowerCase() === lower);
+  if(byFuzzy) return byFuzzy.code;
+  // 字典为空时保留原值,确保旧数据能回显
+  if(list.length === 0) return value;
+  // 常见旧值兼容映射
+  if(lower.includes('offline')){
+    const offline = list.find(p => String(p.code).toLowerCase().includes('offline') || getDictLabel(p).toLowerCase().includes('offline'));
+    if(offline) return offline.code;
+  }
+  if(lower.includes('shopee')){
+    const shopee = list.find(p => String(p.code).toLowerCase().includes('shopee') || getDictLabel(p).toLowerCase().includes('shopee'));
+    if(shopee) return shopee.code;
+  }
+  if(lower.includes('tiktok')){
+    const tiktok = list.find(p => String(p.code).toLowerCase().includes('tiktok') || getDictLabel(p).toLowerCase().includes('tiktok'));
+    if(tiktok) return tiktok.code;
+  }
+  return value;
+}
+
+// ==================== SKU 自动补全(自定义下拉,点击后填入并隐藏) ====================
+let _skuAcDropdown = null;
+let _skuAcActiveInput = null;
+let _skuAcCleanup = null;
+
+function ensureSkuAcDropdown(){
+  if(_skuAcDropdown) return _skuAcDropdown;
+  _skuAcDropdown = document.createElement('div');
+  _skuAcDropdown.className = 'sku-ac-dropdown hidden';
+  document.body.appendChild(_skuAcDropdown);
+  _skuAcDropdown.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.sku-ac-item');
+    if(!item) return;
+    e.preventDefault();
+    selectSkuAcOption(item.dataset.sku);
+  });
+  return _skuAcDropdown;
+}
+
+function positionSkuAcDropdown(input){
+  const dd = ensureSkuAcDropdown();
+  const r = input.getBoundingClientRect();
+  dd.style.left = r.left + 'px';
+  dd.style.top = (r.bottom + 2) + 'px';
+  dd.style.width = Math.max(r.width, 180) + 'px';
+}
+
+async function showSkuAcDropdown(input){
+  const dd = ensureSkuAcDropdown();
+  _skuAcActiveInput = input;
+  positionSkuAcDropdown(input);
+  await renderSkuAcOptions(input);
+  dd.classList.remove('hidden');
+  if(_skuAcCleanup) _skuAcCleanup();
+  const onScroll = () => { if(_skuAcActiveInput && !dd.classList.contains('hidden')) positionSkuAcDropdown(_skuAcActiveInput); };
+  const onResize = () => { if(_skuAcActiveInput && !dd.classList.contains('hidden')) positionSkuAcDropdown(_skuAcActiveInput); };
+  const onDocDown = (e) => {
+    if(!dd.classList.contains('hidden') && !dd.contains(e.target) && e.target !== _skuAcActiveInput) hideSkuAcDropdown();
+  };
+  window.addEventListener('scroll', onScroll, true);
+  window.addEventListener('resize', onResize);
+  document.addEventListener('mousedown', onDocDown);
+  _skuAcCleanup = () => {
+    window.removeEventListener('scroll', onScroll, true);
+    window.removeEventListener('resize', onResize);
+    document.removeEventListener('mousedown', onDocDown);
+  };
+}
+
+function hideSkuAcDropdown(){
+  const dd = ensureSkuAcDropdown();
+  dd.classList.add('hidden');
+  if(_skuAcCleanup){ _skuAcCleanup(); _skuAcCleanup = null; }
+  _skuAcActiveInput = null;
+}
+
+async function renderSkuAcOptions(input){
+  const dd = ensureSkuAcDropdown();
+  const filter = input.value.trim();
+  const products = await getProducts();
+  const matches = products.filter(p => p.status === 'active').filter(p => {
+    if(!filter) return true;
+    const f = filter.toLowerCase();
+    return p.sku_code.toLowerCase().includes(f) || (p.model || '').toLowerCase().includes(f) || (p.brand || '').toLowerCase().includes(f);
+  });
+  if(!matches.length){
+    dd.innerHTML = '<div class="sku-ac-empty">' + (t('form.skuNoMatch') !== 'form.skuNoMatch' ? t('form.skuNoMatch') : 'No matching SKU') + '</div>';
+    return;
+  }
+  dd.innerHTML = matches.map((p, i) => '<div class="sku-ac-item' + (i === 0 ? ' active' : '') + '" data-sku="' + esc(p.sku_code) + '"><div class="sku-ac-main">' + esc(p.sku_code) + '</div><div class="sku-ac-sub">' + esc(p.brand || '') + ' - ' + esc(p.model || '') + '</div></div>').join('');
+}
+
+function onSkuFocus(input){ showSkuAcDropdown(input); }
+function onSkuInput(input){ showSkuAcDropdown(input); }
+function onSkuBlur(input){ setTimeout(() => hideSkuAcDropdown(), 150); }
+
+function onSkuKeydown(e, input){
+  const dd = ensureSkuAcDropdown();
+  if(dd.classList.contains('hidden')) return;
+  const items = dd.querySelectorAll('.sku-ac-item');
+  if(!items.length) return;
+  let active = dd.querySelector('.sku-ac-item.active');
+  let idx = Array.from(items).indexOf(active);
+  if(e.key === 'ArrowDown'){ e.preventDefault(); idx = Math.min(idx + 1, items.length - 1); updateSkuAcActive(items, idx); }
+  else if(e.key === 'ArrowUp'){ e.preventDefault(); idx = Math.max(idx - 1, 0); updateSkuAcActive(items, idx); }
+  else if(e.key === 'Enter'){ if(active){ e.preventDefault(); selectSkuAcOption(active.dataset.sku); } }
+  else if(e.key === 'Escape'){ hideSkuAcDropdown(); }
+}
+
+function updateSkuAcActive(items, idx){
+  items.forEach((it, i) => it.classList.toggle('active', i === idx));
+  if(items[idx]) items[idx].scrollIntoView({block: 'nearest'});
+}
+
+function selectSkuAcOption(sku){
+  const input = _skuAcActiveInput;
+  if(!input) return;
+  input.value = sku;
+  hideSkuAcDropdown();
+  onSkuChanged(input);
 }
 
 async function populateApproverSelects(){

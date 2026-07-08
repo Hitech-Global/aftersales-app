@@ -287,6 +287,7 @@
     },
     "shopCustomerPlaceholder": "Cari nama pelanggan",
     "shopCustomerNoMatch": "Tidak ada pelanggan cocok",
+    "skuNoMatch": "Tidak ada SKU cocok",
     "btnSubmit": "Ajukan Approval",
     "btnSaveDraft": "Simpan Draft",
     "btnCancel": "Batal",
