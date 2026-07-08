@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.12"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.13"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -2735,7 +2735,8 @@ function jumpFromOverview(type){
   }
   document.getElementById('search-input').value='';
   document.getElementById('status-filter').value='';
-  document.getElementById('process-status-filter').value=type==='pendingRma'?'rma':'';
+  const psStatusFilter=document.getElementById('process-status-filter');
+  if(psStatusFilter) psStatusFilter.value=type==='pendingRma'?'rma':'';
   const progressFilter=document.getElementById('process-progress-filter');
   if(progressFilter) progressFilter.value='';
   document.getElementById('list-risk-filter').value=type==='pendingProcess'?'pending':(type==='overdue'?'overdue':'');
@@ -2790,6 +2791,7 @@ function updateProcessProgressFilter(){
 
 let listMode='record';
 let pendingListPreset=null;
+let _renderListSeq=0;
 
 function switchListMode(mode){
   listMode=mode;
@@ -2801,7 +2803,9 @@ function switchListMode(mode){
 }
 
 async function renderList(){
+  const seq=++_renderListSeq;
   await updateBrandFilter(); updateStatusFilter(); updateChannelFilter(); updateReturnReasonFilter(); updateProcessProgressFilter();
+  if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
   if(pendingListPreset){
     document.getElementById('brand-filter').value=pendingListPreset.brand||'';
     document.getElementById('channel-filter').value=pendingListPreset.channel||'';
@@ -2814,6 +2818,7 @@ async function renderList(){
     pendingListPreset=null;
   }
   const records=await getRecords();
+  if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
   const search=(document.getElementById('search-input').value||'').toLowerCase();
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
@@ -2878,7 +2883,7 @@ async function renderList(){
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
-        const showItem=(!psFilter||itemProcessType(it)===psFilter)&&(!progressFilter||itemProcessProgress(it)===progressFilter);
+        const showItem=(!progressFilter||itemProcessProgress(it)===progressFilter);
         if(!showItem) return;
         html+=`<tr>
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
@@ -5301,7 +5306,7 @@ async function exportAftersalesExcel(){
   const search = (document.getElementById('search-input').value||'').toLowerCase();
   const brandF = document.getElementById('brand-filter').value;
   const statusF = document.getElementById('status-filter').value;
-  const processStatusF = document.getElementById('process-status-filter').value;
+  const processStatusF = (document.getElementById('process-status-filter')||{}).value || '';
   const processProgressF = document.getElementById('process-progress-filter')?.value || '';
   const startDate = getDateInputValue('list-start-date');
   const endDate = getDateInputValue('list-end-date');
