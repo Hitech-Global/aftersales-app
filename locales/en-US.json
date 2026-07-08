@@ -596,10 +596,26 @@
       "title": "Import Notes",
       "csvFormat": "Supports Excel / CSV files (UTF-8 encoded)",
       "requiredCols": "Required columns: RMA Date, Platform, SKU, Qty, Return Reason",
-      "optionalCols": "Optional columns: Order No., Issue Description / Notes",
+      "optionalCols": "Optional columns: Shop/Customer, SN Code, Order No., Issue Description / Notes",
       "draftNote": "Imported records will be saved as drafts. Please edit and submit them for approval from the list."
     },
     "btnDownloadTemplate": "Download Import Template",
+    "template": {
+      "fileName": "RMA Import Template",
+      "sheetName": "RMA Import Template",
+      "instructionSheetName": "Instructions",
+      "col": {
+        "date": "RMA Date",
+        "platform": "Platform",
+        "shopCustomer": "Shop/Customer",
+        "sku": "SKU",
+        "snCode": "SN Code",
+        "orderNo": "Order No.",
+        "qty": "Qty",
+        "returnReason": "Return Reason (Required)",
+        "description": "Issue Description / Notes"
+      }
+    },
     "dropHint": "Click to choose a file or drag an Excel / CSV file here",
     "fileFormat": "Supports .xlsx / .csv files",
     "btnClose": "Close",

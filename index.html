@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.2"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.3"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -551,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.9.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.9.3 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -4527,20 +4527,23 @@ function openImportDialog(){
 function closeImportDialog(){ document.getElementById('import-modal').classList.add('hidden'); }
 
 function downloadImportTemplate(){
-  const headers=['售后日期','平台','SKU','SN Code','订单号','数量','退货原因（必填）','问题说明/备注'];
-  const example=['2026-01-15','Shopee','SKU-APPLE-001','SN12345','SH20260115001','2','可二次销售','屏幕裂纹'];
+  const c=t('importRecord.template.col');
+  const headers=[c.date,c.platform,c.shopCustomer,c.sku,c.snCode,c.orderNo,c.qty,c.returnReason,c.description];
+  const example=['2026-01-15','Shopee','Store A','SKU-APPLE-001','SN12345','SH20260115001','2','可二次销售','屏幕裂纹'];
+  const fileName=t('importRecord.template.fileName');
+  const sheetName=t('importRecord.template.sheetName');
   if(typeof XLSX!=='undefined'){
     const ws=XLSX.utils.aoa_to_sheet([headers, example]);
-    ws['!cols']=[{wch:14},{wch:14},{wch:18},{wch:20},{wch:10},{wch:18},{wch:28}];
+    ws['!cols']=[{wch:14},{wch:14},{wch:16},{wch:18},{wch:20},{wch:18},{wch:10},{wch:24},{wch:28}];
     ws['!dataValidation']=[{
-      sqref:'F2:F500',
+      sqref:'H2:H500',
       type:'list',
       allowBlank:false,
       formula1:`"${RETURN_REASONS.join(',')}"`
     }];
     const instructionRows=[
-      ['填写说明 / Instructions',''],
-      ['退货原因（必填）','请从下方可选值中选择；也支持填写中文/English/Bahasa Indonesia 显示名称。'],
+      [t('importRecord.template.instructionSheetName'),''],
+      [c.returnReason, t('importRecord.guide.draftNote')],
       ['Return Reason (Required)','Choose one of the allowed values below. Display names are accepted and mapped automatically.'],
       ['Alasan Retur (Wajib)','Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.'],
       [],
@@ -4550,9 +4553,9 @@ function downloadImportTemplate(){
     const instructionWs=XLSX.utils.aoa_to_sheet(instructionRows);
     instructionWs['!cols']=[{wch:18},{wch:18},{wch:24},{wch:28}];
     const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws,'售后记录导入模板');
-    XLSX.utils.book_append_sheet(wb,instructionWs,'填写说明 Instructions');
-    XLSX.writeFile(wb,'售后记录导入模板.xlsx');
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    XLSX.utils.book_append_sheet(wb,instructionWs,t('importRecord.template.instructionSheetName'));
+    XLSX.writeFile(wb,fileName+'.xlsx');
     return;
   }
   const bom='\uFEFF';
@@ -4560,7 +4563,7 @@ function downloadImportTemplate(){
   const csv=bom+headers.join(',')+'\n'+csvLine(example);
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='售后记录导入模板.csv';
+  const a=document.createElement('a');a.href=url;a.download=fileName+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
@@ -4604,12 +4607,13 @@ function processImportFile(file){
       const k=h.replace(/\s/g,'').toLowerCase();
       if(k.includes('售后日期')||k.includes('日期')||k.includes('rmadate')||k.includes('tanggalrma')) colMap.date=i;
       else if(k.includes('平台')||k.includes('platform')) colMap.platform=i;
-      else if(k.includes('订单号')) colMap.order=i;
+      else if(k.includes('店铺')||k.includes('客户')||k.includes('shop')||k.includes('customer')||k.includes('toko')||k.includes('pelanggan')) colMap.shop=i;
+      else if(k.includes('订单号')||k.includes('order')) colMap.order=i;
       else if(k.includes('sn')||k.includes('序列号')) colMap.sn=i;
       else if(k.includes('sku')) colMap.sku=i;
       else if(k.includes('数量')||k.includes('qty')||k.includes('quantity')) colMap.qty=i;
       else if(k.includes('退货原因')||k.includes('退货类型')||k.includes('售后类型')||k.includes('类型')||k.includes('returnreason')||k.includes('alasanretur')) colMap.type=i;
-      else if(k.includes('故障')||k.includes('说明')||k.includes('备注')||k.includes('问题')) colMap.fault=i;
+      else if(k.includes('故障')||k.includes('说明')||k.includes('备注')||k.includes('问题')||k.includes('description')||k.includes('issue')) colMap.fault=i;
     });
     if(colMap.date===undefined||colMap.platform===undefined||colMap.sku===undefined||colMap.qty===undefined||colMap.type===undefined){
       showImportResult('error',t('importRecord.error.missingRequiredCols',{headers:esc(header.join(' | '))}));
@@ -4625,6 +4629,7 @@ function processImportFile(file){
       if(row.length===0||row.every(c=>!String(c||'').trim())){ blankRows++; continue; }
       const aftersales_date=getVal(row,colMap.date);
       const platform=getVal(row,colMap.platform);
+      const shop_customer=getVal(row,colMap.shop);
       const order_no=getVal(row,colMap.order);
       const sn_code=getVal(row,colMap.sn);
       const sku=getVal(row,colMap.sku);
@@ -4650,7 +4655,7 @@ function processImportFile(file){
       pendingRecordImports.push({
         id:importNextId++,
         aftersales_date, platforms:[platform],
-        items:[{platform, sku_code:sku, sn_code, order_no, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
+        items:[{platform, shop_customer, sku_code:sku, sn_code, order_no, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
         total_quantity:quantity,
         brand:prod?prod.brand:'',
         model:prod?prod.model:'',

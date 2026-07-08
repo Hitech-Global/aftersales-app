@@ -596,10 +596,26 @@
       "title": "导入说明",
       "csvFormat": "支持 Excel / CSV 文件（UTF-8 编码）",
       "requiredCols": "必填列：售后日期, 平台, SKU, 数量, 退货原因",
-      "optionalCols": "可选列：订单号, 问题说明/备注",
+      "optionalCols": "可选列：店铺/客户, SN Code, 订单号, 问题说明/备注",
       "draftNote": "导入的记录将自动保存为草稿状态，请到列表中编辑并提交审批"
     },
     "btnDownloadTemplate": "下载导入模板",
+    "template": {
+      "fileName": "售后记录导入模板",
+      "sheetName": "售后记录导入模板",
+      "instructionSheetName": "填写说明",
+      "col": {
+        "date": "售后日期",
+        "platform": "平台",
+        "shopCustomer": "店铺/客户",
+        "sku": "SKU",
+        "snCode": "SN Code",
+        "orderNo": "订单号",
+        "qty": "数量",
+        "returnReason": "退货原因（必填）",
+        "description": "问题说明/备注"
+      }
+    },
     "dropHint": "点击选择文件或拖拽 Excel / CSV 文件到此处",
     "fileFormat": "支持 .xlsx / .csv 格式",
     "btnClose": "关闭",

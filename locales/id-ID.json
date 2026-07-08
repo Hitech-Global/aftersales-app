@@ -596,10 +596,26 @@
       "title": "Panduan Impor",
       "csvFormat": "Mendukung file Excel / CSV (encoding UTF-8)",
       "requiredCols": "Kolom wajib: Tanggal RMA, Platform, SKU, Qty, Alasan Retur",
-      "optionalCols": "Kolom opsional: No. Pesanan, Deskripsi Masalah / Catatan",
+      "optionalCols": "Kolom opsional: Toko/Pelanggan, SN Code, No. Pesanan, Deskripsi Masalah / Catatan",
       "draftNote": "Data yang diimpor akan disimpan sebagai draft. Silakan edit dan ajukan approval dari daftar."
     },
     "btnDownloadTemplate": "Unduh Template Impor",
+    "template": {
+      "fileName": "Template Impor RMA",
+      "sheetName": "Template Impor RMA",
+      "instructionSheetName": "Petunjuk",
+      "col": {
+        "date": "Tanggal RMA",
+        "platform": "Platform",
+        "shopCustomer": "Toko/Pelanggan",
+        "sku": "SKU",
+        "snCode": "SN Code",
+        "orderNo": "No. Pesanan",
+        "qty": "Qty",
+        "returnReason": "Alasan Retur (Wajib)",
+        "description": "Deskripsi Masalah / Catatan"
+      }
+    },
     "dropHint": "Klik untuk memilih file atau tarik file Excel / CSV ke sini",
     "fileFormat": "Mendukung file .xlsx / .csv",
     "btnClose": "Tutup",
