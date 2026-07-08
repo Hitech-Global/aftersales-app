@@ -4543,9 +4543,9 @@ async function downloadImportTemplate(){
     try { platformShops['__all__']=await loadDictOptions('shop_customer'); } catch(e){ platformShops['__all__']=[]; }
   }
   const p0 = platforms[0];
-  const examplePlatform = p0 ? p0.code : 'Shopee';
+  const examplePlatform = p0 ? getDictLabel(p0) : 'Shopee';
   let exampleShop = '';
-  if(p0 && platformShops[p0.code] && platformShops[p0.code][0]) exampleShop = platformShops[p0.code][0].code;
+  if(p0 && platformShops[p0.code] && platformShops[p0.code][0]) exampleShop = getDictLabel(platformShops[p0.code][0]);
   if(!exampleShop) exampleShop = 'Store A';
   const example=['2026-01-15', examplePlatform, exampleShop, 'SKU-APPLE-001','SN12345','SH20260115001','2', tReturnReason('可二次销售'), t('importRecord.template.exampleDescription')];
   const fileName=t('importRecord.template.fileName');
@@ -4573,7 +4573,7 @@ async function downloadImportTemplate(){
       [t('importRecord.template.platformCol'), t('importRecord.template.shopCustomerCol')],
       ...platforms.flatMap(p=>{
         const shops=platformShops[p.code]||[];
-        const rows=shops.length?shops.map(s=>[p.code, s.code]):[[p.code, '']];
+        const rows=shops.length?shops.map(s=>[getDictLabel(p), getDictLabel(s)]):[[getDictLabel(p), '']];
         return rows;
       })
     ];
@@ -4653,8 +4653,10 @@ function processImportFile(file){
       const row=lines[i];
       if(row.length===0||row.every(c=>!String(c||'').trim())){ blankRows++; continue; }
       const aftersales_date=getVal(row,colMap.date);
-      const platform=getVal(row,colMap.platform);
-      const shop_customer=getVal(row,colMap.shop);
+      const platformRaw=getVal(row,colMap.platform);
+      const platform=normalizePlatform(platformRaw);
+      const shopRaw=getVal(row,colMap.shop);
+      const shop_customer=normalizeShopCustomer(shopRaw, platform);
       const order_no=getVal(row,colMap.order);
       const sn_code=getVal(row,colMap.sn);
       const sku=getVal(row,colMap.sku);
@@ -4740,6 +4742,45 @@ function getReturnReasonAliasMap(){
 
 function normalizeReturnReason(value){
   return getReturnReasonAliasMap().get(normalizeReasonToken(value))||'';
+}
+
+function normalizePlatform(value){
+  value=String(value||'').trim();
+  if(!value) return '';
+  const platformList=_dictCache['platform']||[];
+  // 直接匹配 code
+  const byCode=platformList.find(p=>p.code===value);
+  if(byCode) return byCode.code;
+  // 按当前语言 label 匹配
+  const byLabel=platformList.find(p=>getDictLabel(p)===value);
+  if(byLabel) return byLabel.code;
+  // 模糊匹配（忽略大小写）
+  const byFuzzy=platformList.find(p=>getDictLabel(p).toLowerCase()===value.toLowerCase()||p.code.toLowerCase()===value.toLowerCase());
+  if(byFuzzy) return byFuzzy.code;
+  return value;
+}
+
+function normalizeShopCustomer(value, platformCode){
+  value=String(value||'').trim();
+  if(!value) return '';
+  const shopList=_dictCache['shop_customer']||[];
+  // 如果有 platformCode，只在该平台下查找
+  const candidates=platformCode?shopList.filter(s=>s.parent_code===platformCode):shopList;
+  // 直接匹配 code
+  const byCode=candidates.find(s=>s.code===value);
+  if(byCode) return byCode.code;
+  // 按当前语言 label 匹配
+  const byLabel=candidates.find(s=>getDictLabel(s)===value);
+  if(byLabel) return byLabel.code;
+  // 模糊匹配（忽略大小写）
+  const byFuzzy=candidates.find(s=>getDictLabel(s).toLowerCase()===value.toLowerCase()||s.code.toLowerCase()===value.toLowerCase());
+  if(byFuzzy) return byFuzzy.code;
+  // 在全量 shop_customer 中兜底查找
+  if(platformCode){
+    const byGlobal=shopList.find(s=>getDictLabel(s)===value||s.code===value||getDictLabel(s).toLowerCase()===value.toLowerCase()||s.code.toLowerCase()===value.toLowerCase());
+    if(byGlobal) return byGlobal.code;
+  }
+  return value;
 }
 
 function showImportPreview(totalRows){
