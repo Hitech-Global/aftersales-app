@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.6"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.7"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -551,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.6 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.7 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -627,10 +627,6 @@ select option{background:var(--card-bg);color:var(--text)}
           </div>
           <div class="filter-bar">
             <div class="filter-form">
-              <div class="filter-group" style="flex:2">
-                <label data-i18n="list.filter.keyword"></label>
-                <input type="text" class="search-input" id="search-input" data-i18n-placeholder="list.filter.keywordPlaceholder" oninput="renderList()">
-              </div>
               <div class="filter-group">
                 <label data-i18n="list.filter.brand"></label>
                 <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allBrands"></option></select>
@@ -666,6 +662,10 @@ select option{background:var(--card-bg);color:var(--text)}
               <div class="filter-group date-filter">
                 <label data-i18n="list.filter.endDate"></label>
                 <input type="text" class="date-input" id="list-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
+              </div>
+              <div class="filter-group" style="flex:2">
+                <label data-i18n="list.filter.keyword"></label>
+                <input type="text" class="search-input" id="search-input" data-i18n-placeholder="list.filter.keywordPlaceholder" oninput="renderList()">
               </div>
               <div class="filter-actions">
                 <button class="btn btn-search" onclick="renderList()" data-i18n="list.btnSearch"></button>
