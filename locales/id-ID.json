@@ -613,9 +613,20 @@
         "orderNo": "No. Pesanan",
         "qty": "Qty",
         "returnReason": "Alasan Retur (Wajib)",
-        "description": "Deskripsi Masalah / Catatan"
-      }
-    },
+          "description": "Deskripsi Masalah / Catatan"
+        },
+        "exampleDescription": "Layar retak",
+        "noteReturnReasonTitle": "Alasan Retur (Wajib)",
+        "noteReturnReasonBody": "Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.",
+        "noteShopTitle": "Platform / Toko-Pelanggan",
+        "noteShopBody": "Pilih Platform dulu, lalu dropdown Toko/Pelanggan hanya menampilkan toko di bawah platform tersebut (sama seperti formulir buat).",
+        "mapInternal": "Nilai Internal Sistem",
+        "mapZh": "Mandarin",
+        "mapEn": "Inggris",
+        "mapId": "Bahasa Indonesia",
+        "platformCol": "Platform",
+        "shopCustomerCol": "Toko/Pelanggan"
+      },
     "dropHint": "Klik untuk memilih file atau tarik file Excel / CSV ke sini",
     "fileFormat": "Mendukung file .xlsx / .csv",
     "btnClose": "Tutup",

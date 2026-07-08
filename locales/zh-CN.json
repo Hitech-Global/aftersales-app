@@ -613,9 +613,20 @@
         "orderNo": "订单号",
         "qty": "数量",
         "returnReason": "退货原因（必填）",
-        "description": "问题说明/备注"
-      }
-    },
+          "description": "问题说明/备注"
+        },
+        "exampleDescription": "屏幕裂纹",
+        "noteReturnReasonTitle": "退货原因（必填）",
+        "noteReturnReasonBody": "请选择下方允许的值之一，显示名称会被自动映射。",
+        "noteShopTitle": "平台 / 店铺-客户",
+        "noteShopBody": "先选择平台，店铺/客户下拉将只显示该平台下的店铺（与新建表单一致）。",
+        "mapInternal": "系统内部值",
+        "mapZh": "中文",
+        "mapEn": "英文",
+        "mapId": "印尼文",
+        "platformCol": "平台",
+        "shopCustomerCol": "店铺/客户"
+      },
     "dropHint": "点击选择文件或拖拽 Excel / CSV 文件到此处",
     "fileFormat": "支持 .xlsx / .csv 格式",
     "btnClose": "关闭",

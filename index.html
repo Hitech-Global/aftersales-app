@@ -4526,34 +4526,59 @@ function openImportDialog(){
 }
 function closeImportDialog(){ document.getElementById('import-modal').classList.add('hidden'); }
 
-function downloadImportTemplate(){
+async function downloadImportTemplate(){
   const c=t('importRecord.template.col');
   const headers=[c.date,c.platform,c.shopCustomer,c.sku,c.snCode,c.orderNo,c.qty,c.returnReason,c.description];
-  const example=['2026-01-15','Shopee','Store A','SKU-APPLE-001','SN12345','SH20260115001','2','可二次销售','屏幕裂纹'];
+  // 确保退货原因字典已加载（含全部启用项）
+  await refreshReturnReasonsFromDict().catch(()=>{});
+  // 读取平台与店铺/客户字典（按平台分组，对齐新建表单的字段关联逻辑）
+  let platforms=[];
+  try { platforms = await loadDictOptions('platform'); } catch(e){ platforms=[]; }
+  const platformShops={};
+  if(platforms.length){
+    for(const p of platforms){
+      try { platformShops[p.code]=await loadDictOptions('shop_customer', p.code); } catch(e){ platformShops[p.code]=[]; }
+    }
+  } else {
+    try { platformShops['__all__']=await loadDictOptions('shop_customer'); } catch(e){ platformShops['__all__']=[]; }
+  }
+  const p0 = platforms[0];
+  const examplePlatform = p0 ? p0.code : 'Shopee';
+  let exampleShop = '';
+  if(p0 && platformShops[p0.code] && platformShops[p0.code][0]) exampleShop = platformShops[p0.code][0].code;
+  if(!exampleShop) exampleShop = 'Store A';
+  const example=['2026-01-15', examplePlatform, exampleShop, 'SKU-APPLE-001','SN12345','SH20260115001','2', tReturnReason('可二次销售'), t('importRecord.template.exampleDescription')];
   const fileName=t('importRecord.template.fileName');
   const sheetName=t('importRecord.template.sheetName');
+
   if(typeof XLSX!=='undefined'){
+    // SheetJS Community Edition 不支持写入 dataValidation / named ranges，
+    // 因此下拉校验和级联依赖通过 Instructions sheet 的参考表来引导用户。
     const ws=XLSX.utils.aoa_to_sheet([headers, example]);
-    ws['!cols']=[{wch:14},{wch:14},{wch:16},{wch:18},{wch:20},{wch:18},{wch:10},{wch:24},{wch:28}];
-    ws['!dataValidation']=[{
-      sqref:'H2:H500',
-      type:'list',
-      allowBlank:false,
-      formula1:`"${RETURN_REASONS.join(',')}"`
-    }];
+    ws['!cols']=[{wch:14},{wch:16},{wch:18},{wch:18},{wch:20},{wch:18},{wch:10},{wch:24},{wch:28}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    // 构建 Instructions sheet：
+    // - 退货原因映射表（内部值 / 中文 / 英文 / 印尼文）
+    // - 平台 → 店铺/客户关联表（对齐新建表单的级联逻辑）
     const instructionRows=[
       [t('importRecord.template.instructionSheetName'),''],
       [c.returnReason, t('importRecord.guide.draftNote')],
-      ['Return Reason (Required)','Choose one of the allowed values below. Display names are accepted and mapped automatically.'],
-      ['Alasan Retur (Wajib)','Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.'],
+      [t('importRecord.template.noteReturnReasonTitle'), t('importRecord.template.noteReturnReasonBody')],
+      [t('importRecord.template.noteShopTitle'), t('importRecord.template.noteShopBody')],
       [],
-      ['系统内部值','中文','English','Bahasa Indonesia'],
-      ...RETURN_REASONS.map(reason=>[reason, reason, getReturnReasonLabelForLocale(reason,'en-US'), getReturnReasonLabelForLocale(reason,'id-ID')])
+      [t('importRecord.template.mapInternal'), t('importRecord.template.mapZh'), t('importRecord.template.mapEn'), t('importRecord.template.mapId')],
+      ...RETURN_REASONS.map(reason=>[reason, reason, getReturnReasonLabelForLocale(reason,'en-US'), getReturnReasonLabelForLocale(reason,'id-ID')]),
+      [],
+      [t('importRecord.template.platformCol'), t('importRecord.template.shopCustomerCol')],
+      ...platforms.flatMap(p=>{
+        const shops=platformShops[p.code]||[];
+        const rows=shops.length?shops.map(s=>[p.code, s.code]):[[p.code, '']];
+        return rows;
+      })
     ];
     const instructionWs=XLSX.utils.aoa_to_sheet(instructionRows);
-    instructionWs['!cols']=[{wch:18},{wch:18},{wch:24},{wch:28}];
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+    instructionWs['!cols']=[{wch:22},{wch:22},{wch:26},{wch:28}];
     XLSX.utils.book_append_sheet(wb,instructionWs,t('importRecord.template.instructionSheetName'));
     XLSX.writeFile(wb,fileName+'.xlsx');
     return;
