@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.10"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.11"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -2887,7 +2887,7 @@ async function renderList(){
           <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
           <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
-          <td>${esc(it.platform||'-')}</td>
+          <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
           <td>${esc(it.shop_customer||'-')}</td>
           <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
@@ -3235,7 +3235,7 @@ async function renderDetail(id){
         <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
-            <td>${esc(it.platform||'-')}</td>
+            <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
             <td>${esc(it.shop_customer||'-')}</td>
             <td>${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
@@ -3744,26 +3744,27 @@ async function resetForm(recordId){
     setDateInputValue('f-aftersales-date', record.aftersales_date || formatDateLocal(new Date()));
     document.getElementById('detail-items-tbody').innerHTML='';
     currentEditingRecordId = recordId;
-    // 先加载平台字典,确保渠道下拉能正确回显(旧记录可能存的是 label 或已不在字典中的 code)
-    const platformOpts = await loadDictOptions('platform').catch(() => []);
-    _platformCache = platformOpts;
-    const attsAll = await fetchRecordAttachments(recordId).catch(() => []);
     const items = record.items || [];
-    // 预加载每个涉及平台的 shop_customer 字典选项,确保店铺/客户下拉能正确回显
-    const shopCache = {};  // { platformCode: [shopOptions] }
+    // 并行预加载: 平台字典 + 附件 + 每个涉及平台的店铺字典
+    const platformOptsPromise = loadDictOptions('platform').catch(() => []);
+    const attsAllPromise = fetchRecordAttachments(recordId).catch(() => []);
+    // 先等 platformOpts 确定涉及哪些平台,再发起店铺字典并行加载
+    const platformOpts = await platformOptsPromise;
+    _platformCache = platformOpts;
     const platformCodes = [...new Set(items.map(it => resolvePlatformCode(it.platform, platformOpts)).filter(Boolean))];
-    for(const pc of platformCodes){
+    const shopCache = {};  // { platformCode: [shopOptions] }
+    const shopLoadPromises = platformCodes.map(async pc => {
       shopCache[pc] = await loadDictOptions('shop_customer', pc).catch(() => []);
-    }
-    // 线下渠道还需要客户名→客户ID映射,用于 autocomplete 输入框回显
+    });
+    // 平台字典、附件、所有店铺字典 全部并行等待
+    const [attsAll] = await Promise.all([attsAllPromise, ...shopLoadPromises]);
+    // 渲染明细行
     for(let i=0;i<items.length;i++){
       const it=items[i];
       const platformCode = resolvePlatformCode(it.platform, platformOpts);
-      // 用预加载的店铺字典做反查,将存储值归一化为当前字典 code
       const shopList = shopCache[platformCode] || [];
       const shopCode = resolveShopCustomerCode(it.shop_customer, shopList);
       addDetailItem(platformCode, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], shopCode);
-      // 加载附件
       const tr = document.querySelectorAll('#detail-items-tbody tr')[i];
       if(tr){
         tr.dataset.recordId = recordId;
@@ -3815,6 +3816,14 @@ function resolvePlatformCode(value, platformList){
     if(tiktok) return tiktok.code;
   }
   return value;
+}
+
+// 根据 platform code 获取显示 label;字典未加载时返回原值
+function getPlatformLabel(code, platformList){
+  if(!code) return '';
+  const list = platformList || _platformCache || [];
+  const item = list.find(p => p.code === code) || list.find(p => getDictLabel(p) === code) || list.find(p => String(p.code).toLowerCase() === String(code).toLowerCase());
+  return item ? getDictLabel(item) : code;
 }
 
 // 店铺/客户回显值反查: 将存储的 shop_customer 值(可能是 display label 或旧 code)归一化为当前字典中的 code
@@ -4489,7 +4498,7 @@ async function openLegacyApprovalModal(recordId){
           const screenshots=it.erp_screenshots||[];
           return `<tr>
             <td>${i+1}</td>
-            <td>${esc(it.platform||'-')}</td>
+            <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
             <td>${esc(it.shop_customer||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>

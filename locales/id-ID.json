@@ -573,7 +573,7 @@
     "col": {
       "id": "No. Kasus RMA",
       "date": "Tanggal RMA",
-      "platform": "Platform",
+      "platform": "Saluran",
       "brand": "Brand",
       "sku": "SKU",
       "model": "Model",
@@ -609,7 +609,7 @@
       "instructionSheetName": "Petunjuk",
       "col": {
         "date": "Tanggal RMA",
-        "platform": "Platform",
+        "platform": "Saluran",
         "shopCustomer": "Toko/Pelanggan",
         "sku": "SKU",
         "snCode": "SN Code",
@@ -621,13 +621,13 @@
         "exampleDescription": "Layar retak",
         "noteReturnReasonTitle": "Alasan Retur (Wajib)",
         "noteReturnReasonBody": "Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.",
-        "noteShopTitle": "Platform / Toko-Pelanggan",
-        "noteShopBody": "Pilih Platform dulu, lalu dropdown Toko/Pelanggan hanya menampilkan toko di bawah platform tersebut (sama seperti formulir buat).",
+        "noteShopTitle": "Saluran / Toko-Pelanggan",
+        "noteShopBody": "Pilih Saluran dulu, lalu dropdown Toko/Pelanggan hanya menampilkan toko di bawah saluran tersebut (sama seperti formulir buat).",
         "mapInternal": "Nilai Internal Sistem",
         "mapZh": "Mandarin",
         "mapEn": "Inggris",
         "mapId": "Bahasa Indonesia",
-        "platformCol": "Platform",
+        "platformCol": "Saluran",
         "shopCustomerCol": "Toko/Pelanggan"
       },
     "dropHint": "Klik untuk memilih file atau tarik file Excel / CSV ke sini",
@@ -646,9 +646,9 @@
     "error": {
       "fileType": "Silakan pilih file Excel atau CSV",
       "emptyFile": "File kosong atau format tidak valid",
-      "missingRequiredCols": "Kolom wajib kurang: Tanggal RMA, Platform, SKU, Qty, Alasan Retur. Header saat ini: {headers}",
+      "missingRequiredCols": "Kolom wajib kurang: Tanggal RMA, Saluran, SKU, Qty, Alasan Retur. Header saat ini: {headers}",
       "dateRequired": "Tanggal RMA wajib diisi",
-      "platformRequired": "Platform wajib diisi",
+      "platformRequired": "Saluran wajib diisi",
       "skuRequired": "SKU wajib diisi",
       "qtyInvalid": "Qty harus lebih besar dari 0",
       "returnReasonRequired": "Alasan retur wajib diisi",
@@ -1135,14 +1135,14 @@
     "categories": "Kategori",
     "category": {
       "return_reason": "Alasan Pengembalian",
-      "platform": "Platform",
+      "platform": "Saluran",
       "return_method": "Metode Pengembalian",
       "shop_customer": "Toko/Pelanggan",
       "common": "Umum"
     },
     "col": {
       "name": "Nama",
-      "parentPlatform": "Platform Induk",
+      "parentPlatform": "Saluran Induk",
       "status": "Status",
       "actions": "Tindakan"
     },

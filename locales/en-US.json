@@ -573,7 +573,7 @@
     "col": {
       "id": "RMA Case No.",
       "date": "RMA Date",
-      "platform": "Platform",
+      "platform": "Channel",
       "brand": "Brand",
       "sku": "SKU",
       "model": "Model",
@@ -609,7 +609,7 @@
       "instructionSheetName": "Instructions",
       "col": {
         "date": "RMA Date",
-        "platform": "Platform",
+        "platform": "Channel",
         "shopCustomer": "Shop/Customer",
         "sku": "SKU",
         "snCode": "SN Code",
@@ -621,13 +621,13 @@
         "exampleDescription": "Screen crack",
         "noteReturnReasonTitle": "Return Reason (Required)",
         "noteReturnReasonBody": "Choose one of the allowed values below. Display names are accepted and mapped automatically.",
-        "noteShopTitle": "Platform / Shop-Customer",
-        "noteShopBody": "First select a Platform, then the Shop/Customer dropdown shows only the shops under that platform (same as the create form).",
+        "noteShopTitle": "Channel / Shop-Customer",
+        "noteShopBody": "First select a Channel, then the Shop/Customer dropdown shows only the shops under that channel (same as the create form).",
         "mapInternal": "System Internal Value",
         "mapZh": "Chinese",
         "mapEn": "English",
         "mapId": "Bahasa Indonesia",
-        "platformCol": "Platform",
+        "platformCol": "Channel",
         "shopCustomerCol": "Shop/Customer"
       },
     "dropHint": "Click to choose a file or drag an Excel / CSV file here",
@@ -646,9 +646,9 @@
     "error": {
       "fileType": "Please select an Excel or CSV file",
       "emptyFile": "The file is empty or invalid",
-      "missingRequiredCols": "Missing required columns: RMA Date, Platform, SKU, Qty, Return Reason. Current headers: {headers}",
+      "missingRequiredCols": "Missing required columns: RMA Date, Channel, SKU, Qty, Return Reason. Current headers: {headers}",
       "dateRequired": "RMA date is required",
-      "platformRequired": "Platform is required",
+      "platformRequired": "Channel is required",
       "skuRequired": "SKU is required",
       "qtyInvalid": "Qty must be greater than 0",
       "returnReasonRequired": "Return reason is required",
@@ -1135,14 +1135,14 @@
     "categories": "Categories",
     "category": {
       "return_reason": "Return Reason",
-      "platform": "Platform",
+      "platform": "Channel",
       "return_method": "Return Method",
       "shop_customer": "Shop/Customer",
       "common": "Common"
     },
     "col": {
       "name": "Name",
-      "parentPlatform": "Parent Platform",
+      "parentPlatform": "Parent Channel",
       "status": "Status",
       "actions": "Actions"
     },

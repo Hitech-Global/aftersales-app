@@ -573,7 +573,7 @@
     "col": {
       "id": "售后单号",
       "date": "售后日期",
-      "platform": "平台",
+      "platform": "渠道",
       "brand": "品牌",
       "sku": "SKU",
       "model": "型号",
@@ -598,7 +598,7 @@
     "guide": {
       "title": "导入说明",
       "csvFormat": "支持 Excel / CSV 文件（UTF-8 编码）",
-      "requiredCols": "必填列：售后日期, 平台, SKU, 数量, 退货原因",
+      "requiredCols": "必填列：售后日期, 渠道, SKU, 数量, 退货原因",
       "optionalCols": "可选列：店铺/客户, SN Code, 订单号, 问题说明/备注",
       "draftNote": "导入的记录将自动保存为草稿状态，请到列表中编辑并提交审批"
     },
@@ -607,9 +607,9 @@
       "fileName": "售后记录导入模板",
       "sheetName": "售后记录导入模板",
       "instructionSheetName": "填写说明",
-      "col": {
-        "date": "售后日期",
-        "platform": "平台",
+        "col": {
+          "date": "售后日期",
+          "platform": "渠道",
         "shopCustomer": "店铺/客户",
         "sku": "SKU",
         "snCode": "SN Code",
@@ -621,13 +621,13 @@
         "exampleDescription": "屏幕裂纹",
         "noteReturnReasonTitle": "退货原因（必填）",
         "noteReturnReasonBody": "请选择下方允许的值之一，显示名称会被自动映射。",
-        "noteShopTitle": "平台 / 店铺-客户",
-        "noteShopBody": "先选择平台，店铺/客户下拉将只显示该平台下的店铺（与新建表单一致）。",
+        "noteShopTitle": "渠道 / 店铺-客户",
+        "noteShopBody": "先选择渠道，店铺/客户下拉将只显示该渠道下的店铺（与新建表单一致）。",
         "mapInternal": "系统内部值",
         "mapZh": "中文",
         "mapEn": "英文",
         "mapId": "印尼文",
-        "platformCol": "平台",
+        "platformCol": "渠道",
         "shopCustomerCol": "店铺/客户"
       },
     "dropHint": "点击选择文件或拖拽 Excel / CSV 文件到此处",
@@ -646,9 +646,9 @@
     "error": {
       "fileType": "请选择 Excel 或 CSV 格式的文件",
       "emptyFile": "文件为空或格式不正确",
-      "missingRequiredCols": "缺少必填列：售后日期、平台、SKU、数量、退货原因。当前表头：{headers}",
+      "missingRequiredCols": "缺少必填列：售后日期、渠道、SKU、数量、退货原因。当前表头：{headers}",
       "dateRequired": "售后日期不能为空",
-      "platformRequired": "平台不能为空",
+      "platformRequired": "渠道不能为空",
       "skuRequired": "SKU不能为空",
       "qtyInvalid": "数量必须大于0",
       "returnReasonRequired": "退货原因不能为空",
@@ -1006,7 +1006,7 @@
     "pasteImageSize": "粘贴的图片超过2MB，已跳过",
     "selectCsv": "请选择 CSV 格式的文件",
     "fileEmpty": "文件为空或格式不正确",
-    "missingRequiredCols": "缺少必填列：售后日期、平台、SKU、数量。当前表头：{headers}",
+    "missingRequiredCols": "缺少必填列：售后日期、渠道、SKU、数量。当前表头：{headers}",
     "fileEmptyNoHeader": "文件为空或缺少表头",
     "noValidData": "未解析到有效商品数据",
     "fileParseFailed": "文件解析失败：{message}",
@@ -1135,7 +1135,7 @@
     "categories": "字典类别",
     "category": {
       "return_reason": "退货原因",
-      "platform": "平台",
+      "platform": "渠道",
       "return_method": "退货方式",
       "shop_customer": "店铺/客户",
       "common": "通用类别"
