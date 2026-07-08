@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.9"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.10"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -3747,6 +3747,8 @@ async function resetForm(recordId){
     // 先加载平台字典,确保渠道下拉能正确回显(旧记录可能存的是 label 或已不在字典中的 code)
     const platformOpts = await loadDictOptions('platform').catch(() => []);
     _platformCache = platformOpts;
+    const attsAll = await fetchRecordAttachments(recordId).catch(() => []);
+    const items = record.items || [];
     // 预加载每个涉及平台的 shop_customer 字典选项,确保店铺/客户下拉能正确回显
     const shopCache = {};  // { platformCode: [shopOptions] }
     const platformCodes = [...new Set(items.map(it => resolvePlatformCode(it.platform, platformOpts)).filter(Boolean))];
@@ -3754,8 +3756,6 @@ async function resetForm(recordId){
       shopCache[pc] = await loadDictOptions('shop_customer', pc).catch(() => []);
     }
     // 线下渠道还需要客户名→客户ID映射,用于 autocomplete 输入框回显
-    const attsAll = await fetchRecordAttachments(recordId).catch(() => []);
-    const items = record.items || [];
     for(let i=0;i<items.length;i++){
       const it=items[i];
       const platformCode = resolvePlatformCode(it.platform, platformOpts);
