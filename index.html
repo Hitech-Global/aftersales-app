@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.11"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.12"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -3282,14 +3282,14 @@ async function renderDetail(id){
 }
 
 // ==================== RECORD FORM MODAL ====================
-function openRecordForm(recordId){
+async function openRecordForm(recordId){
   if(recordId){
     if(!hasPermission('record_edit')){ showFlash(t('flash.noPermissionEdit'),'warning'); return; }
   } else {
     if(!hasPermission('record_create')){ showFlash(t('flash.noPermissionCreate'),'warning'); return; }
   }
-  resetForm(recordId);
   document.getElementById('record-form-modal').classList.remove('hidden');
+  await resetForm(recordId);
   // Preload dictionaries + approval flow (并行加载,避免其中一个失败阻塞另一个)
   Promise.all([
     refreshReturnReasonsFromDict().catch(() => {}),
@@ -3361,10 +3361,6 @@ function refreshPlatformSelects(){
       });
       sel.innerHTML = h;
     });
-    // Refresh shop selects for rows that already have a platform selected
-    document.querySelectorAll('#detail-items-tbody select.platform-select').forEach(sel => {
-      if (sel.value) onPlatformChange(sel);
-    });
   });
 }
 
@@ -3412,7 +3408,7 @@ function scrollSelectIntoView(selectEl){
   if(offset > 0) body.scrollTop += offset;
 }
 
-function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments, shopCustomer){
+function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments, shopCustomer, shopList){
   const tbody=document.getElementById('detail-items-tbody');
   const idx=tbody.children.length;
   const tr=document.createElement('tr');
@@ -3461,7 +3457,7 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
   tbody.appendChild(tr);
   // If platform is set, load shop options and pre-select shopCustomer
   if (platform) {
-    _loadShopOptions(tr.querySelector('.shop-select'), platform, shopCustomer);
+    _loadShopOptions(tr.querySelector('.shop-select'), platform, shopCustomer, shopList);
   }
   // Render existing attachments
   if (attachments && attachments.length > 0) {
@@ -3496,7 +3492,7 @@ async function onPlatformChange(selectEl){
 }
 
 // 加载店铺/客户选项并可选地预选
-async function _loadShopOptions(shopEl, platformCode, selectedCode){
+async function _loadShopOptions(shopEl, platformCode, selectedCode, preloadedShops){
   const tr = shopEl.closest('tr');
   const isOffline = platformCode && platformCode.toLowerCase().includes('offline');
 
@@ -3543,7 +3539,7 @@ async function _loadShopOptions(shopEl, platformCode, selectedCode){
   }
   sel.disabled = false;
   try{
-    const shops = await loadDictOptions('shop_customer', platformCode);
+    const shops = preloadedShops || await loadDictOptions('shop_customer', platformCode);
     let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
     shops.forEach(o => {
       h += '<option value="' + esc(o.code) + '"' + (selectedCode === o.code ? ' selected' : '') + '>' + esc(getDictLabel(o)) + '</option>';
@@ -3764,7 +3760,7 @@ async function resetForm(recordId){
       const platformCode = resolvePlatformCode(it.platform, platformOpts);
       const shopList = shopCache[platformCode] || [];
       const shopCode = resolveShopCustomerCode(it.shop_customer, shopList);
-      addDetailItem(platformCode, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], shopCode);
+      addDetailItem(platformCode, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], shopCode, shopList);
       const tr = document.querySelectorAll('#detail-items-tbody tr')[i];
       if(tr){
         tr.dataset.recordId = recordId;
