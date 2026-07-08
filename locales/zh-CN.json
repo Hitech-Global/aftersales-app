@@ -203,6 +203,7 @@
     },
     "action": {
       "view": "查看",
+      "edit": "编辑",
       "approve": "审批",
       "delete": "删除"
     },
@@ -249,6 +250,7 @@
   },
   "form": {
     "titleNew": "新建售后记录",
+    "titleEdit": "编辑售后记录",
     "section": {
       "basic": "基本信息",
       "details": "售后明细",
@@ -830,6 +832,8 @@
     "importComplete": "共读取 {total} 行，成功导入 {imported} 条草稿记录",
     "noExportData": "当前筛选条件下没有可导出的数据",
     "noPermissionCreate": "您没有提交审批的权限",
+    "noPermissionEdit": "您没有编辑售后记录的权限",
+    "onlyDraftEditable": "仅草稿状态可编辑",
     "feishuNotBound": "审批已提交，但审批人 {name} 未绑定飞书账号，无法发送飞书通知。请联系管理员绑定。",
     "feishuNotifyFailed": "审批已提交，但飞书通知发送失败，请检查审批人飞书绑定或应用权限。",
     "feishuTestSent": "飞书测试通知已发送",

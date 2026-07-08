@@ -203,6 +203,7 @@
     },
     "action": {
       "view": "View",
+      "edit": "Edit",
       "approve": "Approve",
       "delete": "Delete"
     },
@@ -249,6 +250,7 @@
   },
   "form": {
     "titleNew": "Create RMA Case",
+    "titleEdit": "Edit RMA Case",
     "section": {
       "basic": "Basic Information",
       "details": "RMA Items",
@@ -830,6 +832,8 @@
     "importComplete": "Read {total} rows. Imported {imported} draft records.",
     "noExportData": "No data to export under the current filters",
     "noPermissionCreate": "You do not have permission to create records",
+    "noPermissionEdit": "You do not have permission to edit records",
+    "onlyDraftEditable": "Only draft records can be edited",
     "feishuNotBound": "Approval submitted, but approver {name} has not bound Feishu account. Feishu notification cannot be sent. Please contact admin to bind.",
     "feishuNotifyFailed": "Approval submitted, but the Lark notification failed. Please check the approver's Lark binding or app permissions.",
     "feishuTestSent": "Lark test notification sent",

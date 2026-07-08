@@ -2897,23 +2897,26 @@ async function renderList(){
   } else {
     // ===== 按售后单模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
-      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processStatus')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.updatedAt')}</th><th>${t('list.col.actions')}</th>
+      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processStatus')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.shopCustomer')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.updatedAt')}</th><th>${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+      const shopCustomers=[...new Set(items.map(it=>it.shop_customer).filter(Boolean))];
       const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].map(rr=>tReturnReason(rr)).join(', ');
       const skus=items.map(it=>it.sku_code).filter(Boolean).join(', ');
       const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
       const faultDescs=items.map(it=>(it.fault_description||'').substring(0,30)).join('; ');
       const totalQty=r.total_quantity||items.reduce((s,it)=>s+(it.quantity||0),0);
       const psCell=getRecordProcessSummary(items);
+      const canEdit = hasPermission('record_edit') && r.status==='草稿';
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
         <td>${psCell}</td>
         <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||r.platform||'-')}</td>
+        <td>${esc(shopCustomers.join(',')||'-')}</td>
         <td>${returnReasons||'-'}</td>
         <td class="cell-desc" title="${esc(skus)}">${esc(skus||'-')}</td>
         <td class="cell-desc" title="${esc(orders)}">${esc(orders||'-')}</td>
@@ -2923,6 +2926,7 @@ async function renderList(){
         <td class="cell-date">${formatDateTime(r.updated_at)}</td>
         <td class="cell-actions">
           <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button>
+          ${canEdit?`<button class="action-btn" title="${t('list.action.edit')}" onclick="editRecord('${escAttr(String(r.id))}')">&#x270F;</button>`:''}
           ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord('${escAttr(String(r.id))}')">&#x1F5D1;</button>`:''}
         </td></tr>`;
     });
@@ -3270,9 +3274,13 @@ async function renderDetail(id){
 }
 
 // ==================== RECORD FORM MODAL ====================
-function openRecordForm(){
-  if(!hasPermission('record_create')){ showFlash(t('flash.noPermissionCreate'),'warning'); return; }
-  resetForm();
+function openRecordForm(recordId){
+  if(recordId){
+    if(!hasPermission('record_edit')){ showFlash(t('flash.noPermissionEdit'),'warning'); return; }
+  } else {
+    if(!hasPermission('record_create')){ showFlash(t('flash.noPermissionCreate'),'warning'); return; }
+  }
+  resetForm(recordId);
   document.getElementById('record-form-modal').classList.remove('hidden');
   // Preload dictionaries + approval flow (并行加载,避免其中一个失败阻塞另一个)
   Promise.all([
@@ -3291,6 +3299,15 @@ function openRecordForm(){
       sel.innerHTML = h;
     });
   });
+}
+
+async function editRecord(recordId){
+  if(!requirePermission('record_edit')) return;
+  const records=await getRecords();
+  const record=records.find(r=>String(r.id)===String(recordId));
+  if(!record){ showFlash(t('flash.recordNotFound'),'warning'); return; }
+  if(record.status!=='草稿'){ showFlash(t('flash.onlyDraftEditable'),'warning'); return; }
+  openRecordForm(recordId);
 }
 
 let _platformCache = [];
@@ -3688,7 +3705,35 @@ async function onSkuChanged(input){
   // Could show brand hint - but user said remove auto fields, so just keep SKU lookups working
 }
 
-function resetForm(){
+async function resetForm(recordId){
+  if(recordId){
+    const records=await getRecords();
+    const record=records.find(r=>String(r.id)===String(recordId));
+    if(!record){ showFlash(t('flash.recordNotFound'),'warning'); return; }
+    document.getElementById('form-title').textContent=t('form.titleEdit');
+    document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
+    setDateInputValue('f-aftersales-date', record.aftersales_date || formatDateLocal(new Date()));
+    document.getElementById('detail-items-tbody').innerHTML='';
+    updateSkuDatalist();
+    currentEditingRecordId = recordId;
+    const attsAll = await fetchRecordAttachments(recordId).catch(() => []);
+    const items = record.items || [];
+    for(let i=0;i<items.length;i++){
+      const it=items[i];
+      addDetailItem(it.platform, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], it.shop_customer);
+      // 加载附件
+      const tr = document.querySelectorAll('#detail-items-tbody tr')[i];
+      if(tr){
+        tr.dataset.recordId = recordId;
+        const atts = attsAll.filter(a => (a.item_index === null && i === 0) || a.item_index === i);
+        const cell = tr.querySelector('.atch-cell');
+        if(cell) cell.innerHTML = renderAttachmentChips(atts, true);
+      }
+    }
+    if(items.length===0) addDetailItem();
+    updateDetailTotalQty();
+    return;
+  }
   document.getElementById('form-title').textContent=t('form.titleNew');
   document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
   const today=formatDateLocal(new Date());
@@ -3826,7 +3871,12 @@ function renderFlowPreview(flow){
 
 async function submitForApproval(e){
   e.preventDefault();
-  if(!requirePermission('record_create')) return;
+  const isEdit = !!currentEditingRecordId;
+  if(isEdit){
+    if(!requirePermission('record_edit')) return;
+  } else {
+    if(!requirePermission('record_create')) return;
+  }
 
   const aftersalesDate=getDateInputValue('f-aftersales-date');
 
@@ -3874,24 +3924,46 @@ async function submitForApproval(e){
     it.process_status_date=now;
   });
 
-  const record={
-    id:await nextId(),
-    aftersales_date:aftersalesDate,
-    platforms,
-    items,
-    total_quantity:totalQty,
-    brand:product?product.brand:'',
-    model:product?product.model:'',
-    category:product?product.category:'',
-    submitter_id:user.id,
-    submitter_name:user.name,
-    approval_flow_id: flowId,
-    status:'待'+levelNames[firstLevel]+'审批',
-    current_approval_level:firstLevel,
-    approval_history:[],
-    created_at:now,
-    updated_at:now
-  };
+  const records=await getRecords();
+  let record;
+  if(isEdit){
+    const idx=records.findIndex(r=>String(r.id)===String(currentEditingRecordId));
+    if(idx<0){ showFlash(t('flash.recordNotFound'),'warning'); return; }
+    record=records[idx];
+    record.aftersales_date=aftersalesDate;
+    record.platforms=platforms;
+    record.items=items;
+    record.total_quantity=totalQty;
+    record.brand=product?product.brand:'';
+    record.model=product?product.model:'';
+    record.category=product?product.category:'';
+    record.approval_flow_id=flowId;
+    record.status='待'+levelNames[firstLevel]+'审批';
+    record.current_approval_level=firstLevel;
+    record.updated_at=now;
+    // 编辑后重新提交,清空旧的审批历史(草稿状态本身没有)
+    record.approval_history=[];
+  } else {
+    record={
+      id:await nextId(),
+      aftersales_date:aftersalesDate,
+      platforms,
+      items,
+      total_quantity:totalQty,
+      brand:product?product.brand:'',
+      model:product?product.model:'',
+      category:product?product.category:'',
+      submitter_id:user.id,
+      submitter_name:user.name,
+      approval_flow_id: flowId,
+      status:'待'+levelNames[firstLevel]+'审批',
+      current_approval_level:firstLevel,
+      approval_history:[],
+      created_at:now,
+      updated_at:now
+    };
+    records.push(record);
+  }
   // 客户端计算 approver_level* (供前端 sendApprovalNotification 使用,后端会从 flow 重新算)
   const allUsers = await getUsers();
   flowNodes.forEach((n, i) => {
@@ -3905,8 +3977,6 @@ async function submitForApproval(e){
       record['approver_level' + lvl + '_name'] = '';
     }
   });
-  const records=await getRecords();
-  records.push(record);
   await saveRecordsAsync(records);
   showFlash(t('flash.approvalSubmitted') + t('approval.level' + firstLevel) + t('flash.approval'),'success');
   // 发送飞书审批通知
@@ -3916,7 +3986,12 @@ async function submitForApproval(e){
 }
 
 async function saveAsDraft(){
-  if(!requirePermission('record_create')) return;
+  const isEdit = !!currentEditingRecordId;
+  if(isEdit){
+    if(!requirePermission('record_edit')) return;
+  } else {
+    if(!requirePermission('record_create')) return;
+  }
   const aftersalesDate=getDateInputValue('f-aftersales-date');
   if(!aftersalesDate){ showFlash(t('flash.fillAftersalesDate'),'warning'); return; }
 
@@ -3943,26 +4018,45 @@ async function saveAsDraft(){
     it.process_status_date=now;
   });
 
-  const record={
-    id:await nextId(),
-    aftersales_date:aftersalesDate,
-    platforms,
-    items,
-    total_quantity:totalQty,
-    brand:product?product.brand:'',
-    model:product?product.model:'',
-    category:product?product.category:'',
-    submitter_id:user.id,
-    submitter_name:user.name,
-    approval_flow_id: flowId || '',
-    status:'草稿',
-    current_approval_level:0,
-    approval_history:[],
-    created_at:now,
-    updated_at:now
-  };
   const records=await getRecords();
-  records.push(record);
+  let record;
+  if(isEdit){
+    const idx=records.findIndex(r=>String(r.id)===String(currentEditingRecordId));
+    if(idx<0){ showFlash(t('flash.recordNotFound'),'warning'); return; }
+    record=records[idx];
+    record.aftersales_date=aftersalesDate;
+    record.platforms=platforms;
+    record.items=items;
+    record.total_quantity=totalQty;
+    record.brand=product?product.brand:'';
+    record.model=product?product.model:'';
+    record.category=product?product.category:'';
+    record.approval_flow_id=flowId || '';
+    record.status='草稿';
+    record.current_approval_level=0;
+    record.approval_history=[];
+    record.updated_at=now;
+  } else {
+    record={
+      id:await nextId(),
+      aftersales_date:aftersalesDate,
+      platforms,
+      items,
+      total_quantity:totalQty,
+      brand:product?product.brand:'',
+      model:product?product.model:'',
+      category:product?product.category:'',
+      submitter_id:user.id,
+      submitter_name:user.name,
+      approval_flow_id: flowId || '',
+      status:'草稿',
+      current_approval_level:0,
+      approval_history:[],
+      created_at:now,
+      updated_at:now
+    };
+    records.push(record);
+  }
   await saveRecordsAsync(records);
   showFlash(t('flash.draftSaved'),'success');
   closeRecordForm();
