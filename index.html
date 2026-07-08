@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.4"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.5"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -94,7 +94,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .prod-batch-bar .batch-count{font-weight:600;color:#e65100}
 .filter-bar .btn,.prod-batch-bar .btn{pointer-events:auto}
 .filter-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+.filter-group.date-filter{flex:0 0 auto;width:155px}
 .filter-group label{font-size:12px;color:var(--text-secondary);font-weight:500}
 .search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;font-family:inherit}
 .search-input:focus,.filter-select:focus,.date-input:focus,.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
@@ -550,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.4 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.5 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -635,12 +636,16 @@ select option{background:var(--card-bg);color:var(--text)}
                 <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allBrands"></option></select>
               </div>
               <div class="filter-group">
+                <label data-i18n="list.filter.channel"></label>
+                <select class="filter-select" id="channel-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allChannels"></option></select>
+              </div>
+              <div class="filter-group">
                 <label data-i18n="list.filter.approvalStatus"></label>
                 <select class="filter-select" id="status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allApprovalStatus"></option></select>
               </div>
               <div class="filter-group">
-                <label data-i18n="list.filter.processType"></label>
-                <select class="filter-select" id="process-status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessStatus"></option></select>
+                <label data-i18n="list.filter.returnReason"></label>
+                <select class="filter-select" id="return-reason-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allReturnReasons"></option></select>
               </div>
               <div class="filter-group">
                 <label data-i18n="list.filter.processProgress"></label>
@@ -654,11 +659,11 @@ select option{background:var(--card-bg);color:var(--text)}
                   <option value="overdue" data-i18n="list.filter.riskOverdue"></option>
                 </select>
               </div>
-              <div class="filter-group">
+              <div class="filter-group date-filter">
                 <label data-i18n="list.filter.startDate"></label>
                 <input type="text" class="date-input" id="list-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
               </div>
-              <div class="filter-group">
+              <div class="filter-group date-filter">
                 <label data-i18n="list.filter.endDate"></label>
                 <input type="text" class="date-input" id="list-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
               </div>
@@ -1204,14 +1209,13 @@ select option{background:var(--card-bg);color:var(--text)}
 <script src="locales/i18n.js"></script>
 <script>
 // ==================== DATA LAYER ====================
-const APPROVAL_STATUSES = ['草稿','待一级审批','一级审批通过','待二级审批','二级审批通过','待三级审批','审批通过','审批拒绝'];
+const APPROVAL_STATUSES = ['草稿','一级审批通过','二级审批通过','审批通过','审批拒绝'];
 function refreshApprovalStatuses() {
   // 保持内部值为中文不变，仅提供显示层翻译映射
 }
 const APPROVAL_STATUS_KEY_MAP = {
-  '草稿':'status.draft','待一级审批':'status.pendingLevel1','一级审批通过':'status.level1Approved',
-  '待二级审批':'status.pendingLevel2','二级审批通过':'status.level2Approved','待三级审批':'status.pendingLevel3',
-  '审批通过':'status.approved','审批拒绝':'status.rejected'
+  '草稿':'status.draft','一级审批通过':'status.level1Approved',
+  '二级审批通过':'status.level2Approved','审批通过':'status.approved','审批拒绝':'status.rejected'
 };
 function tApprovalStatus(zh){ return t(APPROVAL_STATUS_KEY_MAP[zh] || zh); }
 const _PERM_CONFIG = [
@@ -2751,9 +2755,19 @@ function updateStatusFilter(){
   sel.value=cur;
 }
 
-function updateProcessStatusFilter(){
-  const sel=document.getElementById('process-status-filter'), cur=sel.value;
-  sel.innerHTML=`<option value="">${t('list.filter.allProcessTypes')}</option>`+PROCESS_TYPE_VALUES.map(s=>`<option value="${s}">${tProcessType(s)}</option>`).join('');
+async function updateChannelFilter(){
+  const records=await getRecords();
+  const channels=[...new Set(records.flatMap(r=>(r.items||[]).map(it=>it.platform).filter(Boolean)))].sort();
+  const current=document.getElementById('channel-filter').value;
+  let html=`<option value="">${t('list.filter.allChannels')}</option>`;
+  channels.forEach(c=>html+=`<option value="${esc(c)}">${esc(c)}</option>`);
+  document.getElementById('channel-filter').innerHTML=html;
+  document.getElementById('channel-filter').value=current;
+}
+
+function updateReturnReasonFilter(){
+  const sel=document.getElementById('return-reason-filter'), cur=sel.value;
+  sel.innerHTML=`<option value="">${t('list.filter.allReturnReasons')}</option>`+RETURN_REASONS.map(s=>`<option value="${s}">${tReturnReason(s)}</option>`).join('');
   sel.value=cur;
 }
 
@@ -2778,10 +2792,11 @@ function switchListMode(mode){
 }
 
 async function renderList(){
-  await updateBrandFilter(); updateStatusFilter(); updateProcessStatusFilter(); updateProcessProgressFilter();
+  await updateBrandFilter(); updateStatusFilter(); updateChannelFilter(); updateReturnReasonFilter(); updateProcessProgressFilter();
   if(pendingListPreset){
     document.getElementById('brand-filter').value=pendingListPreset.brand||'';
-    document.getElementById('process-status-filter').value=pendingListPreset.processType||'';
+    document.getElementById('channel-filter').value=pendingListPreset.channel||'';
+    document.getElementById('return-reason-filter').value=pendingListPreset.returnReason||'';
     const progressFilter=document.getElementById('process-progress-filter');
     if(progressFilter) progressFilter.value=pendingListPreset.processProgress||'';
     document.getElementById('list-risk-filter').value=pendingListPreset.risk||'';
@@ -2793,7 +2808,8 @@ async function renderList(){
   const search=(document.getElementById('search-input').value||'').toLowerCase();
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
-  const psFilter=document.getElementById('process-status-filter').value;
+  const channel=document.getElementById('channel-filter').value;
+  const returnReason=document.getElementById('return-reason-filter').value;
   const progressFilter=document.getElementById('process-progress-filter')?.value || '';
   const riskFilter=document.getElementById('list-risk-filter').value;
   const startD=getDateInputValue('list-start-date');
@@ -2803,7 +2819,8 @@ async function renderList(){
   let filtered=records;
   if(status) filtered=filtered.filter(r=>r.status===status);
   if(brand) filtered=filtered.filter(r=>r.brand===brand);
-  if(psFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessType(it)===psFilter));
+  if(channel) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.platform===channel));
+  if(returnReason) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.return_reason===returnReason));
   if(progressFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessProgress(it)===progressFilter));
   if(riskFilter==='pending') filtered=filtered.filter(r=>(r.items||[]).some(it=>isPendingProcessItem(it)));
   if(riskFilter==='overdue') filtered=filtered.filter(r=>(r.items||[]).some(it=>isOverdueItem(it,r)));
@@ -3082,7 +3099,8 @@ function renderListPagination(total){
 function clearListFilter(){
   document.getElementById('search-input').value='';
   document.getElementById('status-filter').value='';
-  document.getElementById('process-status-filter').value='';
+  document.getElementById('channel-filter').value='';
+  document.getElementById('return-reason-filter').value='';
   const progressFilter=document.getElementById('process-progress-filter');
   if(progressFilter) progressFilter.value='';
   document.getElementById('list-risk-filter').value='';
