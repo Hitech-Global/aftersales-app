@@ -298,8 +298,23 @@
       "singleHint": "The flow below is automatically applied based on Approval Flow Management."
     },
     "skuPlaceholder": "Enter SKU...",
+    "snPlaceholder": "SN Code",
     "orderPlaceholder": "Order No.",
     "descPlaceholder": "Issue Description / Notes",
+    "atch": {
+      "noAttachment": "No attachments",
+      "upload": "Upload",
+      "uploaded": "Uploaded {count} attachments",
+      "uploadFailed": "Upload failed: {message}",
+      "confirmDelete": "Delete this attachment?",
+      "deleted": "Deleted",
+      "deleteFailed": "Delete failed",
+      "unsupportedPreview": "This file type does not support online preview",
+      "downloadFile": "Download file",
+      "download": "Download",
+      "delete": "Delete",
+      "close": "Close"
+    },
     "placeholder": {
       "feishuBound": "Feishu bound user (cannot modify)",
       "searchFeishu": "Search Feishu members by name/English name/email..."

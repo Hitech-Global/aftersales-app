@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.8"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.9"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -551,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.8 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.9 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -3406,16 +3406,16 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     <td><select class="platform-select" data-dict="platform" onchange="onPlatformChange(this)" onfocus="scrollSelectIntoView(this)">${platformHtml}</select></td>
     <td><select class="shop-select" data-dict="shop_customer" ${isShopDisabled ? 'disabled' : ''}>${shopHtml}</select></td>
     <td><input type="text" class="sku-input" list="sku-datalist" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" onfocus="updateSkuDatalist(this.value)" oninput="updateSkuDatalist(this.value)" onchange="onSkuChanged(this)"></td>
-    <td><input type="text" class="sn-input" placeholder="SN Code" value="${esc(snCode||'')}"></td>
-    <td><input type="text" class="order-input" placeholder="${t('form.col.orderNo')}" value="${esc(orderNo||'')}"></td>
+    <td><input type="text" class="sn-input" placeholder="${t('form.snPlaceholder')}" value="${esc(snCode||'')}"></td>
+    <td><input type="text" class="order-input" placeholder="${t('form.orderPlaceholder')}" value="${esc(orderNo||'')}"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
     <td><select class="type-select" onchange="updateDetailTotalQty()" onfocus="scrollSelectIntoView(this)">${reasonHtml}</select></td>
     <td><input type="text" class="fault-input" placeholder="${t('form.descPlaceholder')}" value="${esc(faultDesc||'')}"></td>
     <td>
       <div class="atch-cell" data-attach-list>
-        <span class="atch-empty">无附件</span>
+        <span class="atch-empty">${t('form.atch.noAttachment')}</span>
       </div>
-      <label class="atch-upload-btn" data-upload-trigger="${idx}">📎 上传<input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" style="display:none" data-item-attach></label>
+      <label class="atch-upload-btn" data-upload-trigger="${idx}">📎 ${t('form.atch.upload')}<input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" style="display:none" data-item-attach></label>
     </td>
     <td><button type="button" class="btn-delete-row" title="${t('list.action.delete')}" onclick="removeDetailItem(this)">&times;</button></td>`;
   tr.dataset.index=idx;
@@ -3484,7 +3484,7 @@ async function _loadShopOptions(shopEl, platformCode, selectedCode){
       input.className = 'shop-select shop-autocomplete';
       input.setAttribute('data-dict','shop_customer');
       input.setAttribute('autocomplete','off');
-      input.placeholder = (t('form.shopCustomerPlaceholder') !== 'form.shopCustomerPlaceholder') ? t('form.shopCustomerPlaceholder') : '输入客户名称搜索';
+      input.placeholder = (t('form.shopCustomerPlaceholder') !== 'form.shopCustomerPlaceholder') ? t('form.shopCustomerPlaceholder') : t('form.option.selectPlatformFirst');
       shopEl.replaceWith(input);
     }
     input.disabled = false;
@@ -3570,7 +3570,7 @@ function attachShopAutocomplete(input, tr){
   };
   const render = (customers) => {
     if(!customers || !customers.length){
-      dd.innerHTML = '<div class="shop-ac-empty">' + ((t('form.shopCustomerNoMatch') !== 'form.shopCustomerNoMatch') ? t('form.shopCustomerNoMatch') : '无匹配客户') + '</div>';
+      dd.innerHTML = '<div class="shop-ac-empty">' + ((t('form.shopCustomerNoMatch') !== 'form.shopCustomerNoMatch') ? t('form.shopCustomerNoMatch') : 'No matching customer') + '</div>';
       showDropdown();
       return;
     }
@@ -3635,9 +3635,9 @@ async function _handleItemAttachmentUpload(tr, files) {
     const itemAtts = all.filter(a => (a.item_index === null && itemIdx === 0) || a.item_index === itemIdx);
     const cell = tr.querySelector('.atch-cell');
     cell.innerHTML = renderAttachmentChips(itemAtts, true);
-    toast('已上传 ' + files.length + ' 个附件', 'success');
+    toast(t('form.atch.uploaded').replace('{count}', files.length), 'success');
   } catch (e) {
-    toast('上传失败: ' + e.message, 'error');
+    toast(t('form.atch.uploadFailed').replace('{message}', e.message), 'error');
   }
 }
 
@@ -3786,7 +3786,7 @@ function renderFlowPreview(flow){
     const displayName = name || (n.approver_id ? '(' + n.approver_id + ')' : t('form.flow.notAssigned'));
     h += '<span class="afp-node' + (n.approver_id ? '' : ' missing') + '">';
     h += '<span class="afp-lvl">L' + (i + 1) + '</span>';
-    h += esc(n.title || (t('detail.label.level' + (i + 1)) || ('L' + (i + 1))));
+    h += esc(n.title || (t('detail.levelPrefix').replace('{level}', (i + 1)) || ('L' + (i + 1))));
     h += ' · <strong>' + esc(displayName) + '</strong>';
     h += '</span>';
   });
@@ -6845,7 +6845,7 @@ async function uploadRecordAttachments(recordId, itemIndex, files, onProgress) {
   });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error || '上传失败');
+    throw new Error(err.error || t('form.atch.uploadFailed').replace('{message}', ''));
   }
   return await resp.json();
 }
@@ -6866,14 +6866,14 @@ async function deleteAttachment(id) {
 
 function renderAttachmentChips(attachments, editable) {
   if (!attachments || attachments.length === 0) {
-    return '<span class="atch-empty">无附件</span>';
+    return '<span class="atch-empty">' + t('form.atch.noAttachment') + '</span>';
   }
   let h = '<div class="atch-list">';
   attachments.forEach(a => {
     const isImg = /\.(jpe?g|png|gif|webp|bmp)$/i.test(a.original_name);
     h += '<span class="atch-chip" onclick="previewAttachment(\'' + esc(a.id) + '\',\'' + esc(a.mime_type) + '\',\'' + esc(a.original_name) + '\',\'' + esc(a.path) + '\')" title="' + esc(a.original_name) + '">';
     h += (isImg ? '🖼️ ' : '📄 ') + '<span class="atch-chip-name">' + esc(a.original_name) + '</span>';
-    if (editable) h += '<span class="atch-chip-del" onclick="event.stopPropagation();handleDeleteAttachment(\'' + esc(a.id) + '\',this)" title="删除">×</span>';
+    if (editable) h += '<span class="atch-chip-del" onclick="event.stopPropagation();handleDeleteAttachment(\'' + esc(a.id) + '\',this)" title="' + t('form.atch.delete') + '">×</span>';
     h += '</span>';
   });
   h += '</div>';
@@ -6881,19 +6881,19 @@ function renderAttachmentChips(attachments, editable) {
 }
 
 async function handleDeleteAttachment(id, btnEl) {
-  if (!confirm('确定删除该附件？')) return;
+  if (!confirm(t('form.atch.confirmDelete'))) return;
   if (await deleteAttachment(id)) {
     const listEl = btnEl.closest('.atch-list') || btnEl.closest('[data-attach-list]');
     if (listEl) {
       btnEl.closest('.atch-chip').remove();
       if (listEl.children.length === 0 && listEl.parentElement) {
         const old = listEl.parentElement;
-        old.innerHTML = '<span class="atch-empty">无附件</span>';
+        old.innerHTML = '<span class="atch-empty">' + t('form.atch.noAttachment') + '</span>';
       }
     }
-    toast('已删除', 'success');
+    toast(t('form.atch.deleted'), 'success');
   } else {
-    toast('删除失败', 'error');
+    toast(t('form.atch.deleteFailed'), 'error');
   }
 }
 
@@ -6912,12 +6912,12 @@ function previewAttachment(id, mime, name, path) {
     const viewerUrl = /^https?:\/\//i.test(url) ? url : location.origin + url;
     body = '<iframe src="https://docs.google.com/gview?url=' + encodeURIComponent(viewerUrl) + '&embedded=true" title="' + esc(name) + '"></iframe>';
   } else {
-    body = '<div style="padding:40px;text-align:center"><p>该文件类型不支持在线预览</p><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:var(--primary);text-decoration:underline">下载文件</a></div>';
+    body = '<div style="padding:40px;text-align:center"><p>' + t('form.atch.unsupportedPreview') + '</p><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:var(--primary);text-decoration:underline">' + t('form.atch.downloadFile') + '</a></div>';
   }
   const ov = document.createElement('div');
   ov.className = 'atch-preview-overlay';
   ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
-  ov.innerHTML = '<div class="atch-preview-box"><div class="atch-preview-bar"><span>📎 ' + esc(name) + '</span><div><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:#333;text-decoration:underline;font-size:13px;margin-right:12px">下载</a><button onclick="this.closest(\'.atch-preview-overlay\').remove()">关闭</button></div></div><div class="atch-preview-content">' + body + '</div></div>';
+  ov.innerHTML = '<div class="atch-preview-box"><div class="atch-preview-bar"><span>📎 ' + esc(name) + '</span><div><a href="' + esc(url) + '" download="' + esc(name) + '" style="color:#333;text-decoration:underline;font-size:13px;margin-right:12px">' + t('form.atch.download') + '</a><button onclick="this.closest(\'.atch-preview-overlay\').remove()">' + t('form.atch.close') + '</button></div></div><div class="atch-preview-content">' + body + '</div></div>';
   document.body.appendChild(ov);
 }
 </script>

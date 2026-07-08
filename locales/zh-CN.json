@@ -298,8 +298,23 @@
       "singleHint": "已根据「审批流管理」配置自动应用以下流程"
     },
     "skuPlaceholder": "输入SKU…",
+    "snPlaceholder": "SN Code",
     "orderPlaceholder": "订单号",
     "descPlaceholder": "问题说明/备注",
+    "atch": {
+      "noAttachment": "无附件",
+      "upload": "上传",
+      "uploaded": "已上传 {count} 个附件",
+      "uploadFailed": "上传失败: {message}",
+      "confirmDelete": "确定删除该附件？",
+      "deleted": "已删除",
+      "deleteFailed": "删除失败",
+      "unsupportedPreview": "该文件类型不支持在线预览",
+      "downloadFile": "下载文件",
+      "download": "下载",
+      "delete": "删除",
+      "close": "关闭"
+    },
     "placeholder": {
       "feishuBound": "飞书绑定用户（不可修改）",
       "searchFeishu": "输入姓名/英文名/邮箱搜索飞书成员..."

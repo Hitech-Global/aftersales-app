@@ -298,8 +298,23 @@
       "singleHint": "Alur di bawah ini diterapkan secara otomatis berdasarkan Manajemen Alur Persetujuan."
     },
     "skuPlaceholder": "Masukkan SKU...",
+    "snPlaceholder": "SN Code",
     "orderPlaceholder": "No. Pesanan",
     "descPlaceholder": "Deskripsi Masalah / Catatan",
+    "atch": {
+      "noAttachment": "Tidak ada lampiran",
+      "upload": "Unggah",
+      "uploaded": "{count} lampiran diunggah",
+      "uploadFailed": "Unggah gagal: {message}",
+      "confirmDelete": "Hapus lampiran ini?",
+      "deleted": "Dihapus",
+      "deleteFailed": "Gagal menghapus",
+      "unsupportedPreview": "Jenis file ini tidak mendukung pratinjau online",
+      "downloadFile": "Unduh file",
+      "download": "Unduh",
+      "delete": "Hapus",
+      "close": "Tutup"
+    },
     "placeholder": {
       "feishuBound": "Pengguna terhubung Feishu (tidak dapat diubah)",
       "searchFeishu": "Cari anggota Feishu berdasarkan nama/nama Inggris/email..."
