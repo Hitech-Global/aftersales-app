@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.8.7"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.8.8"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -551,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.8.7 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.8.8 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1757,7 +1757,8 @@ const PROCESS_TYPE_TO_LEGACY_PENDING = {
   erp:'待ERP入库', color_box:'待换彩盒', parts:'待补配件', rma:'待RMA', scrap:'待报废'
 };
 const RETURN_REASON_TO_PROCESS_TYPE = {
-  '可二次销售':'erp', '彩盒损坏':'color_box', '配件缺失':'parts', '硬件故障':'rma', '报废':'scrap'
+  '可二次销售':'erp', '彩盒损坏':'color_box', '配件缺失':'parts', '硬件故障':'rma', '报废':'scrap',
+  '人为损坏':'erp', '其他':'erp', '功能异常':'erp'
 };
 function normalizeProcessItem(item){
   if(!item) return item;
@@ -3279,6 +3280,15 @@ function openRecordForm(){
     populateApproverSelects()
   ]).finally(() => {
     refreshPlatformSelects();
+    // 字典加载完成后刷新已渲染行的退货原因下拉（resetForm 时 RETURN_REASONS 还是默认值）
+    document.querySelectorAll('#detail-items-tbody select.type-select').forEach(sel => {
+      const cur = sel.value;
+      let h = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+      RETURN_REASONS.forEach(r => {
+        h += '<option value="' + esc(r) + '"' + (cur === r ? ' selected' : '') + '>' + esc(tReturnReason(r)) + '</option>';
+      });
+      sel.innerHTML = h;
+    });
   });
 }
 
@@ -3346,13 +3356,14 @@ const PROCESS_STATUS_KEY_MAP = {
 function tProcessStatus(zh){ return t(PROCESS_STATUS_KEY_MAP[zh] || zh); }
 const RETURN_REASON_KEY_MAP = {
   '可二次销售':'returnReason.resaleable','彩盒损坏':'returnReason.colorBoxDamage','配件缺失':'returnReason.missingParts',
-  '硬件故障':'returnReason.hardwareFault','报废':'returnReason.scrap'
+  '硬件故障':'returnReason.hardwareFault','报废':'returnReason.scrap','人为损坏':'returnReason.humanDamage',
+  '其他':'returnReason.other','功能异常':'returnReason.functionDefect'
 };
 function tReturnReason(zh){ return t(RETURN_REASON_KEY_MAP[zh] || zh); }
-const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废'};
+const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废','人为损坏':'待ERP入库','其他':'待ERP入库','功能异常':'待ERP入库'};
 const RETURN_REASON_LOCALE_FALLBACKS={
-  'en-US':{'可二次销售':'Resellable','彩盒损坏':'Damaged Color Box','配件缺失':'Missing Parts','硬件故障':'Hardware Issue','报废':'Scrap'},
-  'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap'}
+  'en-US':{'可二次销售':'Resellable','彩盒损坏':'Damaged Color Box','配件缺失':'Missing Parts','硬件故障':'Hardware Issue','报废':'Scrap','人为损坏':'Human Damage','其他':'Other','功能异常':'Functional Defect'},
+  'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap','人为损坏':'Kerusakan Manusia','其他':'Lainnya','功能异常':'Gangguan Fungsi'}
 };
 
 // 下拉框获得焦点时自动将所在行滚到可视区上方,确保原生弹窗有足够展开空间(不被底部固定栏遮挡)

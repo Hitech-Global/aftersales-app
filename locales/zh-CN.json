@@ -311,7 +311,10 @@
     "colorBoxDamage": "彩盒损坏",
     "missingParts": "配件缺失",
     "hardwareFault": "硬件故障",
-    "scrap": "报废"
+    "scrap": "报废",
+    "humanDamage": "人为损坏",
+    "other": "其他",
+    "functionDefect": "功能异常"
   },
   "detail": {
     "btnBack": "返回列表",

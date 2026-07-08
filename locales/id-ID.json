@@ -311,7 +311,10 @@
     "colorBoxDamage": "Box Rusak",
     "missingParts": "Aksesori Tidak Lengkap",
     "hardwareFault": "Masalah Hardware",
-    "scrap": "Scrap"
+    "scrap": "Scrap",
+    "humanDamage": "Kerusakan Manusia",
+    "other": "Lainnya",
+    "functionDefect": "Gangguan Fungsi"
   },
   "detail": {
     "btnBack": "Kembali ke Daftar",

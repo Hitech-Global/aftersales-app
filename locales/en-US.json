@@ -311,7 +311,10 @@
     "colorBoxDamage": "Damaged Color Box",
     "missingParts": "Missing Parts",
     "hardwareFault": "Hardware Issue",
-    "scrap": "Scrap"
+    "scrap": "Scrap",
+    "humanDamage": "Human Damage",
+    "other": "Other",
+    "functionDefect": "Functional Defect"
   },
   "detail": {
     "btnBack": "Back to List",
