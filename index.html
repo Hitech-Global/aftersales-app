@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.1"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.2"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -349,7 +349,7 @@ select option{background:var(--card-bg);color:var(--text)}
 .detail-items-table .qty-input{text-align:center}
 .detail-items-table .btn-delete-row{background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:4px 6px;line-height:1;border-radius:4px}
 /* ===== 新建售后记录 - 主内容区全屏弹窗(不覆盖左侧导航栏,覆盖右侧整个内容区) ===== */
-.record-fs-overlay{position:fixed;top:0;right:0;bottom:0;left:220px;background:var(--bg);z-index:200;display:flex;flex-direction:column;overflow:hidden}
+.record-fs-overlay{position:fixed;top:56px;right:0;bottom:0;left:220px;background:var(--bg);z-index:200;display:flex;flex-direction:column;overflow:hidden}
 .record-fs-overlay.hidden{display:none}
 .record-fs-panel{display:flex;flex-direction:column;width:100%;height:100%;background:var(--card-bg)}
 .record-fs-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)}
@@ -551,7 +551,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">&#x1F4CB;</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.9.1 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.9.2 Render Latest &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2474,6 +2474,7 @@ function setSidebarActive(page){
 
 // ==================== PAGE ROUTING ====================
 function showPage(page, recordId=null){
+  closeRecordForm();
   if(!canAccessPage(page)){
     showFlash(t('flash.noPagePermission'),'danger');
     const fallback=getDefaultAccessiblePage();
