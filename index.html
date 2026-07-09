@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.15"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.16"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -2634,8 +2634,7 @@ async function renderOverview(){
     const completedCount=allItems.filter(x=>itemProcessProgress(x.item)==='completed').length;
 
     if(ovEl){
-      ovEl.innerHTML='<div style="color:#e11d48;font-weight:bold">TEST-售后概览已渲染</div>'
-        + ovCard(todayCount, t('overview.card.today'), '&#x1F4C5;')
+      ovEl.innerHTML=ovCard(todayCount, t('overview.card.today'), '&#x1F4C5;')
         + ovCardClick(pendingApprovalCount, t('overview.card.pendingApproval'), '&#x2705;', 'pendingApproval')
         + ovCardClick(pendingProcessCount, t('overview.card.pendingProcess'), '&#x23F3;', 'pendingProcess')
         + ovCard(completedCount, t('overview.card.completed'), '&#x2705;');
