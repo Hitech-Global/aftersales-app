@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.13"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.14"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -1222,7 +1222,17 @@ function refreshApprovalStatuses() {
   // 保持内部值为中文不变，仅提供显示层翻译映射
 }
 const APPROVAL_STATUS_KEY_MAP = {
-  '草稿':'status.draft','审批通过':'status.approved','审批拒绝':'status.rejected'
+  '草稿':'status.draft',
+  '待一级审批':'status.pendingLevel1',
+  '一级审批通过':'status.level1Approved',
+  '待二级审批':'status.pendingLevel2',
+  '二级审批通过':'status.level2Approved',
+  '待三级审批':'status.pendingLevel3',
+  '三级审批通过':'status.level3Approved',
+  '审批通过':'status.approved',
+  '审批拒绝':'status.rejected',
+  '已完成':'status.completed',
+  '已驳回':'status.rejected'
 };
 function tApprovalStatus(zh){ return t(APPROVAL_STATUS_KEY_MAP[zh] || zh); }
 const _PERM_CONFIG = [
@@ -1567,8 +1577,15 @@ async function saveRecordAsync(record) {
       headers: getAuthHeaders(),
       body: JSON.stringify(record)
     });
-    if (resp.status === 404) {
-      await fetch('/api/records', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(record) });
+    if (!resp.ok) {
+      if (resp.status === 404) {
+        const createResp = await fetch('/api/records', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(record) });
+        if (!createResp.ok) {
+          throw new Error(`创建记录失败 (${createResp.status}): ${await createResp.text()}`);
+        }
+        return;
+      }
+      throw new Error(`保存记录失败 (${resp.status}): ${await resp.text()}`);
     }
     return;
   }
@@ -2888,7 +2905,7 @@ async function renderList(){
         html+=`<tr>
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
-          <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
+          <td><span class="status-badge">${r.status || r.approval_status || r.approvalStatus || 'Pending Approval'}</span></td>
           <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
           <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
@@ -2925,7 +2942,7 @@ async function renderList(){
       const canEdit = hasPermission('record_edit') && r.status==='草稿';
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
-        <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
+        <td><span class="status-badge">${r.status || r.approval_status || r.approvalStatus || 'Pending Approval'}</span></td>
         <td>${psCell}</td>
         <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||r.platform||'-')}</td>
@@ -4174,8 +4191,10 @@ async function submitForApproval(e){
   });
   await saveRecordsAsync(records);
   showFlash(t('flash.approvalSubmitted') + t('approval.level' + firstLevel) + t('flash.approval'),'success');
-  // 发送飞书审批通知
-  await sendApprovalNotification(record);
+  // 发送飞书审批通知（非阻塞，不拖慢提交响应）
+  sendApprovalNotification(record).catch(err => {
+    console.warn('[Notify] 提交审批通知发送失败（不影响提交结果）:', err?.message || err);
+  });
   closeRecordForm();
   renderList();
 }
@@ -4353,10 +4372,18 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
   }
 
   record.updated_at=now;
-  await saveRecordsAsync(records);
-  // 如果审批通过且流转到下一级，发送飞书通知给下一级审批人
+  try {
+    await saveRecordAsync(record);
+  } catch(e) {
+    console.error('审批保存失败:', e);
+    showFlash(t('flash.saveFailed'), 'danger');
+    return false;
+  }
+  // 如果审批通过且流转到下一级，发送飞书通知给下一级审批人（非阻塞，不拖慢审批响应）
   if(action==='approve'&&record.current_approval_level>0){
-    await sendApprovalNotification(record);
+    sendApprovalNotification(record).catch(err => {
+      console.warn('[Notify] 审批通知发送失败（不影响审批结果）:', err?.message || err);
+    });
   }
   return true;
 }
@@ -4556,7 +4583,13 @@ function closeApprovalModal(){
 }
 
 async function doApproval(action, source='modal'){
+  // 防止重复提交：审批过程中禁用按钮
   const prefix=source==='detail'?'detail-appr':'appr';
+  const approveBtn = document.querySelector(`button[onclick="doApproval('approve','${source}')"]`);
+  const rejectBtn = document.querySelector(`button[onclick="doApproval('reject','${source}')"]`);
+  if(approveBtn){ approveBtn.disabled=true; approveBtn.dataset.originalText=approveBtn.textContent; approveBtn.textContent='...'; }
+  if(rejectBtn){ rejectBtn.disabled=true; }
+
   approvalAttachmentTarget=source;
   const commentEl=document.getElementById(prefix+'-comment');
   const returnDateEl=document.getElementById(prefix+'-return-date');
@@ -4566,7 +4599,12 @@ async function doApproval(action, source='modal'){
   const pendingErpQty=pendingErpQuantity(recordForValidation);
   const willFinishApproval=action==='approve'&&recordForValidation&&findNextApprovalLevel(recordForValidation, recordForValidation.current_approval_level)===0;
   const returnDate=returnDateEl ? normalizeDateInput(returnDateEl) : '';
-  if(willFinishApproval&&pendingErpQty>0 && !returnDate) return showFlash(t('validation.enterReturnDate'),'warning');
+  if(willFinishApproval&&pendingErpQty>0 && !returnDate){
+    // 恢复按钮状态
+    if(approveBtn){ approveBtn.disabled=false; approveBtn.textContent=approveBtn.dataset.originalText||'审批通过'; }
+    if(rejectBtn){ rejectBtn.disabled=false; }
+    return showFlash(t('validation.enterReturnDate'),'warning');
+  }
   // Save pending ERP screenshots before approval
   if(Object.keys(pendingErpScreenshots).length>0){
     const records=recordsForValidation;
@@ -4588,9 +4626,18 @@ async function doApproval(action, source='modal'){
       pendingAttachments=[];
       pendingErpScreenshots={};
     }
+    // 强制清除缓存，确保重新渲染时拉取最新数据（包含刚完成的审批结果）
+    _recordsCache=null;
+    _cacheTimestamp=0;
     renderApproval();
     if(document.getElementById('page-list').classList.contains('active')) renderList();
-    if(document.getElementById('page-detail').classList.contains('active')&&currentDetailId===currentApprovalRecordId) renderDetail(currentDetailId);
+    if(document.getElementById('page-detail').classList.contains('active')&&currentDetailId===currentApprovalRecordId){
+      await renderDetail(currentDetailId);
+    }
+  }else{
+    // 审批失败，恢复按钮状态
+    if(approveBtn){ approveBtn.disabled=false; approveBtn.textContent=approveBtn.dataset.originalText||'审批通过'; }
+    if(rejectBtn){ rejectBtn.disabled=false; }
   }
 }
 

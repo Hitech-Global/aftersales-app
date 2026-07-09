@@ -224,7 +224,9 @@
     "pendingLevel2": "Pending Level 2 Approval",
     "level2Approved": "Level 2 Approved",
     "pendingLevel3": "Pending Level 3 Approval",
+    "level3Approved": "Level 3 Approved",
     "approved": "Approved",
+    "completed": "Completed",
     "rejected": "Rejected"
   },
   "process": {
