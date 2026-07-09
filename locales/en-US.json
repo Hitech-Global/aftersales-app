@@ -105,7 +105,9 @@
       "monthCount": "This Month RMA",
       "avgHandleDays": "Avg. Handling Time",
       "today": "Today's RMA",
-      "completed": "Completed"
+      "completed": "Completed",
+      "pendingApproval": "Pending Approval",
+      "pendingProcess": "Pending Processing"
     },
     "metric": {
       "avgDays": "Avg. Processing Days",

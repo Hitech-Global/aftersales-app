@@ -105,7 +105,9 @@
       "monthCount": "本月售后数",
       "avgHandleDays": "平均处理时长",
       "today": "今日售后",
-      "completed": "已完成"
+      "completed": "已完成",
+      "pendingApproval": "待审批",
+      "pendingProcess": "待处理"
     },
     "metric": {
       "avgDays": "平均处理天数",

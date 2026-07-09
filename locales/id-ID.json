@@ -105,7 +105,9 @@
       "monthCount": "RMA Bulan Ini",
       "avgHandleDays": "Rata-rata Waktu Proses",
       "today": "RMA Hari Ini",
-      "completed": "Selesai"
+      "completed": "Selesai",
+      "pendingApproval": "Menunggu Persetujuan",
+      "pendingProcess": "Menunggu Diproses"
     },
     "metric": {
       "avgDays": "Rata-rata Hari Proses",
