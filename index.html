@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.5"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.6"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -622,15 +622,16 @@ select option{background:var(--card-bg);color:var(--text)}
 .table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.26)}
 
 /* ===== Overview v2 (systematic layout) ===== */
-.ov-filter-card{padding:14px 18px;margin-bottom:14px}
+.ov-filter-card{padding:12px 18px;margin-bottom:12px}
 .ov-filter-card .ov-filter-bar{background:none;box-shadow:none;padding:0;margin:0;gap:10px;align-items:flex-end}
 .ov-filter-card .ov-filter-group label{margin-bottom:0;font-size:12px}
 .ov-filter-card .date-input,.ov-filter-card .filter-select{padding:7px 12px;height:36px;font-size:13px}
 .ov-filter-card .btn{padding:7px 16px;font-size:13px;height:36px}
-.ov-data-asof{margin-top:8px;font-size:11px;color:var(--text-muted)}
-.ov-section{margin-bottom:18px}
+.ov-data-asof{margin-top:6px;font-size:11px;color:var(--text-muted)}
+.ov-section{padding:18px 20px;margin-bottom:18px}
 .ov-section-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.ov-section-title{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.ov-section-head .ov-section-title{margin:0}
+.ov-section-title{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.01em;margin:0 0 14px}
 .ov-grid-2{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-bottom:18px}
 .ov-grid-2.even{grid-template-columns:1fr 1fr}
 .ov-grid-2>.card{margin-bottom:0}
@@ -768,7 +769,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.5 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.6 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2785,6 +2786,7 @@ document.addEventListener('click', function(e){
 function renderSidebar(){
   const prevActive=document.querySelector('.sidebar-item.active')?.dataset.page;
   const nav=document.getElementById('sidebar-nav');
+  nav.innerHTML=''; // 先清空，杜绝任何来源（缓存/重复调用）导致的重复渲染
   const ICON={
     overview:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>',
     list:'<svg class="line-icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
@@ -2834,6 +2836,12 @@ function renderSidebar(){
     });
   });
   nav.innerHTML=html;
+  // DOM 级二次去重：无论渲染来源如何，确保每个菜单项（data-page）在 DOM 中只出现一次
+  const seenPages={};
+  nav.querySelectorAll('.sidebar-item').forEach(el=>{
+    const p=el.dataset.page;
+    if(seenPages[p]) el.remove(); else seenPages[p]=true;
+  });
   if(prevActive) setSidebarActive(prevActive);
 }
 
@@ -3202,7 +3210,7 @@ function renderReasonTop5Chart(data){
   if(data.length===0){renderChartEmpty('chart-reason-top5-wrapper');return;}
   chartReasonTop5=new Chart(ctx,{
     type:'bar',
-    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#5cb87f','#e0a13c','#5b9bd5','#d98b8b','#a987c9'],borderRadius:5,maxBarThickness:18,barPercentage:.6,categoryPercentage:.7}]},
+    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#5cb87f','#e0a13c','#5b9bd5','#d98b8b','#a987c9'],borderRadius:5,maxBarThickness:46,barPercentage:.55,categoryPercentage:.7}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:'rgba(0,0,0,.05)'}}}}
   });
 }
