@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.13"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.0"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -111,7 +111,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .btn-danger{background:var(--danger);color:#fff}
 .btn-danger:hover{background:#e02b22}
 .btn-search{background:var(--primary);color:#fff;border:none}
-.btn-clear{background:none;color:var(--text-muted);border-color:var(--border)}
+.btn-clear{background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--border)}
 .btn-sm{padding:6px 12px;font-size:13px}
 .btn-lg{padding:12px 28px;font-size:16px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -202,6 +202,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary);background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow)}
 .empty-icon{font-size:48px;margin-bottom:12px}
 .page-info{margin-top:16px;font-size:13px;color:var(--text-muted)}
+
+/* ===== RMA Cases 列表页重构 (v3.11.0) ===== */
+.page-header .ph-left{display:flex;flex-direction:column;gap:4px}
+.page-header .ph-subtitle{margin:0;font-size:13px;color:var(--text-muted);font-weight:400}
+
+/* 状态快捷筛选栏 */
+.quick-filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.qf-pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;border:1px solid var(--border);background:var(--card-bg);cursor:pointer;font-size:13px;color:var(--text-secondary);transition:all .18s;font-family:inherit}
+.qf-pill:hover{border-color:var(--primary);color:var(--text)}
+.qf-pill .qf-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--bg);font-size:12px;font-weight:600;color:var(--text-muted)}
+.qf-pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.qf-pill.active .qf-count{background:rgba(255,255,255,.22);color:#fff}
+.qf-pill.alert:not(.muted) .qf-count{background:rgba(46,157,82,.12);color:var(--primary)}
+.qf-pill.alert.active .qf-count{background:rgba(255,255,255,.22);color:#fff}
+.qf-pill.muted{opacity:.5}
+.qf-pill.muted .qf-count{background:var(--bg)}
+
+/* 两行筛选卡片 */
+.filter-bar{padding:16px 20px}
+.filter-bar .filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.filter-bar .filter-row-2{margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light)}
+.filter-bar .filter-group{min-width:140px}
+.filter-bar .filter-kw{flex:2 1 280px;min-width:240px}
+.filter-bar .filter-actions{margin-left:auto}
+
+/* 表格可读性 */
+.table-container{border:1px solid var(--border-light);border-radius:var(--radius-card)}
+.table-container::-webkit-scrollbar{height:8px;width:8px}
+.table-container::-webkit-scrollbar-track{background:transparent}
+.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.24)}
+.data-table th,.data-table td{padding:15px 16px}
+.data-table thead th{position:sticky;top:0;z-index:1}
+/* 操作列粘性右固定 */
+.data-table th.col-actions-head,.data-table td.cell-actions{position:sticky;right:0;text-align:center;z-index:2}
+.data-table thead th.col-actions-head{background:#fbfbfd;z-index:3}
+.data-table td.cell-actions{background:var(--card-bg);box-shadow:inset 1px 0 0 var(--border-light)}
+.data-table tbody tr:hover td.cell-actions{background:#f7f7f9}
+.data-table tbody tr.row-clickable:hover td.cell-actions{background:#f0f4fb}
+.cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sku-more{color:var(--text-muted);font-size:12px}
+
+/* 风险标签 */
+.risk-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.risk-overdue{background:#fde8e8;color:#c62828}
+.risk-pending{background:#fff3e0;color:#e65100}
+.risk-ok{background:#eef3ee;color:var(--text-muted)}
+
+/* 空状态去 emoji（改用线性图标） */
+.empty-icon{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.empty-icon svg{width:46px;height:46px;stroke:var(--text-muted);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
 .form-container{max-width:800px}
 .record-form{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
@@ -767,7 +818,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.13 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.0 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -866,13 +917,17 @@ select option{background:var(--card-bg);color:var(--text)}
         <!-- 售后列表 -->
         <div id="page-list" class="page">
           <div class="page-header">
-            <h2 data-i18n="list.title"></h2>
-            <div style="display:flex;gap:10px;align-items:center">
+            <div class="ph-left">
+              <h2 data-i18n="list.title"></h2>
+              <p class="ph-subtitle" data-i18n="list.subtitle"></p>
+            </div>
+            <div class="ph-right">
               <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()" data-i18n="list.btnExport"></button>
             </div>
           </div>
+          <div class="quick-filter-bar" id="quick-filter-bar"></div>
           <div class="filter-bar">
-            <div class="filter-form">
+            <div class="filter-row filter-row-1">
               <div class="filter-group">
                 <label data-i18n="list.filter.brand"></label>
                 <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allBrands"></option></select>
@@ -901,6 +956,8 @@ select option{background:var(--card-bg);color:var(--text)}
                   <option value="overdue" data-i18n="list.filter.riskOverdue"></option>
                 </select>
               </div>
+            </div>
+            <div class="filter-row filter-row-2">
               <div class="filter-group date-filter">
                 <label data-i18n="list.filter.startDate"></label>
                 <input type="text" class="date-input" id="list-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
@@ -909,7 +966,7 @@ select option{background:var(--card-bg);color:var(--text)}
                 <label data-i18n="list.filter.endDate"></label>
                 <input type="text" class="date-input" id="list-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderList()" onchange="normalizeDateInput(this);renderList()">
               </div>
-              <div class="filter-group" style="flex:2">
+              <div class="filter-group filter-kw">
                 <label data-i18n="list.filter.keyword"></label>
                 <input type="text" class="search-input" id="search-input" data-i18n-placeholder="list.filter.keywordPlaceholder" oninput="renderList()">
               </div>
@@ -931,7 +988,7 @@ select option{background:var(--card-bg);color:var(--text)}
               </div>
               <div class="table-section-actions" id="list-actions">
                 <button class="btn btn-primary" id="btn-new-record-table" onclick="openRecordForm()" data-i18n="list.btnManual"></button>
-                <button class="btn btn-success" id="btn-import-records" onclick="openImportDialog()" data-i18n="list.btnBatchImport"></button>
+                <button class="btn btn-secondary" id="btn-import-records" onclick="openImportDialog()" data-i18n="list.btnBatchImport"></button>
               </div>
             </div>
             <div class="batch-bar" id="batch-bar">
@@ -2715,7 +2772,9 @@ const ICON_ACTION={
   del:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>',
   bell:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 7 2 7H4s2-2 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
   doc:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>',
-  more:'<svg class="line-icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>'
+  more:'<svg class="line-icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
+  check:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+  process:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>'
 };
 const ICON_HEALTH={
   good:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>',
@@ -3361,6 +3420,84 @@ function updateProcessProgressFilter(){
 let listMode='record';
 let pendingListPreset=null;
 let _renderListSeq=0;
+let quickFilter=''; // 状态快捷筛选: ''=全部, pendingApproval/pendingProcessing/pendingRma/overdue/completed
+
+// ===== 列表页快捷筛选与风险/截断辅助 =====
+function isFullyCompleted(r){
+  const items=r.items||[];
+  if(items.length===0) return false;
+  const apprOk = ['审批通过','已完成'].includes(r.status) || tApprovalStatus(r.status||'')==='completed';
+  const procOk = items.every(it=>itemProcessProgress(it)==='completed');
+  return apprOk && procOk;
+}
+function matchQuickFilter(r, key){
+  if(!key || key==='all') return true;
+  const items=r.items||[];
+  switch(key){
+    case 'pendingApproval': return isPendingApproval(r);
+    case 'pendingProcessing': return items.some(it=>isPendingProcessItem(it));
+    case 'pendingRma': return items.some(it=>isPendingRmaItem(it));
+    case 'overdue': return items.some(it=>isOverdueItem(it,r));
+    case 'completed': return isFullyCompleted(r);
+  }
+  return true;
+}
+function computeQuickCounts(list){
+  const c={all:list.length,pendingApproval:0,pendingProcessing:0,pendingRma:0,overdue:0,completed:0};
+  for(const r of list){
+    const items=r.items||[];
+    if(isPendingApproval(r)) c.pendingApproval++;
+    if(items.some(it=>isPendingProcessItem(it))) c.pendingProcessing++;
+    if(items.some(it=>isPendingRmaItem(it))) c.pendingRma++;
+    if(items.some(it=>isOverdueItem(it,r))) c.overdue++;
+    if(isFullyCompleted(r)) c.completed++;
+  }
+  return c;
+}
+function setQuickFilter(key){ quickFilter = (key==='all')?'':key; renderList(); }
+function renderQuickFilterBar(counts){
+  const bar=document.getElementById('quick-filter-bar');
+  if(!bar) return;
+  const defs=[
+    {key:'all',label:t('list.quickFilter.all'),alert:false},
+    {key:'pendingApproval',label:t('list.quickFilter.pendingApproval'),alert:true},
+    {key:'pendingProcessing',label:t('list.quickFilter.pendingProcessing'),alert:true},
+    {key:'pendingRma',label:t('list.quickFilter.pendingRma'),alert:true},
+    {key:'overdue',label:t('list.quickFilter.overdue'),alert:true},
+    {key:'completed',label:t('list.quickFilter.completed'),alert:false}
+  ];
+  bar.innerHTML=defs.map(d=>{
+    const cnt=counts[d.key]||0;
+    const active=(quickFilter||'all')===d.key;
+    const muted=cnt===0?'muted':'';
+    const alert=d.alert?'alert':'';
+    return `<button class="qf-pill ${active?'active':''} ${muted} ${alert}" onclick="setQuickFilter('${d.key}')"><span class="qf-label">${esc(d.label)}</span><span class="qf-count">${cnt}</span></button>`;
+  }).join('');
+}
+// SKU / Order No. 截断：最多显示 max 个，超出显示 +N more
+function formatSkuList(items, max){
+  max = max || 2;
+  const skus=items.map(it=>it.sku_code).filter(Boolean);
+  if(skus.length===0) return '-';
+  const shown=skus.slice(0,max);
+  const more=skus.length-shown.length;
+  return esc(shown.join(', ')) + (more>0?` <span class="sku-more">+${more} more</span>`:'');
+}
+function formatOrderList(items, max){
+  max = max || 1;
+  const orders=items.map(it=>it.order_no).filter(Boolean);
+  if(orders.length===0) return '-';
+  const shown=orders.slice(0,max);
+  const more=orders.length-shown.length;
+  return esc(shown.join(', ')) + (more>0?` <span class="sku-more">+${more}</span>`:'');
+}
+// 风险标签：items 中任一超期→Overdue；否则任一待处理→Pending；否则 Done
+function renderRiskBadge(items, r){
+  const arr=items||[];
+  if(arr.some(it=>isOverdueItem(it,r))) return `<span class="risk-pill risk-overdue">${esc(t('list.riskPill.overdue'))}</span>`;
+  if(arr.some(it=>isPendingProcessItem(it))) return `<span class="risk-pill risk-pending">${esc(t('list.riskPill.pending'))}</span>`;
+  return `<span class="risk-pill risk-ok">${esc(t('list.riskPill.ok'))}</span>`;
+}
 
 function switchListMode(mode){
   listMode=mode;
@@ -3437,6 +3574,10 @@ async function renderList(){
       (r.submitter_name||'').toLowerCase().includes(search)||
       (String(r.id)).includes(search);
   });
+  // 状态快捷筛选：先基于其他筛选项统计各状态数量，再应用快捷筛选
+  renderQuickFilterBar(computeQuickCounts(filtered));
+  if(quickFilter) filtered=filtered.filter(r=>matchQuickFilter(r, quickFilter));
+
   filtered.sort((a,b)=>new Date(b.created_at)-(new Date(a.created_at)));
 
   const total=filtered.length;
@@ -3445,7 +3586,7 @@ async function renderList(){
   const area=document.getElementById('table-area');
 
   if(pageRecords.length===0){
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${records.length===0?t('list.empty.noRecords'):t('list.empty.noMatch')}</p>${records.length===0&&hasPermission('record_create')?`<button class="btn btn-primary" onclick="openRecordForm()">${t('list.empty.createFirst')}</button>`:''}</div>`;
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg></div><p>${records.length===0?t('list.empty.noRecords'):t('list.empty.noMatch')}</p>${records.length===0&&hasPermission('record_create')?`<button class="btn btn-primary" onclick="openRecordForm()">${t('list.empty.createFirst')}</button>`:''}</div>`;
     renderListPagination(total);
     return;
   }
@@ -3454,29 +3595,51 @@ async function renderList(){
     // ===== 按售后明细模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
-      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processType')}</th><th>${t('list.col.processProgress')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.shopCustomer')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.snCode')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.actions')}</th>
+      <th>${t('list.col.id')}</th>
+      <th>${t('list.col.date')}</th>
+      <th>${t('list.col.platform')}</th>
+      <th>${t('list.col.shopCustomer')}</th>
+      <th>${t('list.col.approvalStatus')}</th>
+      <th>${t('list.col.processType')}</th>
+      <th>${t('list.col.processProgress')}</th>
+      <th>${t('list.col.risk')}</th>
+      <th>${t('list.col.returnReason')}</th>
+      <th>${t('list.col.sku')}</th>
+      <th>${t('list.col.snCode')}</th>
+      <th>${t('list.col.orderNo')}</th>
+      <th>${t('list.col.qty')}</th>
+      <th>${t('list.col.description')}</th>
+      <th>${t('list.col.submitter')}</th>
+      <th class="col-actions-head">${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
         const showItem=(!progressFilter||itemProcessProgress(it)===progressFilter);
         if(!showItem) return;
+        const canApprove = canApproveRecord(r);
+        const canProcess = r.status==='审批通过' && isPendingProcessItem(it) && hasPermission('record_edit');
         html+=`<tr>
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
-          <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
-          <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
-          <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
           <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
+          <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
+          <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
+          <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
+          <td>${renderRiskBadge([it], r)}</td>
           <td>${esc(it.return_reason?displayReturnReason(it.return_reason):'-')}</td>
-          <td>${esc(it.sku_code||'-')}</td>
+          <td class="cell-sku">${esc(it.sku_code||'-')}</td>
           <td>${esc(it.sn_code||'-')}</td>
-          <td>${esc(it.order_no||'-')}</td>
+          <td class="cell-order">${esc(it.order_no||'-')}</td>
           <td>${it.quantity||0}</td>
           <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
           <td>${esc(r.submitter_name||'-')}</td>
-          <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id))+'-'+idx, [{text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`}])}</td>
+          <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id))+'-'+idx, [
+            {text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`},
+            ...(canApprove?[{text:t('list.action.approve'),icon:ICON_ACTION.check,onclick:`openLegacyApprovalModal('${escAttr(String(r.id))}')`}]:[]),
+            ...(canProcess?[{text:t('list.action.process'),icon:ICON_ACTION.process,onclick:`openApprovalModal('${escAttr(String(r.id))}')`}]:[])
+          ])}</td>
         </tr>`;
       });
     });
@@ -3485,29 +3648,48 @@ async function renderList(){
   } else {
     // ===== 按售后单模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
-      <th>${t('list.col.id')}</th><th>${t('list.col.approvalStatus')}</th><th>${t('list.col.processStatus')}</th><th>${t('list.col.date')}</th><th>${t('list.col.platform')}</th><th>${t('list.col.shopCustomer')}</th><th>${t('list.col.returnReason')}</th><th>${t('list.col.sku')}</th><th>${t('list.col.orderNo')}</th><th>${t('list.col.qty')}</th><th>${t('list.col.description')}</th><th>${t('list.col.submitter')}</th><th>${t('list.col.updatedAt')}</th><th>${t('list.col.actions')}</th>
+      <th>${t('list.col.id')}</th>
+      <th>${t('list.col.date')}</th>
+      <th>${t('list.col.platform')}</th>
+      <th>${t('list.col.shopCustomer')}</th>
+      <th>${t('list.col.approvalStatus')}</th>
+      <th>${t('list.col.processStatus')}</th>
+      <th>${t('list.col.risk')}</th>
+      <th>${t('list.col.returnReason')}</th>
+      <th>${t('list.col.sku')}</th>
+      <th>${t('list.col.orderNo')}</th>
+      <th>${t('list.col.qty')}</th>
+      <th>${t('list.col.description')}</th>
+      <th>${t('list.col.submitter')}</th>
+      <th>${t('list.col.updatedAt')}</th>
+      <th class="col-actions-head">${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>getPlatformLabel(it.platform)).filter(Boolean))];
       const shopCustomers=[...new Set(items.map(it=>getShopCustomerLabel(it.shop_customer)).filter(Boolean))];
       const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].map(rr=>displayReturnReason(rr)).join(', ');
-      const skus=items.map(it=>it.sku_code).filter(Boolean).join(', ');
-      const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
+      const skus=items.map(it=>it.sku_code).filter(Boolean);
+      const orders=items.map(it=>it.order_no).filter(Boolean);
+      const fullSkus=skus.join(', ');
+      const fullOrders=orders.join(', ');
       const faultDescs=items.map(it=>(it.fault_description||'').substring(0,30)).join('; ');
       const totalQty=r.total_quantity||items.reduce((s,it)=>s+(it.quantity||0),0);
       const psCell=getRecordProcessSummary(items);
       const canEdit = hasPermission('record_edit') && r.status==='草稿';
+      const canApprove = canApproveRecord(r);
+      const canProcess = r.status==='审批通过' && items.some(it=>isPendingProcessItem(it)) && hasPermission('record_edit');
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
-        <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
-        <td>${psCell}</td>
         <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
         <td>${esc(shopCustomers.join(',')||'-')}</td>
+        <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
+        <td>${psCell}</td>
+        <td>${renderRiskBadge(items, r)}</td>
         <td>${returnReasons||'-'}</td>
-        <td class="cell-desc" title="${esc(skus)}">${esc(skus||'-')}</td>
-        <td class="cell-desc" title="${esc(orders)}">${esc(orders||'-')}</td>
+        <td class="cell-sku" title="${esc(fullSkus)}">${formatSkuList(items, 2)}</td>
+        <td class="cell-order" title="${esc(fullOrders)}">${formatOrderList(items, 1)}</td>
         <td>${totalQty}</td>
         <td class="cell-desc" title="${esc(faultDescs)}">${esc(faultDescs||'-').substring(0,25)}${faultDescs.length>25?'...':''}</td>
         <td>${esc(r.submitter_name||'-')}</td>
@@ -3515,7 +3697,9 @@ async function renderList(){
         <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id)), [
           {text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`},
           ...(canEdit?[{text:t('list.action.edit'),icon:ICON_ACTION.edit,onclick:`editRecord('${escAttr(String(r.id))}')`}]:[]),
-          ...(hasPermission('record_delete')?[{text:t('list.action.delete'),icon:ICON_ACTION.del,onclick:`deleteRecord('${escAttr(String(r.id))}')`,danger:true}]:[])
+          ...(hasPermission('record_delete')?[{text:t('list.action.delete'),icon:ICON_ACTION.del,onclick:`deleteRecord('${escAttr(String(r.id))}')`,danger:true}]:[]),
+          ...(canApprove?[{text:t('list.action.approve'),icon:ICON_ACTION.check,onclick:`openLegacyApprovalModal('${escAttr(String(r.id))}')`}]:[]),
+          ...(canProcess?[{text:t('list.action.process'),icon:ICON_ACTION.process,onclick:`openApprovalModal('${escAttr(String(r.id))}')`}]:[])
         ])}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -3700,6 +3884,7 @@ function clearListFilter(){
   document.getElementById('brand-filter').value='';
   setDateInputValue('list-start-date','');
   setDateInputValue('list-end-date','');
+  quickFilter='';
   listPage=1; renderList();
 }
 

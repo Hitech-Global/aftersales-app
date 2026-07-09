@@ -238,7 +238,8 @@
       "description": "Deskripsi Masalah",
       "submitter": "Diajukan oleh",
       "updatedAt": "Diperbarui pada",
-      "actions": "Aksi"
+      "actions": "Aksi",
+      "risk": "Risiko"
     },
     "empty": {
       "noRecords": "Belum ada kasus RMA",
@@ -250,7 +251,8 @@
       "edit": "Edit",
       "approve": "Approve",
       "delete": "Hapus",
-      "more": "Lainnya"
+      "more": "Lainnya",
+      "process": "Proses"
     },
     "pagination": {
       "perPage": "/ halaman",
@@ -260,6 +262,20 @@
       "next": "Berikutnya",
       "last": "Akhir",
       "info": "Total {count}, halaman {current}/{totalPages}"
+    },
+    "subtitle": "Kelola kasus purna jual, persetujuan, progres pemrosesan, dan tindak lanjut RMA.",
+    "quickFilter": {
+      "all": "Semua",
+      "pendingApproval": "Menunggu Persetujuan",
+      "pendingProcessing": "Menunggu Diproses",
+      "pendingRma": "Menunggu RMA",
+      "overdue": "Terlambat",
+      "completed": "Selesai"
+    },
+    "riskPill": {
+      "overdue": "Terlambat",
+      "pending": "Proses",
+      "ok": "Selesai"
     }
   },
   "status": {

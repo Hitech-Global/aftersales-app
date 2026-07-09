@@ -238,7 +238,8 @@
       "description": "Issue Description",
       "submitter": "Submitted By",
       "updatedAt": "Updated At",
-      "actions": "Actions"
+      "actions": "Actions",
+      "risk": "Risk"
     },
     "empty": {
       "noRecords": "No RMA cases yet",
@@ -250,7 +251,8 @@
       "edit": "Edit",
       "approve": "Approve",
       "delete": "Delete",
-      "more": "More actions"
+      "more": "More actions",
+      "process": "Process"
     },
     "pagination": {
       "perPage": "/ page",
@@ -260,6 +262,20 @@
       "next": "Next",
       "last": "Last",
       "info": "{count} total, page {current} of {totalPages}"
+    },
+    "subtitle": "Manage after-sales cases, approvals, processing progress, and RMA follow-up.",
+    "quickFilter": {
+      "all": "All",
+      "pendingApproval": "Pending Approval",
+      "pendingProcessing": "Pending Processing",
+      "pendingRma": "Pending RMA",
+      "overdue": "Overdue",
+      "completed": "Completed"
+    },
+    "riskPill": {
+      "overdue": "Overdue",
+      "pending": "Pending",
+      "ok": "Done"
     }
   },
   "status": {

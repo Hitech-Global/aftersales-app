@@ -213,8 +213,8 @@
       "byRecord": "按售后单",
       "byItem": "按售后明细"
     },
-    "btnManual": "📝 手动填写",
-    "btnBatchImport": "📥 批量导入",
+    "btnManual": "手动填写",
+    "btnBatchImport": "批量导入",
     "batch": {
       "selected": "已选 {count} 项明细",
       "selectStatus": "选择处理状态...",
@@ -238,7 +238,8 @@
       "description": "问题说明",
       "submitter": "提交人",
       "updatedAt": "更新时间",
-      "actions": "操作"
+      "actions": "操作",
+      "risk": "风险"
     },
     "empty": {
       "noRecords": "暂无售后记录",
@@ -250,7 +251,8 @@
       "edit": "编辑",
       "approve": "审批",
       "delete": "删除",
-      "more": "更多操作"
+      "more": "更多操作",
+      "process": "处理"
     },
     "pagination": {
       "perPage": "条/页",
@@ -260,6 +262,20 @@
       "next": "下一页",
       "last": "末页",
       "info": "共 {count} 条，第 {current}/{totalPages} 页"
+    },
+    "subtitle": "管理售后工单、审批、处理进度与 RMA 跟进。",
+    "quickFilter": {
+      "all": "全部",
+      "pendingApproval": "待审批",
+      "pendingProcessing": "待处理",
+      "pendingRma": "待RMA",
+      "overdue": "超期",
+      "completed": "已完成"
+    },
+    "riskPill": {
+      "overdue": "超期",
+      "pending": "处理中",
+      "ok": "已完成"
     }
   },
   "status": {
