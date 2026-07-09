@@ -467,7 +467,10 @@
       "current": "待审批",
       "pending": "未开始",
       "rejected": "已驳回"
-    }
+    },
+    "levelName1": "一级审批",
+    "levelName2": "二级审批",
+    "levelName3": "三级审批"
   },
   "approval": {
     "title": "售后记录审批",
@@ -1211,7 +1214,16 @@
   },
   "approvalFlows": {
     "title": "审批流管理",
-    "btnNew": "新建审批流"
+    "btnNew": "新建审批流",
+    "col": {
+      "level": "审批层级"
+    },
+    "btnAddLevel": "添加审批层级",
+    "atLeastOneLevel": "至少保留一个审批层级",
+    "label": {
+      "levelName": "层级名称"
+    },
+    "btnDeleteLevel": "删除层级"
   },
   "dictionaries": {
     "title": "字典管理",

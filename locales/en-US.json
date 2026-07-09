@@ -467,7 +467,10 @@
       "current": "Pending",
       "pending": "Not started",
       "rejected": "Rejected"
-    }
+    },
+    "levelName1": "Level 1",
+    "levelName2": "Level 2",
+    "levelName3": "Level 3"
   },
   "approval": {
     "title": "RMA Approvals",
@@ -1211,7 +1214,16 @@
   },
   "approvalFlows": {
     "title": "Approval Flow Management",
-    "btnNew": "New Approval Flow"
+    "btnNew": "New Approval Flow",
+    "col": {
+      "level": "Level"
+    },
+    "btnAddLevel": "Add Approval Level",
+    "atLeastOneLevel": "At least one approval level is required",
+    "label": {
+      "levelName": "Level Name"
+    },
+    "btnDeleteLevel": "Delete Level"
   },
   "dictionaries": {
     "title": "Dictionaries",

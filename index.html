@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.7"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.8"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -864,7 +864,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.7 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.8 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -4951,27 +4951,40 @@ function tFlowName(name) {
   return name;
 }
 function tFlowNodeTitle(title, level) {
-  if (!title) return t('detail.levelPrefix').replace('{level}', level);
+  if (!title) {
+    const fb = t('detail.levelName' + level);
+    if (fb && fb !== ('detail.levelName' + level)) return fb;
+    return t('approval.levelPrefix').replace('{level}', level);
+  }
+  // 已知中文默认标题
   const known = {
-    '一级审批': 'detail.level1',
-    '二级审批': 'detail.level2',
-    '三级审批': 'detail.level3',
+    '一级审批': 'detail.levelName1',
+    '二级审批': 'detail.levelName2',
+    '三级审批': 'detail.levelName3',
     '审批': 'detail.levelSuffix'
   };
-  // 先精确匹配
   if (known[title]) {
     const translated = t(known[title]);
-    if (translated !== known[title]) return translated;
+    if (translated && translated !== known[title]) return translated;
   }
-  // 匹配“N级审批”组合：用 levelPrefix + levelSuffix
-  const m = title.match(/^(一|二|三|四|五|1|2|3|4|5)级审批$/);
-  if (m) {
+  // 匹配系统默认标题“审批层级N”（如 审批层级3）
+  const m1 = title.match(/^审批层级([1-9])$/);
+  if (m1) {
+    const lvl = parseInt(m1[1], 10);
+    const tr = t('detail.levelName' + lvl);
+    if (tr && tr !== ('detail.levelName' + lvl)) return tr;
+    return t('approval.levelPrefix').replace('{level}', lvl);
+  }
+  // 匹配“N级审批”（如 三级审批）
+  const m2 = title.match(/^(一|二|三|四|五|1|2|3|4|5)级审批$/);
+  if (m2) {
     const map = { '一':1,'二':2,'三':3,'四':4,'五':5,'1':1,'2':2,'3':3,'4':4,'5':5 };
-    const lvl = map[m[1]];
-    const prefix = t('detail.levelPrefix').replace('{level}', lvl);
-    return prefix;
+    const lvl = map[m2[1]];
+    const tr = t('detail.levelName' + lvl);
+    if (tr && tr !== ('detail.levelName' + lvl)) return tr;
+    return t('approval.levelPrefix').replace('{level}', lvl);
   }
-  return title;
+  return title; // 自定义标题原样显示
 }
 function getActiveFlow() {
   if (!_activeFlowId) return null;
@@ -7547,8 +7560,12 @@ function _afUsersWithPerm(perm) {
 }
 
 function _afPermLabel(perm) {
-  const map = { approval_level1: '一级审批权限', approval_level2: '二级审批权限', approval_level3: '三级审批权限' };
-  return map[perm] || perm;
+  const map = { approval_level1: 'detail.levelName1', approval_level2: 'detail.levelName2', approval_level3: 'detail.levelName3' };
+  if (map[perm]) {
+    const tr = t(map[perm]);
+    if (tr && tr !== map[perm]) return tr;
+  }
+  return perm;
 }
 
 function _afRenderPage() {
@@ -7571,7 +7588,7 @@ function _afRenderPage() {
   h += '<span style="font-size:15px;font-weight:600">审批流列表</span>';
   h += '<span style="font-size:12px;color:var(--text-muted)">新建时自动复制标准售后审批流配置</span>';
   h += '</div>';
-  h += '<table class="af-table"><thead><tr><th>流程名称</th><th>适用范围</th><th>审批层级</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  h += '<table class="af-table"><thead><tr><th>流程名称</th><th>适用范围</th><th>' + t('approvalFlows.col.level') + '</th><th>状态</th><th>操作</th></tr></thead><tbody>';
   _afFlows.forEach((f, i) => {
     h += '<tr class="' + (i === _afCurrentIdx ? 'selected' : '') + '" onclick="selectFlow(' + i + ')">';
     h += '<td style="font-weight:600">' + esc(f.name) + '</td>';
@@ -7617,7 +7634,7 @@ function _afRenderPage() {
       h += '<div class="af-flow-arrow">&#x2192;</div>';
       h += '<div class="af-flow-node ' + (i === _afSelectedNode ? 'active' : '') + '" onclick="selectFlowNode(' + i + ')">';
       h += '<div class="af-flow-level-tag">L' + (i + 1) + '</div>';
-      h += '<div style="font-size:14px;font-weight:600">' + esc(node.title || ('审批层级' + (i + 1))) + '</div>';
+      h += '<div style="font-size:14px;font-weight:600">' + esc(tFlowNodeTitle(node.title, i + 1)) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px">' + esc(_afPermLabel(node.permission)) + '</div>';
       h += '</div>';
     });
@@ -7627,7 +7644,7 @@ function _afRenderPage() {
 
     // 节点操作栏
     h += '<div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">';
-    h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="addFlowNode()">+ 添加审批层级</button>';
+    h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="addFlowNode()">+ ' + t('approvalFlows.btnAddLevel') + '</button>';
     h += '<span style="font-size:11px;color:var(--text-muted);margin-left:auto">点击节点查看和编辑配置</span>';
     h += '</div>';
 
@@ -7651,11 +7668,11 @@ function _afRenderNodeConfig(node, idx, total) {
   h += '<div class="af-node-actions">';
   if (idx > 0) h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="moveFlowNode(' + idx + ',-1)">&#x2191; 上移</button>';
   if (idx < total - 1) h += '<button class="af-btn af-btn-secondary af-btn-sm" onclick="moveFlowNode(' + idx + ',1)">&#x2193; 下移</button>';
-  h += '<button class="af-btn af-btn-danger af-btn-sm" onclick="deleteFlowNode(' + idx + ')">&#x2715; 删除层级</button>';
+  h += '<button class="af-btn af-btn-danger af-btn-sm" onclick="deleteFlowNode(' + idx + ')">&#x2715; ' + t('approvalFlows.btnDeleteLevel') + '</button>';
   h += '</div></div>';
 
   // 层级名称
-  h += '<div class="af-config-row"><span class="af-config-label">层级名称</span>';
+  h += '<div class="af-config-row"><span class="af-config-label">' + t('approvalFlows.label.levelName') + '</span>';
   h += '<input class="af-config-input" value="' + esc(node.title || '') + '" onchange="updateNodeField(' + idx + ',\'title\',this.value)"></div>';
 
   // 审批权限
@@ -7752,7 +7769,7 @@ function moveFlowNode(idx, dir) {
 function deleteFlowNode(idx) {
   const flow = _afFlows[_afCurrentIdx];
   if (!flow || !flow.nodes) return;
-  if (flow.nodes.length <= 1) { alert('至少保留一个审批层级'); return; }
+  if (flow.nodes.length <= 1) { alert(t('approvalFlows.atLeastOneLevel')); return; }
   flow.nodes.splice(idx, 1);
   _afSelectedNode = -1;
   _afRenderPage();

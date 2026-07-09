@@ -467,7 +467,10 @@
       "current": "Menunggu",
       "pending": "Belum mulai",
       "rejected": "Ditolak"
-    }
+    },
+    "levelName1": "Level 1",
+    "levelName2": "Level 2",
+    "levelName3": "Level 3"
   },
   "approval": {
     "title": "Persetujuan RMA",
@@ -1211,7 +1214,16 @@
   },
   "approvalFlows": {
     "title": "Manajemen Alur Persetujuan",
-    "btnNew": "Buat Alur Baru"
+    "btnNew": "Buat Alur Baru",
+    "col": {
+      "level": "Level"
+    },
+    "btnAddLevel": "Tambah Level",
+    "atLeastOneLevel": "Minimal harus ada satu level persetujuan",
+    "label": {
+      "levelName": "Nama Level"
+    },
+    "btnDeleteLevel": "Hapus Level"
   },
   "dictionaries": {
     "title": "Manajemen Kamus",
