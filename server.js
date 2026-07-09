@@ -28,7 +28,9 @@ try {
 
 // ==================== 配置 ====================
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = '3.9.13';
+// 从 package.json 读取版本，避免手改遗漏导致版本漂移（曾因硬编码 3.9.13 未更新引发缓存/校验异常）
+let APP_VERSION = '0.0.0';
+try { APP_VERSION = require('./package.json').version || APP_VERSION; } catch (e) {}
 const FEISHU_ENABLED = process.env.FEISHU_ENABLED === 'true';
 const FEISHU_APP_ID = process.env.FEISHU_APP_ID || '';
 const FEISHU_APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -230,19 +232,13 @@ function sendNoCacheHtml(res, fileName) {
 }
 
 // 前端路由：所有带 hash 的请求返回首页
-// 版本化重定向：将 / 重定向到 /?_v=<version>，强制 bust 掉飞书 webview / 中间代理基于 URL 的 HTML 缓存。
-// 仅影响 HTML 入口；当 _v 与当前版本一致时直接返回，不会循环；不触碰任何 API 或业务逻辑。
+// 直接返回 index.html 并带 no-store 头（禁止缓存）。
+// 注意：不要在此做版本化 302 重定向——曾导致飞书 webview 无限重载死循环。
 app.get('/', (req, res) => {
-  if (req.query._v !== APP_VERSION) {
-    return res.redirect(302, '/?_v=' + encodeURIComponent(APP_VERSION));
-  }
   sendNoCacheHtml(res, 'index.html');
 });
 
 app.get('/index.html', (req, res) => {
-  if (req.query._v !== APP_VERSION) {
-    return res.redirect(302, '/index.html?_v=' + encodeURIComponent(APP_VERSION));
-  }
   sendNoCacheHtml(res, 'index.html');
 });
 

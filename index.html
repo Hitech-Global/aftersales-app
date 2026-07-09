@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.10"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.11"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -767,7 +767,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.10 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.11 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1455,27 +1455,6 @@ select option{background:var(--card-bg);color:var(--text)}
 <script>
 // 版本缓存击穿：若服务端版本高于当前已加载的构建（飞书 webview / 代理按 URL 缓存旧 HTML 所致），
 // 强制重定向到带版本参数的 URL，使浏览器/webview 拉取最新文件，避免一直显示旧构建（含旧 bug）。
-(function bootVersionBust(){
-  try{
-    const cur=(document.querySelector('title')&&document.querySelector('title').getAttribute('data-i18n-suffix')||'').trim();
-    if(!cur) return;
-    const xhr=new XMLHttpRequest();
-    xhr.open('GET','/api/version',true);
-    xhr.setRequestHeader('Cache-Control','no-store');
-    xhr.onreadystatechange=function(){
-      if(xhr.readyState!==4||xhr.status!==200) return;
-      try{
-        const d=JSON.parse(xhr.responseText);
-        if(d&&d.version&&d.version!==cur){
-          const u=new URL(location.href);
-          u.searchParams.set('_v',d.version);
-          location.replace(u.toString());
-        }
-      }catch(e){}
-    };
-    xhr.send();
-  }catch(e){}
-})();
 // ==================== DATA LAYER ====================
 const APPROVAL_STATUSES = ['草稿','审批通过','审批拒绝'];
 function refreshApprovalStatuses() {
