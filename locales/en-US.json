@@ -436,7 +436,18 @@
     },
     "notSet": "Not Set",
     "approved": "Approved",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "processingDone": "Completed",
+    "processingPending": "Pending",
+    "summary": {
+      "rmaCase": "RMA Case"
+    },
+    "step": {
+      "done": "Approved",
+      "current": "Pending",
+      "pending": "Not started",
+      "rejected": "Rejected"
+    }
   },
   "approval": {
     "title": "RMA Approvals",

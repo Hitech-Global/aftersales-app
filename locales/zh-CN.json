@@ -436,7 +436,18 @@
     },
     "notSet": "未设置",
     "approved": "✅ 审批通过",
-    "rejected": "❌ 审批拒绝"
+    "rejected": "❌ 审批拒绝",
+    "processingDone": "已完成",
+    "processingPending": "待处理",
+    "summary": {
+      "rmaCase": "售后单号"
+    },
+    "step": {
+      "done": "已通过",
+      "current": "待审批",
+      "pending": "未开始",
+      "rejected": "已驳回"
+    }
   },
   "approval": {
     "title": "售后记录审批",

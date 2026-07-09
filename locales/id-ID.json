@@ -436,7 +436,18 @@
     },
     "notSet": "Belum Diatur",
     "approved": "Disetujui",
-    "rejected": "Ditolak"
+    "rejected": "Ditolak",
+    "processingDone": "Selesai",
+    "processingPending": "Menunggu",
+    "summary": {
+      "rmaCase": "RMA Case"
+    },
+    "step": {
+      "done": "Disetujui",
+      "current": "Menunggu",
+      "pending": "Belum mulai",
+      "rejected": "Ditolak"
+    }
   },
   "approval": {
     "title": "Persetujuan RMA",
