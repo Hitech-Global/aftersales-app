@@ -92,7 +92,11 @@
         "daysSuffix": "hr"
       },
       "noData": "Belum ada data",
-      "trend30": "Tren RMA 30 Hari Terakhir"
+      "trend30": "Tren RMA 30 Hari Terakhir",
+      "stageDonut": "Distribusi Tahap RMA",
+      "trendCreated": "Dibuat",
+      "trendCompleted": "Selesai",
+      "trendOverdue": "Terlambat"
     },
     "section": {
       "brandCompare": "Perbandingan per Brand"
@@ -142,7 +146,38 @@
       "title": "Catatan RMA Terbaru",
       "empty": "Tidak ada data",
       "pending": "Menunggu"
-    }
+    },
+    "health": {
+      "title": "Kesehatan Layanan Purna Jual",
+      "good": "Baik",
+      "attention": "Perhatian",
+      "critical": "Kritis",
+      "totalThisPeriod": "Total RMA Periode Ini",
+      "completionRate": "Tingkat Penyelesaian",
+      "overdue": "Terlambat",
+      "bottleneck": "Bottleneck Saat Ini",
+      "noBottleneck": "Tidak ada bottleneck utama"
+    },
+    "flow": {
+      "title": "Ikhtisar Alur RMA",
+      "created": "Dibuat",
+      "pendingApproval": "Menunggu Persetujuan",
+      "pendingProcess": "Menunggu Diproses",
+      "pendingRma": "Menunggu RMA",
+      "completed": "Selesai",
+      "count": "Jumlah",
+      "share": "Proporsi",
+      "avgStay": "Rata-rata tinggal",
+      "overdue": "Terlambat"
+    },
+    "attention": {
+      "title": "Perlu Perhatian Anda",
+      "overdue": "Terlambat Belum Diproses",
+      "pendingApproval24h": "Menunggu Persetujuan > 24j",
+      "pendingProcess3d": "Menunggu Diproses > 3 Hari",
+      "rmaNotCreated7d": "RMA Belum Dibuat > 7 Hari"
+    },
+    "dataAsOf": "Data per"
   },
   "list": {
     "title": "Daftar Kasus RMA",
@@ -214,7 +249,8 @@
       "view": "Lihat",
       "edit": "Edit",
       "approve": "Approve",
-      "delete": "Hapus"
+      "delete": "Hapus",
+      "more": "Lainnya"
     },
     "pagination": {
       "perPage": "/ halaman",

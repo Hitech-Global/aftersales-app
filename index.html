@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.1"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.2"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -20,10 +20,10 @@ if (window.location.protocol === 'file:') {
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   /* Apple-inspired palette */
-  --primary:#0071e3;
-  --primary-hover:#0077ed;
+  --primary:#2e9d52;
+  --primary-hover:#248a45;
   --primary-dark:#0058b9;
-  --primary-light:#e8f1fd;
+  --primary-light:#e8f6ed;
   --success:#34c759;
   --warning:#ff9f0a;
   --danger:#ff3b30;
@@ -576,6 +576,81 @@ select option{background:var(--card-bg);color:var(--text)}
 .dropdown-item.danger:hover{background:#fde8e8}
 .dropdown-item .di-icon{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .dropdown-item .di-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.more-wrap{position:relative;display:inline-block}
+.table-container{scrollbar-width:thin;scrollbar-color:#d2d2d7 transparent}
+.table-container::-webkit-scrollbar{height:8px;width:8px}
+.table-container::-webkit-scrollbar-track{background:transparent}
+.table-container::-webkit-scrollbar-thumb{background:#d2d2d7;border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover{background:#b8b8be}
+
+/* ===== Overview v2 (systematic layout) ===== */
+.ov-filter-card{margin-bottom:16px}
+.ov-filter-card .ov-filter-bar{background:none;box-shadow:none;padding:0;margin:0}
+.ov-data-asof{margin-top:10px;font-size:12px;color:var(--text-muted)}
+.ov-section{margin-bottom:16px}
+.ov-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ov-grid-2>.card{margin-bottom:0}
+.chart-trend{height:240px}
+.chart-donut{height:260px}
+.chart-bar{height:260px}
+
+/* After-sales Health */
+.ov-health-card{padding:20px 22px}
+.ov-health-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ov-health-badge{font-size:13px;font-weight:600;padding:5px 14px;border-radius:999px}
+.ov-health-badge.good{background:rgba(52,199,89,.14);color:#1a8a3a}
+.ov-health-badge.attention{background:rgba(255,149,0,.16);color:#b25e00}
+.ov-health-badge.critical{background:rgba(255,59,48,.14);color:#c0392b}
+.ov-health-sub{font-size:13px;color:var(--text-muted)}
+.ov-health-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ov-health-metric{background:var(--bg);border-radius:12px;padding:14px 16px}
+.ov-health-metric .v{font-size:22px;font-weight:700;color:var(--text)}
+.ov-health-metric .l{font-size:12px;color:var(--text-muted);margin-top:4px}
+.ov-health-metric.bottleneck-metric{display:flex;flex-direction:column;justify-content:center}
+.ov-health-metric .bottleneck{margin-top:6px;font-size:13px;font-weight:600;color:var(--warning)}
+
+/* RMA Flow Overview */
+.ov-flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:4px 0}
+.ov-flow-node{flex:1;min-width:140px;text-align:center;position:relative;padding:0 10px}
+.ov-flow-node:not(:last-child)::after{content:'\203A';position:absolute;top:18px;right:-2px;color:var(--text-muted);font-size:20px;font-weight:700}
+.ov-flow-dot{width:50px;height:50px;border-radius:14px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff}
+.ov-flow-node .nm{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.ov-flow-stats{font-size:11px;color:var(--text-muted);line-height:1.8}
+.ov-flow-stats b{color:var(--text);font-weight:600}
+
+/* Need Your Attention */
+.ov-attention-list{display:flex;flex-direction:column;gap:10px}
+.ov-attention-item{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:10px;padding:12px 14px;cursor:pointer;transition:background .2s}
+.ov-attention-item:hover{background:#ececf0}
+.ov-attention-item .ai-label{font-size:13px;color:var(--text-secondary)}
+.ov-attention-item .ai-count{font-size:18px;font-weight:700;margin-left:auto}
+.ov-attention-item.alert .ai-count{color:var(--danger)}
+.ov-attention-item .ai-go{color:var(--text-muted);font-size:18px;margin-left:4px}
+.ov-recent-list{display:flex;flex-direction:column}
+.ov-recent-list .empty-state{padding:20px}
+
+@media(max-width:900px){
+  .ov-grid-2{grid-template-columns:1fr}
+  .ov-health-metrics{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ===== Unified line icons (replace emoji) ===== */
+.ui-ico{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.action-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:none;background:transparent;border-radius:8px;color:var(--text-secondary);cursor:pointer;transition:background .18s,color .18s;font-size:14px;opacity:1;padding:0}
+.action-btn:hover{background:rgba(0,0,0,.06);color:var(--text);opacity:1}
+.action-btn.action-delete:hover{background:rgba(255,59,48,.10);color:var(--danger)}
+.action-btn .ui-ico{width:18px;height:18px}
+.action-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.empty-icon .ui-ico{width:44px;height:44px;color:var(--text-muted)}
+.table-section-icon .ui-ico{width:18px;height:18px}
+/* lighter horizontal scrollbar for data tables */
+.table-container::-webkit-scrollbar{height:8px}
+.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.22)}
+.table-container::-webkit-scrollbar-track{background:transparent}
+.stmt-table-container::-webkit-scrollbar{height:8px}
+.stmt-table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
+.stmt-table-container::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
@@ -629,7 +704,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.1 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.2 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -662,38 +737,64 @@ select option{background:var(--card-bg);color:var(--text)}
 
         <!-- 售后概览 -->
         <div id="page-overview" class="page">
-          <div class="ov-filter-bar">
-            <div class="ov-filter-group">
-              <label data-i18n="overview.filter.startDate"></label>
-              <input type="text" class="date-input" id="ov-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderOverview()" onchange="normalizeDateInput(this);renderOverview()">
+          <div class="card ov-filter-card">
+            <div class="ov-filter-bar">
+              <div class="ov-filter-group">
+                <label data-i18n="overview.filter.startDate"></label>
+                <input type="text" class="date-input" id="ov-start-date" inputmode="numeric" onblur="normalizeDateInput(this);renderOverview()" onchange="normalizeDateInput(this);renderOverview()">
+              </div>
+              <div class="ov-filter-group">
+                <label data-i18n="overview.filter.endDate"></label>
+                <input type="text" class="date-input" id="ov-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderOverview()" onchange="normalizeDateInput(this);renderOverview()">
+              </div>
+              <div class="ov-filter-group">
+                <label data-i18n="overview.filter.brand"></label>
+                <select class="filter-select" id="ov-brand-filter" onchange="renderOverview()"><option value="" data-i18n="overview.filter.allBrands"></option></select>
+              </div>
+              <button class="btn btn-secondary" onclick="resetOverviewFilter()" data-i18n="overview.btnReset"></button>
             </div>
-            <div class="ov-filter-group">
-              <label data-i18n="overview.filter.endDate"></label>
-              <input type="text" class="date-input" id="ov-end-date" inputmode="numeric" onblur="normalizeDateInput(this);renderOverview()" onchange="normalizeDateInput(this);renderOverview()">
-            </div>
-            <div class="ov-filter-group">
-              <label data-i18n="overview.filter.brand"></label>
-              <select class="filter-select" id="ov-brand-filter" onchange="renderOverview()"><option value="" data-i18n="overview.filter.allBrands"></option></select>
-            </div>
-            <button class="btn btn-secondary" onclick="resetOverviewFilter()" data-i18n="overview.btnReset"></button>
+            <div class="ov-data-asof"><span data-i18n="overview.dataAsOf"></span>: <span id="ov-data-asof">-</span></div>
           </div>
-          <div class="ov-summary" id="ov-summary"></div>
-          <div class="ov-risk-row" id="ov-risk-row"></div>
-          <div class="chart-container">
-            <div class="ov-section-title" data-i18n="overview.chart.trend30"></div>
-            <div class="chart-wrapper" id="chart-trend-30-wrapper"><canvas id="chart-trend-30"></canvas></div>
+
+          <div class="card ov-health-card" id="ov-health"></div>
+
+          <div class="card ov-section">
+            <div class="ov-section-title" data-i18n="overview.flow.title"></div>
+            <div class="ov-flow" id="ov-flow"></div>
           </div>
-          <div class="ov-charts-row">
-            <div class="chart-container">
+
+          <div class="ov-grid-2">
+            <div class="card ov-section">
+              <div class="ov-section-title" data-i18n="overview.chart.trend30"></div>
+              <div class="chart-wrapper chart-trend" id="chart-trend-30-wrapper"><canvas id="chart-trend-30"></canvas></div>
+            </div>
+            <div class="card ov-section">
+              <div class="ov-section-title" data-i18n="overview.chart.stageDonut"></div>
+              <div class="chart-wrapper chart-donut" id="chart-stage-donut-wrapper"><canvas id="chart-stage-donut"></canvas></div>
+            </div>
+          </div>
+
+          <div class="ov-grid-2">
+            <div class="card ov-section">
               <div class="ov-section-title" data-i18n="overview.chart.reasonTop5"></div>
-              <div class="chart-wrapper" id="chart-reason-top5-wrapper"><canvas id="chart-reason-top5"></canvas></div>
+              <div class="chart-wrapper chart-bar" id="chart-reason-top5-wrapper"><canvas id="chart-reason-top5"></canvas></div>
             </div>
-            <div class="chart-container">
+            <div class="card ov-section">
               <div class="ov-section-title" data-i18n="overview.chart.skuTop10"></div>
-              <div class="chart-wrapper" id="chart-sku-top10-wrapper"><canvas id="chart-sku-top10"></canvas></div>
+              <div class="chart-wrapper chart-bar" id="chart-sku-top10-wrapper"><canvas id="chart-sku-top10"></canvas></div>
             </div>
           </div>
-          <div class="ov-recent" id="ov-recent"></div>
+
+          <div class="ov-grid-2">
+            <div class="card ov-section" id="ov-attention-card">
+              <div class="ov-section-title" data-i18n="overview.attention.title"></div>
+              <div class="ov-attention-list" id="ov-attention-list"></div>
+            </div>
+            <div class="card ov-section" id="ov-recent-card">
+              <div class="ov-section-title" data-i18n="overview.recent.title"></div>
+              <div class="ov-recent-list" id="ov-recent-list"></div>
+            </div>
+          </div>
         </div>
 
         <!-- 售后列表 -->
@@ -755,7 +856,7 @@ select option{background:var(--card-bg);color:var(--text)}
           <div class="table-section" id="list-table-section">
             <div class="table-section-title">
               <div class="table-section-title-left">
-                <span class="table-section-icon">📝</span>
+                <span class="table-section-icon"><svg class="line-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></span>
                 <span data-i18n="list.sectionTitle"></span>
                 <div class="view-mode-toggle" style="margin-left:12px">
                   <button id="mode-by-record" class="active" onclick="switchListMode('record')" data-i18n="list.mode.byRecord"></button>
@@ -2539,6 +2640,30 @@ function enterApp() {
   if(!document.querySelector('.page.active')){ showPage('overview'); }
 }
 
+// ==================== 统一线性图标 & 操作列下拉菜单 ====================
+const ICON_ACTION={
+  view:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  edit:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  del:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>',
+  bell:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 7 2 7H4s2-2 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  doc:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>',
+  more:'<svg class="line-icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>'
+};
+function moreMenuHtml(id, items){
+  const menu=items.map(it=>`<div class="dropdown-item${it.danger?' danger':''}" onclick="${it.onclick}"><span class="di-icon">${it.icon||''}</span>${esc(it.text)}</div>`).join('');
+  return `<span class="more-wrap"><button class="more-btn" type="button" title="${t('list.action.more')}" onclick="toggleDropdown(event,'${id}')">${ICON_ACTION.more}</button><div class="dropdown-menu" id="${id}" style="right:0;top:34px">${menu}</div></span>`;
+}
+function toggleDropdown(e, id){
+  e.stopPropagation();
+  const menu=document.getElementById(id);
+  if(!menu) return;
+  const wasOpen=menu.classList.contains('open');
+  closeDropdowns();
+  if(!wasOpen) menu.classList.add('open');
+}
+function closeDropdowns(){ document.querySelectorAll('.dropdown-menu.open').forEach(m=>m.classList.remove('open')); }
+document.addEventListener('click', closeDropdowns);
+
 // ==================== SIDEBAR ====================
 function renderSidebar(){
   const prevActive=document.querySelector('.sidebar-item.active')?.dataset.page;
@@ -2665,7 +2790,7 @@ async function updateOverviewBrandFilter(){
   sel.value=cur;
 }
 
-let chartTrend30=null, chartReasonTop5=null, chartSkuTop10=null;
+let chartTrend30=null, chartReasonTop5=null, chartSkuTop10=null, chartStageDonut=null;
 
 function asArray(value){ return Array.isArray(value)?value:[]; }
 function recordDateKey(record){ return dateToStorage(record.aftersales_date || record.created_at); }
@@ -2682,9 +2807,11 @@ function isOverdueItem(item, record, days=7){
 }
 
 async function renderOverview(){
-  const ovEl=document.getElementById('ov-summary');
-  const riskEl=document.getElementById('ov-risk-row');
-  const recentEl=document.getElementById('ov-recent');
+  const healthEl=document.getElementById('ov-health');
+  const flowEl=document.getElementById('ov-flow');
+  const attEl=document.getElementById('ov-attention-list');
+  const recentEl=document.getElementById('ov-recent-list');
+  const asofEl=document.getElementById('ov-data-asof');
 
   // 1) 拉取并过滤数据（独立容错，失败也不影响主内容渲染）
   let records=[], allItems=[];
@@ -2713,49 +2840,126 @@ async function renderOverview(){
     records=[]; allItems=[];
   }
 
-  // 2) 主内容（卡片 / 风险 / 最近记录）—— 始终渲染，绝不被图表异常清空
-  try{
-    const todayKey=formatDateLocal(new Date());
-    const todayCount=records.filter(r=>recordDateKey(r)===todayKey).length;
-    const pendingApprovalCount=records.filter(isPendingApproval).length;
-    const pendingProcessCount=allItems.filter(x=>isPendingProcessItem(x.item)).length;
-    const completedCount=allItems.filter(x=>itemProcessProgress(x.item)==='completed').length;
+  // 2) 核心指标（复用既有判定函数，不新增业务状态）
+  const createdCount=records.length;
+  const pendingApprovalRecords=records.filter(isPendingApproval);
+  const pendingApprovalCount=pendingApprovalRecords.length;
+  const openItems=allItems.filter(x=>isPendingProcessItem(x.item));
+  const pendingProcessingCount=openItems.length;
+  const pendingRmaItems=allItems.filter(x=>isPendingRmaItem(x.item));
+  const pendingRmaCount=pendingRmaItems.length;
+  const completedItems=allItems.filter(x=>itemProcessProgress(x.item)==='completed');
+  const completedCount=completedItems.length;
+  const totalItems=allItems.length;
+  const overdueItems=allItems.filter(x=>isOverdueItem(x.item,x.record));
+  const overdueCount=overdueItems.length;
 
-    if(ovEl){
-      ovEl.innerHTML=ovCard(todayCount, t('overview.card.today'), '&#x1F4C5;')
-        + ovCardClick(pendingApprovalCount, t('overview.card.pendingApproval'), '&#x2705;', 'pendingApproval')
-        + ovCardClick(pendingProcessCount, t('overview.card.pendingProcess'), '&#x23F3;', 'pendingProcess')
-        + ovCard(completedCount, t('overview.card.completed'), '&#x2705;');
-    }
-    if(riskEl){
-      const overdueCount=allItems.filter(x=>isOverdueItem(x.item,x.record)).length;
-      const pendingRmaCount=allItems.filter(x=>isPendingRmaItem(x.item)).length;
-      riskEl.innerHTML=ovCardClick(overdueCount, t('overview.risk.overdue'), '&#x26A0;', 'overdue')
-        + ovCardClick(pendingRmaCount, t('overview.risk.pendingRma'), '&#x1F6E0;', 'pendingRma');
-    }
-    if(recentEl){
-      if(records.length===0){
-        recentEl.innerHTML='<div class="ov-section-title">'+t('overview.recent.title')+'</div><div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>'+t('overview.recent.empty')+'</p></div>';
-      }else{
-        const recent=[...records].sort((a,b)=>(recordDateKey(b)||'').localeCompare(recordDateKey(a)||'')).slice(0,5);
-        recentEl.innerHTML='<div class="ov-section-title">'+t('overview.recent.title')+'</div>'+recent.map(r=>{
-          const status=tApprovalStatus(r.status||r.approval_status||r.approvalStatus||'pending');
-          return '<div class="ov-recent-item" onclick="showPage(\'detail\',\''+escAttr(String(r.id))+'\')">'
-            +'<span class="ov-recent-id">#'+esc(String(r.id))+'</span>'
-            +'<span class="ov-recent-date">'+formatDate(r.aftersales_date)+'</span>'
-            +'<span class="ov-recent-status">'+esc(status)+'</span>'
-            +'<span class="ov-recent-submitter">'+esc(r.submitter_name||'-')+'</span>'
-            +'</div>';
-        }).join('');
-      }
-    }
-  }catch(e){
-    console.error('[Overview] 概览渲染失败:', e);
-    if(ovEl) ovEl.innerHTML='<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>'+t('overview.error.loadFailed')+'</p></div>';
+  // 衍生关注项：待审批>24h / 待处理>3天 / RMA未创建>7天（复用既有映射，不新增状态）
+  const pa24=pendingApprovalRecords.filter(r=>{const s=parseDateValue(recordDateKey(r));return s&&(new Date()-s)/86400000>1;}).length;
+  const pp3=openItems.filter(x=>{const s=parseDateValue(itemAgeStartDate(x.item,x.record));return s&&(new Date()-s)/86400000>=3;}).length;
+  const rmaNc7=allItems.filter(x=>{
+    const it=x.item;
+    if(itemProcessProgress(it)==='completed') return false;
+    if(RETURN_REASON_TO_PROCESS_TYPE[it.return_reason]!=='rma') return false;
+    if(itemProcessType(it)==='rma') return false;
+    const s=parseDateValue(itemAgeStartDate(it,x.record));
+    return s&&(new Date()-s)/86400000>7;
+  }).length;
+
+  const completionRate= totalItems>0 ? Math.round(completedCount/totalItems*100) : 0;
+  const completionRateDisplay= totalItems>0 ? completionRate+'%' : '—';
+
+  // 健康状态
+  let health='good';
+  if(overdueCount>=5 || pendingApprovalCount>=10 || pendingRmaCount>=5) health='critical';
+  else if(overdueCount>0 || pendingApprovalCount>0 || pendingProcessingCount>0 || pendingRmaCount>0) health='attention';
+  const healthLabel=t('overview.health.'+health);
+
+  // 当前瓶颈
+  const bottleneckCands=[
+    {label:t('overview.flow.pendingApproval'), v:pendingApprovalCount},
+    {label:t('overview.flow.pendingProcess'), v:pendingProcessingCount},
+    {label:t('overview.flow.pendingRma'), v:pendingRmaCount},
+    {label:t('overview.health.overdue'), v:overdueCount}
+  ];
+  const topBottleneck=bottleneckCands.reduce((a,b)=>b.v>a.v?b:a,{v:-1});
+  const bottleneckHtml= topBottleneck.v>0 ? `${esc(topBottleneck.label)} (${topBottleneck.v})` : t('overview.health.noBottleneck');
+
+  // 3) After-sales Health 卡
+  if(healthEl){
+    healthEl.innerHTML=`
+      <div class="ov-health-head">
+        <span class="ov-health-badge ${health}">${esc(healthLabel)}</span>
+        <span class="ov-health-sub">${esc(t('overview.health.title'))}</span>
+      </div>
+      <div class="ov-health-metrics">
+        <div class="ov-health-metric"><div class="v">${createdCount}</div><div class="l">${esc(t('overview.health.totalThisPeriod'))}</div></div>
+        <div class="ov-health-metric"><div class="v">${completionRateDisplay}</div><div class="l">${esc(t('overview.health.completionRate'))}</div></div>
+        <div class="ov-health-metric"><div class="v" style="color:${overdueCount>0?'var(--danger)':'inherit'}">${overdueCount}</div><div class="l">${esc(t('overview.health.overdue'))}</div></div>
+        <div class="ov-health-metric bottleneck-metric"><div class="l">${esc(t('overview.health.bottleneck'))}</div><div class="bottleneck">${esc(bottleneckHtml)}</div></div>
+      </div>`;
   }
 
-  // 3) 图表独立容错：Chart.js 未加载或渲染失败，只影响图表区域，不再清空主内容
+  // 4) RMA Flow Overview（横向流程，复用既有判定；RMA 仍是 process_type='rma' 的明细类型）
+  const flowDefs=[
+    {label:t('overview.flow.created'), color:'#34c759', count:createdCount, share: createdCount?100:0, avg: avgAgeLabel(records.map(r=>({start:recordDateKey(r)}))), overdue:'—'},
+    {label:t('overview.flow.pendingApproval'), color:'#ff9500', count:pendingApprovalCount, share: createdCount?Math.round(pendingApprovalCount/createdCount*100):0, avg: avgAgeLabel(pendingApprovalRecords.map(r=>({start:recordDateKey(r)}))), overdue:pa24},
+    {label:t('overview.flow.pendingProcess'), color:'#0071e3', count:pendingProcessingCount, share: totalItems?Math.round(pendingProcessingCount/totalItems*100):0, avg: avgAgeLabel(openItems.map(x=>({start:itemAgeStartDate(x.item,x.record)}))), overdue:overdueItems.filter(x=>isPendingProcessItem(x.item)).length},
+    {label:t('overview.flow.pendingRma'), color:'#af52de', count:pendingRmaCount, share: totalItems?Math.round(pendingRmaCount/totalItems*100):0, avg: avgAgeLabel(pendingRmaItems.map(x=>({start:itemAgeStartDate(x.item,x.record)}))), overdue:overdueItems.filter(x=>isPendingRmaItem(x.item)).length},
+    {label:t('overview.flow.completed'), color:'#8e8e93', count:completedCount, share: totalItems?Math.round(completedCount/totalItems*100):0, avg: avgAgeLabel(completedItems.map(x=>({start:itemAgeStartDate(x.item,x.record), end:x.item.process_completed_date}))), overdue:'—'}
+  ];
+  if(flowEl){
+    flowEl.innerHTML=flowDefs.map(n=>`
+      <div class="ov-flow-node">
+        <div class="ov-flow-dot" style="background:${n.color}">${n.count}</div>
+        <div class="nm">${esc(n.label)}</div>
+        <div class="ov-flow-stats">
+          ${esc(t('overview.flow.share'))} <b>${n.share}%</b><br>
+          ${esc(t('overview.flow.avgStay'))} <b>${esc(n.avg)}</b><br>
+          ${esc(t('overview.flow.overdue'))} <b style="color:${n.overdue!=='—'&&n.overdue>0?'var(--danger)':'inherit'}">${n.overdue}</b>
+        </div>
+      </div>`).join('');
+  }
+
+  // 5) Need Your Attention 行动区
+  const attention=[
+    {label:t('overview.attention.overdue'), count:overdueCount, alert:overdueCount>0, act:"jumpFromOverview('overdue')"},
+    {label:t('overview.attention.pendingApproval24h'), count:pa24, alert:pa24>0, act:"jumpFromOverview('pendingApproval')"},
+    {label:t('overview.attention.pendingProcess3d'), count:pp3, alert:pp3>0, act:"jumpFromOverview('pendingProcess')"},
+    {label:t('overview.attention.rmaNotCreated7d'), count:rmaNc7, alert:rmaNc7>0, act:"jumpFromOverview('pendingRma')"}
+  ];
+  if(attEl){
+    attEl.innerHTML=attention.map(a=>`
+      <div class="ov-attention-item ${a.alert?'alert':''}" onclick="${a.act}" role="button" tabindex="0">
+        <span class="ai-label">${esc(a.label)}</span>
+        <span class="ai-count">${a.count}</span>
+        <span class="ai-go">&#x203A;</span>
+      </div>`).join('');
+  }
+
+  // 6) 最近售后记录
+  if(recentEl){
+    if(records.length===0){
+      recentEl.innerHTML='<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>'+t('overview.recent.empty')+'</p></div>';
+    }else{
+      const recent=[...records].sort((a,b)=>(recordDateKey(b)||'').localeCompare(recordDateKey(a)||'')).slice(0,5);
+      recentEl.innerHTML=recent.map(r=>{
+        const status=tApprovalStatus(r.status||r.approval_status||r.approvalStatus||'pending');
+        return '<div class="ov-recent-item" onclick="showPage(\'detail\',\''+escAttr(String(r.id))+'\')">'
+          +'<span class="ov-recent-id">#'+esc(String(r.id))+'</span>'
+          +'<span class="ov-recent-date">'+formatDate(r.aftersales_date)+'</span>'
+          +'<span class="ov-recent-status">'+esc(status)+'</span>'
+          +'<span class="ov-recent-submitter">'+esc(r.submitter_name||'-')+'</span>'
+          +'</div>';
+      }).join('');
+    }
+  }
+
+  if(asofEl) asofEl.textContent=formatDateTime(new Date());
+
+  // 7) 图表独立容错：Chart.js 未加载或渲染失败，只影响图表区域
   safeRenderChart(function(){ renderTrend30Chart(buildTrend30(records, getDateInputValue('ov-end-date'))); });
+  safeRenderChart(function(){ renderStageDonutChart(flowDefs); });
   safeRenderChart(function(){
     const reasonCounts={};
     allItems.forEach(x=>{const reason=x.item.return_reason;if(reason)reasonCounts[reason]=(reasonCounts[reason]||0)+1;});
@@ -2781,21 +2985,50 @@ function safeRenderChart(fn){
   }catch(e){ console.warn('[Overview] 图表渲染失败(不影响主内容):', e); }
 }
 
+function avgAgeLabel(entries){
+  if(!entries.length) return '—';
+  let sum=0,c=0;
+  for(const e of entries){
+    const s=parseDateValue(e.start), en=parseDateValue(e.end||new Date());
+    if(s){ const d=(en-s)/86400000; if(d>=0){ sum+=d; c++; } }
+  }
+  return c? (sum/c).toFixed(1)+t('overview.chart.label.daysSuffix') : '—';
+}
+
 function buildTrend30(records,endDate){
   const end=parseDateValue(endDate)||new Date();
-  const dates=[];
-  const counts={};
+  const dates=[]; const createdMap={}; const completedMap={};
   for(let i=29;i>=0;i--){
     const d=new Date(end.getFullYear(),end.getMonth(),end.getDate()-i);
     const key=formatDateLocal(d);
-    dates.push(key);
-    counts[key]=0;
+    dates.push(key); createdMap[key]=0; completedMap[key]=0;
   }
-  records.forEach(record=>{
-    const key=recordDateKey(record);
-    if(counts[key]!==undefined) counts[key]+=Math.max(1,asArray(record.items).length);
+  records.forEach(r=>{ const k=recordDateKey(r); if(createdMap[k]!==undefined) createdMap[k]++; });
+  const openItemsAll=[];
+  records.forEach(r=>asArray(r.items).forEach(it=>{
+    normalizeProcessItem(it);
+    if(itemProcessProgress(it)==='completed'){
+      const ck=dateToStorage(it.process_completed_date);
+      if(completedMap[ck]!==undefined) completedMap[ck]++;
+    } else {
+      openItemsAll.push({it, record:r});
+    }
+  }));
+  const overdueArr=dates.map(day=>{
+    const dayDate=parseDateValue(day);
+    let c=0;
+    for(const x of openItemsAll){
+      const s=parseDateValue(itemAgeStartDate(x.it,x.record));
+      if(!s) continue;
+      const startPlus7=new Date(s.getTime()+7*86400000);
+      if(startPlus7<=dayDate){
+        const cd=dateToStorage(x.it.process_completed_date);
+        if(!x.it.process_completed_date || cd>day) c++;
+      }
+    }
+    return c;
   });
-  return dates.map(date=>({date,count:counts[date]}));
+  return {dates, created:dates.map(d=>createdMap[d]), completed:dates.map(d=>completedMap[d]), overdue:overdueArr};
 }
 
 function ensureChartCanvas(wrapperId,canvasId){
@@ -2818,11 +3051,15 @@ function renderTrend30Chart(data){
   const ctx=ensureChartCanvas('chart-trend-30-wrapper','chart-trend-30');
   if(chartTrend30){ chartTrend30.destroy(); chartTrend30=null; }
   if(!ctx) return;
-  if(!data.length){renderChartEmpty('chart-trend-30-wrapper');return;}
+  if(!data.dates||!data.dates.length){renderChartEmpty('chart-trend-30-wrapper');return;}
   chartTrend30=new Chart(ctx,{
     type:'line',
-    data:{labels:data.map(d=>formatDate(d.date)),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d.count),borderColor:'#2e7d32',backgroundColor:'rgba(46,125,50,.12)',tension:.25,fill:true,pointRadius:2}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+    data:{labels:data.dates.map(formatDate),datasets:[
+      {label:t('overview.chart.trendCreated'),data:data.created,borderColor:'#34c759',backgroundColor:'rgba(52,199,89,.12)',tension:.25,fill:true,pointRadius:2},
+      {label:t('overview.chart.trendCompleted'),data:data.completed,borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.10)',tension:.25,fill:false,pointRadius:2},
+      {label:t('overview.chart.trendOverdue'),data:data.overdue,borderColor:'#ff3b30',backgroundColor:'rgba(255,59,48,.10)',tension:.25,fill:false,pointRadius:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
   });
 }
 
@@ -2833,7 +3070,7 @@ function renderReasonTop5Chart(data){
   if(data.length===0){renderChartEmpty('chart-reason-top5-wrapper');return;}
   chartReasonTop5=new Chart(ctx,{
     type:'bar',
-    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6'],borderRadius:4}]},
+    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#34c759','#ff9500','#0071e3','#ff3b30','#af52de'],borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
   });
 }
@@ -2845,8 +3082,21 @@ function renderSkuTop10Chart(data){
   if(data.length===0){renderChartEmpty('chart-sku-top10-wrapper');return;}
   chartSkuTop10=new Chart(ctx,{
     type:'bar',
-    data:{labels:data.map(d=>d[0]),datasets:[{label:t('overview.chart.label.times'),data:data.map(d=>d[1]),backgroundColor:'#2e7d32',borderRadius:4}]},
+    data:{labels:data.map(d=>d[0]),datasets:[{label:t('overview.chart.label.times'),data:data.map(d=>d[1]),backgroundColor:'#34c759',borderRadius:4}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}
+  });
+}
+
+function renderStageDonutChart(flowDefs){
+  const ctx=ensureChartCanvas('chart-stage-donut-wrapper','chart-stage-donut');
+  if(chartStageDonut){ chartStageDonut.destroy(); chartStageDonut=null; }
+  if(!ctx) return;
+  const data=flowDefs.map(n=>n.count);
+  if(data.every(v=>v===0)){renderChartEmpty('chart-stage-donut-wrapper');return;}
+  chartStageDonut=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:flowDefs.map(n=>n.label),datasets:[{data,backgroundColor:flowDefs.map(n=>n.color),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{boxWidth:12,font:{size:11}}}}}
   });
 }
 
@@ -3033,7 +3283,7 @@ async function renderList(){
           <td>${it.quantity||0}</td>
           <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
           <td>${esc(r.submitter_name||'-')}</td>
-          <td class="cell-actions"><button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button></td>
+          <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id))+'-'+idx, [{text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`}])}</td>
         </tr>`;
       });
     });
@@ -3069,11 +3319,11 @@ async function renderList(){
         <td class="cell-desc" title="${esc(faultDescs)}">${esc(faultDescs||'-').substring(0,25)}${faultDescs.length>25?'...':''}</td>
         <td>${esc(r.submitter_name||'-')}</td>
         <td class="cell-date">${formatDateTime(r.updated_at)}</td>
-        <td class="cell-actions">
-          <button class="action-btn" title="${t('list.action.view')}" onclick="showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button>
-          ${canEdit?`<button class="action-btn" title="${t('list.action.edit')}" onclick="editRecord('${escAttr(String(r.id))}')">&#x270F;</button>`:''}
-          ${hasPermission('record_delete')?`<button class="action-btn action-delete" title="${t('list.action.delete')}" onclick="deleteRecord('${escAttr(String(r.id))}')">&#x1F5D1;</button>`:''}
-        </td></tr>`;
+        <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id)), [
+          {text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`},
+          ...(canEdit?[{text:t('list.action.edit'),icon:ICON_ACTION.edit,onclick:`editRecord('${escAttr(String(r.id))}')`}]:[]),
+          ...(hasPermission('record_delete')?[{text:t('list.action.delete'),icon:ICON_ACTION.del,onclick:`deleteRecord('${escAttr(String(r.id))}')`,danger:true}]:[])
+        ])}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
     area.innerHTML=html;
@@ -4616,9 +4866,7 @@ async function renderApproval(){
         <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
         <td><strong>${totalQty}</strong></td>
         <td>${esc(currentApprover)}</td>
-        <td class="cell-actions">
-          <button class="action-btn" title="${t('list.action.view')}" onclick="event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')">&#x1F441;</button>
-        </td></tr>`;
+        <td class="cell-actions">${moreMenuHtml('more-appr-'+escAttr(String(r.id)), [{text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')`}])}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
     area.innerHTML=html;
@@ -5677,8 +5925,8 @@ async function renderProducts(){
         <td style="font-size:12px;color:var(--text-muted)">${esc(p.ean_code||'-')}</td>
         <td><span class="prod-status prod-status-${p.status}">${p.status==='active'?t('productModal.statusActive'):t('productModal.statusDisabled')}</span></td>
         <td class="cell-actions">
-          ${hasPermission('product_edit')?`<button class="action-btn" title="编辑" onclick="openProductModal('${p.id}')">&#x270F;</button>`:''}
-          ${hasPermission('product_delete')?`<button class="action-btn action-delete" title="删除" onclick="deleteProduct('${p.id}')">&#x1F5D1;</button>`:''}
+          ${hasPermission('product_edit')?`<button class="action-btn" title="编辑" onclick="openProductModal('${p.id}')">${ICON_ACTION.edit}</button>`:''}
+          ${hasPermission('product_delete')?`<button class="action-btn action-delete" title="删除" onclick="deleteProduct('${p.id}')">${ICON_ACTION.del}</button>`:''}
         </td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -5990,9 +6238,9 @@ async function renderUsers(){
       <td style="font-size:12px;color:${u.feishu_open_id?'var(--primary)':'var(--text-muted)'}">${feishuBound}</td>
       <td class="cell-date">${formatDate(u.created_at)}</td>
       <td class="cell-actions">
-        <button class="action-btn" title="${t('users.action.testFeishu')}" onclick="sendFeishuTestNotification('${u.id}')">&#x1F514;</button>
-        <button class="action-btn" title="${t('users.action.edit')}" onclick="openUserModal('${u.id}')">&#x270F;</button>
-        ${u.id!=='user_admin'?`<button class="action-btn action-delete" title="${t('users.action.delete')}" onclick="deleteUser('${u.id}')">&#x1F5D1;</button>`:''}
+        <button class="action-btn" title="${t('users.action.testFeishu')}" onclick="sendFeishuTestNotification('${u.id}')">${ICON_ACTION.bell}</button>
+        <button class="action-btn" title="${t('users.action.edit')}" onclick="openUserModal('${u.id}')">${ICON_ACTION.edit}</button>
+        ${u.id!=='user_admin'?`<button class="action-btn action-delete" title="${t('users.action.delete')}" onclick="deleteUser('${u.id}')">${ICON_ACTION.del}</button>`:''}
       </td></tr>`;
   });
   html+=`</tbody></table></div>`;
@@ -6334,8 +6582,8 @@ async function renderRoles(){
       <td style="max-width:260px" class="cell-desc" title="${esc(perms)}">${esc(perms)||'-'}</td>
       <td>${userCount}</td><td class="cell-date">${formatDate(r.created_at)}</td>
       <td class="cell-actions">
-        <button class="action-btn" title="编辑" onclick="openRoleModal('${r.id}')">&#x270F;</button>
-        ${!r.system?`<button class="action-btn action-delete" title="删除" onclick="deleteRole('${r.id}')">&#x1F5D1;</button>`:''}
+        <button class="action-btn" title="编辑" onclick="openRoleModal('${r.id}')">${ICON_ACTION.edit}</button>
+        ${!r.system?`<button class="action-btn action-delete" title="删除" onclick="deleteRole('${r.id}')">${ICON_ACTION.del}</button>`:''}
       </td></tr>`;
   });
   html+=`</tbody></table></div>`;

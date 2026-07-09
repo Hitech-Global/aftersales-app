@@ -92,7 +92,11 @@
         "daysSuffix": "d"
       },
       "noData": "No data",
-      "trend30": "Last 30 Days RMA Trend"
+      "trend30": "Last 30 Days RMA Trend",
+      "stageDonut": "RMA Stage Distribution",
+      "trendCreated": "Created",
+      "trendCompleted": "Completed",
+      "trendOverdue": "Overdue"
     },
     "section": {
       "brandCompare": "By Brand"
@@ -142,7 +146,38 @@
       "title": "Recent RMA Records",
       "empty": "No recent records",
       "pending": "Pending"
-    }
+    },
+    "health": {
+      "title": "After-sales Health",
+      "good": "Good",
+      "attention": "Attention",
+      "critical": "Critical",
+      "totalThisPeriod": "Total RMA This Period",
+      "completionRate": "Completion Rate",
+      "overdue": "Overdue",
+      "bottleneck": "Current Bottleneck",
+      "noBottleneck": "No major bottleneck"
+    },
+    "flow": {
+      "title": "RMA Flow Overview",
+      "created": "Created",
+      "pendingApproval": "Pending Approval",
+      "pendingProcess": "Pending Processing",
+      "pendingRma": "Pending RMA",
+      "completed": "Completed",
+      "count": "Count",
+      "share": "Share",
+      "avgStay": "Avg. stay",
+      "overdue": "Overdue"
+    },
+    "attention": {
+      "title": "Need Your Attention",
+      "overdue": "Overdue Not Processed",
+      "pendingApproval24h": "Pending Approval > 24h",
+      "pendingProcess3d": "Pending Processing > 3 Days",
+      "rmaNotCreated7d": "RMA Not Created > 7 Days"
+    },
+    "dataAsOf": "Data as of"
   },
   "list": {
     "title": "RMA Case List",
@@ -214,7 +249,8 @@
       "view": "View",
       "edit": "Edit",
       "approve": "Approve",
-      "delete": "Delete"
+      "delete": "Delete",
+      "more": "More actions"
     },
     "pagination": {
       "perPage": "/ page",

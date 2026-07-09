@@ -92,7 +92,11 @@
         "daysSuffix": "天"
       },
       "noData": "暂无数据",
-      "trend30": "近 30 天售后趋势"
+      "trend30": "近 30 天售后趋势",
+      "stageDonut": "售后阶段分布",
+      "trendCreated": "已创建",
+      "trendCompleted": "已完成",
+      "trendOverdue": "超期"
     },
     "section": {
       "brandCompare": "按品牌对比"
@@ -142,7 +146,38 @@
       "title": "最近售后记录",
       "empty": "暂无数据",
       "pending": "待审批"
-    }
+    },
+    "health": {
+      "title": "售后健康状态",
+      "good": "良好",
+      "attention": "需关注",
+      "critical": "严重",
+      "totalThisPeriod": "本周期售后总数",
+      "completionRate": "完成率",
+      "overdue": "超期数",
+      "bottleneck": "当前瓶颈",
+      "noBottleneck": "暂无明显瓶颈"
+    },
+    "flow": {
+      "title": "售后流程概览",
+      "created": "已创建",
+      "pendingApproval": "待审批",
+      "pendingProcess": "待处理",
+      "pendingRma": "待RMA",
+      "completed": "已完成",
+      "count": "数量",
+      "share": "占比",
+      "avgStay": "平均停留",
+      "overdue": "超期"
+    },
+    "attention": {
+      "title": "需要关注",
+      "overdue": "超期未处理",
+      "pendingApproval24h": "待审批超过 24h",
+      "pendingProcess3d": "待处理超过 3 天",
+      "rmaNotCreated7d": "RMA 未创建超过 7 天"
+    },
+    "dataAsOf": "数据更新时间"
   },
   "list": {
     "title": "售后记录列表",
@@ -214,7 +249,8 @@
       "view": "查看",
       "edit": "编辑",
       "approve": "审批",
-      "delete": "删除"
+      "delete": "删除",
+      "more": "更多操作"
     },
     "pagination": {
       "perPage": "条/页",
