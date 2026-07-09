@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.19"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.20"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -4419,31 +4419,39 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
     }else{
       record.status='审批通过';
       record.current_approval_level=0;
-      if(returnDate){
-        (record.items||[]).forEach((item,itemIndex)=>{
-          normalizeProcessItem(item);
-          if(itemProcessType(item)==='erp'&&itemProcessProgress(item)!=='completed'){
-            const oldProgress=itemProcessProgress(item);
-            item.process_progress='completed';
-            item.process_status='已处理';
-            item.return_stockin_date=returnDate;
-            item.process_completed_date=returnDate;
-            item.process_status_updated_at=now;
-            addProcessLog(record,itemIndex,{
-              operator_id:user.id,
-              operator_name:user.name,
-              processed_at:now,
-              process_date:returnDate,
-              process_type:'erp',
-              old_progress:oldProgress,
-              new_progress:'completed',
-              remark:comment||'',
-              attachments:attachments||[],
-              erp_return_date:returnDate
-            });
-          }
-        });
-      }
+      // 治本：审批通过时，凡明细属于「可二次销售(ERP入库)」类型，无论是否填写退货日期，均自动置为已处理；
+      // 其他处理类型(待换彩盒/待补配件/待RMA/待报废)不受影响。
+      const autoCompleteDate = returnDate || now;
+      (record.items||[]).forEach((item,itemIndex)=>{
+        normalizeProcessItem(item);
+        const rawType=(item.process_type||'').toString();
+        const rawReason=(item.return_reason||'').toString();
+        const isResellable =
+            rawType.toLowerCase()==='erp'
+         || rawType==='ERP入库'
+         || rawReason==='可二次销售'
+         || rawReason.toLowerCase()==='resellable';
+        if(isResellable && itemProcessProgress(item)!=='completed'){
+          const oldProgress=itemProcessProgress(item);
+          item.process_progress='completed';
+          item.process_status='已处理';
+          item.process_completed_date=autoCompleteDate;
+          item.process_status_updated_at=now;
+          if(returnDate){ item.return_stockin_date=returnDate; } // 退货日期仅作可选补充，不阻断 completed
+          addProcessLog(record,itemIndex,{
+            operator_id:user.id,
+            operator_name:user.name,
+            processed_at:now,
+            process_date:returnDate||'',
+            process_type:'erp',
+            old_progress:oldProgress,
+            new_progress:'completed',
+            remark:comment||'',
+            attachments:attachments||[],
+            erp_return_date:returnDate||''
+          });
+        }
+      });
     }
   }
 
@@ -4678,12 +4686,8 @@ async function doApproval(action, source='modal'){
   const pendingErpQty=pendingErpQuantity(recordForValidation);
   const willFinishApproval=action==='approve'&&recordForValidation&&findNextApprovalLevel(recordForValidation, recordForValidation.current_approval_level)===0;
   const returnDate=returnDateEl ? normalizeDateInput(returnDateEl) : '';
-  if(willFinishApproval&&pendingErpQty>0 && !returnDate){
-    // 恢复按钮状态
-    if(approveBtn){ approveBtn.disabled=false; approveBtn.textContent=approveBtn.dataset.originalText||'审批通过'; }
-    if(rejectBtn){ rejectBtn.disabled=false; }
-    return showFlash(t('validation.enterReturnDate'),'warning');
-  }
+  // 注：returnDate 不再是自动“已处理”的前提（见 executeApproval 内治本逻辑）；
+  // 审批通过时 ERP入库/可二次销售 明细会自动 completed，退货日期仅作可选补充，不再强制阻断审批。
   // Save pending ERP screenshots before approval
   if(Object.keys(pendingErpScreenshots).length>0){
     const records=recordsForValidation;
