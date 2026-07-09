@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.2"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.3"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -105,8 +105,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .btn-primary:hover{background:var(--primary-hover)}
 .btn-secondary{background:var(--card-bg);color:var(--text-secondary);border-color:var(--border)}
 .btn-secondary:hover{background:var(--bg)}
-.btn-secondary-green{background:rgba(46,157,82,.1);color:var(--primary);border-color:rgba(46,157,82,.35)}
-.btn-secondary-green:hover{background:rgba(46,157,82,.16)}
+.btn-secondary-green{background:rgba(46,157,82,.14);color:var(--primary);border-color:rgba(46,157,82,.45)}
+.btn-secondary-green:hover{background:rgba(46,157,82,.2)}
 .btn-success{background:var(--success);color:#fff}
 .btn-success:hover{background:#2bb04e}
 .table-section-actions{display:flex;gap:8px;align-items:center}
@@ -114,6 +114,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .btn-danger:hover{background:#e02b22}
 .btn-search{background:var(--primary);color:#fff;border:none}
 .btn-clear{background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--border)}
+.filter-bar .btn-search{width:96px}
+.filter-bar .btn-clear{width:88px}
 .btn-sm{padding:6px 12px;font-size:13px}
 .btn-lg{padding:12px 28px;font-size:16px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -218,28 +220,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .qf-pill.active .qf-count{background:rgba(255,255,255,.22);color:#fff}
 .qf-pill.alert:not(.muted) .qf-count{background:rgba(46,157,82,.12);color:var(--primary)}
 .qf-pill.alert.active .qf-count{background:rgba(255,255,255,.22);color:#fff}
-.qf-pill.muted{opacity:.5}
+.qf-pill.muted{opacity:.62}
 .qf-pill.muted .qf-count{background:var(--bg)}
 /* 待处理/超期类状态用浅绿底，比 Completed 更有工作台感与处理优先级 */
 .qf-pill.alert:not(.active):not(.muted){background:rgba(46,157,82,.06);border-color:rgba(46,157,82,.3);color:var(--text)}
 
 /* 两行筛选卡片 */
-.filter-bar{padding:16px 20px}
+.filter-bar{padding:14px 20px}
 .filter-bar .filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-.filter-bar .filter-row-2{margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light)}
-.filter-bar .filter-group{min-width:140px}
-.filter-bar .filter-kw{flex:2 1 280px;min-width:240px}
-.filter-bar .fg-short{flex:0 0 158px;min-width:138px}
-.filter-bar .fg-wide{flex:1.5 1 190px;min-width:168px}
-.filter-bar .filter-actions{margin-left:auto}
+.filter-bar .filter-row-2{margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)}
+.filter-bar .filter-group{min-width:120px}
+.filter-bar .filter-kw{flex:1 1 320px;min-width:320px;max-width:420px}
+.filter-bar .fg-short{flex:0 0 144px;min-width:128px}
+.filter-bar .fg-wide{flex:1.6 1 200px;min-width:182px}
+.filter-bar .filter-group.date-filter{width:150px}
+.filter-bar .filter-actions{margin-left:auto;align-self:flex-end;display:flex;gap:8px}
+.filter-bar .search-input,.filter-bar .filter-select,.filter-bar .date-input,.filter-bar .btn{height:38px;box-sizing:border-box}
 
 /* 表格可读性 */
 .table-container{border:1px solid var(--border-light);border-radius:var(--radius-card)}
-.table-container::-webkit-scrollbar{height:6px;width:6px}
+.table-container::-webkit-scrollbar{height:5px;width:5px}
 .table-container::-webkit-scrollbar-track{background:transparent}
-.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:8px}
-.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
-.data-table th,.data-table td{padding:15px 16px}
+.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.4)}
+#page-list .data-table th,#page-list .data-table td{padding:13px 16px}
 .data-table thead th{position:sticky;top:0;z-index:1}
 /* 操作列粘性右固定 */
 .data-table th.col-actions-head,.data-table td.cell-actions{position:sticky;right:0;text-align:center;z-index:2;width:92px;padding-left:0;padding-right:14px}
@@ -249,13 +253,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .data-table tbody tr.row-clickable:hover td.cell-actions{background:#f0f4fb}
 .cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:9px;background:var(--bg);color:var(--text-secondary);font-size:11px;font-weight:500;white-space:nowrap}
+.sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
 
 /* 风险标签：只表达风险，不表达完成状态 */
 .risk-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
 .risk-overdue{background:#fdecec;color:#d23b3b;font-weight:600}
 .risk-warn{background:#fff3e0;color:#e0701a}
 .risk-none{background:#eef6ee;color:#5a9e5f}
+
+/* 列表表格可读性微调：表头弱化、分割线更浅、状态/进度/风险 pill 形状统一 */
+#page-list .data-table th{font-weight:500}
+#page-list .data-table td{border-bottom:1px solid rgba(0,0,0,.05)}
+#page-list .data-table .status-badge,
+#page-list .data-table .ps-badge,
+#page-list .data-table .risk-pill{padding:3px 10px;border-radius:999px;font-size:12px;line-height:1.45}
+#page-list .table-section-actions .btn{height:38px;box-sizing:border-box}
 
 /* 空状态去 emoji（改用线性图标） */
 .empty-icon{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
@@ -448,7 +460,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .pagination-btn{padding:6px 12px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;font-size:13px}
 .pagination-btn:hover{background:var(--bg)}
 .pagination-btn:disabled{opacity:.5;cursor:not-allowed}
-.pagination-info{font-size:13px;color:var(--text-secondary);margin-right:auto}
+.pagination-info{font-size:13px;color:var(--text-muted);margin-right:auto}
 .pagination-controls{display:inline-flex;align-items:center;gap:8px}
 .page-size-select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg)}
 
@@ -674,11 +686,11 @@ select option{background:var(--card-bg);color:var(--text)}
 .dropdown-item .di-icon{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .dropdown-item .di-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .more-wrap{position:relative;display:inline-block}
-.table-container,.stmt-table-container,.ov-flow,.af-flow-container{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.16) transparent}
-.table-container::-webkit-scrollbar,.stmt-table-container::-webkit-scrollbar,.ov-flow::-webkit-scrollbar,.af-flow-container::-webkit-scrollbar{height:6px;width:6px}
+.table-container,.stmt-table-container,.ov-flow,.af-flow-container{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.1) transparent}
+.table-container::-webkit-scrollbar,.stmt-table-container::-webkit-scrollbar,.ov-flow::-webkit-scrollbar,.af-flow-container::-webkit-scrollbar{height:5px;width:5px}
 .table-container::-webkit-scrollbar-track,.stmt-table-container::-webkit-scrollbar-track,.ov-flow::-webkit-scrollbar-track,.af-flow-container::-webkit-scrollbar-track{background:transparent}
-.table-container::-webkit-scrollbar-thumb,.stmt-table-container::-webkit-scrollbar-thumb,.ov-flow::-webkit-scrollbar-thumb,.af-flow-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:8px}
-.table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
+.table-container::-webkit-scrollbar-thumb,.stmt-table-container::-webkit-scrollbar-thumb,.ov-flow::-webkit-scrollbar-thumb,.af-flow-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.4)}
 
 /* ===== Overview v2 (systematic layout) ===== */
 .ov-filter-card{padding:12px 18px;margin-bottom:12px}
@@ -826,7 +838,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.2 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.3 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
