@@ -380,6 +380,32 @@ async function initDatabase() {
       console.log('[DB] 已插入默认字典数据');
     }
 
+    // 修复退货原因字典的三语标签（用户可能在某语言下编辑导致 label_zh 等被覆盖为非对应语言文本）
+    // 使用 UPSERT 保证幂等：已存在的行会修正标签，不存在的行会被创建
+    const returnReasonCanonical = [
+      { code: 'resellable',           zh: '可二次销售',                    en: 'Resellable',                  id: 'Dapat Dijual Ulang',       sort: 1 },
+      { code: 'box_damage',           zh: '彩盒损坏',                     en: 'Damaged Packaging',          id: 'Kemasan Rusak',             sort: 2 },
+      { code: 'accessory_missing',    zh: '配件缺失',                     en: 'Missing Accessories',        id: 'Aksesori Hilang',            sort: 3 },
+      { code: 'hardware_fault',       zh: '硬件故障',                     en: 'Hardware Defect',            id: 'Kerusakan Hardware',         sort: 4 },
+      { code: 'scrapped',             zh: '报废',                        en: 'Scrapped',                   id: 'Dibuang',                    sort: 5 },
+      { code: 'human_damage',         zh: '人为损坏',                     en: 'Customer-Induced Damage',    id: 'Kerusakan oleh Manusia',     sort: 6 },
+      { code: 'functional_issue',     zh: '功能异常',                     en: 'Functional Issue',           id: 'Masalah Fungsional',         sort: 7 },
+      { code: 'other',                zh: '其他',                         en: 'Other',                      id: 'Lainnya',                    sort: 99 },
+    ];
+    for (const d of returnReasonCanonical) {
+      await query(
+        `INSERT INTO dictionaries (id, category, code, label_zh, label_en, label_id, sort_order, enabled, parent_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8)
+         ON CONFLICT (category, code) DO UPDATE SET
+           label_zh = EXCLUDED.label_zh,
+           label_en = EXCLUDED.label_en,
+           label_id = EXCLUDED.label_id,
+           sort_order = EXCLUDED.sort_order`,
+        ['dict_return_reason_' + d.code, 'return_reason', d.code, d.zh, d.en, d.id, d.sort, '']
+      );
+    }
+    console.log('[DB] 已修复退货原因字典三语标签');
+
     // 始终尝试插入默认 shop_customer 数据（ON CONFLICT DO NOTHING 保证幂等）
     const defaultShopCustomer = [
       { code: 'shopee_store_01', zh: 'Shopee 官方店', en: 'Shopee Official Store', id: 'Shopee Official Store', sort: 1, parent_code: 'shopee' },
