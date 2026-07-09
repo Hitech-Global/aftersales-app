@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.5"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.6"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -144,7 +144,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;font-family:inherit}
 .search-input:focus,.filter-select:focus,.date-input:focus,.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
 .filter-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--card-bg);outline:none;cursor:pointer;font-family:inherit}
-.date-picker-wrap{position:relative;display:flex;align-items:center;width:100%}
+/* 包裹层必须相对定位,否则内部绝对定位的日历按钮会锚定到最近的定位祖先(如全屏浮层的 fixed 容器)而跑到最右侧 */
+.date-picker-wrap{position:relative;display:block;width:100%}
 .date-input{width:100%;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:var(--card-bg);cursor:pointer}
 .date-picker-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-radius:6px;font-size:15px;line-height:1}
 .date-picker-btn:hover{background:var(--primary-light);color:var(--primary)}
@@ -305,9 +306,9 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .form-card-title{margin:0;font-size:15px;font-weight:600;color:var(--text)}
 .form-card-hint{font-size:12px;color:var(--text-muted);font-weight:400}
 .form-card-body{padding:20px}
-.form-card--basic .form-card-head{padding:12px 20px}
-.form-card--basic .form-card-body{padding:14px 20px}
-.form-card--basic .date-input{max-width:220px}
+.form-card--basic .form-card-head{padding:10px 18px}
+.form-card--basic .form-card-body{padding:12px 18px}
+.form-card--basic .date-picker-wrap{display:inline-block;width:240px;max-width:240px}
 .form-card-note{font-size:12px;color:var(--text-muted);margin-top:10px}
 .detail-items-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px}
 .total-qty{font-size:13px;color:var(--text-secondary);white-space:nowrap}
@@ -316,6 +317,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .btn-ghost:hover{background:var(--bg);color:var(--text)}
 .record-fs-inner .detail-items-table th.col-actions,
 .record-fs-inner .detail-items-table td.col-actions{position:sticky;right:0;background:var(--card-bg);z-index:4;text-align:center;box-shadow:-1px 0 0 var(--border-light)}
+.record-fs-inner .detail-items-table td.col-actions{padding-right:16px}
 
 .detail-card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
 .detail-section{margin-bottom:24px}
@@ -506,7 +508,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .detail-items-table-wrapper::-webkit-scrollbar-track{background:transparent}
 .detail-items-table-wrapper::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:8px}
 .detail-items-table-wrapper::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.4)}
-.detail-items-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.detail-items-table{width:100%;min-width:1760px;border-collapse:collapse;font-size:13px;table-layout:fixed}
 .detail-items-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
 /* 表头固定: 滚动时吸附在内容区顶部, 与输入行用阴影清晰分隔, 不再视觉重叠 */
 .detail-items-table th{position:sticky;top:0;z-index:5;background:#fafbfc;padding:10px 10px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,.06)}
@@ -862,7 +864,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.5 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.6 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1068,14 +1070,14 @@ select option{background:var(--card-bg);color:var(--text)}
                           <thead><tr>
                             <th class="col-channel" style="width:120px"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
                             <th class="col-shop" style="width:200px"><span data-i18n="form.col.shopCustomer"></span></th>
-                            <th class="col-sku" style="width:230px"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
+                            <th class="col-sku" style="width:240px"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
                             <th class="col-sn" style="width:160px" data-i18n="form.col.snCode"></th>
-                            <th class="col-order" style="width:190px" data-i18n="form.col.orderNo"></th>
+                            <th class="col-order" style="width:180px" data-i18n="form.col.orderNo"></th>
                             <th class="col-qty" style="width:80px"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
-                            <th class="col-reason" style="width:200px"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
+                            <th class="col-reason" style="width:220px"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
                             <th class="col-desc" style="width:320px"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
-                            <th class="col-atch" style="width:140px" data-i18n="form.col.attachment"></th>
-                            <th class="col-actions" style="width:72px" data-i18n="form.col.actions"></th>
+                            <th class="col-atch" style="width:150px" data-i18n="form.col.attachment"></th>
+                            <th class="col-actions" style="width:80px" data-i18n="form.col.actions"></th>
                           </tr></thead>
                           <tbody id="detail-items-tbody"></tbody>
                         </table>
