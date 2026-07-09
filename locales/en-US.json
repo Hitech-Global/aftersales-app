@@ -103,7 +103,9 @@
       "returnRate": "Overall Return Rate",
       "defectRate": "Overall Defect Rate",
       "monthCount": "This Month RMA",
-      "avgHandleDays": "Avg. Handling Time"
+      "avgHandleDays": "Avg. Handling Time",
+      "today": "Today's RMA",
+      "completed": "Completed"
     },
     "metric": {
       "avgDays": "Avg. Processing Days",
@@ -133,6 +135,11 @@
     },
     "error": {
       "loadFailed": "Overview data failed to load. Empty state is shown."
+    },
+    "recent": {
+      "title": "Recent RMA Records",
+      "empty": "No recent records",
+      "pending": "Pending"
     }
   },
   "list": {
@@ -618,20 +625,20 @@
         "orderNo": "Order No.",
         "qty": "Qty",
         "returnReason": "Return Reason (Required)",
-          "description": "Issue Description / Notes"
-        },
-        "exampleDescription": "Screen crack",
-        "noteReturnReasonTitle": "Return Reason (Required)",
-        "noteReturnReasonBody": "Choose one of the allowed values below. Display names are accepted and mapped automatically.",
-        "noteShopTitle": "Channel / Shop-Customer",
-        "noteShopBody": "First select a Channel, then the Shop/Customer dropdown shows only the shops under that channel (same as the create form).",
-        "mapInternal": "System Internal Value",
-        "mapZh": "Chinese",
-        "mapEn": "English",
-        "mapId": "Bahasa Indonesia",
-        "platformCol": "Channel",
-        "shopCustomerCol": "Shop/Customer"
+        "description": "Issue Description / Notes"
       },
+      "exampleDescription": "Screen crack",
+      "noteReturnReasonTitle": "Return Reason (Required)",
+      "noteReturnReasonBody": "Choose one of the allowed values below. Display names are accepted and mapped automatically.",
+      "noteShopTitle": "Channel / Shop-Customer",
+      "noteShopBody": "First select a Channel, then the Shop/Customer dropdown shows only the shops under that channel (same as the create form).",
+      "mapInternal": "System Internal Value",
+      "mapZh": "Chinese",
+      "mapEn": "English",
+      "mapId": "Bahasa Indonesia",
+      "platformCol": "Channel",
+      "shopCustomerCol": "Shop/Customer"
+    },
     "dropHint": "Click to choose a file or drag an Excel / CSV file here",
     "fileFormat": "Supports .xlsx / .csv files",
     "btnClose": "Close",

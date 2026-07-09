@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.14"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.15"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -419,6 +419,14 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-risk-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .ov-click-card{cursor:pointer;transition:transform .18s,box-shadow .18s}
 .ov-click-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+.ov-recent{margin-top:24px}
+.ov-recent-item{display:flex;align-items:center;gap:14px;padding:11px 16px;border-bottom:1px solid var(--border,#eee);cursor:pointer;font-size:14px}
+.ov-recent-item:last-child{border-bottom:none}
+.ov-recent-item:hover{background:var(--hover-bg,#f6f8fa)}
+.ov-recent-id{font-weight:700;color:var(--primary)}
+.ov-recent-date{color:var(--text-secondary);min-width:96px}
+.ov-recent-status{flex:1;color:var(--text)}
+.ov-recent-submitter{color:var(--text-secondary);min-width:80px;text-align:right}
 /* 明细模式表格 */
 .data-table .col-checkbox{width:36px;text-align:center}
 .data-table .col-checkbox input{cursor:pointer}
@@ -624,6 +632,7 @@ select option{background:var(--card-bg);color:var(--text)}
               <div class="chart-wrapper" id="chart-sku-top10-wrapper"><canvas id="chart-sku-top10"></canvas></div>
             </div>
           </div>
+          <div class="ov-recent" id="ov-recent"></div>
         </div>
 
         <!-- 售后列表 -->
@@ -2450,8 +2459,9 @@ function enterApp() {
   updateFeishuStatusBadge();
   document.getElementById('btn-logout').textContent = t('app.logout');
   
-  // 检查 URL hash，决定初始页面
+  // 检查 URL hash，决定初始页面；无 hash（如 ?lang=en-US）时默认进入概览页
   handleHashRoute();
+  if(!document.querySelector('.page.active')){ showPage('overview'); }
 }
 
 // ==================== SIDEBAR ====================
@@ -2584,13 +2594,17 @@ function isOverdueItem(item, record, days=7){
 }
 
 async function renderOverview(){
+  const ovEl=document.getElementById('ov-summary');
+  const riskEl=document.getElementById('ov-risk-row');
+  const recentEl=document.getElementById('ov-recent');
+
+  // 1) 拉取并过滤数据（独立容错，失败也不影响主内容渲染）
+  let records=[], allItems=[];
   try{
     const startD=getDateInputValue('ov-start-date');
     const endD=getDateInputValue('ov-end-date');
-    const brandF=document.getElementById('ov-brand-filter').value;
-    const salesData=asArray(await getSalesData());
-    let records=asArray(await getRecords());
-
+    const brandF=(document.getElementById('ov-brand-filter')||{}).value||'';
+    records=asArray(await getRecords());
     if(startD||endD){
       records=records.filter(r=>{
         const d=recordDateKey(r);
@@ -2601,71 +2615,83 @@ async function renderOverview(){
       });
     }
     if(brandF) records=records.filter(r=>r.brand===brandF);
-
-    const startMonth=startD?startD.substring(0,7):null;
-    const endMonth=endD?endD.substring(0,7):null;
-    const filteredSales=salesData.filter(d=>{
-      if(brandF&&d.brand!==brandF) return false;
-      if(startMonth&&d.month<startMonth) return false;
-      if(endMonth&&d.month>endMonth) return false;
-      return true;
-    });
-    const shipmentTotal=filteredSales.reduce((s,d)=>s+Number(d.online_shipment||0)+Number(d.offline_shipment||0),0);
-    const salesTotal=filteredSales.reduce((s,d)=>s+Number(d.online_sales||0)+Number(d.offline_sales||0),0);
-
-    const allItems=[];
     records.forEach(record=>{
       const items=asArray(record.items);
       if(items.length===0) allItems.push({record, item:{process_status:''}});
       items.forEach(item=>allItems.push({record,item}));
     });
+  }catch(e){
+    console.error('[Overview] 数据加载失败:', e);
+    records=[]; allItems=[];
+  }
 
-    const totalCount=allItems.length;
+  // 2) 主内容（卡片 / 风险 / 最近记录）—— 始终渲染，绝不被图表异常清空
+  try{
+    const todayKey=formatDateLocal(new Date());
+    const todayCount=records.filter(r=>recordDateKey(r)===todayKey).length;
     const pendingApprovalCount=records.filter(isPendingApproval).length;
     const pendingProcessCount=allItems.filter(x=>isPendingProcessItem(x.item)).length;
-    const overdueCount=allItems.filter(x=>isOverdueItem(x.item,x.record)).length;
-    const pendingRmaCount=allItems.filter(x=>isPendingRmaItem(x.item)).length;
-    const completedItems=allItems.filter(x=>itemProcessProgress(x.item)==='completed'&&x.item.process_completed_date);
-    const avgDays=completedItems.length
-      ?(completedItems.reduce((sum,x)=>{
-        const done=parseDateValue(x.item.process_completed_date);
-        const start=parseDateValue(x.record.created_at || x.record.aftersales_date);
-        return done&&start?sum+Math.max(0,(done-start)/86400000):sum;
-      },0)/completedItems.length).toFixed(1)
-      :'--';
-    const returnRate=salesTotal>0?(totalCount/salesTotal*100):null;
-    const defectRate=shipmentTotal>0?(totalCount/shipmentTotal*100):null;
+    const completedCount=allItems.filter(x=>itemProcessProgress(x.item)==='completed').length;
 
-    document.getElementById('ov-summary').innerHTML=`
-      <div class="ov-summary-card card-total"><div class="ov-card-icon">&#x1F4E6;</div><div class="ov-card-value">${totalCount}</div><div class="ov-card-label">${t('overview.card.monthCount')}</div></div>
-      <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x1F4CA;</div><div class="ov-card-value">${returnRate!=null?returnRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.returnRate')}</div></div>
-      <div class="ov-summary-card card-rate"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${defectRate!=null?defectRate.toFixed(2)+'%':'--'}</div><div class="ov-card-label">${t('overview.card.defectRate')}</div></div>
-      <div class="ov-summary-card"><div class="ov-card-icon">&#x23F1;</div><div class="ov-card-value">${avgDays}${avgDays!=='--'?t('overview.chart.label.daysSuffix'):''}</div><div class="ov-card-label">${t('overview.card.avgHandleDays')}</div></div>
-    `;
+    if(ovEl){
+      ovEl.innerHTML='<div style="color:#e11d48;font-weight:bold">TEST-售后概览已渲染</div>'
+        + ovCard(todayCount, t('overview.card.today'), '&#x1F4C5;')
+        + ovCardClick(pendingApprovalCount, t('overview.card.pendingApproval'), '&#x2705;', 'pendingApproval')
+        + ovCardClick(pendingProcessCount, t('overview.card.pendingProcess'), '&#x23F3;', 'pendingProcess')
+        + ovCard(completedCount, t('overview.card.completed'), '&#x2705;');
+    }
+    if(riskEl){
+      const overdueCount=allItems.filter(x=>isOverdueItem(x.item,x.record)).length;
+      const pendingRmaCount=allItems.filter(x=>isPendingRmaItem(x.item)).length;
+      riskEl.innerHTML=ovCardClick(overdueCount, t('overview.risk.overdue'), '&#x26A0;', 'overdue')
+        + ovCardClick(pendingRmaCount, t('overview.risk.pendingRma'), '&#x1F6E0;', 'pendingRma');
+    }
+    if(recentEl){
+      if(records.length===0){
+        recentEl.innerHTML='<div class="ov-section-title">'+t('overview.recent.title')+'</div><div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>'+t('overview.recent.empty')+'</p></div>';
+      }else{
+        const recent=[...records].sort((a,b)=>(recordDateKey(b)||'').localeCompare(recordDateKey(a)||'')).slice(0,5);
+        recentEl.innerHTML='<div class="ov-section-title">'+t('overview.recent.title')+'</div>'+recent.map(r=>{
+          const status=r.status||r.approval_status||r.approvalStatus||t('overview.recent.pending');
+          return '<div class="ov-recent-item" onclick="showPage(\'detail\',\''+escAttr(String(r.id))+'\')">'
+            +'<span class="ov-recent-id">#'+esc(String(r.id))+'</span>'
+            +'<span class="ov-recent-date">'+formatDate(r.aftersales_date)+'</span>'
+            +'<span class="ov-recent-status">'+esc(status)+'</span>'
+            +'<span class="ov-recent-submitter">'+esc(r.submitter_name||'-')+'</span>'
+            +'</div>';
+        }).join('');
+      }
+    }
+  }catch(e){
+    console.error('[Overview] 概览渲染失败:', e);
+    if(ovEl) ovEl.innerHTML='<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>'+t('overview.error.loadFailed')+'</p></div>';
+  }
 
-    document.getElementById('ov-risk-row').innerHTML=`
-      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('pendingApproval')"><div class="ov-card-icon">&#x2705;</div><div class="ov-card-value">${pendingApprovalCount}</div><div class="ov-card-label">${t('overview.risk.pendingApproval')}</div></div>
-      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('pendingProcess')"><div class="ov-card-icon">&#x23F3;</div><div class="ov-card-value">${pendingProcessCount}</div><div class="ov-card-label">${t('overview.risk.pendingProcess')}</div></div>
-      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('overdue')"><div class="ov-card-icon">&#x26A0;</div><div class="ov-card-value">${overdueCount}</div><div class="ov-card-label">${t('overview.risk.overdue')}</div></div>
-      <div class="ov-summary-card ov-click-card" onclick="jumpFromOverview('pendingRma')"><div class="ov-card-icon">&#x1F6E0;</div><div class="ov-card-value">${pendingRmaCount}</div><div class="ov-card-label">${t('overview.risk.pendingRma')}</div></div>
-    `;
-
-    renderTrend30Chart(buildTrend30(records, endD));
+  // 3) 图表独立容错：Chart.js 未加载或渲染失败，只影响图表区域，不再清空主内容
+  safeRenderChart(function(){ renderTrend30Chart(buildTrend30(records, getDateInputValue('ov-end-date'))); });
+  safeRenderChart(function(){
     const reasonCounts={};
     allItems.forEach(x=>{const reason=x.item.return_reason;if(reason)reasonCounts[reason]=(reasonCounts[reason]||0)+1;});
     renderReasonTop5Chart(Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,5));
+  });
+  safeRenderChart(function(){
     const skuCounts={};
     allItems.forEach(x=>{const sku=x.item.sku_code;if(sku)skuCounts[sku]=(skuCounts[sku]||0)+1;});
     renderSkuTop10Chart(Object.entries(skuCounts).sort((a,b)=>b[1]-a[1]).slice(0,10));
-  }catch(e){
-    console.error('[Overview] render failed:', e);
-    document.getElementById('ov-summary').innerHTML='';
-    document.getElementById('ov-risk-row').innerHTML='';
-    renderTrend30Chart([]);
-    renderReasonTop5Chart([]);
-    renderSkuTop10Chart([]);
-    showFlash(t('overview.error.loadFailed'),'warning');
-  }
+  });
+}
+
+function ovCard(value,label,icon){
+  return '<div class="ov-summary-card"><div class="ov-card-icon">'+icon+'</div><div class="ov-card-value">'+value+'</div><div class="ov-card-label">'+label+'</div></div>';
+}
+function ovCardClick(value,label,icon,kind){
+  return '<div class="ov-summary-card ov-click-card" onclick="jumpFromOverview(\''+kind+'\')"><div class="ov-card-icon">'+icon+'</div><div class="ov-card-value">'+value+'</div><div class="ov-card-label">'+label+'</div></div>';
+}
+function safeRenderChart(fn){
+  try{
+    if(typeof Chart==='undefined'||!Chart){ console.warn('[Overview] Chart.js 未加载，跳过图表渲染'); return; }
+    fn();
+  }catch(e){ console.warn('[Overview] 图表渲染失败(不影响主内容):', e); }
 }
 
 function buildTrend30(records,endDate){

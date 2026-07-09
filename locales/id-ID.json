@@ -103,7 +103,9 @@
       "returnRate": "Total Return Rate",
       "defectRate": "Total Defect Rate",
       "monthCount": "RMA Bulan Ini",
-      "avgHandleDays": "Rata-rata Waktu Proses"
+      "avgHandleDays": "Rata-rata Waktu Proses",
+      "today": "RMA Hari Ini",
+      "completed": "Selesai"
     },
     "metric": {
       "avgDays": "Rata-rata Hari Proses",
@@ -133,6 +135,11 @@
     },
     "error": {
       "loadFailed": "Data ringkasan gagal dimuat. Status kosong ditampilkan."
+    },
+    "recent": {
+      "title": "Catatan RMA Terbaru",
+      "empty": "Tidak ada data",
+      "pending": "Menunggu"
     }
   },
   "list": {
@@ -618,20 +625,20 @@
         "orderNo": "No. Pesanan",
         "qty": "Qty",
         "returnReason": "Alasan Retur (Wajib)",
-          "description": "Deskripsi Masalah / Catatan"
-        },
-        "exampleDescription": "Layar retak",
-        "noteReturnReasonTitle": "Alasan Retur (Wajib)",
-        "noteReturnReasonBody": "Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.",
-        "noteShopTitle": "Saluran / Toko-Pelanggan",
-        "noteShopBody": "Pilih Saluran dulu, lalu dropdown Toko/Pelanggan hanya menampilkan toko di bawah saluran tersebut (sama seperti formulir buat).",
-        "mapInternal": "Nilai Internal Sistem",
-        "mapZh": "Mandarin",
-        "mapEn": "Inggris",
-        "mapId": "Bahasa Indonesia",
-        "platformCol": "Saluran",
-        "shopCustomerCol": "Toko/Pelanggan"
+        "description": "Deskripsi Masalah / Catatan"
       },
+      "exampleDescription": "Layar retak",
+      "noteReturnReasonTitle": "Alasan Retur (Wajib)",
+      "noteReturnReasonBody": "Pilih salah satu nilai yang tersedia di bawah ini. Nama tampilan akan dipetakan otomatis.",
+      "noteShopTitle": "Saluran / Toko-Pelanggan",
+      "noteShopBody": "Pilih Saluran dulu, lalu dropdown Toko/Pelanggan hanya menampilkan toko di bawah saluran tersebut (sama seperti formulir buat).",
+      "mapInternal": "Nilai Internal Sistem",
+      "mapZh": "Mandarin",
+      "mapEn": "Inggris",
+      "mapId": "Bahasa Indonesia",
+      "platformCol": "Saluran",
+      "shopCustomerCol": "Toko/Pelanggan"
+    },
     "dropHint": "Klik untuk memilih file atau tarik file Excel / CSV ke sini",
     "fileFormat": "Mendukung file .xlsx / .csv",
     "btnClose": "Tutup",

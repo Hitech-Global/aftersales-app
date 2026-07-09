@@ -103,7 +103,9 @@
       "returnRate": "综合退货率",
       "defectRate": "综合不良率",
       "monthCount": "本月售后数",
-      "avgHandleDays": "平均处理时长"
+      "avgHandleDays": "平均处理时长",
+      "today": "今日售后",
+      "completed": "已完成"
     },
     "metric": {
       "avgDays": "平均处理天数",
@@ -133,6 +135,11 @@
     },
     "error": {
       "loadFailed": "概览数据加载失败，已显示空状态"
+    },
+    "recent": {
+      "title": "最近售后记录",
+      "empty": "暂无数据",
+      "pending": "待审批"
     }
   },
   "list": {
@@ -609,29 +616,29 @@
       "fileName": "售后记录导入模板",
       "sheetName": "售后记录导入模板",
       "instructionSheetName": "填写说明",
-        "col": {
-          "date": "售后日期",
-          "platform": "渠道",
+      "col": {
+        "date": "售后日期",
+        "platform": "渠道",
         "shopCustomer": "店铺/客户",
         "sku": "SKU",
         "snCode": "SN Code",
         "orderNo": "订单号",
         "qty": "数量",
         "returnReason": "退货原因（必填）",
-          "description": "问题说明/备注"
-        },
-        "exampleDescription": "屏幕裂纹",
-        "noteReturnReasonTitle": "退货原因（必填）",
-        "noteReturnReasonBody": "请选择下方允许的值之一，显示名称会被自动映射。",
-        "noteShopTitle": "渠道 / 店铺-客户",
-        "noteShopBody": "先选择渠道，店铺/客户下拉将只显示该渠道下的店铺（与新建表单一致）。",
-        "mapInternal": "系统内部值",
-        "mapZh": "中文",
-        "mapEn": "英文",
-        "mapId": "印尼文",
-        "platformCol": "渠道",
-        "shopCustomerCol": "店铺/客户"
+        "description": "问题说明/备注"
       },
+      "exampleDescription": "屏幕裂纹",
+      "noteReturnReasonTitle": "退货原因（必填）",
+      "noteReturnReasonBody": "请选择下方允许的值之一，显示名称会被自动映射。",
+      "noteShopTitle": "渠道 / 店铺-客户",
+      "noteShopBody": "先选择渠道，店铺/客户下拉将只显示该渠道下的店铺（与新建表单一致）。",
+      "mapInternal": "系统内部值",
+      "mapZh": "中文",
+      "mapEn": "英文",
+      "mapId": "印尼文",
+      "platformCol": "渠道",
+      "shopCustomerCol": "店铺/客户"
+    },
     "dropHint": "点击选择文件或拖拽 Excel / CSV 文件到此处",
     "fileFormat": "支持 .xlsx / .csv 格式",
     "btnClose": "关闭",
