@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.7"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.8"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -642,7 +642,7 @@ select option{background:var(--card-bg);color:var(--text)}
 
 /* After-sales Health */
 .ov-health-card{padding:20px 22px;display:flex;gap:22px;align-items:stretch}
-.ov-health-status{flex:0 0 190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;border-radius:14px;background:var(--bg)}
+.ov-health-status{flex:0 0 190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;border-radius:14px;background:var(--bg)}
 .ov-health-status .hs-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center}
 .ov-health-status .hs-icon svg{width:26px;height:26px;stroke-width:1.8}
 .ov-health-status .hs-status{font-size:15px;font-weight:700}
@@ -657,7 +657,7 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-health-status.critical .hs-icon{background:rgba(255,59,48,.16);color:#d23b2f}
 .ov-health-status.critical .hs-status{color:#d23b2f}
 .ov-health-metrics{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.ov-health-metric{background:var(--bg);border-radius:14px;padding:16px}
+.ov-health-metric{background:var(--bg);border-radius:14px;padding:20px;display:flex;flex-direction:column;justify-content:center}
 .ov-health-metric .v{font-size:24px;font-weight:700;color:var(--text);line-height:1.1}
 .ov-health-metric .l{font-size:12px;color:var(--text-muted);margin-top:6px}
 .ov-health-metric.bottleneck-metric{display:flex;flex-direction:column;justify-content:center}
@@ -769,7 +769,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.7 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.8 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
