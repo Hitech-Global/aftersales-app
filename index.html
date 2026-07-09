@@ -2861,6 +2861,7 @@ async function renderList(){
   }
   const records=await getRecords();
   if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
+  await ensureShopCustomerDict();
   const search=(document.getElementById('search-input').value||'').toLowerCase();
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
@@ -2935,7 +2936,7 @@ async function renderList(){
           <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
-          <td>${esc(it.shop_customer||'-')}</td>
+          <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
           <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
           <td>${esc(it.sn_code||'-')}</td>
@@ -2957,7 +2958,7 @@ async function renderList(){
     pageRecords.forEach(r=>{
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
-      const shopCustomers=[...new Set(items.map(it=>it.shop_customer).filter(Boolean))];
+      const shopCustomers=[...new Set(items.map(it=>getShopCustomerLabel(it.shop_customer)).filter(Boolean))];
       const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].map(rr=>tReturnReason(rr)).join(', ');
       const skus=items.map(it=>it.sku_code).filter(Boolean).join(', ');
       const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
@@ -3194,6 +3195,7 @@ async function renderDetail(id){
   }
   const products=await getProducts();
   const productBySku=new Map(products.map(p=>[String(p.sku_code||'').toLowerCase(),p]));
+  await ensureShopCustomerDict();
   const pendingErpQty=pendingErpQuantity(r);
   currentApprovalRecordId=r.id;
   approvalAttachmentTarget='detail';
@@ -3283,7 +3285,7 @@ async function renderDetail(id){
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id">${i+1}</td>
             <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
-            <td>${esc(it.shop_customer||'-')}</td>
+            <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
             <td>${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.sn_code||'-')}</td>
@@ -3867,6 +3869,35 @@ function getPlatformLabel(code, platformList){
   const list = platformList || _platformCache || [];
   const item = list.find(p => p.code === code) || list.find(p => getDictLabel(p) === code) || list.find(p => String(p.code).toLowerCase() === String(code).toLowerCase());
   return item ? getDictLabel(item) : code;
+}
+
+// 店铺/客户展示映射: 将存储的内部 code(如 shopee_netac)映射为字典显示名(如 Shopee Netac)
+let _shopCustomerDict = null; // null 表示尚未加载; 加载后即使为空也缓存为 []
+async function ensureShopCustomerDict(){
+  if(_shopCustomerDict) return _shopCustomerDict;
+  try{
+    _shopCustomerDict = await loadDictOptions('shop_customer'); // 全量,跨平台
+  }catch(e){
+    _shopCustomerDict = [];
+  }
+  return _shopCustomerDict;
+}
+// 将存储的 shop_customer 内部值映射为可读显示名;找不到字典项时兜底返回原值,避免空白
+function getShopCustomerLabel(value){
+  if(!value) return '';
+  const list = (_shopCustomerDict && _shopCustomerDict.length) ? _shopCustomerDict : (_dictCache['shop_customer'] || []);
+  // 1) code 精确匹配
+  const byCode = list.find(s => s.code === value);
+  if(byCode) return getDictLabel(byCode);
+  // 2) code 不区分大小写匹配
+  const lower = String(value).toLowerCase();
+  const byCodeCI = list.find(s => String(s.code).toLowerCase() === lower);
+  if(byCodeCI) return getDictLabel(byCodeCI);
+  // 3) 已是显示名(label 匹配)
+  const byLabel = list.find(s => getDictLabel(s).toLowerCase() === lower);
+  if(byLabel) return getDictLabel(byLabel);
+  // 4) 兜底: 保留原始值,避免空白
+  return value;
 }
 
 // 店铺/客户回显值反查: 将存储的 shop_customer 值(可能是 display label 或旧 code)归一化为当前字典中的 code
@@ -4528,6 +4559,7 @@ async function openLegacyApprovalModal(recordId){
   approvalAttachmentTarget='modal';
   pendingErpScreenshots={};
   const records=await getRecords();
+  await ensureShopCustomerDict();
   const record=records.find(r=>r.id===recordId);
   if(!record) return;
   if(!canApproveRecord(record)){
@@ -4552,7 +4584,7 @@ async function openLegacyApprovalModal(recordId){
           return `<tr>
             <td>${i+1}</td>
             <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
-            <td>${esc(it.shop_customer||'-')}</td>
+            <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
