@@ -261,7 +261,8 @@
       "prev": "Previous",
       "next": "Next",
       "last": "Last",
-      "info": "{count} total, page {current} of {totalPages}"
+      "info": "{count} total, page {current} of {totalPages}",
+      "showing": "Showing {count} of {total} cases"
     },
     "subtitle": "Manage after-sales cases, approvals, processing progress, and RMA follow-up.",
     "quickFilter": {

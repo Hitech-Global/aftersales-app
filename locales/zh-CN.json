@@ -261,7 +261,8 @@
       "prev": "上一页",
       "next": "下一页",
       "last": "末页",
-      "info": "共 {count} 条，第 {current}/{totalPages} 页"
+      "info": "共 {count} 条，第 {current}/{totalPages} 页",
+      "showing": "显示 {count} / {total} 条"
     },
     "subtitle": "管理售后工单、审批、处理进度与 RMA 跟进。",
     "quickFilter": {

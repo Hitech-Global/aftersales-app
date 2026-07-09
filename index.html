@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.1"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.2"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -105,6 +105,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .btn-primary:hover{background:var(--primary-hover)}
 .btn-secondary{background:var(--card-bg);color:var(--text-secondary);border-color:var(--border)}
 .btn-secondary:hover{background:var(--bg)}
+.btn-secondary-green{background:rgba(46,157,82,.1);color:var(--primary);border-color:rgba(46,157,82,.35)}
+.btn-secondary-green:hover{background:rgba(46,157,82,.16)}
 .btn-success{background:var(--success);color:#fff}
 .btn-success:hover{background:#2bb04e}
 .table-section-actions{display:flex;gap:8px;align-items:center}
@@ -218,6 +220,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .qf-pill.alert.active .qf-count{background:rgba(255,255,255,.22);color:#fff}
 .qf-pill.muted{opacity:.5}
 .qf-pill.muted .qf-count{background:var(--bg)}
+/* 待处理/超期类状态用浅绿底，比 Completed 更有工作台感与处理优先级 */
+.qf-pill.alert:not(.active):not(.muted){background:rgba(46,157,82,.06);border-color:rgba(46,157,82,.3);color:var(--text)}
 
 /* 两行筛选卡片 */
 .filter-bar{padding:16px 20px}
@@ -225,24 +229,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .filter-bar .filter-row-2{margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light)}
 .filter-bar .filter-group{min-width:140px}
 .filter-bar .filter-kw{flex:2 1 280px;min-width:240px}
+.filter-bar .fg-short{flex:0 0 158px;min-width:138px}
+.filter-bar .fg-wide{flex:1.5 1 190px;min-width:168px}
 .filter-bar .filter-actions{margin-left:auto}
 
 /* 表格可读性 */
 .table-container{border:1px solid var(--border-light);border-radius:var(--radius-card)}
-.table-container::-webkit-scrollbar{height:8px;width:8px}
+.table-container::-webkit-scrollbar{height:6px;width:6px}
 .table-container::-webkit-scrollbar-track{background:transparent}
-.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
-.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.24)}
+.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
 .data-table th,.data-table td{padding:15px 16px}
 .data-table thead th{position:sticky;top:0;z-index:1}
 /* 操作列粘性右固定 */
-.data-table th.col-actions-head,.data-table td.cell-actions{position:sticky;right:0;text-align:center;z-index:2}
+.data-table th.col-actions-head,.data-table td.cell-actions{position:sticky;right:0;text-align:center;z-index:2;width:92px;padding-left:0;padding-right:14px}
 .data-table thead th.col-actions-head{background:#fbfbfd;z-index:3}
 .data-table td.cell-actions{background:var(--card-bg);box-shadow:inset 1px 0 0 var(--border-light)}
 .data-table tbody tr:hover td.cell-actions{background:#f7f7f9}
 .data-table tbody tr.row-clickable:hover td.cell-actions{background:#f0f4fb}
 .cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sku-more{color:var(--text-muted);font-size:12px}
+.data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:9px;background:var(--bg);color:var(--text-secondary);font-size:11px;font-weight:500;white-space:nowrap}
 
 /* 风险标签：只表达风险，不表达完成状态 */
 .risk-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
@@ -441,7 +448,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .pagination-btn{padding:6px 12px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;font-size:13px}
 .pagination-btn:hover{background:var(--bg)}
 .pagination-btn:disabled{opacity:.5;cursor:not-allowed}
-.pagination-info{font-size:13px;color:var(--text-secondary)}
+.pagination-info{font-size:13px;color:var(--text-secondary);margin-right:auto}
+.pagination-controls{display:inline-flex;align-items:center;gap:8px}
 .page-size-select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card-bg)}
 
 .hidden{display:none!important}
@@ -669,8 +677,8 @@ select option{background:var(--card-bg);color:var(--text)}
 .table-container,.stmt-table-container,.ov-flow,.af-flow-container{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.16) transparent}
 .table-container::-webkit-scrollbar,.stmt-table-container::-webkit-scrollbar,.ov-flow::-webkit-scrollbar,.af-flow-container::-webkit-scrollbar{height:6px;width:6px}
 .table-container::-webkit-scrollbar-track,.stmt-table-container::-webkit-scrollbar-track,.ov-flow::-webkit-scrollbar-track,.af-flow-container::-webkit-scrollbar-track{background:transparent}
-.table-container::-webkit-scrollbar-thumb,.stmt-table-container::-webkit-scrollbar-thumb,.ov-flow::-webkit-scrollbar-thumb,.af-flow-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:8px}
-.table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.26)}
+.table-container::-webkit-scrollbar-thumb,.stmt-table-container::-webkit-scrollbar-thumb,.ov-flow::-webkit-scrollbar-thumb,.af-flow-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.28)}
 
 /* ===== Overview v2 (systematic layout) ===== */
 .ov-filter-card{padding:12px 18px;margin-bottom:12px}
@@ -818,7 +826,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.1 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.2 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -921,34 +929,31 @@ select option{background:var(--card-bg);color:var(--text)}
               <h2 data-i18n="list.title"></h2>
               <p class="ph-subtitle" data-i18n="list.subtitle"></p>
             </div>
-            <div class="ph-right">
-              <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()" data-i18n="list.btnExport"></button>
-            </div>
           </div>
           <div class="quick-filter-bar" id="quick-filter-bar"></div>
           <div class="filter-bar">
             <div class="filter-row filter-row-1">
-              <div class="filter-group">
+              <div class="filter-group fg-short">
                 <label data-i18n="list.filter.brand"></label>
                 <select class="filter-select" id="brand-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allBrands"></option></select>
               </div>
-              <div class="filter-group">
+              <div class="filter-group fg-short">
                 <label data-i18n="list.filter.channel"></label>
                 <select class="filter-select" id="channel-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allChannels"></option></select>
               </div>
-              <div class="filter-group">
+              <div class="filter-group fg-wide">
                 <label data-i18n="list.filter.approvalStatus"></label>
                 <select class="filter-select" id="status-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allApprovalStatus"></option></select>
               </div>
-              <div class="filter-group">
+              <div class="filter-group fg-wide">
                 <label data-i18n="list.filter.returnReason"></label>
                 <select class="filter-select" id="return-reason-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allReturnReasons"></option></select>
               </div>
-              <div class="filter-group">
+              <div class="filter-group fg-wide">
                 <label data-i18n="list.filter.processProgress"></label>
                 <select class="filter-select" id="process-progress-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessProgress"></option></select>
               </div>
-              <div class="filter-group">
+              <div class="filter-group fg-short">
                 <label data-i18n="list.filter.risk"></label>
                 <select class="filter-select" id="list-risk-filter" onchange="renderList()">
                   <option value="" data-i18n="list.filter.riskAll"></option>
@@ -988,7 +993,8 @@ select option{background:var(--card-bg);color:var(--text)}
               </div>
               <div class="table-section-actions" id="list-actions">
                 <button class="btn btn-primary" id="btn-new-record-table" onclick="openRecordForm()" data-i18n="list.btnManual"></button>
-                <button class="btn btn-secondary" id="btn-import-records" onclick="openImportDialog()" data-i18n="list.btnBatchImport"></button>
+                <button class="btn btn-secondary-green" id="btn-import-records" onclick="openImportDialog()" data-i18n="list.btnBatchImport"></button>
+                <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()" data-i18n="list.btnExport"></button>
               </div>
             </div>
             <div class="batch-bar" id="batch-bar">
@@ -3627,13 +3633,12 @@ async function renderList(){
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th class="col-checkbox"><input type="checkbox" id="select-all-items" onchange="toggleSelectAllItems(this)"></th>
       <th>${t('list.col.id')}</th>
+      <th>${t('list.col.approvalStatus')}</th>
+      <th>${t('list.col.processStatus')}</th>
+      <th>${t('list.col.risk')}</th>
       <th>${t('list.col.date')}</th>
       <th>${t('list.col.platform')}</th>
       <th>${t('list.col.shopCustomer')}</th>
-      <th>${t('list.col.approvalStatus')}</th>
-      <th>${t('list.col.processType')}</th>
-      <th>${t('list.col.processProgress')}</th>
-      <th>${t('list.col.risk')}</th>
       <th>${t('list.col.returnReason')}</th>
       <th>${t('list.col.sku')}</th>
       <th>${t('list.col.snCode')}</th>
@@ -3652,19 +3657,18 @@ async function renderList(){
         html+=`<tr>
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
+          <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
+          <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
+          <td>${renderRiskBadge([it], r)}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
           <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
-          <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
-          <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
-          <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
-          <td>${renderRiskBadge([it], r)}</td>
           <td>${esc(it.return_reason?displayReturnReason(it.return_reason):'-')}</td>
           <td class="cell-sku">${esc(it.sku_code||'-')}</td>
           <td>${esc(it.sn_code||'-')}</td>
           <td class="cell-order">${esc(it.order_no||'-')}</td>
           <td>${it.quantity||0}</td>
-          <td class="cell-desc">${esc((it.fault_description||'').substring(0,25))}</td>
+          <td class="cell-desc" title="${esc(it.fault_description||'')}">${esc(it.fault_description||'-')}</td>
           <td>${esc(r.submitter_name||'-')}</td>
           <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id))+'-'+idx, [
             {text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`},
@@ -3680,19 +3684,18 @@ async function renderList(){
     // ===== 按售后单模式 =====
     let html=`<div class="table-container"><table class="data-table"><thead><tr>
       <th>${t('list.col.id')}</th>
-      <th>${t('list.col.date')}</th>
-      <th>${t('list.col.platform')}</th>
-      <th>${t('list.col.shopCustomer')}</th>
       <th>${t('list.col.approvalStatus')}</th>
       <th>${t('list.col.processStatus')}</th>
       <th>${t('list.col.risk')}</th>
+      <th>${t('list.col.date')}</th>
+      <th>${t('list.col.platform')}</th>
+      <th>${t('list.col.shopCustomer')}</th>
       <th>${t('list.col.returnReason')}</th>
       <th>${t('list.col.sku')}</th>
       <th>${t('list.col.orderNo')}</th>
       <th>${t('list.col.qty')}</th>
       <th>${t('list.col.description')}</th>
       <th>${t('list.col.submitter')}</th>
-      <th>${t('list.col.updatedAt')}</th>
       <th class="col-actions-head">${t('list.col.actions')}</th>
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
@@ -3712,19 +3715,18 @@ async function renderList(){
       const canProcess = r.status==='审批通过' && items.some(it=>isPendingProcessItem(it)) && hasPermission('record_edit');
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
-        <td class="cell-date">${formatDate(r.aftersales_date)}</td>
-        <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
-        <td>${esc(shopCustomers.join(',')||'-')}</td>
         <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
         <td>${psCell}</td>
         <td>${renderRiskBadge(items, r)}</td>
+        <td class="cell-date">${formatDate(r.aftersales_date)}</td>
+        <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
+        <td>${esc(shopCustomers.join(',')||'-')}</td>
         <td>${returnReasons||'-'}</td>
         <td class="cell-sku" title="${esc(fullSkus)}">${formatSkuList(items, 2)}</td>
         <td class="cell-order" title="${esc(fullOrders)}">${formatOrderList(items, 1)}</td>
         <td>${totalQty}</td>
-        <td class="cell-desc" title="${esc(faultDescs)}">${esc(faultDescs||'-').substring(0,25)}${faultDescs.length>25?'...':''}</td>
+        <td class="cell-desc" title="${esc(faultDescs)}">${esc(faultDescs||'-')}</td>
         <td>${esc(r.submitter_name||'-')}</td>
-        <td class="cell-date">${formatDateTime(r.updated_at)}</td>
         <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id)), [
           {text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`},
           ...(canEdit?[{text:t('list.action.edit'),icon:ICON_ACTION.edit,onclick:`editRecord('${escAttr(String(r.id))}')`}]:[]),
@@ -3894,14 +3896,19 @@ async function submitBatchProcess(){
 function renderListPagination(total){
   const container=document.getElementById('list-pagination');
   const totalPages=Math.max(1,Math.ceil(total/listPageSize));
-  if(totalPages<=1&&total<=listPageSize){ container.innerHTML=''; return; }
+  const startIdx= total===0?0:(listPage-1)*listPageSize+1;
+  const endIdx=Math.min(total, listPage*listPageSize);
+  const count= total===0?0:(endIdx-startIdx+1);
+  const showControls= totalPages>1;
   container.innerHTML=`
-    <select class="page-size-select" onchange="listPageSize=parseInt(this.value);listPage=1;renderList();"><option value="10" ${listPageSize===10?'selected':''}>10 ${t('list.pagination.perPage')}</option><option value="20" ${listPageSize===20?'selected':''}>20 ${t('list.pagination.perPage')}</option><option value="50" ${listPageSize===50?'selected':''}>50 ${t('list.pagination.perPage')}</option></select>
-    <span class="pagination-info">${t('list.pagination.total',{count:total})}，${listPage}/${totalPages}</span>
-    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage=1;renderList()">${t('list.pagination.first')}</button>
-    <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage--;renderList()">${t('list.pagination.prev')}</button>
-    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage++;renderList()">${t('list.pagination.next')}</button>
-    <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage=totalPages;renderList()">${t('list.pagination.last')}</button>`;
+    <span class="pagination-info">${t('list.pagination.showing',{count:count,total:total})}</span>
+    ${showControls?`<span class="pagination-controls">
+      <select class="page-size-select" onchange="listPageSize=parseInt(this.value);listPage=1;renderList();"><option value="10" ${listPageSize===10?'selected':''}>10 ${t('list.pagination.perPage')}</option><option value="20" ${listPageSize===20?'selected':''}>20 ${t('list.pagination.perPage')}</option><option value="50" ${listPageSize===50?'selected':''}>50 ${t('list.pagination.perPage')}</option></select>
+      <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage=1;renderList()">${t('list.pagination.first')}</button>
+      <button class="pagination-btn" ${listPage===1?'disabled':''} onclick="listPage--;renderList()">${t('list.pagination.prev')}</button>
+      <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage++;renderList()">${t('list.pagination.next')}</button>
+      <button class="pagination-btn" ${listPage===totalPages?'disabled':''} onclick="listPage=totalPages;renderList()">${t('list.pagination.last')}</button>
+    </span>`:''}`;
 }
 
 function clearListFilter(){

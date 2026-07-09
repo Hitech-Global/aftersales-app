@@ -261,7 +261,8 @@
       "prev": "Sebelumnya",
       "next": "Berikutnya",
       "last": "Akhir",
-      "info": "Total {count}, halaman {current}/{totalPages}"
+      "info": "Total {count}, halaman {current}/{totalPages}",
+      "showing": "Menampilkan {count} dari {total} kasus"
     },
     "subtitle": "Kelola kasus purna jual, persetujuan, progres pemrosesan, dan tindak lanjut RMA.",
     "quickFilter": {
