@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.6"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.7"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -149,7 +149,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .date-input{width:100%;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:var(--card-bg);cursor:pointer}
 .date-picker-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-radius:6px;font-size:15px;line-height:1}
 .date-picker-btn:hover{background:var(--primary-light);color:var(--primary)}
-.custom-date-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:450;width:258px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.18);padding:10px;display:none}
+.custom-date-panel{position:fixed;top:0;left:0;z-index:1000;width:258px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.18);padding:10px;display:none}
 .custom-date-panel.open{display:block}
 .custom-date-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .custom-date-title{font-size:13px;font-weight:600;color:var(--text)}
@@ -864,7 +864,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.6 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.7 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2274,7 +2274,7 @@ function setDateInputValue(id,value){
   const storage=value?dateToStorage(value):'';
   input.dataset.value=storage;
   input.value=storage?formatDateInputDisplay(storage):'';
-  const panel=input.parentElement&&input.parentElement.querySelector('.custom-date-panel');
+  const panel=getDatePanel(input);
   if(panel) renderCustomDatePanel(input);
 }
 let activeDateInput=null;
@@ -2298,8 +2298,7 @@ function getDateWeekdays(){
 function sameStorageDate(a,b){ return dateToStorage(a)===dateToStorage(b); }
 function addMonths(date,delta){ return new Date(date.getFullYear(),date.getMonth()+delta,1); }
 function renderCustomDatePanel(input){
-  const wrapper=input.parentElement;
-  const panel=wrapper&&wrapper.querySelector('.custom-date-panel');
+  const panel=getDatePanel(input);
   if(!panel) return;
   const locale=getDateLocale();
   const labels=getDatePanelLabels();
@@ -2369,16 +2368,38 @@ function renderCustomDatePanel(input){
     input.dispatchEvent(new Event('change',{bubbles:true}));
   };
 }
+function getDatePanel(input){ return input && input._datePanel; }
+// 日期弹窗用 fixed 定位并 portal 到 body,避免被 card/section/modal body/scroll 容器裁切。
+// 自动处理靠近底部时向上展开、靠近右侧时左对齐,避免超出屏幕。
+function positionDatePanel(input,panel){
+  const rect=input.getBoundingClientRect();
+  const pw=panel.offsetWidth||258;
+  const ph=panel.offsetHeight||300;
+  const margin=6, gap=8;
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=rect.left;
+  if(left+pw>vw-gap) left=Math.max(gap, vw-pw-gap);
+  let top=rect.bottom+margin;
+  if(top+ph>vh-gap){
+    const above=rect.top-ph-margin;
+    top = above>=gap ? above : Math.max(gap, vh-ph-gap);
+  }
+  panel.style.left=left+'px';
+  panel.style.top=top+'px';
+  panel.style.right='auto';
+  panel.style.bottom='auto';
+}
 function openCustomDatePanel(input){
   document.querySelectorAll('.custom-date-panel.open').forEach(p=>p.classList.remove('open'));
   activeDateInput=input;
-  const panel=input.parentElement&&input.parentElement.querySelector('.custom-date-panel');
+  const panel=getDatePanel(input);
   if(!panel) return;
   const base=input.dataset.value||dateToStorage(input.value)||formatDateLocal(new Date());
   const d=parseDateValue(base)||new Date();
   panel.dataset.view=formatDateLocal(new Date(d.getFullYear(),d.getMonth(),1));
   renderCustomDatePanel(input);
   panel.classList.add('open');
+  positionDatePanel(input,panel);
 }
 function closeCustomDatePanel(){
   document.querySelectorAll('.custom-date-panel.open').forEach(p=>p.classList.remove('open'));
@@ -2403,17 +2424,30 @@ function enhanceDateInput(input){
   input.addEventListener('input',()=>{ input.dataset.value=''; });
   button.addEventListener('click',openPicker);
   wrapper.appendChild(button);
-  wrapper.appendChild(panel);
+  // 弹窗 portal 到 body,脱离任何 overflow:hidden / scroll 容器,避免被裁切
+  document.body.appendChild(panel);
+  input._datePanel=panel;
   normalizeDateInput(input);
 }
 document.addEventListener('click',e=>{
   if(!activeDateInput) return;
   const wrapper=activeDateInput.parentElement;
-  if(wrapper&&!wrapper.contains(e.target)) closeCustomDatePanel();
+  if(wrapper&&wrapper.contains(e.target)) return;
+  const panel=getDatePanel(activeDateInput);
+  if(panel&&panel.contains(e.target)) return;
+  closeCustomDatePanel();
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape') closeCustomDatePanel();
 });
+// 打开期间跟随滚动/缩放重新定位(捕获阶段以感知任意滚动容器,如全屏表单 body)
+function repositionOpenDatePanel(){
+  if(!activeDateInput) return;
+  const panel=getDatePanel(activeDateInput);
+  if(panel&&panel.classList.contains('open')) positionDatePanel(activeDateInput,panel);
+}
+window.addEventListener('scroll',repositionOpenDatePanel,true);
+window.addEventListener('resize',repositionOpenDatePanel);
 function rateClass(rate){ if(rate==null)return'rate-na'; if(rate>5)return'rate-bad'; if(rate>=2)return'rate-warn'; return'rate-good'; }
 
 // ==================== FEISHU NOTIFICATION ====================
@@ -7361,7 +7395,7 @@ function applyDateInputLocale() {
     input.value = input.dataset.value ? formatDateInputDisplay(input.dataset.value) : input.value;
     const btn=input.parentElement&&input.parentElement.querySelector('.date-picker-btn');
     if(btn) btn.setAttribute('aria-label', t('date.openPicker'));
-    const panel=input.parentElement&&input.parentElement.querySelector('.custom-date-panel');
+    const panel=getDatePanel(input);
     if(panel&&panel.classList.contains('open')) renderCustomDatePanel(input);
   });
 }
