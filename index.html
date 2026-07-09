@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.2"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.3"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -568,8 +568,9 @@ select option{background:var(--card-bg);color:var(--text)}
 .more-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;transition:background .18s,color .18s}
 .more-btn:hover{background:rgba(0,0,0,.06);color:var(--text)}
 .more-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.dropdown-menu{position:absolute;z-index:400;min-width:168px;background:var(--card-bg);border:1px solid var(--border-light);border-radius:12px;box-shadow:var(--shadow-modal);padding:6px;display:none;animation:modalIn .15s ease}
+.dropdown-menu{position:fixed;z-index:150;min-width:172px;max-height:70vh;overflow-y:auto;background:var(--card-bg);border:1px solid var(--border-light);border-radius:12px;box-shadow:var(--shadow-modal);padding:6px;display:none;animation:modalIn .15s ease}
 .dropdown-menu.open{display:block}
+.dropdown-menu .di-text{display:inline-block}
 .dropdown-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;color:var(--text);cursor:pointer;transition:background .15s;white-space:nowrap;text-decoration:none}
 .dropdown-item:hover{background:var(--bg)}
 .dropdown-item.danger{color:var(--danger)}
@@ -577,11 +578,11 @@ select option{background:var(--card-bg);color:var(--text)}
 .dropdown-item .di-icon{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .dropdown-item .di-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .more-wrap{position:relative;display:inline-block}
-.table-container{scrollbar-width:thin;scrollbar-color:#d2d2d7 transparent}
-.table-container::-webkit-scrollbar{height:8px;width:8px}
-.table-container::-webkit-scrollbar-track{background:transparent}
-.table-container::-webkit-scrollbar-thumb{background:#d2d2d7;border-radius:8px}
-.table-container::-webkit-scrollbar-thumb:hover{background:#b8b8be}
+.table-container,.stmt-table-container,.ov-flow,.af-flow-container{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.16) transparent}
+.table-container::-webkit-scrollbar,.stmt-table-container::-webkit-scrollbar,.ov-flow::-webkit-scrollbar,.af-flow-container::-webkit-scrollbar{height:6px;width:6px}
+.table-container::-webkit-scrollbar-track,.stmt-table-container::-webkit-scrollbar-track,.ov-flow::-webkit-scrollbar-track,.af-flow-container::-webkit-scrollbar-track{background:transparent}
+.table-container::-webkit-scrollbar-thumb,.stmt-table-container::-webkit-scrollbar-thumb,.ov-flow::-webkit-scrollbar-thumb,.af-flow-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:8px}
+.table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.26)}
 
 /* ===== Overview v2 (systematic layout) ===== */
 .ov-filter-card{margin-bottom:16px}
@@ -643,14 +644,6 @@ select option{background:var(--card-bg);color:var(--text)}
 .action-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .empty-icon .ui-ico{width:44px;height:44px;color:var(--text-muted)}
 .table-section-icon .ui-ico{width:18px;height:18px}
-/* lighter horizontal scrollbar for data tables */
-.table-container::-webkit-scrollbar{height:8px}
-.table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
-.table-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.22)}
-.table-container::-webkit-scrollbar-track{background:transparent}
-.stmt-table-container::-webkit-scrollbar{height:8px}
-.stmt-table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
-.stmt-table-container::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
@@ -704,7 +697,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.2 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.3 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2649,20 +2642,59 @@ const ICON_ACTION={
   doc:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>',
   more:'<svg class="line-icon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>'
 };
+let _dropdownRegistry={};
+let _fdAnchor=null;
 function moreMenuHtml(id, items){
-  const menu=items.map(it=>`<div class="dropdown-item${it.danger?' danger':''}" onclick="${it.onclick}"><span class="di-icon">${it.icon||''}</span>${esc(it.text)}</div>`).join('');
-  return `<span class="more-wrap"><button class="more-btn" type="button" title="${t('list.action.more')}" onclick="toggleDropdown(event,'${id}')">${ICON_ACTION.more}</button><div class="dropdown-menu" id="${id}" style="right:0;top:34px">${menu}</div></span>`;
+  const menu=items.map(it=>`<div class="dropdown-item${it.danger?' danger':''}" onclick="${it.onclick}"><span class="di-icon">${it.icon||''}</span><span class="di-text">${esc(it.text)}</span></div>`).join('');
+  _dropdownRegistry[id]=menu;
+  return `<button class="more-btn" type="button" title="${t('list.action.more')}" aria-haspopup="true" onclick="toggleDropdown(event,'${id}')">${ICON_ACTION.more}</button>`;
+}
+function positionDropdown(fd, btn){
+  const r=btn.getBoundingClientRect();
+  const mw=fd.offsetWidth, mh=fd.offsetHeight;
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=r.right-mw;
+  if(left<8) left=r.left;
+  if(left+mw>vw-8) left=Math.max(8, vw-mw-8);
+  let top=r.bottom+6;
+  if(top+mh>vh-8) top=r.top-mh-6;
+  if(top<8) top=8;
+  fd.style.left=left+'px';
+  fd.style.top=top+'px';
 }
 function toggleDropdown(e, id){
-  e.stopPropagation();
-  const menu=document.getElementById(id);
-  if(!menu) return;
-  const wasOpen=menu.classList.contains('open');
+  e.preventDefault(); e.stopPropagation();
+  const btn=e.currentTarget;
+  if(_fdAnchor===btn && document.getElementById('floating-dropdown') && document.getElementById('floating-dropdown').classList.contains('open')){
+    closeDropdowns(); return;
+  }
   closeDropdowns();
-  if(!wasOpen) menu.classList.add('open');
+  let fd=document.getElementById('floating-dropdown');
+  if(!fd){
+    fd=document.createElement('div');
+    fd.id='floating-dropdown';
+    fd.className='dropdown-menu floating';
+    document.body.appendChild(fd);
+  }
+  fd.innerHTML=_dropdownRegistry[id]||'';
+  fd.classList.add('open');
+  _fdAnchor=btn;
+  positionDropdown(fd, btn);
 }
-function closeDropdowns(){ document.querySelectorAll('.dropdown-menu.open').forEach(m=>m.classList.remove('open')); }
-document.addEventListener('click', closeDropdowns);
+function closeDropdowns(){ document.querySelectorAll('.dropdown-menu.open').forEach(m=>m.classList.remove('open')); _fdAnchor=null; }
+function repositionDropdown(){
+  const fd=document.getElementById('floating-dropdown');
+  if(!fd||!fd.classList.contains('open')||!_fdAnchor) return;
+  const r=_fdAnchor.getBoundingClientRect();
+  if(r.bottom<0||r.top>window.innerHeight||r.right<0||r.left>window.innerWidth){ closeDropdowns(); return; }
+  positionDropdown(fd,_fdAnchor);
+}
+window.addEventListener('scroll', repositionDropdown, true);
+window.addEventListener('resize', repositionDropdown);
+document.addEventListener('click', function(e){
+  if(e.target.closest('.dropdown-item')){ closeDropdowns(); return; }
+  if(!e.target.closest('#floating-dropdown') && !e.target.closest('.more-btn')) closeDropdowns();
+});
 
 // ==================== SIDEBAR ====================
 function renderSidebar(){
