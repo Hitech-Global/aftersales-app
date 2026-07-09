@@ -274,8 +274,10 @@
     },
     "riskPill": {
       "overdue": "超期",
-      "pending": "处理中",
-      "ok": "已完成"
+      "pendingApproval": "待审批>24小时",
+      "pendingProcessing": "待处理>3天",
+      "rmaNotCreated": "RMA未创建>7天",
+      "none": "无风险"
     }
   },
   "status": {

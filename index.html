@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.0"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.1"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -244,11 +244,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{color:var(--text-muted);font-size:12px}
 
-/* 风险标签 */
+/* 风险标签：只表达风险，不表达完成状态 */
 .risk-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
-.risk-overdue{background:#fde8e8;color:#c62828}
-.risk-pending{background:#fff3e0;color:#e65100}
-.risk-ok{background:#eef3ee;color:var(--text-muted)}
+.risk-overdue{background:#fdecec;color:#d23b3b;font-weight:600}
+.risk-warn{background:#fff3e0;color:#e0701a}
+.risk-none{background:#eef6ee;color:#5a9e5f}
 
 /* 空状态去 emoji（改用线性图标） */
 .empty-icon{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
@@ -818,7 +818,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.0 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.1 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -3491,12 +3491,43 @@ function formatOrderList(items, max){
   const more=orders.length-shown.length;
   return esc(shown.join(', ')) + (more>0?` <span class="sku-more">+${more}</span>`:'');
 }
-// 风险标签：items 中任一超期→Overdue；否则任一待处理→Pending；否则 Done
-function renderRiskBadge(items, r){
+// 风险标签：只表达「风险」，不表达完成状态。
+// 无风险 → No Risk；有风险 → 取最严重的一种（按 severity 排序）。
+// 阈值与 Overview 关注项一致：超期(≥7d) / 待审批>24h / 待处理>3d / RMA未创建>7d。
+function computeTopRisk(items, r){
   const arr=items||[];
-  if(arr.some(it=>isOverdueItem(it,r))) return `<span class="risk-pill risk-overdue">${esc(t('list.riskPill.overdue'))}</span>`;
-  if(arr.some(it=>isPendingProcessItem(it))) return `<span class="risk-pill risk-pending">${esc(t('list.riskPill.pending'))}</span>`;
-  return `<span class="risk-pill risk-ok">${esc(t('list.riskPill.ok'))}</span>`;
+  const now=Date.now();
+  const risks=[];
+  // 记录级：待审批 > 24h
+  if(isPendingApproval(r)){
+    const s=parseDateValue(recordDateKey(r));
+    if(s && (now-s)/86400000>1) risks.push('pendingApproval');
+  }
+  for(const it of arr){
+    // RMA 未创建 > 7d：退货原因映射为 rma，但当前 process_type 仍非 rma 且未完成。
+    // 作为独立风险类别，优先于通用「超期」判断，避免被吞掉。
+    const isRmaNc = itemProcessProgress(it)!=='completed' && RETURN_REASON_TO_PROCESS_TYPE[it.return_reason]==='rma' && itemProcessType(it)!=='rma';
+    if(isRmaNc){
+      const s=parseDateValue(itemAgeStartDate(it,r));
+      if(s && (now-s)/86400000>7) risks.push('rmaNotCreated');
+      continue;
+    }
+    if(isOverdueItem(it,r)){ risks.push('overdue'); continue; } // 超期(≥7d)
+    if(isPendingProcessItem(it)){
+      const s=parseDateValue(itemAgeStartDate(it,r));
+      if(s && (now-s)/86400000>=3) risks.push('pendingProcessing');
+    }
+  }
+  if(risks.length===0) return 'none';
+  const order=['overdue','rmaNotCreated','pendingApproval','pendingProcessing'];
+  risks.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  return risks[0];
+}
+function renderRiskBadge(items, r){
+  const top=computeTopRisk(items, r);
+  if(top==='none') return `<span class="risk-pill risk-none">${esc(t('list.riskPill.none'))}</span>`;
+  if(top==='overdue') return `<span class="risk-pill risk-overdue">${esc(t('list.riskPill.overdue'))}</span>`;
+  return `<span class="risk-pill risk-warn">${esc(t('list.riskPill.'+top))}</span>`;
 }
 
 function switchListMode(mode){

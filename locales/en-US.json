@@ -274,8 +274,10 @@
     },
     "riskPill": {
       "overdue": "Overdue",
-      "pending": "Pending",
-      "ok": "Done"
+      "pendingApproval": "Pending Approval >24h",
+      "pendingProcessing": "Pending Processing >3d",
+      "rmaNotCreated": "RMA Not Created >7d",
+      "none": "No Risk"
     }
   },
   "status": {

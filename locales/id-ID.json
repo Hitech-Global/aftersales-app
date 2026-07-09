@@ -274,8 +274,10 @@
     },
     "riskPill": {
       "overdue": "Terlambat",
-      "pending": "Proses",
-      "ok": "Selesai"
+      "pendingApproval": "Menunggu Persetujuan >24j",
+      "pendingProcessing": "Menunggu Proses >3h",
+      "rmaNotCreated": "RMA Belum Dibuat >7h",
+      "none": "Tidak Ada Risiko"
     }
   },
   "status": {
