@@ -236,6 +236,11 @@
     "completed": "Selesai",
     "rejected": "Ditolak"
   },
+  "approvalStatusDisplay": {
+    "completed": "Selesai",
+    "pending": "Menunggu Persetujuan",
+    "rejected": "Ditolak"
+  },
   "process": {
     "pendingErp": "Menunggu Penerimaan ERP",
     "pendingColorBox": "Menunggu Ganti Box",

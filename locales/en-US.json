@@ -236,6 +236,11 @@
     "completed": "Completed",
     "rejected": "Rejected"
   },
+  "approvalStatusDisplay": {
+    "completed": "Completed",
+    "pending": "Pending Approval",
+    "rejected": "Rejected"
+  },
   "process": {
     "pendingErp": "Pending ERP Receipt",
     "pendingColorBox": "Pending Box Replacement",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.9.18"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.9.19"></title>
 <script>
 if (window.location.protocol === 'file:') {
   window.location.replace('http://localhost:3000/?admin');
@@ -1230,20 +1230,28 @@ const APPROVAL_STATUSES = ['草稿','审批通过','审批拒绝'];
 function refreshApprovalStatuses() {
   // 保持内部值为中文不变，仅提供显示层翻译映射
 }
-const APPROVAL_STATUS_KEY_MAP = {
-  '草稿':'status.draft',
-  '待一级审批':'status.pendingLevel1',
-  '一级审批通过':'status.level1Approved',
-  '待二级审批':'status.pendingLevel2',
-  '二级审批通过':'status.level2Approved',
-  '待三级审批':'status.pendingLevel3',
-  '三级审批通过':'status.level3Approved',
-  '审批通过':'status.approved',
-  '审批拒绝':'status.rejected',
-  '已完成':'status.completed',
-  '已驳回':'status.rejected'
+// 审批状态统一映射: 将数据库存储值(中文/英文/旧值)归一化为标准 key(completed|pending|rejected)
+// 已完成/completed/approved/审批通过/各级通过 → completed
+// 待审批/pending/pending_approval/待X级审批/草稿 → pending
+// 已拒绝/rejected/审批拒绝/已驳回 → rejected
+const APPROVAL_STATUS_CANON = {
+  '已完成':'completed', 'completed':'completed', 'approved':'completed', '审批通过':'completed',
+  '一级审批通过':'completed', '二级审批通过':'completed', '三级审批通过':'completed',
+  '待审批':'pending', 'pending':'pending', 'pending_approval':'pending', 'pendingApproval':'pending',
+  '待一级审批':'pending', '待二级审批':'pending', '待三级审批':'pending', '草稿':'pending',
+  '已拒绝':'rejected', 'rejected':'rejected', '审批拒绝':'rejected', '已驳回':'rejected'
 };
-function tApprovalStatus(zh){ return t(APPROVAL_STATUS_KEY_MAP[zh] || zh); }
+const APPROVAL_STATUS_LABEL_KEY = {
+  'completed':'approvalStatusDisplay.completed',
+  'pending':'approvalStatusDisplay.pending',
+  'rejected':'approvalStatusDisplay.rejected'
+};
+// 按当前语言翻译审批状态; 未知值兜底返回原始值, 避免空白
+function tApprovalStatus(value){
+  if(!value) return '';
+  const canon = APPROVAL_STATUS_CANON[String(value)] || String(value);
+  return APPROVAL_STATUS_LABEL_KEY[canon] ? t(APPROVAL_STATUS_LABEL_KEY[canon]) : value;
+}
 const _PERM_CONFIG = [
   {key:'record_view', path:'perm.recordView'},
   {key:'record_create', path:'perm.recordCreate'},
@@ -2651,7 +2659,7 @@ async function renderOverview(){
       }else{
         const recent=[...records].sort((a,b)=>(recordDateKey(b)||'').localeCompare(recordDateKey(a)||'')).slice(0,5);
         recentEl.innerHTML='<div class="ov-section-title">'+t('overview.recent.title')+'</div>'+recent.map(r=>{
-          const status=r.status||r.approval_status||r.approvalStatus||t('overview.recent.pending');
+          const status=tApprovalStatus(r.status||r.approval_status||r.approvalStatus||'pending');
           return '<div class="ov-recent-item" onclick="showPage(\'detail\',\''+escAttr(String(r.id))+'\')">'
             +'<span class="ov-recent-id">#'+esc(String(r.id))+'</span>'
             +'<span class="ov-recent-date">'+formatDate(r.aftersales_date)+'</span>'
@@ -2932,7 +2940,7 @@ async function renderList(){
         html+=`<tr>
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
-          <td><span class="status-badge">${r.status || r.approval_status || r.approvalStatus || 'Pending Approval'}</span></td>
+          <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
           <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
           <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
@@ -2969,7 +2977,7 @@ async function renderList(){
       const canEdit = hasPermission('record_edit') && r.status==='草稿';
       html+=`<tr>
         <td class="cell-id">${r.id}</td>
-        <td><span class="status-badge">${r.status || r.approval_status || r.approvalStatus || 'Pending Approval'}</span></td>
+        <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
         <td>${psCell}</td>
         <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>

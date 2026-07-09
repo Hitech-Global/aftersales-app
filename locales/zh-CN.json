@@ -236,6 +236,11 @@
     "completed": "已完成",
     "rejected": "审批拒绝"
   },
+  "approvalStatusDisplay": {
+    "completed": "已完成",
+    "pending": "待审批",
+    "rejected": "已拒绝"
+  },
   "process": {
     "pendingErp": "待ERP入库",
     "pendingColorBox": "待换彩盒",
