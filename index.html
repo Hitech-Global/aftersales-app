@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.11"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.12"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -767,7 +767,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.11 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.12 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -3295,10 +3295,59 @@ async function updateChannelFilter(){
   document.getElementById('channel-filter').value=current;
 }
 
-function updateReturnReasonFilter(){
+// ===== 退货原因筛选：动态读取字典(仅启用项)，兼容旧数据 code / label =====
+let _rrFilterOptions = [];        // 最近一次加载的启用项
+let _rrFilterAliasMap = {};       // 归一化别名(任意语言 label / code) -> 字典 code
+
+// 由字典项构造 别名 -> code 映射，兼容历史数据(code 或 任意语言 label)
+function buildReturnReasonAliasMap(opts){
+  const map = {};
+  (opts||[]).forEach(o=>{
+    [o.code, o.label_zh, o.label_en, o.label_id].filter(Boolean).forEach(s=>{ map[String(s).toLowerCase()] = o.code; });
+  });
+  return map;
+}
+
+// 将存储值(code 或 任意语言 label)归一化为字典 code；无法识别返回 ''
+function normalizeReturnReasonToCode(value){
+  if(!value) return '';
+  return _rrFilterAliasMap[String(value).toLowerCase()] || '';
+}
+
+// 列表/明细中退货原因的展示：优先字典当前语言文案，兼容历史 code / label
+function displayReturnReason(value){
+  if(!value) return '-';
+  const code = normalizeReturnReasonToCode(value);
+  if(code){
+    const opt = _rrFilterOptions.find(o=>o.code===code);
+    if(opt) return getDictLabel(opt);
+  }
+  // 兜底：不在当前启用字典中(如已禁用/历史数据)，沿用旧翻译逻辑，再兜底原值
+  return tReturnReason(value) || value;
+}
+
+// 加载退货原因字典(仅启用)，刷新缓存并返回
+async function loadReturnReasonOptions(){
+  try{
+    _rrFilterOptions = await loadDictOptions('return_reason'); // loadDictOptions 已过滤 enabled
+  }catch(e){
+    _rrFilterOptions = [];
+  }
+  _rrFilterAliasMap = buildReturnReasonAliasMap(_rrFilterOptions);
+  return _rrFilterOptions;
+}
+
+async function updateReturnReasonFilter(){
   const sel=document.getElementById('return-reason-filter'), cur=sel.value;
-  sel.innerHTML=`<option value="">${t('list.filter.allReturnReasons')}</option>`+RETURN_REASONS.map(s=>`<option value="${s}">${tReturnReason(s)}</option>`).join('');
-  sel.value=cur;
+  const opts = await loadReturnReasonOptions();
+  let html=`<option value="">${t('list.filter.allReturnReasons')}</option>`;
+  (opts||[]).forEach(o=>{
+    html+=`<option value="${esc(o.code)}">${esc(getDictLabel(o))}</option>`;
+  });
+  sel.innerHTML=html;
+  // 恢复原选中值：优先按 code，其次归一化旧 label
+  const restored = normalizeReturnReasonToCode(cur) || cur;
+  sel.value = restored;
 }
 
 function updateProcessProgressFilter(){
@@ -3324,7 +3373,11 @@ function switchListMode(mode){
 
 async function renderList(){
   const seq=++_renderListSeq;
-  await updateBrandFilter(); updateStatusFilter(); updateChannelFilter(); updateReturnReasonFilter(); updateProcessProgressFilter();
+  await updateBrandFilter();
+  await updateStatusFilter();
+  await updateChannelFilter();
+  await updateReturnReasonFilter();
+  await updateProcessProgressFilter();
   if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
   if(pendingListPreset){
     document.getElementById('brand-filter').value=pendingListPreset.brand||'';
@@ -3356,7 +3409,7 @@ async function renderList(){
   if(status) filtered=filtered.filter(r=>r.status===status);
   if(brand) filtered=filtered.filter(r=>r.brand===brand);
   if(channel) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.platform===channel));
-  if(returnReason) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.return_reason===returnReason));
+  if(returnReason) filtered=filtered.filter(r=>(r.items||[]).some(it=>normalizeReturnReasonToCode(it.return_reason)===returnReason));
   if(progressFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessProgress(it)===progressFilter));
   if(riskFilter==='pending') filtered=filtered.filter(r=>(r.items||[]).some(it=>isPendingProcessItem(it)));
   if(riskFilter==='overdue') filtered=filtered.filter(r=>(r.items||[]).some(it=>isOverdueItem(it,r)));
@@ -3416,7 +3469,7 @@ async function renderList(){
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
           <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
-          <td>${esc(it.return_reason?tReturnReason(it.return_reason):'-')}</td>
+          <td>${esc(it.return_reason?displayReturnReason(it.return_reason):'-')}</td>
           <td>${esc(it.sku_code||'-')}</td>
           <td>${esc(it.sn_code||'-')}</td>
           <td>${esc(it.order_no||'-')}</td>
@@ -3438,7 +3491,7 @@ async function renderList(){
       const items=r.items||[];
       const platforms=[...new Set(items.map(it=>getPlatformLabel(it.platform)).filter(Boolean))];
       const shopCustomers=[...new Set(items.map(it=>getShopCustomerLabel(it.shop_customer)).filter(Boolean))];
-      const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].map(rr=>tReturnReason(rr)).join(', ');
+      const returnReasons=[...new Set(items.map(it=>it.return_reason).filter(Boolean))].map(rr=>displayReturnReason(rr)).join(', ');
       const skus=items.map(it=>it.sku_code).filter(Boolean).join(', ');
       const orders=items.map(it=>it.order_no).filter(Boolean).join(', ');
       const faultDescs=items.map(it=>(it.fault_description||'').substring(0,30)).join('; ');
@@ -3795,7 +3848,7 @@ async function renderDetail(id){
             <td>${esc(it.sn_code||'-')}</td>
             <td class="cell-wrap">${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
-            <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
+            <td>${esc(displayReturnReason(it.return_reason)||'-')}</td>
             <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
             <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
             <td class="cell-date">${it.return_stockin_date?formatDate(it.return_stockin_date):'-'}</td>
@@ -5110,7 +5163,7 @@ async function openLegacyApprovalModal(recordId){
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
-            <td>${esc(tReturnReason(it.return_reason)||'-')}</td>
+            <td>${esc(displayReturnReason(it.return_reason)||'-')}</td>
             <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
             <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
             <td id="erp-cell-${i}">
