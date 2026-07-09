@@ -354,7 +354,8 @@
     },
     "option": {
       "pleaseSelect": "Select",
-      "selectPlatformFirst": "Select channel first"
+      "selectChannel": "Select channel",
+      "selectShopCustomer": "Select shop/customer"
     },
     "shopCustomerPlaceholder": "Search by customer name",
     "shopCustomerNoMatch": "No matching customer",
@@ -398,11 +399,11 @@
   },
   "returnReason": {
     "resaleable": "Resellable",
-    "colorBoxDamage": "Damaged Color Box",
-    "missingParts": "Missing Parts",
-    "hardwareFault": "Hardware Issue",
-    "scrap": "Scrap",
-    "humanDamage": "Human Damage",
+    "colorBoxDamage": "Damaged Packaging",
+    "missingParts": "Missing Accessories",
+    "hardwareFault": "Hardware Defect",
+    "scrap": "To Be Scrapped",
+    "humanDamage": "Customer-Induced Damage",
     "other": "Other",
     "functionDefect": "Functional Defect"
   },

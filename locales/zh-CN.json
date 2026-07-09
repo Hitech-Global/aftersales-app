@@ -354,7 +354,8 @@
     },
     "option": {
       "pleaseSelect": "请选择",
-      "selectPlatformFirst": "请先选择渠道"
+      "selectChannel": "选择渠道",
+      "selectShopCustomer": "选择店铺/客户"
     },
     "shopCustomerPlaceholder": "输入客户名称搜索",
     "shopCustomerNoMatch": "无匹配客户",

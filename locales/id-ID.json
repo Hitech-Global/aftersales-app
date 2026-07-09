@@ -354,7 +354,8 @@
     },
     "option": {
       "pleaseSelect": "Pilih",
-      "selectPlatformFirst": "Pilih saluran dulu"
+      "selectChannel": "Pilih channel",
+      "selectShopCustomer": "Pilih toko/pelanggan"
     },
     "shopCustomerPlaceholder": "Cari nama pelanggan",
     "shopCustomerNoMatch": "Tidak ada pelanggan cocok",

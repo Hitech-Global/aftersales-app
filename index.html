@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.3"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.4"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -68,7 +68,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .sidebar-item.active{background:var(--sidebar-active);color:#fff}
 .sidebar-item .icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sidebar-item .icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(235,235,245,.4);text-align:center}
+.sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(235,235,245,.4);text-align:center;flex-shrink:0}
 
 .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .topbar{height:54px;background:rgba(255,255,255,.72);border-bottom:.5px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
@@ -281,22 +281,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group-full{grid-column:1/-1}
 .form-group label{font-size:14px;font-weight:500;color:var(--text-secondary)}
-.required{color:var(--danger)}
+.required{color:#e35d52;font-weight:600}
 .form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--card-bg);width:100%}
 .approval-flow-preview{margin-top:10px;padding:12px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .approval-flow-preview .afp-node{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;font-size:12px}
 .approval-flow-preview .afp-node .afp-lvl{font-size:10px;font-weight:600;color:var(--text-muted);background:var(--bg-secondary);padding:2px 6px;border-radius:8px}
 .approval-flow-preview .afp-node.missing{opacity:.55;background:transparent}
-.approval-flow-preview .afp-arrow{color:var(--text-muted);font-size:12px}
-.approval-flow-card{margin-top:6px;padding:12px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;display:block}
+.approval-flow-preview .afp-arrow{color:var(--text-muted);font-size:11px;opacity:.6}
+.approval-flow-card{margin-top:6px;padding:14px 16px;background:var(--bg-alt);border:1px solid var(--border-light);border-radius:12px;display:block}
 .afc-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .afc-icon{font-size:18px;line-height:1}
 .afc-name{font-size:14px;font-weight:600;color:var(--text)}
-.afc-tag{font-size:11px;padding:2px 8px;background:var(--primary);color:#fff;border-radius:10px;font-weight:500}
+.afc-tag{font-size:11px;padding:2px 9px;background:rgba(46,157,82,.12);color:var(--primary);border:1px solid rgba(46,157,82,.3);border-radius:999px;font-weight:500}
 .approval-flow-card.empty{padding:14px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-secondary)}
 .approval-flow-card.empty .afc-name{font-weight:500}
 input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .form-actions{display:flex;gap:12px;margin-top:8px}
+/* 全屏新建表单：分组卡片 + 居中内容 + 底部固定栏优化 (v3.11.4) */
+.record-fs-inner{max-width:1240px;margin:0 auto;padding:28px}
+.form-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;margin-bottom:24px;overflow:hidden}
+.form-card-head{display:flex;align-items:baseline;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border-light);background:var(--bg-alt)}
+.form-card-title{margin:0;font-size:15px;font-weight:600;color:var(--text)}
+.form-card-hint{font-size:12px;color:var(--text-muted);font-weight:400}
+.form-card-body{padding:20px}
+.form-card-note{font-size:12px;color:var(--text-muted);margin-top:10px}
+.detail-items-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px}
+.total-qty{font-size:13px;color:var(--text-secondary);white-space:nowrap}
+.total-qty-num{color:var(--primary);font-weight:700;font-size:17px;margin-left:6px}
+.btn-ghost{background:transparent;color:var(--text-secondary);border-color:transparent}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.record-fs-inner .detail-items-table th.col-actions,
+.record-fs-inner .detail-items-table td.col-actions{position:sticky;right:0;background:var(--card-bg);z-index:4;text-align:center;box-shadow:-1px 0 0 var(--border-light)}
 
 .detail-card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
 .detail-section{margin-bottom:24px}
@@ -482,8 +497,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 
 /* Detail items table in form */
 /* 表格列宽合计 100%, 不需要横向滚动; 设为 visible 避免成为滚动容器, 否则 sticky 表头相对它定位会失效 */
-.detail-items-table-wrapper{overflow:visible}
-.detail-items-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.detail-items-table-wrapper{overflow-x:auto}
+.detail-items-table{width:auto;min-width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
 .detail-items-table thead{background:#fafbfc;border-bottom:2px solid var(--border)}
 /* 表头固定: 滚动时吸附在内容区顶部, 与输入行用阴影清晰分隔, 不再视觉重叠 */
 .detail-items-table th{position:sticky;top:0;z-index:5;background:#fafbfc;padding:10px 6px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,.06)}
@@ -491,7 +506,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 /* 全局:强制所有原生下拉控件在浅色页面下使用浅色外观,避免 macOS/浏览器深色模式下弹窗变深灰 */
 select{color-scheme:light}
 select option{background:var(--card-bg);color:var(--text)}
-.detail-items-table input,.detail-items-table select{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box;color-scheme:light}
+.detail-items-table input,.detail-items-table select{width:100%;padding:8px 10px;height:38px;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);color-scheme:light}
 .detail-items-table input:focus,.detail-items-table select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(46,125,50,.1)}
 /* 强制原生下拉弹窗在浅色页面下使用浅色背景,避免 macOS/浏览器深色模式下出现深灰弹窗与页面风格冲突 */
 .detail-items-table select option{background:var(--card-bg);color:var(--text)}
@@ -501,10 +516,11 @@ select option{background:var(--card-bg);color:var(--text)}
 .record-fs-overlay{position:fixed;top:56px;right:0;bottom:0;left:220px;background:var(--bg);z-index:200;display:flex;flex-direction:column;overflow:hidden}
 .record-fs-overlay.hidden{display:none}
 .record-fs-panel{display:flex;flex-direction:column;width:100%;height:100%;background:var(--card-bg)}
-.record-fs-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)}
+.record-fs-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;min-height:60px;border-bottom:1px solid var(--border-light);background:var(--card-bg)}
 .record-fs-header h3{margin:0;font-size:18px}
-.record-fs-body{flex:1 1 auto;overflow-y:auto;padding:24px 24px 90px}
-.record-fs-footer{flex-shrink:0;display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid var(--border);background:var(--card-bg)}
+.record-fs-body{flex:1 1 auto;overflow-y:auto;padding:0}
+.record-fs-footer{flex-shrink:0;display:flex;justify-content:flex-end;gap:12px;padding:14px 28px;border-top:1px solid var(--border);background:var(--card-bg);box-shadow:0 -2px 12px rgba(0,0,0,.05)}
+.record-fs-footer .btn{height:42px;padding:0 24px;font-size:14px;font-weight:600;border-radius:var(--radius-btn)}
 /* 全屏弹窗内的 select 强制浅色渲染,确保原生下拉弹窗不因 overflow 裁切后显示异常 */
 .record-fs-panel select{color-scheme:light!important;-webkit-color-scheme:light!important}
 .record-fs-panel select option{background:#fff;color:#1f2329}
@@ -838,7 +854,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.3 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.4 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1026,58 +1042,66 @@ select option{background:var(--card-bg);color:var(--text)}
               <h3 id="form-title" data-i18n="form.titleNew"></h3>
               <button type="button" class="modal-close" onclick="closeRecordForm()">&times;</button>
             </div>
-            <div class="record-fs-body">
-              <fieldset class="form-section">
-                  <legend data-i18n="form.section.basic"></legend>
-                  <div class="form-grid">
-                    <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="text" class="date-input" id="f-aftersales-date" inputmode="numeric" required onblur="normalizeDateInput(this)"></div>
-                  </div>
-                </fieldset>
-                <fieldset class="form-section">
-                  <legend><span data-i18n="form.section.details"></span> <span style="font-size:12px;color:var(--text-muted);font-weight:400" data-i18n="form.hint.minOneItem"></span></legend>
-                  <div class="detail-items-table-wrapper">
-                    <table class="detail-items-table" id="detail-items-table">
-                      <thead><tr>
-                        <th style="width:8%"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
-                        <th style="width:10%"><span data-i18n="form.col.shopCustomer"></span></th>
-                        <th style="width:11%"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
-                        <th style="width:10%" data-i18n="form.col.snCode"></th>
-                        <th style="width:11%" data-i18n="form.col.orderNo"></th>
-                        <th style="width:5%"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
-                        <th style="width:12%"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
-                        <th style="width:19%"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
-                        <th style="width:10%" data-i18n="form.col.attachment"></th>
-                        <th style="width:4%" data-i18n="form.col.actions"></th>
-                      </tr></thead>
-                      <tbody id="detail-items-tbody"></tbody>
-                    </table>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addDetailItem()" data-i18n="form.btnAddRow"></button>
-                    <span style="font-size:14px;font-weight:600"><span data-i18n="form.totalQty"></span><span id="detail-total-qty" style="color:var(--primary);font-size:16px">0</span></span>
-                  </div>
-                </fieldset>
-                <fieldset class="form-section">
-                  <legend data-i18n="form.section.approvers"></legend>
-                  <div class="form-group">
-                    <label data-i18n="form.label.approvalFlow"></label>
-                    <!-- 不再让用户手动选择审批流；由系统按「审批流管理」中的配置自动应用 -->
-                    <div id="f-approval-flow-card" class="approval-flow-card">
-                      <div class="afc-header">
-                        <span class="afc-icon">&#x2696;&#xFE0F;</span>
-                        <span id="f-approval-flow-name" class="afc-name" data-i18n="form.flow.loading"></span>
-                        <span id="f-approval-flow-tag" class="afc-tag" style="display:none" data-i18n="form.flow.autoTag"></span>
+              <div class="record-fs-body">
+                <div class="record-fs-inner">
+                  <section class="form-card">
+                    <div class="form-card-head"><h3 class="form-card-title" data-i18n="form.section.basic"></h3></div>
+                    <div class="form-card-body">
+                      <div class="form-grid">
+                        <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="text" class="date-input" id="f-aftersales-date" inputmode="numeric" required onblur="normalizeDateInput(this)"></div>
                       </div>
-                      <div id="f-approval-flow-preview" class="approval-flow-preview"></div>
                     </div>
-                  </div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-top:8px" data-i18n="form.hint.approverRule"></div>
-                </fieldset>
+                  </section>
+                  <section class="form-card">
+                    <div class="form-card-head"><h3 class="form-card-title" data-i18n="form.section.details"></h3><span class="form-card-hint" data-i18n="form.hint.minOneItem"></span></div>
+                    <div class="form-card-body">
+                      <div class="detail-items-table-wrapper">
+                        <table class="detail-items-table" id="detail-items-table">
+                          <thead><tr>
+                            <th class="col-channel" style="width:120px"><span data-i18n="form.col.platform"></span> <span class="required">*</span></th>
+                            <th class="col-shop" style="width:170px"><span data-i18n="form.col.shopCustomer"></span></th>
+                            <th class="col-sku" style="width:200px"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
+                            <th class="col-sn" style="width:150px" data-i18n="form.col.snCode"></th>
+                            <th class="col-order" style="width:170px" data-i18n="form.col.orderNo"></th>
+                            <th class="col-qty" style="width:80px"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
+                            <th class="col-reason" style="width:170px"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
+                            <th class="col-desc" style="width:280px"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
+                            <th class="col-atch" style="width:130px" data-i18n="form.col.attachment"></th>
+                            <th class="col-actions" style="width:72px" data-i18n="form.col.actions"></th>
+                          </tr></thead>
+                          <tbody id="detail-items-tbody"></tbody>
+                        </table>
+                      </div>
+                      <div class="detail-items-foot">
+                        <button type="button" class="btn btn-secondary" onclick="addDetailItem()" data-i18n="form.btnAddRow"></button>
+                        <span class="total-qty"><span data-i18n="form.totalQty"></span> <span id="detail-total-qty" class="total-qty-num">0</span></span>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="form-card">
+                    <div class="form-card-head"><h3 class="form-card-title" data-i18n="form.section.approvers"></h3></div>
+                    <div class="form-card-body">
+                      <div class="form-group">
+                        <label data-i18n="form.label.approvalFlow"></label>
+                        <!-- 不再让用户手动选择审批流；由系统按「审批流管理」中的配置自动应用 -->
+                        <div id="f-approval-flow-card" class="approval-flow-card">
+                          <div class="afc-header">
+                            <span class="afc-icon">&#x2696;&#xFE0F;</span>
+                            <span id="f-approval-flow-name" class="afc-name" data-i18n="form.flow.loading"></span>
+                            <span id="f-approval-flow-tag" class="afc-tag" style="display:none" data-i18n="form.flow.autoTag"></span>
+                          </div>
+                          <div id="f-approval-flow-preview" class="approval-flow-preview"></div>
+                        </div>
+                      </div>
+                      <div class="form-card-note" data-i18n="form.hint.approverRule"></div>
+                    </div>
+                  </section>
+                </div>
               </div>
               <div class="record-fs-footer form-actions">
-                <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn" data-i18n="form.btnSubmit"></button>
-                <button type="button" class="btn btn-secondary btn-lg" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
-                <button type="button" class="btn btn-secondary btn-lg" onclick="closeRecordForm()" data-i18n="form.btnCancel"></button>
+                <button type="submit" class="btn btn-primary" id="form-submit-btn" data-i18n="form.btnSubmit"></button>
+                <button type="button" class="btn btn-secondary" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
+                <button type="button" class="btn btn-ghost" onclick="closeRecordForm()" data-i18n="form.btnCancel"></button>
               </div>
             </form>
           </div>
@@ -1476,7 +1500,7 @@ select option{background:var(--card-bg);color:var(--text)}
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeDictAddForm()" data-i18n="common.cancel">取消</button>
+      <button type="button" class="btn btn-secondary" onclick="closeDictAddForm()" data-i18n="form.btnCancel"></button>
       <button type="button" id="dict-add-submit" class="btn btn-primary" onclick="submitDictAddForm()">保存</button>
     </div>
   </div>
@@ -4234,7 +4258,7 @@ const RETURN_REASON_KEY_MAP = {
 function tReturnReason(zh){ return t(RETURN_REASON_KEY_MAP[zh] || zh); }
 const REASON_TO_PROCESS={'可二次销售':'待ERP入库','彩盒损坏':'待换彩盒','配件缺失':'待补配件','硬件故障':'待RMA','报废':'待报废','人为损坏':'待ERP入库','其他':'待ERP入库','功能异常':'待ERP入库'};
 const RETURN_REASON_LOCALE_FALLBACKS={
-  'en-US':{'可二次销售':'Resellable','彩盒损坏':'Damaged Color Box','配件缺失':'Missing Parts','硬件故障':'Hardware Issue','报废':'Scrap','人为损坏':'Human Damage','其他':'Other','功能异常':'Functional Defect'},
+  'en-US':{'可二次销售':'Resellable','彩盒损坏':'Damaged Packaging','配件缺失':'Missing Accessories','硬件故障':'Hardware Defect','报废':'To Be Scrapped','人为损坏':'Customer-Induced Damage','其他':'Other','功能异常':'Functional Defect'},
   'id-ID':{'可二次销售':'Bisa Dijual Kembali','彩盒损坏':'Box Rusak','配件缺失':'Aksesori Tidak Lengkap','硬件故障':'Masalah Hardware','报废':'Scrap','人为损坏':'Kerusakan Manusia','其他':'Lainnya','功能异常':'Gangguan Fungsi'}
 };
 
@@ -4256,7 +4280,7 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
   tr.dataset.index=idx;
   // Build platform options from cache (or fallback)
   const platformOpts = _platformCache || [];
-  let platformHtml = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
+  let platformHtml = '<option value="">' + t('form.option.selectChannel') + '</option>';
   if (platformOpts.length > 0) {
     platformOpts.forEach(o => {
       platformHtml += '<option value="' + esc(o.code) + '"' + (platform === o.code ? ' selected' : '') + '>' + esc(getDictLabel(o)) + '</option>';
@@ -4271,7 +4295,7 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     platformHtml += '<option value="' + esc(platform) + '" selected>' + esc(platform) + '</option>';
   }
   // Build shop/customer select (disabled until platform is chosen)
-  let shopHtml = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
+  let shopHtml = '<option value="">' + t('form.option.selectShopCustomer') + '</option>';
   const isShopDisabled = !platform;
   // Build return reason options
   let reasonHtml = '<option value="">' + t('form.option.pleaseSelect') + '</option>';
@@ -4293,7 +4317,7 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
       </div>
       <label class="atch-upload-btn" data-upload-trigger="${idx}">📎 ${t('form.atch.upload')}<input type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" style="display:none" data-item-attach></label>
     </td>
-    <td><button type="button" class="btn-delete-row" title="${t('list.action.delete')}" onclick="removeDetailItem(this)">&times;</button></td>`;
+    <td class="col-actions"><button type="button" class="btn-delete-row" title="${t('list.action.delete')}" onclick="removeDetailItem(this)">&times;</button></td>`;
   tr.dataset.index=idx;
   tbody.appendChild(tr);
   // If platform is set, load shop options and pre-select shopCustomer
@@ -4325,7 +4349,7 @@ async function onPlatformChange(selectEl){
   const platformCode = selectEl.value;
   if(!platformCode){
     shopSelect.disabled = true;
-    shopSelect.innerHTML = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
+    shopSelect.innerHTML = '<option value="">' + t('form.option.selectShopCustomer') + '</option>';
     return;
   }
   shopSelect.disabled = false;
@@ -4347,7 +4371,7 @@ async function _loadShopOptions(shopEl, platformCode, selectedCode, preloadedSho
       shopEl.replaceWith(sel);
     }
     sel.disabled = true;
-    sel.innerHTML = '<option value="">' + t('form.option.selectPlatformFirst') + '</option>';
+    sel.innerHTML = '<option value="">' + t('form.option.selectShopCustomer') + '</option>';
     return;
   }
 
@@ -4360,7 +4384,7 @@ async function _loadShopOptions(shopEl, platformCode, selectedCode, preloadedSho
       input.className = 'shop-select shop-autocomplete';
       input.setAttribute('data-dict','shop_customer');
       input.setAttribute('autocomplete','off');
-      input.placeholder = (t('form.shopCustomerPlaceholder') !== 'form.shopCustomerPlaceholder') ? t('form.shopCustomerPlaceholder') : t('form.option.selectPlatformFirst');
+      input.placeholder = (t('form.shopCustomerPlaceholder') !== 'form.shopCustomerPlaceholder') ? t('form.shopCustomerPlaceholder') : t('form.option.selectShopCustomer');
       shopEl.replaceWith(input);
     }
     input.disabled = false;
