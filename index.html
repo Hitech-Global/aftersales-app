@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.10.4"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.10.5"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -137,11 +137,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:104px}
 .filter-group.date-filter{flex:0 0 auto;width:140px}
 .filter-group label{font-size:12px;color:var(--text-secondary);font-weight:500}
-.search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;font-family:inherit}
+.search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;font-family:inherit}
 .search-input:focus,.filter-select:focus,.date-input:focus,.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
-.filter-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--card-bg);outline:none;cursor:pointer;font-family:inherit}
+.filter-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--card-bg);outline:none;cursor:pointer;font-family:inherit}
 .date-picker-wrap{position:relative;display:flex;align-items:center;width:100%}
-.date-input{width:100%;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;background:var(--card-bg);cursor:pointer}
+.date-input{width:100%;padding:8px 38px 8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:var(--card-bg);cursor:pointer}
 .date-picker-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-radius:6px;font-size:15px;line-height:1}
 .date-picker-btn:hover{background:var(--primary-light);color:var(--primary)}
 .custom-date-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:450;width:258px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.18);padding:10px;display:none}
@@ -212,13 +212,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .form-group-full{grid-column:1/-1}
 .form-group label{font-size:14px;font-weight:500;color:var(--text-secondary)}
 .required{color:var(--danger)}
-.form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--card-bg);width:100%}
-.approval-flow-preview{margin-top:10px;padding:12px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--card-bg);width:100%}
+.approval-flow-preview{margin-top:10px;padding:12px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .approval-flow-preview .afp-node{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;font-size:12px}
 .approval-flow-preview .afp-node .afp-lvl{font-size:10px;font-weight:600;color:var(--text-muted);background:var(--bg-secondary);padding:2px 6px;border-radius:8px}
 .approval-flow-preview .afp-node.missing{opacity:.55;background:transparent}
 .approval-flow-preview .afp-arrow{color:var(--text-muted);font-size:12px}
-.approval-flow-card{margin-top:6px;padding:12px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;display:block}
+.approval-flow-card{margin-top:6px;padding:12px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;display:block}
 .afc-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .afc-icon{font-size:18px;line-height:1}
 .afc-name{font-size:14px;font-weight:600;color:var(--text)}
@@ -364,7 +364,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 /* Approval step cards (horizontal) */
 .af-steps{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
 .af-step{flex:1;min-width:140px;position:relative;padding:0 14px;text-align:center}
-.af-step:not(:last-child)::after{content:'';position:absolute;top:18px;right:0;width:18px;height:2px;background:var(--border)}
+.af-step:not(:last-child)::after{content:'';position:absolute;top:18px;right:-2px;width:16px;height:2px;background:#aeb0b6;z-index:1}
+.af-step:not(:last-child)::before{content:'';position:absolute;top:18px;right:-3px;width:6px;height:6px;border-top:2px solid #aeb0b6;border-right:2px solid #aeb0b6;transform:translateY(-50%) rotate(45deg);z-index:2}
 .af-step-dot{width:36px;height:36px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text-muted);border:2px solid var(--border)}
 .af-step-dot svg{width:18px;height:18px;stroke-width:2}
 .af-step-role{font-size:12px;color:var(--text-muted)}
@@ -419,7 +420,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 /* 全局:强制所有原生下拉控件在浅色页面下使用浅色外观,避免 macOS/浏览器深色模式下弹窗变深灰 */
 select{color-scheme:light}
 select option{background:var(--card-bg);color:var(--text)}
-.detail-items-table input,.detail-items-table select{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box;color-scheme:light}
+.detail-items-table input,.detail-items-table select{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--text);box-sizing:border-box;color-scheme:light}
 .detail-items-table input:focus,.detail-items-table select:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(46,125,50,.1)}
 /* 强制原生下拉弹窗在浅色页面下使用浅色背景,避免 macOS/浏览器深色模式下出现深灰弹窗与页面风格冲突 */
 .detail-items-table select option{background:var(--card-bg);color:var(--text)}
@@ -621,9 +622,12 @@ select option{background:var(--card-bg);color:var(--text)}
 .table-container::-webkit-scrollbar-thumb:hover,.stmt-table-container::-webkit-scrollbar-thumb:hover,.ov-flow::-webkit-scrollbar-thumb:hover,.af-flow-container::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.26)}
 
 /* ===== Overview v2 (systematic layout) ===== */
-.ov-filter-card{margin-bottom:18px}
-.ov-filter-card .ov-filter-bar{background:none;box-shadow:none;padding:0;margin:0}
-.ov-data-asof{margin-top:10px;font-size:12px;color:var(--text-muted)}
+.ov-filter-card{padding:14px 18px;margin-bottom:14px}
+.ov-filter-card .ov-filter-bar{background:none;box-shadow:none;padding:0;margin:0;gap:10px;align-items:flex-end}
+.ov-filter-card .ov-filter-group label{margin-bottom:0;font-size:12px}
+.ov-filter-card .date-input,.ov-filter-card .filter-select{padding:7px 12px;height:36px;font-size:13px}
+.ov-filter-card .btn{padding:7px 16px;font-size:13px;height:36px}
+.ov-data-asof{margin-top:8px;font-size:11px;color:var(--text-muted)}
 .ov-section{margin-bottom:18px}
 .ov-section-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
 .ov-section-title{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.01em}
@@ -632,12 +636,12 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-grid-2>.card{margin-bottom:0}
 .chart-trend{height:264px}
 .chart-donut{height:240px}
-.chart-bar{height:250px}
+.chart-bar{height:228px}
 .chart-wrapper{padding:2px 6px 4px}
 
 /* After-sales Health */
 .ov-health-card{padding:20px 22px;display:flex;gap:22px;align-items:stretch}
-.ov-health-status{flex:0 0 190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;border-radius:14px;background:var(--bg)}
+.ov-health-status{flex:0 0 190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;border-radius:14px;background:var(--bg)}
 .ov-health-status .hs-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center}
 .ov-health-status .hs-icon svg{width:26px;height:26px;stroke-width:1.8}
 .ov-health-status .hs-status{font-size:15px;font-weight:700}
@@ -652,7 +656,7 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-health-status.critical .hs-icon{background:rgba(255,59,48,.16);color:#d23b2f}
 .ov-health-status.critical .hs-status{color:#d23b2f}
 .ov-health-metrics{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.ov-health-metric{background:var(--bg);border-radius:12px;padding:16px}
+.ov-health-metric{background:var(--bg);border-radius:14px;padding:16px}
 .ov-health-metric .v{font-size:24px;font-weight:700;color:var(--text);line-height:1.1}
 .ov-health-metric .l{font-size:12px;color:var(--text-muted);margin-top:6px}
 .ov-health-metric.bottleneck-metric{display:flex;flex-direction:column;justify-content:center}
@@ -667,7 +671,8 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-flow-node .nm{font-size:12px;color:var(--text-secondary);margin-bottom:8px;font-weight:500}
 .ov-flow-stats{font-size:11px;color:var(--text-muted);line-height:1.9}
 .ov-flow-stats b{color:var(--text);font-weight:600}
-.ov-flow-node:not(:last-child)::after{content:'';position:absolute;top:50%;right:0;width:16px;height:2px;background:var(--border);transform:translateY(-50%)}
+.ov-flow-node:not(:last-child)::after{content:'';position:absolute;top:50%;right:-8px;width:16px;height:2px;background:#aeb0b6;transform:translateY(-50%);z-index:1}
+.ov-flow-node:not(:last-child)::before{content:'';position:absolute;top:50%;right:-9px;width:6px;height:6px;border-top:2px solid #aeb0b6;border-right:2px solid #aeb0b6;transform:translateY(-50%) rotate(45deg);z-index:2}
 
 /* Need Your Attention */
 .ov-badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--danger);color:#fff;font-size:12px;font-weight:600}
@@ -685,13 +690,14 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-attention-item .ai-go{color:var(--text-muted);font-size:18px;margin-left:2px}
 
 /* Recent */
-.ov-recent-list{display:flex;flex-direction:column;gap:2px;margin-top:2px}
-.ov-recent-item{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:10px;padding:11px 8px;border-radius:10px;cursor:pointer;transition:background .18s}
+.ov-recent-list{display:flex;flex-direction:column;margin-top:2px}
+.ov-recent-item{display:grid;grid-template-columns:auto 92px auto 1fr;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background .15s}
+.ov-recent-item + .ov-recent-item{border-top:1px solid var(--border-light)}
 .ov-recent-item:hover{background:var(--bg)}
-.ov-recent-id{font-weight:600;color:var(--text);font-size:13px}
-.ov-recent-date{font-size:12px;color:var(--text-muted)}
-.ov-recent-status{font-size:12px;display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(0,0,0,.05);color:var(--text-secondary);white-space:nowrap}
-.ov-recent-submitter{font-size:12px;color:var(--text-secondary);text-align:right}
+.ov-recent-id{font-weight:600;color:var(--text);font-size:13px;font-variant-numeric:tabular-nums}
+.ov-recent-date{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.ov-recent-status{font-size:11px;display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(0,0,0,.05);color:var(--text-secondary);white-space:nowrap;justify-self:start}
+.ov-recent-submitter{font-size:12px;color:var(--text-secondary);text-align:right;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 @media(max-width:900px){
   .ov-grid-2{grid-template-columns:1fr}
@@ -762,7 +768,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.10.4 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.10.5 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2809,6 +2815,8 @@ function renderSidebar(){
       {id:'approval-flows', icon:ICON['approval-flows'], label:t('nav.approvalFlows'), perm:'system_config'},
     ]}
   ];
+  // 去重守卫：确保任何情况下每个菜单项只渲染一次（防止分组/权限重复或历史缓存导致的重复渲染）
+  const seen=new Set();
   let html='';
   groups.forEach(g=>{
     const hasVisible=g.items.some(item=>{
@@ -2818,6 +2826,8 @@ function renderSidebar(){
     if(!hasVisible) return;
     html+=`<div class="sidebar-group-title">${esc(g.title)}</div>`;
     g.items.forEach(item=>{
+      if(seen.has(item.id)) return;            // 同一 id 只渲染一次
+      seen.add(item.id);
       const hasPerm=Array.isArray(item.perm)?item.perm.some(hasPermission):hasPermission(item.perm);
       if(!hasPerm) return;
       html+=`<div class="sidebar-item" data-page="${item.id}" onclick="showPage('${item.id}')"><span class="icon">${item.icon}</span><span>${esc(item.label)}</span></div>`;
@@ -3192,7 +3202,7 @@ function renderReasonTop5Chart(data){
   if(data.length===0){renderChartEmpty('chart-reason-top5-wrapper');return;}
   chartReasonTop5=new Chart(ctx,{
     type:'bar',
-    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#5cb87f','#e0a13c','#5b9bd5','#d98b8b','#a987c9'],borderRadius:5}]},
+    data:{labels:data.map(d=>tReturnReason(d[0])),datasets:[{label:t('overview.chart.label.count'),data:data.map(d=>d[1]),backgroundColor:['#5cb87f','#e0a13c','#5b9bd5','#d98b8b','#a987c9'],borderRadius:5,maxBarThickness:18,barPercentage:.6,categoryPercentage:.7}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:'rgba(0,0,0,.05)'}}}}
   });
 }
