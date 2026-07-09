@@ -405,7 +405,7 @@
     "scrap": "To Be Scrapped",
     "humanDamage": "Customer-Induced Damage",
     "other": "Other",
-    "functionDefect": "Functional Defect"
+    "functionDefect": "Functional Issue"
   },
   "detail": {
     "btnBack": "Back to List",
