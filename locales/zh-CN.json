@@ -294,7 +294,7 @@
     "rejected": "审批拒绝"
   },
   "approvalStatusDisplay": {
-    "completed": "已完成",
+    "completed": "审批通过",
     "pending": "待审批",
     "rejected": "已拒绝"
   },
@@ -434,7 +434,8 @@
       "returnDate": "退货入库日期：",
       "createdAt": "创建时间",
       "updatedAt": "最后更新",
-      "pendingErpQty": "待ERP入库数量"
+      "pendingErpQty": "待ERP入库数量",
+      "processingStatus": "处理状态"
     },
     "col": {
       "index": "#",
@@ -455,8 +456,9 @@
       "brand": "品牌"
     },
     "notSet": "未设置",
-    "approved": "✅ 审批通过",
-    "rejected": "❌ 审批拒绝",
+    "commentLabel": "备注",
+    "approved": "审批通过",
+    "rejected": "审批拒绝",
     "processingDone": "已完成",
     "processingPending": "待处理",
     "summary": {

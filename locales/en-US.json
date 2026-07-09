@@ -294,7 +294,7 @@
     "rejected": "Rejected"
   },
   "approvalStatusDisplay": {
-    "completed": "Completed",
+    "completed": "Approved",
     "pending": "Pending Approval",
     "rejected": "Rejected"
   },
@@ -434,7 +434,8 @@
       "returnDate": "Return Stock-In Date:",
       "createdAt": "Created At",
       "updatedAt": "Last Updated",
-      "pendingErpQty": "Pending ERP Qty"
+      "pendingErpQty": "Pending ERP Qty",
+      "processingStatus": "Processing Status"
     },
     "col": {
       "index": "#",
@@ -455,6 +456,7 @@
       "brand": "Brand"
     },
     "notSet": "Not Set",
+    "commentLabel": "Comment",
     "approved": "Approved",
     "rejected": "Rejected",
     "processingDone": "Completed",

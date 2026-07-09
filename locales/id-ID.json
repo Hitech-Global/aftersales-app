@@ -294,7 +294,7 @@
     "rejected": "Ditolak"
   },
   "approvalStatusDisplay": {
-    "completed": "Selesai",
+    "completed": "Disetujui",
     "pending": "Menunggu Persetujuan",
     "rejected": "Ditolak"
   },
@@ -434,7 +434,8 @@
       "returnDate": "Tanggal Stock-In Retur:",
       "createdAt": "Dibuat pada",
       "updatedAt": "Update Terakhir",
-      "pendingErpQty": "Qty Menunggu ERP"
+      "pendingErpQty": "Qty Menunggu ERP",
+      "processingStatus": "Status Pemrosesan"
     },
     "col": {
       "index": "#",
@@ -455,6 +456,7 @@
       "brand": "Brand"
     },
     "notSet": "Belum Diatur",
+    "commentLabel": "Komentar",
     "approved": "Disetujui",
     "rejected": "Ditolak",
     "processingDone": "Selesai",

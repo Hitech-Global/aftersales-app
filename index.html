@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.8"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.9"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -203,6 +203,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .status-待三级审批{background:#fce4ec;color:#c62828}
 .status-审批通过{background:#e8f5e9;color:#1b5e20}
 .status-审批拒绝{background:#fde8e8;color:#b71c1c}
+/* Language-neutral approval status pill colors (used by derived display state) */
+.status-approved{background:#e8f5e9;color:#1b5e20}
+.status-pending{background:#fff3e0;color:#e65100}
+.status-rejected{background:#fde8e8;color:#b71c1c}
 .category-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;background:#f0f0f0;color:var(--text-secondary)}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary);background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow)}
 .empty-icon{font-size:48px;margin-bottom:12px}
@@ -252,6 +256,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .data-table td.cell-actions{background:var(--card-bg);box-shadow:inset 1px 0 0 var(--border-light)}
 .data-table tbody tr:hover td.cell-actions{background:#f7f7f9}
 .data-table tbody tr.row-clickable:hover td.cell-actions{background:#f0f4fb}
+/* Detail RMA Items: freeze left columns (#, Channel, Shop/Customer, Brand, SKU) during horizontal scroll */
+.detail-rma-items{table-layout:fixed;min-width:1886px}
+.detail-rma-items th.fcol,.detail-rma-items td.fcol{position:sticky;z-index:2;background:var(--card-bg)}
+.detail-rma-items thead th.fcol{background:#fbfbfd;z-index:4}
+.detail-rma-items th.fcol-1,.detail-rma-items td.fcol-1{left:0;width:46px}
+.detail-rma-items th.fcol-2,.detail-rma-items td.fcol-2{left:46px;width:130px}
+.detail-rma-items th.fcol-3,.detail-rma-items td.fcol-3{left:176px;width:200px}
+.detail-rma-items th.fcol-4,.detail-rma-items td.fcol-4{left:376px;width:120px}
+.detail-rma-items th.fcol-5,.detail-rma-items td.fcol-5{left:496px;width:170px;box-shadow:3px 0 7px -3px rgba(0,0,0,.2)}
+.detail-rma-items tbody tr:hover td.fcol{background:#f7f7f9}
+.detail-rma-items th:nth-child(6),.detail-rma-items td:nth-child(6){width:150px}
+.detail-rma-items th:nth-child(7),.detail-rma-items td:nth-child(7){width:150px}
+.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:70px}
+.detail-rma-items th:nth-child(9),.detail-rma-items td:nth-child(9){width:170px}
+.detail-rma-items th:nth-child(10),.detail-rma-items td:nth-child(10){width:150px}
+.detail-rma-items th:nth-child(11),.detail-rma-items td:nth-child(11){width:160px}
+.detail-rma-items th:nth-child(12),.detail-rma-items td:nth-child(12){width:130px}
+.detail-rma-items th:nth-child(13),.detail-rma-items td:nth-child(13){width:240px}
+.detail-rma-items th:nth-child(14),.detail-rma-items td:nth-child(14){width:130px}
 .cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
@@ -437,6 +460,14 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .ah-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
 .ah-badge.approved{background:rgba(92,184,127,.16);color:#3a9d63}
 .ah-badge.rejected{background:rgba(255,59,48,.14);color:#d23b2f}
+/* Enriched approval-history timeline item */
+.approval-timeline-item .ah-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.approval-timeline-item .ah-level{font-size:12px;font-weight:600;color:var(--text-secondary);background:rgba(0,0,0,.05);padding:2px 9px;border-radius:999px;white-space:nowrap}
+.approval-timeline-item .ah-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary)}
+.approval-timeline-item .ah-approver{font-weight:600;color:var(--text)}
+.approval-timeline-item .ah-time{color:var(--text-muted)}
+.approval-timeline-item .ah-comment{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5}
+.approval-timeline-item .ah-comment-label{font-weight:600;color:var(--text-secondary)}
 
 /* Detail page refinement (Round 2) */
 .detail-summary{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
@@ -864,7 +895,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.8 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.9 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -4037,6 +4068,21 @@ async function renderDetail(id){
   const totalQty=r.total_quantity||_items.reduce((s,it)=>s+(it.quantity||0),0);
   const allCompleted=_items.length>0 && _items.every(it=>itemProcessProgress(it)==='completed');
   const procBadge= allCompleted ? renderProcessProgressBadge('completed') : renderProcessProgressBadge('pending');
+  // Derive a consistent approval display state from actual approval progress (display only; no status-machine change)
+  const _reqLevels=[1,2,3].filter(l=>r['approver_level'+l+'_name']);
+  const _ahAll=r.approval_history||[];
+  let _apprState='pending', _apprText='';
+  if(_reqLevels.some(l=>_ahAll.some(h=>h.level===l && h.action==='reject'))){
+    _apprState='rejected'; _apprText=t('approvalStatusDisplay.rejected');
+  } else if(_reqLevels.length>0 && _reqLevels.every(l=>_ahAll.some(h=>h.level===l && h.action==='approve'))){
+    _apprState='approved'; _apprText=t('approvalStatusDisplay.completed');
+  } else if(_reqLevels.length===0){
+    _apprState='pending'; _apprText=t('approvalStatusDisplay.pending');
+  } else {
+    _apprState='pending';
+    const _fp=_reqLevels.find(l=>!_ahAll.some(h=>h.level===l && h.action==='approve'))||_reqLevels[0];
+    _apprText=t('status.pendingLevel'+_fp);
+  }
   currentApprovalRecordId=r.id;
   approvalAttachmentTarget='detail';
   pendingAttachments=[];
@@ -4052,11 +4098,17 @@ async function renderDetail(id){
         <div class="approval-timeline">
           ${ah.map(h=>`
             <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
-              <div class="ah-title"><span class="ah-badge ${h.action==='reject'?'rejected':'approved'}">${h.action==='approve'?t('detail.approved'):t('detail.rejected')}</span><span>${esc(h.operator_name)} · ${t('approval.levelPrefix', {level: h.level})}</span></div>
-              ${h.comment?`<div class="ah-comment">${esc(h.comment)}</div>`:''}
-              ${h.return_date?`<div class="ah-comment">${t('detail.label.returnDate')}${formatDate(h.return_date)}</div>`:''}
+              <div class="ah-row">
+                <span class="ah-badge ${h.action==='reject'?'rejected':'approved'}">${h.action==='approve'?t('detail.approved'):t('detail.rejected')}</span>
+                <span class="ah-level">${t('approval.levelPrefix', {level: h.level})}</span>
+              </div>
+              <div class="ah-meta">
+                <span class="ah-approver">${esc(h.operator_name||t('detail.notSet'))}</span>
+                <span class="ah-time">${esc(h.timestamp||'')}</span>
+              </div>
+              ${h.comment?`<div class="ah-comment"><span class="ah-comment-label">${t('detail.commentLabel')}:</span> ${esc(h.comment)}</div>`:''}
+              ${h.return_date?`<div class="ah-comment">${t('detail.label.returnDate')} ${formatDate(h.return_date)}</div>`:''}
               ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
-              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
             </div>
           `).join('')}
         </div>
@@ -4065,7 +4117,6 @@ async function renderDetail(id){
 
   // Approvers info (horizontal step cards)
   let approversHTML='';
-  const _ah=r.approval_history||[];
   const STEP_ICON={
     done:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
     current:'<svg class="line-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -4076,16 +4127,17 @@ async function renderDetail(id){
   function stepState(level){
     const name=r['approver_level'+level+'_name'];
     if(!name) return {state:'empty', name:t('detail.notSet')};
-    if(_ah.some(h=>h.level===level && h.action==='reject')) return {state:'rejected', name};
-    if(_ah.some(h=>h.level===level && h.action==='approve')) return {state:'done', name};
-    const cnLevel=['一','二','三'][level-1];
-    if(r.status==='待'+cnLevel+'级审批') return {state:'current', name};
+    if(_ahAll.some(h=>h.level===level && h.action==='reject')) return {state:'rejected', name};
+    if(_ahAll.some(h=>h.level===level && h.action==='approve')) return {state:'done', name};
+    // 'current' = first required level not yet approved (keeps step cards consistent with actual progress)
+    const firstPending=_reqLevels.find(l=>!_ahAll.some(h=>h.level===l && h.action==='approve'));
+    if(level===firstPending) return {state:'current', name};
     return {state:'pending', name};
   }
-  if(r.approver_level1_name||r.approver_level2_name||r.approver_level3_name||r.submitter_name){
+  if(_reqLevels.length>0 || r.submitter_name){
     const steps=[
       {role:t('detail.label.initiator'), name:r.submitter_name||t('detail.notSet'), state:'done'},
-      ...[1,2,3].map(l=>({role:t('detail.label.level'+l), ...stepState(l)}))
+      ..._reqLevels.map(l=>({role:t('detail.label.level'+l), ...stepState(l)}))
     ];
     approversHTML=`<div class="detail-section"><h3>${t('detail.section.approvalFlow')}</h3>
       <div class="af-steps">
@@ -4133,7 +4185,7 @@ async function renderDetail(id){
   document.getElementById('detail-content').innerHTML=`
     <div class="detail-summary">
       <div class="ds-card"><div class="ds-label">${esc(t('detail.summary.rmaCase'))}</div><div class="ds-value">#${esc(String(r.id))}</div></div>
-      <div class="ds-card"><div class="ds-label">${esc(t('detail.label.status'))}</div><div class="ds-value"><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></div></div>
+      <div class="ds-card"><div class="ds-label">${esc(t('detail.label.status'))}</div><div class="ds-value"><span class="status-badge status-${_apprState}">${esc(_apprText)}</span></div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.processingStatus'))}</div><div class="ds-value">${procBadge}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.submitter'))}</div><div class="ds-value">${esc(r.submitter_name||'-')}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.totalQty'))}</div><div class="ds-value">${totalQty}</div></div>
@@ -4141,13 +4193,13 @@ async function renderDetail(id){
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.brand')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
+        <table class="data-table detail-rma-items"><thead><tr><th class="fcol fcol-1">${t('detail.col.index')}</th><th class="fcol fcol-2">${t('detail.col.platform')}</th><th class="fcol fcol-3">${t('detail.col.shopCustomer')}</th><th class="fcol fcol-4">${t('detail.col.brand')}</th><th class="fcol fcol-5">${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
-            <td class="cell-id">${i+1}</td>
-            <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
-            <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
-            <td>${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
-            <td class="cell-wrap">${esc(it.sku_code||'-')}</td>
+            <td class="cell-id fcol fcol-1">${i+1}</td>
+            <td class="fcol fcol-2">${esc(getPlatformLabel(it.platform) || '-')}</td>
+            <td class="fcol fcol-3">${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
+            <td class="fcol fcol-4">${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
+            <td class="cell-wrap fcol fcol-5">${esc(it.sku_code||'-')}</td>
             <td>${esc(it.sn_code||'-')}</td>
             <td class="cell-wrap">${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
@@ -5503,11 +5555,17 @@ async function openLegacyApprovalModal(recordId){
     document.getElementById('approval-history').innerHTML=`<div class="approval-timeline">`+
       history.map(h=>`
         <div class="approval-timeline-item ${h.action==='reject'?'rejected':''}">
-          <div style="font-size:13px;font-weight:600">${h.action==='approve'?t('detail.approved'):t('detail.rejected')} - ${esc(h.operator_name)} (${t('approval.levelPrefix', {level: h.level})})</div>
-          ${h.comment?`<div style="font-size:13px;margin-top:4px">${esc(h.comment)}</div>`:''}
-          ${h.return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('detail.label.returnDate')}${esc(h.return_date)}</div>`:''}
+          <div class="ah-row">
+            <span class="ah-badge ${h.action==='reject'?'rejected':'approved'}">${h.action==='approve'?t('detail.approved'):t('detail.rejected')}</span>
+            <span class="ah-level">${t('approval.levelPrefix', {level: h.level})}</span>
+          </div>
+          <div class="ah-meta">
+            <span class="ah-approver">${esc(h.operator_name||t('detail.notSet'))}</span>
+            <span class="ah-time">${esc(h.timestamp||'')}</span>
+          </div>
+          ${h.comment?`<div class="ah-comment"><span class="ah-comment-label">${t('detail.commentLabel')}:</span> ${esc(h.comment)}</div>`:''}
+          ${h.return_date?`<div class="ah-comment">${t('detail.label.returnDate')} ${formatDate(h.return_date)}</div>`:''}
           ${(h.attachments||[]).length>0?renderAttachmentsHTML(h.attachments):''}
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${esc(h.timestamp||'')}</div>
         </div>
       `).join('')+
     `</div>`;
