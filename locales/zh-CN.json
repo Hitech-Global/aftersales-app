@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "售后数据管理系统",
+    "title": "售后管理系统",
     "sidebarBrand": "售后管理系统",
     "mode": {
       "feishu": "飞书模式",
@@ -15,13 +15,13 @@
     }
   },
   "login": {
-    "subtitle": "请使用公司飞书账号登录",
+    "subtitle": "使用公司飞书账号登录",
     "verifying": "正在验证身份...",
     "localModeHint": "当前为本地登录模式",
     "localAccountLoginHint": "可使用本地账号登录。",
-    "feishuOnlyHint": "仅限公司飞书组织成员登录。",
-    "btnFeishu": "飞书登录",
-    "btnLocal": "本地账号登录",
+    "feishuOnlyHint": "仅公司飞书组织成员可以登录",
+    "btnFeishu": "使用飞书登录",
+    "btnLocal": "使用本地账号登录",
     "usernamePlaceholder": "用户名",
     "passwordPlaceholder": "密码",
     "error": {
