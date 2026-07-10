@@ -459,6 +459,10 @@
     "commentLabel": "Komentar",
     "approved": "Disetujui",
     "rejected": "Ditolak",
+    "approverLabel": "Approver",
+    "unknownApprover": "Approver Tidak Diketahui",
+    "btnCopy": "Copy",
+    "btnCopied": "Copied",
     "processingDone": "Selesai",
     "processingPending": "Menunggu",
     "summary": {

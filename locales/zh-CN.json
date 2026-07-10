@@ -459,6 +459,10 @@
     "commentLabel": "备注",
     "approved": "审批通过",
     "rejected": "审批拒绝",
+    "approverLabel": "审批人",
+    "unknownApprover": "未知审批人",
+    "btnCopy": "复制",
+    "btnCopied": "已复制",
     "processingDone": "已完成",
     "processingPending": "待处理",
     "summary": {

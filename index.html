@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.9"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.10"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -278,6 +278,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
+/* SKU hover-to-copy floating button (detail RMA Items) */
+.detail-rma-items td.fcol-5 .sku-copy-btn{position:absolute;top:50%;right:6px;transform:translateY(-50%);display:inline-flex;align-items:center;gap:4px;background:#1d1d1f;color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1;padding:4px 8px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.22);white-space:nowrap;z-index:3;opacity:0;pointer-events:none;transition:opacity .12s ease}
+.detail-rma-items td.fcol-5:hover .sku-copy-btn{opacity:1;pointer-events:auto}
+.detail-rma-items td.fcol-5 .sku-copy-btn:hover{background:#000}
+.detail-rma-items td.fcol-5 .sku-copy-ico{display:block}
+.detail-rma-items td.fcol-5 .sku-copy-btn.copied{background:#0071e3}
 
 /* 风险标签：只表达风险，不表达完成状态 */
 .risk-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
@@ -895,7 +901,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.9 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.10 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2236,6 +2242,54 @@ function showFlash(msg,type='info'){
   setTimeout(remove,3000);
 }
 function esc(s){ if(!s)return''; const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+/* Copy text to clipboard, with execCommand fallback for Feishu webview / non-secure contexts */
+function copyTextToClipboard(text){
+  return new Promise(function(resolve, reject){
+    var done=function(){ resolve(); }, fail=function(e){ reject(e||new Error('copy failed')); };
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text, done, fail); });
+      } else { fallbackCopy(text, done, fail); }
+    }catch(e){ fallbackCopy(text, done, fail); }
+  });
+}
+function fallbackCopy(text, resolve, reject){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.top='-9999px'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    ok?resolve():reject(new Error('execCommand failed'));
+  }catch(e){ reject(e); }
+}
+
+/* Resolve approval-history approver: record operator -> flow-config by level -> Unknown Approver */
+function approvalApproverName(h, rec){
+  if(h.operator_name) return h.operator_name;
+  var cfg = rec ? rec['approver_level'+(h.level||'')+'_name'] : null;
+  if(cfg) return cfg;
+  return t('detail.unknownApprover');
+}
+
+/* Delegated SKU hover-to-copy (bound once) */
+if(!window.__skuCopyBound){
+  window.__skuCopyBound=true;
+  document.addEventListener('click', function(e){
+    var btn=e.target.closest ? e.target.closest('.sku-copy-btn') : null;
+    if(!btn) return;
+    e.preventDefault(); e.stopPropagation();
+    var sku=btn.getAttribute('data-sku')||'';
+    copyTextToClipboard(sku).then(function(){
+      var label=btn.querySelector('.sku-copy-label');
+      var prev=label?label.textContent:'';
+      if(label) label.textContent=t('detail.btnCopied');
+      btn.classList.add('copied');
+      setTimeout(function(){ if(label) label.textContent=prev; btn.classList.remove('copied'); }, 1200);
+    }).catch(function(){});
+  });
+}
 function escAttr(s){ return esc(s).replace(/'/g,"&#39;").replace(/"/g,"&quot;"); }
 function formatDateLocal(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
 function parseDateValue(value){
@@ -4103,7 +4157,7 @@ async function renderDetail(id){
                 <span class="ah-level">${t('approval.levelPrefix', {level: h.level})}</span>
               </div>
               <div class="ah-meta">
-                <span class="ah-approver">${esc(h.operator_name||t('detail.notSet'))}</span>
+                <span class="ah-approver">${t('detail.approverLabel')}: ${esc(approvalApproverName(h, r))}</span>
                 <span class="ah-time">${esc(h.timestamp||'')}</span>
               </div>
               ${h.comment?`<div class="ah-comment"><span class="ah-comment-label">${t('detail.commentLabel')}:</span> ${esc(h.comment)}</div>`:''}
@@ -4199,7 +4253,13 @@ async function renderDetail(id){
             <td class="fcol fcol-2">${esc(getPlatformLabel(it.platform) || '-')}</td>
             <td class="fcol fcol-3">${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
             <td class="fcol fcol-4">${esc(productBySku.get(String(it.sku_code||'').toLowerCase())?.brand||'-')}</td>
-            <td class="cell-wrap fcol fcol-5">${esc(it.sku_code||'-')}</td>
+            <td class="cell-wrap fcol fcol-5" data-sku="${esc(it.sku_code||'')}">
+              <span class="sku-text">${esc(it.sku_code||'-')}</span>
+              <button type="button" class="sku-copy-btn" data-sku="${esc(it.sku_code||'')}" aria-label="${t('detail.btnCopy')}">
+                <svg class="sku-copy-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                <span class="sku-copy-label">${t('detail.btnCopy')}</span>
+              </button>
+            </td>
             <td>${esc(it.sn_code||'-')}</td>
             <td class="cell-wrap">${esc(it.order_no||'-')}</td>
             <td>${it.quantity||0}</td>
@@ -5560,7 +5620,7 @@ async function openLegacyApprovalModal(recordId){
             <span class="ah-level">${t('approval.levelPrefix', {level: h.level})}</span>
           </div>
           <div class="ah-meta">
-            <span class="ah-approver">${esc(h.operator_name||t('detail.notSet'))}</span>
+            <span class="ah-approver">${t('detail.approverLabel')}: ${esc(approvalApproverName(h, record))}</span>
             <span class="ah-time">${esc(h.timestamp||'')}</span>
           </div>
           ${h.comment?`<div class="ah-comment"><span class="ah-comment-label">${t('detail.commentLabel')}:</span> ${esc(h.comment)}</div>`:''}

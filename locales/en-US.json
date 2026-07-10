@@ -459,6 +459,10 @@
     "commentLabel": "Comment",
     "approved": "Approved",
     "rejected": "Rejected",
+    "approverLabel": "Approver",
+    "unknownApprover": "Unknown Approver",
+    "btnCopy": "Copy",
+    "btnCopied": "Copied",
     "processingDone": "Completed",
     "processingPending": "Pending",
     "summary": {
