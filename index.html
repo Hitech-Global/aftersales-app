@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.15"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.16"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -884,10 +884,15 @@ select option{background:var(--card-bg);color:var(--text)}
 (function(){
   var el = document.getElementById('welcome-screen');
   if(!el) return;
+  // 同一会话内只显示一次（避免 OAuth 回调重载后重复出现）
+  try {
+    if(sessionStorage.getItem('splash_shown')){ el.style.display='none'; return; }
+  }catch(e){/* sessionStorage 不可用时忽略 */}
   var start = Date.now();
   var done = false;
   function hide(){
     if(done) return; done = true;
+    try { sessionStorage.setItem('splash_shown','1'); } catch(e){}
     var elapsed = Date.now() - start;
     var wait = Math.max(0, 600 - elapsed); // 至少显示 600ms，避免闪屏
     setTimeout(function(){
@@ -951,7 +956,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">H</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.15 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.16 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
