@@ -16,6 +16,7 @@
     }
   },
   "login": {
+    "welcome": "你好",
     "subtitle": "使用公司飞书账号登录",
     "verifying": "正在验证身份...",
     "localModeHint": "当前为本地登录模式",

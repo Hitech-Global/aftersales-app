@@ -16,6 +16,7 @@
     }
   },
   "login": {
+    "welcome": "Hello",
     "subtitle": "Sign in with your company Lark account",
     "verifying": "Verifying your identity...",
     "localModeHint": "Local sign-in mode is enabled",
