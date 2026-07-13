@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.17"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.18"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -387,7 +387,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 @keyframes welcomeFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .welcome-title{font-size:clamp(64px,12vw,96px);font-weight:600;letter-spacing:-.02em;line-height:1;margin:0;background:linear-gradient(180deg,#ffffff 0%,#e6f0fb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 22px rgba(90,130,180,.35))}
 .welcome-brand{margin-top:20px;font-size:18px;font-weight:500;letter-spacing:.01em;color:rgba(46,66,96,.72)}
-@media (prefers-reduced-motion: reduce){.welcome-bg{animation:none}.welcome-content{animation:none}}
+.welcome-foot{position:relative;z-index:2;margin-top:32px;font-size:15px;font-weight:400;letter-spacing:.01em;color:rgba(46,66,96,.55);animation:welcomeFade 1s ease .3s both}
+@media (prefers-reduced-motion: reduce){.welcome-bg{animation:none}.welcome-content{animation:none}.welcome-foot{animation:none}}
 .login-tabs{display:flex;margin-bottom:24px;border:1px solid #e6e6eb;border-radius:12px;overflow:hidden}
 .login-tab{flex:1;padding:10px;border:none;background:#f5f5f7;font-size:14px;cursor:pointer;color:#6e6e73;font-family:inherit;transition:all .2s}
 .login-tab.active{background:#1d1d1f;color:#fff;font-weight:500}
@@ -872,13 +873,14 @@ select option{background:var(--card-bg);color:var(--text)}
 </head>
 <body>
 
-<!-- Enter-system Welcome/Splash overlay (hidden by default; shown only via showEnterSplash() inside enterApp()) -->
+<!-- Enter-system Welcome/Splash overlay (hidden by default; used as both loading indicator and enter-system transition) -->
 <div id="welcome-screen" class="welcome-screen">
   <div class="welcome-bg"></div>
   <div class="welcome-content">
     <h1 class="welcome-title" data-i18n="splash.title">Hello</h1>
     <div class="welcome-brand" data-i18n="app.title">Hitech After-Sales</div>
   </div>
+  <div class="welcome-foot" id="welcome-foot" data-i18n="splash.opening" style="display:none">Opening Hitech After-Sales...</div>
 </div>
 
 <!-- Login Page -->
@@ -890,8 +892,8 @@ select option{background:var(--card-bg);color:var(--text)}
       <p class="login-brand-sub" data-i18n="app.subtitle"></p>
       <p class="login-signin-hint" data-i18n="login.subtitle"></p>
 
-      <!-- 加载中 -->
-      <div class="login-loading" id="login-loading" style="display:flex">
+      <!-- 加载中（已改用 Splash 覆盖层替代，此处保留 DOM 但默认隐藏） -->
+      <div class="login-loading" id="login-loading" style="display:none">
         <span class="spinner"></span> <span data-i18n="login.verifying"></span>
       </div>
 
@@ -932,7 +934,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">H</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.17 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.18 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2793,7 +2795,20 @@ function showLoginError(msg) {
 }
 
 function showLoginLoading(show) {
-  document.getElementById('login-loading').style.display = show ? 'flex' : 'none';
+  // 隐藏旧的 spinner 加载态
+  document.getElementById('login-loading').style.display = 'none';
+  // 用 Splash 替代：显示/隐藏欢迎覆盖层 + 底部加载文案
+  var el = document.getElementById('welcome-screen');
+  var foot = document.getElementById('welcome-foot');
+  if (!el) return;
+  if (show) {
+    if (foot) foot.style.display = '';
+    el.classList.remove('hidden');
+    el.style.display = 'flex';
+  } else {
+    el.classList.add('hidden');
+    setTimeout(function () { el.style.display = 'none'; if (foot) foot.style.display = 'none'; }, 850);
+  }
 }
 
 function setLocalLoginVisible(show) {
@@ -2940,14 +2955,19 @@ async function adminLogin() {
 // 进入系统前的欢迎过渡（每次进入系统都显示一次：已登录冷启动 / 登录成功 / 刷新）
 function showEnterSplash() {
   var el = document.getElementById('welcome-screen');
+  var foot = document.getElementById('welcome-foot');
   if (!el) return;
+  // 隐藏底部加载文字（进入系统过渡不需要）
+  if (foot) foot.style.display = 'none';
   el.classList.remove('hidden');
-  el.classList.add('show');
   el.style.display = 'flex';
+  // 清除旧定时器（防止多次调用叠加，例如 showLoginLoading→enterApp 无缝衔接场景）
+  if (window._splashTimer) clearTimeout(window._splashTimer);
+  if (window._splashCleanupTimer) clearTimeout(window._splashCleanupTimer);
   // 显示约 1.4s 后淡出（800ms），露出背后已渲染好的系统界面
-  setTimeout(function () {
+  window._splashTimer = setTimeout(function () {
     el.classList.add('hidden');
-    setTimeout(function () { el.style.display = 'none'; el.classList.remove('show'); }, 850);
+    window._splashCleanupTimer = setTimeout(function () { el.style.display = 'none'; el.classList.remove('show'); if (foot) foot.style.display = 'none'; }, 850);
   }, 1400);
 }
 
