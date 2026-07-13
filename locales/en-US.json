@@ -15,8 +15,11 @@
       "id": "Bahasa Indonesia"
     }
   },
+  "welcome": {
+    "title": "Hello",
+    "opening": "Opening Hitech After-Sales..."
+  },
   "login": {
-    "welcome": "Hello",
     "subtitle": "Sign in with your company Lark account",
     "verifying": "Verifying your identity...",
     "localModeHint": "Local sign-in mode is enabled",
