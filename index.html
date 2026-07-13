@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.15"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.16"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -370,17 +370,6 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .login-brand-sub{font-size:13.5px;color:#6e6e73;margin-bottom:4px;line-height:1.4}
 .login-signin-hint{font-size:13px;color:#a1a1a6;margin-bottom:26px;line-height:1.4}
 
-/* Welcome / Splash screen (first-screen only) */
-.welcome-screen{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif}
-.welcome-screen.hidden{opacity:0;pointer-events:none}
-.welcome-bg{position:absolute;inset:-12%;background:radial-gradient(closest-side at 50% 46%,rgba(64,108,176,.55),rgba(64,108,176,0) 70%),radial-gradient(120% 80% at 16% 12%,rgba(150,205,225,.95),rgba(150,205,225,0) 55%),radial-gradient(120% 90% at 86% 24%,rgba(172,226,212,.92),rgba(172,226,212,0) 55%),linear-gradient(180deg,#f3f8fb 0%,#e6eef4 55%,#d3e2f0 100%);animation:welcomeFloat 16s ease-in-out infinite alternate}
-@keyframes welcomeFloat{0%{transform:scale(1.06) translateY(0)}100%{transform:scale(1.14) translateY(-14px)}}
-.welcome-content{position:relative;z-index:2;text-align:center;animation:welcomeFade .9s ease both}
-@keyframes welcomeFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.welcome-title{font-size:clamp(64px,12vw,96px);font-weight:600;letter-spacing:-.02em;line-height:1;margin:0;background:linear-gradient(180deg,#ffffff 0%,#e6f0fb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 22px rgba(90,130,180,.35))}
-.welcome-brand{margin-top:20px;font-size:18px;font-weight:500;letter-spacing:.01em;color:rgba(46,66,96,.72)}
-.welcome-foot{position:absolute;bottom:44px;left:0;right:0;text-align:center;z-index:2;font-size:13px;color:rgba(64,84,114,.5);animation:welcomeFade 1s ease .25s both}
-@media (prefers-reduced-motion: reduce){.welcome-bg{animation:none}.welcome-content,.welcome-foot{animation:none}}
 .login-card input{width:100%;height:46px;padding:0 14px;border:1px solid #e2e2e7;border-radius:12px;font-size:15px;margin-bottom:12px;outline:none;font-family:inherit;background:#fbfbfd;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
 .login-card input:focus{border-color:#007aff;box-shadow:0 0 0 3px rgba(0,122,255,.12)}
 .login-card .btn-local{width:100%;height:46px;padding:0;background:#fff;color:#1d1d1f;border:1px solid #d2d2d7;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
@@ -871,35 +860,6 @@ select option{background:var(--card-bg);color:var(--text)}
 </head>
 <body>
 
-<!-- Welcome / Splash screen (first screen only, shown during app init; not the login page) -->
-<div id="welcome-screen" class="welcome-screen">
-  <div class="welcome-bg"></div>
-  <div class="welcome-content">
-    <h1 class="welcome-title" data-i18n="splash.title">Hello</h1>
-    <div class="welcome-brand" data-i18n="app.title">Hitech After-Sales</div>
-  </div>
-  <div class="welcome-foot" data-i18n="splash.opening">Opening Hitech After-Sales...</div>
-</div>
-<script>
-(function(){
-  var el = document.getElementById('welcome-screen');
-  if(!el) return;
-  var start = Date.now();
-  var done = false;
-  function hide(){
-    if(done) return; done = true;
-    var elapsed = Date.now() - start;
-    var wait = Math.max(0, 600 - elapsed); // 至少显示 600ms，避免闪屏
-    setTimeout(function(){
-      el.classList.add('hidden'); // 触发 800ms 淡出
-      setTimeout(function(){ el.style.display = 'none'; }, 850);
-    }, wait);
-  }
-  window.hideWelcomeScreen = hide;
-  setTimeout(hide, 4500); // 安全兜底：无论如何都会在 4.5s 内消失，不阻塞认证
-})();
-</script>
-
 <!-- Login Page -->
 <div id="page-login" class="login-page">
   <div class="login-container">
@@ -951,7 +911,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">H</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.15 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.16 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2984,7 +2944,6 @@ function enterApp() {
   // 检查 URL hash，决定初始页面；无 hash（如 ?lang=en-US）时默认进入概览页
   handleHashRoute();
   if(!document.querySelector('.page.active')){ showPage('overview'); }
-  if (window.hideWelcomeScreen) window.hideWelcomeScreen();
 }
 
 // ==================== 统一线性图标 & 操作列下拉菜单 ====================
@@ -7545,7 +7504,6 @@ function resolveColumns(headers){
   refreshProcessStatuses();
   applyStaticI18n();
   applyDateInputLocale();
-  if (window.hideWelcomeScreen) window.hideWelcomeScreen();
 })();
 
 // ==================== 静态元素 i18n ====================
