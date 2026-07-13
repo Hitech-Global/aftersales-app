@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.16"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.17"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
 <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
@@ -376,6 +376,18 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .login-card .btn-local:hover{background:#f5f5f7;border-color:#c2c2c7}
 .login-card .btn-local:active{background:#ececf0}
 .login-hint{background:#f5f5f7;border:1px solid #ececf0;border-radius:12px;padding:14px;margin-top:18px;font-size:12px;color:#6e6e73;text-align:left}
+
+/* Enter-system Welcome/Splash overlay (shown only when entering the system, via enterApp()) */
+.welcome-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+.welcome-screen.show{display:flex}
+.welcome-screen.hidden{opacity:0;pointer-events:none}
+.welcome-bg{position:absolute;inset:-12%;background:radial-gradient(closest-side at 50% 46%,rgba(64,108,176,.55),rgba(64,108,176,0) 70%),radial-gradient(120% 80% at 16% 12%,rgba(150,205,225,.95),rgba(150,205,225,0) 55%),radial-gradient(120% 90% at 86% 24%,rgba(172,226,212,.92),rgba(172,226,212,0) 55%),linear-gradient(180deg,#f3f8fb 0%,#e6eef4 55%,#d3e2f0 100%);animation:welcomeFloat 16s ease-in-out infinite alternate}
+@keyframes welcomeFloat{0%{transform:scale(1.06) translateY(0)}100%{transform:scale(1.14) translateY(-14px)}}
+.welcome-content{position:relative;z-index:2;text-align:center;animation:welcomeFade .9s ease both}
+@keyframes welcomeFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.welcome-title{font-size:clamp(64px,12vw,96px);font-weight:600;letter-spacing:-.02em;line-height:1;margin:0;background:linear-gradient(180deg,#ffffff 0%,#e6f0fb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 22px rgba(90,130,180,.35))}
+.welcome-brand{margin-top:20px;font-size:18px;font-weight:500;letter-spacing:.01em;color:rgba(46,66,96,.72)}
+@media (prefers-reduced-motion: reduce){.welcome-bg{animation:none}.welcome-content{animation:none}}
 .login-tabs{display:flex;margin-bottom:24px;border:1px solid #e6e6eb;border-radius:12px;overflow:hidden}
 .login-tab{flex:1;padding:10px;border:none;background:#f5f5f7;font-size:14px;cursor:pointer;color:#6e6e73;font-family:inherit;transition:all .2s}
 .login-tab.active{background:#1d1d1f;color:#fff;font-weight:500}
@@ -860,6 +872,15 @@ select option{background:var(--card-bg);color:var(--text)}
 </head>
 <body>
 
+<!-- Enter-system Welcome/Splash overlay (hidden by default; shown only via showEnterSplash() inside enterApp()) -->
+<div id="welcome-screen" class="welcome-screen">
+  <div class="welcome-bg"></div>
+  <div class="welcome-content">
+    <h1 class="welcome-title" data-i18n="splash.title">Hello</h1>
+    <div class="welcome-brand" data-i18n="app.title">Hitech After-Sales</div>
+  </div>
+</div>
+
 <!-- Login Page -->
 <div id="page-login" class="login-page">
   <div class="login-container">
@@ -911,7 +932,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon">H</span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.16 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.17 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2916,9 +2937,24 @@ async function adminLogin() {
   showFlash(t('flash.admin') + ' ' + user.name + t('flash.adminLoggedIn'), 'success');
 }
 
+// 进入系统前的欢迎过渡（每次进入系统都显示一次：已登录冷启动 / 登录成功 / 刷新）
+function showEnterSplash() {
+  var el = document.getElementById('welcome-screen');
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.classList.add('show');
+  el.style.display = 'flex';
+  // 显示约 1.4s 后淡出（800ms），露出背后已渲染好的系统界面
+  setTimeout(function () {
+    el.classList.add('hidden');
+    setTimeout(function () { el.style.display = 'none'; el.classList.remove('show'); }, 850);
+  }, 1400);
+}
+
 function enterApp() {
   const user = getCurrentUser();
   if (!user) return;
+  showEnterSplash(); // 先盖上欢迎层，再在背后渲染系统
   document.getElementById('page-login').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
   document.getElementById('user-name').textContent = user.name;
