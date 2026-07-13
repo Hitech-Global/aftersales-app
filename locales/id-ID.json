@@ -1,7 +1,8 @@
 {
   "app": {
-    "title": "Portal Data Purna Jual",
-    "sidebarBrand": "Portal Purna Jual",
+    "title": "Hitech After-Sales",
+    "sidebarBrand": "Hitech After-Sales",
+    "subtitle": "RMA & Service Workflow Management",
     "mode": {
       "feishu": "Mode Feishu",
       "local": "Mode Lokal",
@@ -19,7 +20,7 @@
     "verifying": "Sedang memverifikasi identitas...",
     "localModeHint": "Mode login lokal sedang aktif",
     "localAccountLoginHint": "Anda dapat masuk dengan akun lokal.",
-    "feishuOnlyHint": "Hanya anggota organisasi Lark perusahaan yang dapat masuk.",
+    "feishuOnlyHint": "Hanya anggota organisasi Hitech Lark yang dapat masuk.",
     "btnFeishu": "Masuk dengan Lark",
     "btnLocal": "Masuk dengan akun lokal",
     "usernamePlaceholder": "Username",

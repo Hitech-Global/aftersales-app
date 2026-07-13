@@ -1,7 +1,8 @@
 {
   "app": {
-    "title": "售后管理系统",
-    "sidebarBrand": "售后管理系统",
+    "title": "Hitech 售后管理",
+    "sidebarBrand": "Hitech 售后管理",
+    "subtitle": "售后、审批与处理流程管理",
     "mode": {
       "feishu": "飞书模式",
       "local": "本地模式",
@@ -19,7 +20,7 @@
     "verifying": "正在验证身份...",
     "localModeHint": "当前为本地登录模式",
     "localAccountLoginHint": "可使用本地账号登录。",
-    "feishuOnlyHint": "仅公司飞书组织成员可以登录",
+    "feishuOnlyHint": "仅 Hitech 飞书组织成员可以登录",
     "btnFeishu": "使用飞书登录",
     "btnLocal": "使用本地账号登录",
     "usernamePlaceholder": "用户名",

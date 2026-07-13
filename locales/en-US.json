@@ -1,7 +1,8 @@
 {
   "app": {
-    "title": "RMA Management System",
-    "sidebarBrand": "RMA Management",
+    "title": "Hitech After-Sales",
+    "sidebarBrand": "Hitech After-Sales",
+    "subtitle": "RMA & Service Workflow Management",
     "mode": {
       "feishu": "Feishu Mode",
       "local": "Local Mode",
@@ -19,7 +20,7 @@
     "verifying": "Verifying your identity...",
     "localModeHint": "Local sign-in mode is enabled",
     "localAccountLoginHint": "You can sign in with a local account.",
-    "feishuOnlyHint": "Only members of the company Lark organization can sign in.",
+    "feishuOnlyHint": "Only members of the Hitech Lark organization can sign in.",
     "btnFeishu": "Sign in with Lark",
     "btnLocal": "Sign in with a local account",
     "usernamePlaceholder": "Username",
