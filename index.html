@@ -377,8 +377,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .login-card .btn-local:active{background:#ececf0}
 .login-hint{background:#f5f5f7;border:1px solid #ececf0;border-radius:12px;padding:14px;margin-top:18px;font-size:12px;color:#6e6e73;text-align:left}
 
-/* Enter-system Welcome/Splash overlay (shown only when entering the system, via enterApp()) */
-.welcome-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+/* Enter-system Welcome/Splash overlay (cold-boot first screen + loading indicator + enter-system transition) */
+.welcome-screen{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif}
 .welcome-screen.show{display:flex}
 .welcome-screen.hidden{opacity:0;pointer-events:none}
 .welcome-bg{position:absolute;inset:-12%;background:radial-gradient(closest-side at 50% 46%,rgba(64,108,176,.55),rgba(64,108,176,0) 70%),radial-gradient(120% 80% at 16% 12%,rgba(150,205,225,.95),rgba(150,205,225,0) 55%),radial-gradient(120% 90% at 86% 24%,rgba(172,226,212,.92),rgba(172,226,212,0) 55%),linear-gradient(180deg,#f3f8fb 0%,#e6eef4 55%,#d3e2f0 100%);animation:welcomeFloat 16s ease-in-out infinite alternate}
@@ -873,14 +873,14 @@ select option{background:var(--card-bg);color:var(--text)}
 </head>
 <body>
 
-<!-- Enter-system Welcome/Splash overlay (hidden by default; used as both loading indicator and enter-system transition) -->
+<!-- Enter-system Welcome/Splash overlay (cold-boot first screen + loading + enter-system transition) -->
 <div id="welcome-screen" class="welcome-screen">
   <div class="welcome-bg"></div>
   <div class="welcome-content">
     <h1 class="welcome-title" data-i18n="splash.title">Hello</h1>
     <div class="welcome-brand" data-i18n="app.title">Hitech After-Sales</div>
   </div>
-  <div class="welcome-foot" id="welcome-foot" data-i18n="splash.opening" style="display:none">Opening Hitech After-Sales...</div>
+  <div class="welcome-foot" id="welcome-foot" data-i18n="splash.opening">Opening Hitech After-Sales...</div>
 </div>
 
 <!-- Login Page -->
@@ -2797,7 +2797,7 @@ function showLoginError(msg) {
 function showLoginLoading(show) {
   // 隐藏旧的 spinner 加载态
   document.getElementById('login-loading').style.display = 'none';
-  // 用 Splash 替代：显示/隐藏欢迎覆盖层 + 底部加载文案
+  // Splash 默认已作为冷启动第一屏显示，此处只控制 foot 文字和淡出
   var el = document.getElementById('welcome-screen');
   var foot = document.getElementById('welcome-foot');
   if (!el) return;
@@ -2806,6 +2806,7 @@ function showLoginLoading(show) {
     el.classList.remove('hidden');
     el.style.display = 'flex';
   } else {
+    // 加载完成：淡出 Splash → 露出登录页或系统
     el.classList.add('hidden');
     setTimeout(function () { el.style.display = 'none'; if (foot) foot.style.display = 'none'; }, 850);
   }
