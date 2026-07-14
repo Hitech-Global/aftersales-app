@@ -698,7 +698,7 @@
       "title": "导入说明",
       "csvFormat": "支持 Excel / CSV 文件（UTF-8 编码）",
       "requiredCols": "必填列：售后日期, 渠道, SKU, 数量, 退货原因",
-      "optionalCols": "可选列：店铺/客户, SN Code, 订单号, 问题说明/备注",
+      "optionalCols": "可选列：店铺/客户, SN Code, 订单号, 物流单号, 问题说明/备注",
       "draftNote": "导入的记录将自动保存为草稿状态，请到列表中编辑并提交审批"
     },
     "btnDownloadTemplate": "下载导入模板",
@@ -713,6 +713,7 @@
         "sku": "SKU",
         "snCode": "SN Code",
         "orderNo": "订单号",
+        "trackingNumber": "物流单号",
         "qty": "数量",
         "returnReason": "退货原因（必填）",
         "description": "问题说明/备注"

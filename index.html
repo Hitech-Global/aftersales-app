@@ -6011,7 +6011,7 @@ function closeImportDialog(){ document.getElementById('import-modal').classList.
 
 async function downloadImportTemplate(){
   const c=t('importRecord.template.col');
-  const headers=[c.date,c.platform,c.shopCustomer,c.sku,c.snCode,c.orderNo,c.qty,c.returnReason,c.description];
+  const headers=[c.date,c.platform,c.shopCustomer,c.sku,c.snCode,c.orderNo,c.trackingNumber,c.qty,c.returnReason,c.description];
   // 确保退货原因字典已加载（含全部启用项）
   await refreshReturnReasonsFromDict().catch(()=>{});
   // 读取平台与店铺/客户字典（按平台分组，对齐新建表单的字段关联逻辑）
@@ -6030,7 +6030,7 @@ async function downloadImportTemplate(){
   let exampleShop = '';
   if(p0 && platformShops[p0.code] && platformShops[p0.code][0]) exampleShop = getDictLabel(platformShops[p0.code][0]);
   if(!exampleShop) exampleShop = 'Store A';
-  const example=['2026-01-15', examplePlatform, exampleShop, 'SKU-APPLE-001','SN12345','SH20260115001','2', tReturnReason('可二次销售'), t('importRecord.template.exampleDescription')];
+  const example=['2026-01-15', examplePlatform, exampleShop, 'SKU-APPLE-001','SN12345','SH20260115001','SF1234567890','2', tReturnReason('可二次销售'), t('importRecord.template.exampleDescription')];
   const fileName=t('importRecord.template.fileName');
   const sheetName=t('importRecord.template.sheetName');
 
@@ -6038,7 +6038,7 @@ async function downloadImportTemplate(){
     // SheetJS Community Edition 不支持写入 dataValidation / named ranges，
     // 因此下拉校验和级联依赖通过 Instructions sheet 的参考表来引导用户。
     const ws=XLSX.utils.aoa_to_sheet([headers, example]);
-    ws['!cols']=[{wch:14},{wch:16},{wch:18},{wch:18},{wch:20},{wch:18},{wch:10},{wch:24},{wch:28}];
+    ws['!cols']=[{wch:14},{wch:16},{wch:18},{wch:18},{wch:20},{wch:18},{wch:18},{wch:10},{wch:24},{wch:28}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,sheetName);
     // 构建 Instructions sheet：
@@ -6117,6 +6117,7 @@ function processImportFile(file){
       else if(k.includes('平台')||k.includes('platform')) colMap.platform=i;
       else if(k.includes('店铺')||k.includes('客户')||k.includes('shop')||k.includes('customer')||k.includes('toko')||k.includes('pelanggan')) colMap.shop=i;
       else if(k.includes('订单号')||k.includes('order')) colMap.order=i;
+      else if(k.includes('物流单号')||k.includes('物流')||k.includes('tracking')||k.includes('resi')||k.includes('运单')||k.includes('awb')) colMap.tracking=i;
       else if(k.includes('sn')||k.includes('序列号')) colMap.sn=i;
       else if(k.includes('sku')) colMap.sku=i;
       else if(k.includes('数量')||k.includes('qty')||k.includes('quantity')) colMap.qty=i;
@@ -6142,6 +6143,7 @@ function processImportFile(file){
       const shop_customer=normalizeShopCustomer(shopRaw, platform);
       const order_no=getVal(row,colMap.order);
       const sn_code=getVal(row,colMap.sn);
+      const tracking_number=getVal(row,colMap.tracking);
       const sku=getVal(row,colMap.sku);
       const qtyRaw=getVal(row,colMap.qty);
       const quantity=parseInt(qtyRaw,10);
@@ -6165,7 +6167,7 @@ function processImportFile(file){
       pendingRecordImports.push({
         id:importNextId++,
         aftersales_date, platforms:[platform],
-        items:[{platform, shop_customer, sku_code:sku, sn_code, order_no, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
+        items:[{platform, shop_customer, sku_code:sku, sn_code, order_no, tracking_number, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
         total_quantity:quantity,
         brand:prod?prod.brand:'',
         model:prod?prod.model:'',

@@ -698,7 +698,7 @@
       "title": "Import Notes",
       "csvFormat": "Supports Excel / CSV files (UTF-8 encoded)",
       "requiredCols": "Required columns: RMA Date, Platform, SKU, Qty, Return Reason",
-      "optionalCols": "Optional columns: Shop/Customer, SN Code, Order No., Issue Description / Notes",
+      "optionalCols": "Optional columns: Shop/Customer, SN Code, Order No., Tracking No., Issue Description / Notes",
       "draftNote": "Imported records will be saved as drafts. Please edit and submit them for approval from the list."
     },
     "btnDownloadTemplate": "Download Import Template",
@@ -713,6 +713,7 @@
         "sku": "SKU",
         "snCode": "SN Code",
         "orderNo": "Order No.",
+        "trackingNumber": "Tracking No.",
         "qty": "Qty",
         "returnReason": "Return Reason (Required)",
         "description": "Issue Description / Notes"

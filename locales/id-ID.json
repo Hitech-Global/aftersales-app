@@ -698,7 +698,7 @@
       "title": "Panduan Impor",
       "csvFormat": "Mendukung file Excel / CSV (encoding UTF-8)",
       "requiredCols": "Kolom wajib: Tanggal RMA, Platform, SKU, Qty, Alasan Retur",
-      "optionalCols": "Kolom opsional: Toko/Pelanggan, SN Code, No. Pesanan, Deskripsi Masalah / Catatan",
+      "optionalCols": "Kolom opsional: Toko/Pelanggan, SN Code, No. Pesanan, Nomor Resi, Deskripsi Masalah / Catatan",
       "draftNote": "Data yang diimpor akan disimpan sebagai draft. Silakan edit dan ajukan approval dari daftar."
     },
     "btnDownloadTemplate": "Unduh Template Impor",
@@ -713,6 +713,7 @@
         "sku": "SKU",
         "snCode": "SN Code",
         "orderNo": "No. Pesanan",
+        "trackingNumber": "Nomor Resi",
         "qty": "Qty",
         "returnReason": "Alasan Retur (Wajib)",
         "description": "Deskripsi Masalah / Catatan"
