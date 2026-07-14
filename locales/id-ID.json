@@ -355,8 +355,7 @@
       "approverL1": "Approver Level 1",
       "approverL2": "Approver Level 2",
       "approverL3": "Approver Level 3",
-      "approvalFlow": "Alur Persetujuan",
-      "trackingNumber": "Nomor Resi"
+      "approvalFlow": "Alur Persetujuan"
     },
     "option": {
       "pleaseSelect": "Pilih",
@@ -442,8 +441,7 @@
       "createdAt": "Dibuat pada",
       "updatedAt": "Update Terakhir",
       "pendingErpQty": "Qty Menunggu ERP",
-      "processingStatus": "Status Pemrosesan",
-      "trackingNumber": "Nomor Resi"
+      "processingStatus": "Status Pemrosesan"
     },
     "col": {
       "index": "#",
@@ -461,7 +459,8 @@
       "desc": "Deskripsi Masalah / Catatan",
       "attachment": "Lampiran",
       "actions": "Aksi",
-      "brand": "Brand"
+      "brand": "Brand",
+      "trackingNumber": "Nomor Resi"
     },
     "notSet": "Belum Diatur",
     "commentLabel": "Komentar",

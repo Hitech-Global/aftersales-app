@@ -355,8 +355,7 @@
       "approverL1": "一级审批人",
       "approverL2": "二级审批人",
       "approverL3": "三级审批人",
-      "approvalFlow": "审批流",
-      "trackingNumber": "物流单号"
+      "approvalFlow": "审批流"
     },
     "option": {
       "pleaseSelect": "请选择",
@@ -442,8 +441,7 @@
       "createdAt": "创建时间",
       "updatedAt": "最后更新",
       "pendingErpQty": "待ERP入库数量",
-      "processingStatus": "处理状态",
-      "trackingNumber": "物流单号"
+      "processingStatus": "处理状态"
     },
     "col": {
       "index": "#",
@@ -461,7 +459,8 @@
       "desc": "问题说明/备注",
       "attachment": "附件",
       "actions": "操作",
-      "brand": "品牌"
+      "brand": "品牌",
+      "trackingNumber": "物流单号"
     },
     "notSet": "未设置",
     "commentLabel": "备注",

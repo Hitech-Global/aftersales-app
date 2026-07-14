@@ -1136,7 +1136,6 @@ select option{background:var(--card-bg);color:var(--text)}
                     <div class="form-card-body">
                       <div class="form-grid">
                         <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="text" class="date-input" id="f-aftersales-date" inputmode="numeric" required onblur="normalizeDateInput(this)"></div>
-                        <div class="form-group"><label data-i18n="form.label.trackingNumber"></label><input type="text" id="f-tracking-number" maxlength="100" data-i18n-placeholder="form.placeholder.trackingNumber"></div>
                       </div>
                     </div>
                   </section>
@@ -1151,6 +1150,7 @@ select option{background:var(--card-bg);color:var(--text)}
                             <th class="col-sku" style="width:240px"><span data-i18n="form.col.sku"></span> <span class="required">*</span></th>
                             <th class="col-sn" style="width:160px" data-i18n="form.col.snCode"></th>
                             <th class="col-order" style="width:180px" data-i18n="form.col.orderNo"></th>
+                            <th class="col-tracking" style="width:160px" data-i18n="detail.col.trackingNumber"></th>
                             <th class="col-qty" style="width:80px"><span data-i18n="form.col.qty"></span> <span class="required">*</span></th>
                             <th class="col-reason" style="width:220px"><span data-i18n="form.col.returnReason"></span> <span class="required">*</span></th>
                             <th class="col-desc" style="width:320px"><span data-i18n="form.col.description"></span> <span class="required">*</span></th>
@@ -3872,6 +3872,7 @@ async function renderList(){
       <th>${t('list.col.sku')}</th>
       <th>${t('list.col.snCode')}</th>
       <th>${t('list.col.orderNo')}</th>
+      <th>${t('detail.col.trackingNumber')}</th>
       <th>${t('list.col.qty')}</th>
       <th>${t('list.col.description')}</th>
       <th>${t('list.col.submitter')}</th>
@@ -3896,6 +3897,7 @@ async function renderList(){
           <td class="cell-sku">${esc(it.sku_code||'-')}</td>
           <td>${esc(it.sn_code||'-')}</td>
           <td class="cell-order">${esc(it.order_no||'-')}</td>
+          <td class="cell-order">${esc(it.tracking_number||'-')}</td>
           <td>${it.quantity||0}</td>
           <td class="cell-desc" title="${esc(it.fault_description||'')}">${esc(it.fault_description||'-')}</td>
           <td>${esc(r.submitter_name||'-')}</td>
@@ -3995,7 +3997,7 @@ function renderProcessLogsHTML(record){
         const item=items[log.item_index]||{};
         return `<div class="approval-timeline-item">
           <div style="font-size:13px;font-weight:600">${esc(log.operator_name||'-')} · ${tProcessType(log.process_type)} · ${tProcessProgress(log.old_progress)} &#x2192; ${tProcessProgress(log.new_progress)}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${esc(item.sku_code||'-')} / ${esc(item.order_no||'-')}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${esc(item.sku_code||'-')} / ${esc(item.order_no||'-')} / ${esc(item.tracking_number||'-')}</div>
           <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('batchProcess.label.processDate')}: ${formatDate(log.process_date)} · ${t('detail.label.createdAt')}: ${formatDateTime(log.processed_at)}</div>
           ${log.erp_return_date?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${t('batchProcess.label.erpDate')}: ${formatDate(log.erp_return_date)}</div>`:''}
           ${log.remark?`<div style="font-size:13px;margin-top:4px">${esc(log.remark)}</div>`:''}
@@ -4323,11 +4325,10 @@ async function renderDetail(id){
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.submitter'))}</div><div class="ds-value">${esc(r.submitter_name||'-')}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.totalQty'))}</div><div class="ds-value">${totalQty}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.pendingErpQty'))}</div><div class="ds-value">${pendingErpQty}</div></div>
-      <div class="ds-card"><div class="ds-label">${esc(t('detail.label.trackingNumber'))}</div><div class="ds-value">${r.tracking_number ? esc(r.tracking_number) : '—'}</div></div>
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
-        <table class="data-table detail-rma-items"><thead><tr><th class="fcol fcol-1">${t('detail.col.index')}</th><th class="fcol fcol-2">${t('detail.col.platform')}</th><th class="fcol fcol-3">${t('detail.col.shopCustomer')}</th><th class="fcol fcol-4">${t('detail.col.brand')}</th><th class="fcol fcol-5">${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
+        <table class="data-table detail-rma-items"><thead><tr><th class="fcol fcol-1">${t('detail.col.index')}</th><th class="fcol fcol-2">${t('detail.col.platform')}</th><th class="fcol fcol-3">${t('detail.col.shopCustomer')}</th><th class="fcol fcol-4">${t('detail.col.brand')}</th><th class="fcol fcol-5">${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.trackingNumber')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id fcol fcol-1">${i+1}</td>
             <td class="fcol fcol-2">${esc(getPlatformLabel(it.platform) || '-')}</td>
@@ -4342,6 +4343,7 @@ async function renderDetail(id){
             </td>
             <td>${esc(it.sn_code||'-')}</td>
             <td class="cell-wrap">${esc(it.order_no||'-')}</td>
+            <td class="cell-wrap">${esc(it.tracking_number||'-')}</td>
             <td>${it.quantity||0}</td>
             <td>${esc(displayReturnReason(it.return_reason)||'-')}</td>
             <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
@@ -4509,7 +4511,7 @@ function scrollSelectIntoView(selectEl){
   if(offset > 0) body.scrollTop += offset;
 }
 
-function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments, shopCustomer, shopList){
+function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultDesc, attachments, shopCustomer, shopList, trackingNumber){
   const tbody=document.getElementById('detail-items-tbody');
   const idx=tbody.children.length;
   const tr=document.createElement('tr');
@@ -4544,6 +4546,7 @@ function addDetailItem(platform, sku, snCode, orderNo, qty, returnReason, faultD
     <td><input type="text" class="sku-input" placeholder="${t('form.skuPlaceholder')}" value="${esc(sku||'')}" autocomplete="off" onfocus="onSkuFocus(this)" oninput="onSkuInput(this)" onblur="onSkuBlur(this)" onkeydown="onSkuKeydown(event,this)" onchange="onSkuChanged(this)"></td>
     <td><input type="text" class="sn-input" placeholder="${t('form.snPlaceholder')}" value="${esc(snCode||'')}"></td>
     <td><input type="text" class="order-input" placeholder="${t('form.orderPlaceholder')}" value="${esc(orderNo||'')}"></td>
+    <td><input type="text" class="tracking-input" placeholder="${t('form.placeholder.trackingNumber')}" value="${esc(trackingNumber||'')}" maxlength="100"></td>
     <td><input type="number" class="qty-input" value="${qty||'1'}" min="1" onchange="updateDetailTotalQty()" oninput="updateDetailTotalQty()"></td>
     <td><select class="type-select" onchange="updateDetailTotalQty()" onfocus="scrollSelectIntoView(this)">${reasonHtml}</select></td>
     <td><input type="text" class="fault-input" placeholder="${t('form.descPlaceholder')}" value="${esc(faultDesc||'')}"></td>
@@ -4813,10 +4816,11 @@ function collectDetailItems(){
     const sku=tr.querySelector('.sku-input').value.trim();
     const snCode=tr.querySelector('.sn-input') ? tr.querySelector('.sn-input').value.trim() : '';
     const orderNo=tr.querySelector('.order-input').value.trim();
+    const trackingNumber=tr.querySelector('.tracking-input') ? tr.querySelector('.tracking-input').value.trim() : '';
     const qty=parseInt(tr.querySelector('.qty-input').value)||0;
     const returnReason=tr.querySelector('.type-select').value;
     const faultDesc=tr.querySelector('.fault-input').value.trim();
-    items.push({platform,shop_customer:shopCustomer,sku_code:sku,sn_code:snCode,order_no:orderNo,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
+    items.push({platform,shop_customer:shopCustomer,sku_code:sku,sn_code:snCode,order_no:orderNo,tracking_number:trackingNumber,quantity:qty,return_reason:returnReason,fault_description:faultDesc});
   });
   return items;
 }
@@ -4839,7 +4843,6 @@ async function resetForm(recordId){
     document.getElementById('form-title').textContent=t('form.titleEdit');
     document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
     setDateInputValue('f-aftersales-date', record.aftersales_date || formatDateLocal(new Date()));
-    document.getElementById('f-tracking-number').value = record.tracking_number || '';
     document.getElementById('detail-items-tbody').innerHTML='';
     currentEditingRecordId = recordId;
     const items = record.items || [];
@@ -4862,7 +4865,7 @@ async function resetForm(recordId){
       const platformCode = resolvePlatformCode(it.platform, platformOpts);
       const shopList = shopCache[platformCode] || [];
       const shopCode = resolveShopCustomerCode(it.shop_customer, shopList);
-      addDetailItem(platformCode, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], shopCode, shopList);
+      addDetailItem(platformCode, it.sku_code, it.sn_code, it.order_no, it.quantity, it.return_reason, it.fault_description, [], shopCode, shopList, it.tracking_number||'');
       const tr = document.querySelectorAll('#detail-items-tbody tr')[i];
       if(tr){
         tr.dataset.recordId = recordId;
@@ -4879,7 +4882,6 @@ async function resetForm(recordId){
   document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
   const today=formatDateLocal(new Date());
   setDateInputValue('f-aftersales-date',today);
-  document.getElementById('f-tracking-number').value = '';
   document.getElementById('detail-items-tbody').innerHTML='';
   // populateApproverSelects 由 openRecordForm 统一调用,这里不再重复请求
   currentEditingRecordId = null;
@@ -5286,7 +5288,6 @@ async function submitForApproval(e){
     record.status='待'+levelNames[firstLevel]+'审批';
     record.current_approval_level=firstLevel;
     record.updated_at=now;
-    record.tracking_number=(document.getElementById('f-tracking-number').value||'').trim();
     // 编辑后重新提交,清空旧的审批历史(草稿状态本身没有)
     record.approval_history=[];
   } else {
@@ -5306,8 +5307,7 @@ async function submitForApproval(e){
       current_approval_level:firstLevel,
       approval_history:[],
       created_at:now,
-      updated_at:now,
-      tracking_number: (document.getElementById('f-tracking-number').value||'').trim()
+      updated_at:now
     };
     records.push(record);
   }
@@ -5385,7 +5385,6 @@ async function saveAsDraft(){
     record.current_approval_level=0;
     record.approval_history=[];
     record.updated_at=now;
-    record.tracking_number=(document.getElementById('f-tracking-number').value||'').trim();
   } else {
     record={
       id:await nextId(),
@@ -5403,8 +5402,7 @@ async function saveAsDraft(){
       current_approval_level:0,
       approval_history:[],
       created_at:now,
-      updated_at:now,
-      tracking_number: (document.getElementById('f-tracking-number').value||'').trim()
+      updated_at:now
     };
     records.push(record);
   }
@@ -5663,10 +5661,9 @@ async function openLegacyApprovalModal(recordId){
       <div class="detail-item"><span class="detail-label">${t('detail.label.brand')}</span><span class="detail-value">${esc(record.brand||'-')}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.totalQty')}</span><span class="detail-value" style="font-weight:700;color:var(--primary);font-size:16px">${record.total_quantity||(record.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${record.status}">${tApprovalStatus(record.status)}</span></span></div>
-      <div class="detail-item"><span class="detail-label">${t('detail.label.trackingNumber')}</span><span class="detail-value">${record.tracking_number ? esc(record.tracking_number) : '—'}</span></div>
     </div>
     <div style="margin-top:10px">
-      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
+      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.trackingNumber')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
         <tbody>${(record.items||[]).map((it,i)=>{
           normalizeProcessItem(it);
           const isOpenErp=itemProcessType(it)==='erp'&&itemProcessProgress(it)!=='completed';
@@ -5677,6 +5674,7 @@ async function openLegacyApprovalModal(recordId){
             <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
             <td>${esc(it.sku_code||'-')}</td>
             <td>${esc(it.order_no||'-')}</td>
+            <td>${esc(it.tracking_number||'-')}</td>
             <td>${it.quantity||0}</td>
             <td>${esc(displayReturnReason(it.return_reason)||'-')}</td>
             <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
