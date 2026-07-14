@@ -355,7 +355,8 @@
       "approverL1": "Approver Level 1",
       "approverL2": "Approver Level 2",
       "approverL3": "Approver Level 3",
-      "approvalFlow": "Alur Persetujuan"
+      "approvalFlow": "Alur Persetujuan",
+      "trackingNumber": "Nomor Resi"
     },
     "option": {
       "pleaseSelect": "Pilih",
@@ -398,7 +399,8 @@
     },
     "placeholder": {
       "feishuBound": "Pengguna terhubung Feishu (tidak dapat diubah)",
-      "searchFeishu": "Cari anggota Feishu berdasarkan nama/nama Inggris/email..."
+      "searchFeishu": "Cari anggota Feishu berdasarkan nama/nama Inggris/email...",
+      "trackingNumber": "Masukkan nomor resi (opsional)"
     },
     "roleNameRequired": "Nama peran wajib diisi"
   },
@@ -440,7 +442,8 @@
       "createdAt": "Dibuat pada",
       "updatedAt": "Update Terakhir",
       "pendingErpQty": "Qty Menunggu ERP",
-      "processingStatus": "Status Pemrosesan"
+      "processingStatus": "Status Pemrosesan",
+      "trackingNumber": "Nomor Resi"
     },
     "col": {
       "index": "#",

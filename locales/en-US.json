@@ -355,7 +355,8 @@
       "approverL1": "Level 1 Approver",
       "approverL2": "Level 2 Approver",
       "approverL3": "Level 3 Approver",
-      "approvalFlow": "Approval Flow"
+      "approvalFlow": "Approval Flow",
+      "trackingNumber": "Tracking No."
     },
     "option": {
       "pleaseSelect": "Select",
@@ -398,7 +399,8 @@
     },
     "placeholder": {
       "feishuBound": "Feishu bound user (cannot modify)",
-      "searchFeishu": "Search Feishu members by name/English name/email..."
+      "searchFeishu": "Search Feishu members by name/English name/email...",
+      "trackingNumber": "Enter tracking number (optional)"
     },
     "roleNameRequired": "Role name is required"
   },
@@ -440,7 +442,8 @@
       "createdAt": "Created At",
       "updatedAt": "Last Updated",
       "pendingErpQty": "Pending ERP Qty",
-      "processingStatus": "Processing Status"
+      "processingStatus": "Processing Status",
+      "trackingNumber": "Tracking No."
     },
     "col": {
       "index": "#",

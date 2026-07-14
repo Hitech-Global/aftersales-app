@@ -48,9 +48,15 @@ if (window.location.protocol === 'file:') {
   --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04);
   --shadow-hover:0 4px 18px rgba(0,0,0,.08);
   --shadow-modal:0 12px 48px rgba(0,0,0,.18);
+  /* Apple HIT V2 — text color hierarchy */
+  --text-primary:   #111827;
+  --text-secondary-v2: #4B5563;
+  --text-tertiary:  #6B7280;
+  --text-placeholder: #9CA3AF;
+  --text-disabled:  #A1A1AA;
 }
 html,body{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;font-size:14px;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 
 /* Layout */
 /* Layout */
@@ -61,18 +67,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .sidebar-brand .brand-icon{width:30px;height:30px;background:rgba(255,255,255,.18);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;letter-spacing:-.03em}
 .sidebar-nav{flex:1;padding:14px 12px;overflow-y:auto}
 .sidebar-group{margin-bottom:18px}
-.sidebar-group-title{font-size:11px;text-transform:uppercase;color:rgba(235,235,245,.4);padding:0 12px;margin-bottom:8px;letter-spacing:.6px;font-weight:600}
-.sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .18s,color .18s;font-size:14px;color:var(--sidebar-text);margin-bottom:2px}
+.sidebar-group-title{font-size:12px;text-transform:uppercase;color:rgba(235,235,245,.5);padding:0 12px;margin-bottom:8px;letter-spacing:.6px;font-weight:600}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .18s,color .18s;font-size:14px;font-weight:500;color:var(--sidebar-text);margin-bottom:2px}
 .sidebar-item:hover{background:var(--sidebar-hover);color:#fff}
-.sidebar-item.active{background:var(--sidebar-active);color:#fff}
+.sidebar-item.active{background:var(--sidebar-active);color:#fff;font-weight:600}
 .sidebar-item .icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sidebar-item .icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(235,235,245,.4);text-align:center;flex-shrink:0}
+.sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(235,235,245,.5);text-align:center;flex-shrink:0}
 
 .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .topbar{height:54px;background:rgba(255,255,255,.72);border-bottom:.5px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 .topbar-left{display:flex;align-items:center;gap:12px}
-.page-title{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.page-title{font-size:17px;font-weight:600;letter-spacing:-.01em;color:var(--text-primary)}
 .topbar-right{display:flex;align-items:center;gap:14px}
 .user-menu{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .18s;position:relative}
 .user-menu:hover{background:rgba(0,0,0,.05)}
@@ -97,7 +103,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .flash-info{background:#e6f0ff;color:#2b5fbf;border:1px solid #b3d4ff}
 
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
-.page-header h2{font-size:20px;font-weight:700}
+.page-header h2{font-size:24px;font-weight:700;line-height:1.25;color:var(--text-primary)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius-btn);font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .18s;text-decoration:none;white-space:nowrap;font-family:inherit}
 .btn:active{transform:scale(.98)}
 .btn-primary{background:var(--primary);color:#fff}
@@ -129,7 +135,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .table-section-icon{font-size:18px}
 .table-section-title .btn{min-height:36px;padding:8px 18px}
 .stat-number{font-size:24px;font-weight:700;color:var(--primary)}
-.stat-label{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.stat-label{font-size:13px;font-weight:500;color:var(--text-tertiary);margin-top:2px}
 
 .filter-bar{margin-bottom:20px;background:var(--card-bg);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow);position:relative;z-index:1}
 .prod-batch-bar{margin-bottom:20px;background:#fff3e0;border:1px solid #ffb74d;padding:12px 16px;border-radius:var(--radius);box-shadow:var(--shadow);display:none;position:relative;z-index:2}
@@ -139,7 +145,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .filter-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
 .filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:104px}
 .filter-group.date-filter{flex:0 0 auto;width:140px}
-.filter-group label{font-size:12px;color:var(--text-secondary);font-weight:500}
+.filter-group label{font-size:13px;color:var(--text-tertiary);font-weight:500}
 .search-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;font-family:inherit}
 .search-input:focus,.filter-select:focus,.date-input:focus,.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
 .filter-select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--card-bg);outline:none;cursor:pointer;font-family:inherit}
@@ -168,9 +174,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .filter-actions{display:flex;gap:8px}
 
 .table-container{background:var(--card-bg);border-radius:var(--radius-card);box-shadow:var(--shadow);overflow-x:auto;border:1px solid var(--border-light)}
-.data-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
+.data-table{width:100%;border-collapse:collapse;font-size:14px;font-weight:500;color:var(--text-primary);table-layout:auto}
 .data-table thead{background:#fbfbfd;border-bottom:1px solid var(--border)}
-.data-table th{padding:14px 16px;text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;white-space:nowrap}
+.data-table th{padding:14px 16px;text-align:left;font-weight:600;color:var(--text-tertiary);font-size:13px;letter-spacing:.01em;white-space:nowrap}
 .data-table td{padding:14px 16px;border-bottom:1px solid var(--border-light)}
 .data-table tbody tr:hover{background:#f7f7f9}
 .data-table tbody tr.row-clickable{cursor:pointer}
@@ -180,10 +186,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 #list-table-section .data-table tbody tr.row-clickable:active{background:#ececf0}
 #list-table-section .data-table tbody tr.row-clickable:hover td.cell-actions{background:#f5f5f7}
 .data-table tbody tr:last-child td{border-bottom:none}
-.cell-id{color:var(--text-muted);font-family:monospace;font-size:12px}
+.cell-id{color:var(--text-tertiary);font-family:monospace;font-size:13px}
 .cell-name{font-weight:500}
 .cell-desc{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cell-date{font-size:12px;color:var(--text-muted);white-space:nowrap}
+.cell-date{font-size:13px;font-weight:400;color:var(--text-tertiary);white-space:nowrap}
 .cell-actions{white-space:nowrap}
 .action-btn{background:none;border:none;cursor:pointer;padding:4px 6px;font-size:16px;opacity:.6;transition:opacity .2s;font-family:inherit}
 .action-btn:hover{opacity:1}
@@ -213,11 +219,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .category-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;background:#f0f0f0;color:var(--text-secondary)}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary);background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow)}
 .empty-icon{font-size:48px;margin-bottom:12px}
-.page-info{margin-top:16px;font-size:13px;color:var(--text-muted)}
+.page-info{margin-top:16px;font-size:13px;color:var(--text-tertiary)}
 
 /* ===== RMA Cases 列表页重构 (v3.11.0) ===== */
 .page-header .ph-left{display:flex;flex-direction:column;gap:4px}
-.page-header .ph-subtitle{margin:0;font-size:13px;color:var(--text-muted);font-weight:400}
+.page-header .ph-subtitle{margin:0;font-size:13px;color:var(--text-tertiary);font-weight:400}
 
 /* 状态快捷筛选栏 */
 .quick-filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
@@ -278,7 +284,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .detail-rma-items th:nth-child(12),.detail-rma-items td:nth-child(12){width:130px}
 .detail-rma-items th:nth-child(13),.detail-rma-items td:nth-child(13){width:240px}
 .detail-rma-items th:nth-child(14),.detail-rma-items td:nth-child(14){width:130px}
-.cell-sku,.cell-order{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-sku,.cell-order{font-size:14px;font-weight:600;color:var(--text-primary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
 /* SKU hover-to-copy floating button (detail RMA Items) */
@@ -295,7 +301,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .risk-none{background:#eef6ee;color:#5a9e5f}
 
 /* 列表表格可读性微调：表头弱化、分割线更浅、状态/进度/风险 pill 形状统一 */
-#page-list .data-table th{font-weight:500}
+#page-list .data-table th{font-weight:600}
 #page-list .data-table td{border-bottom:1px solid rgba(0,0,0,.05)}
 #page-list .data-table .status-badge,
 #page-list .data-table .ps-badge,
@@ -313,9 +319,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group-full{grid-column:1/-1}
-.form-group label{font-size:14px;font-weight:500;color:var(--text-secondary)}
+.form-group label{font-size:13px;font-weight:500;color:var(--text-secondary-v2)}
 .required{color:#e35d52;font-weight:600}
 .form-group input,.form-group select,.form-group textarea{padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--card-bg);width:100%}
+input::placeholder,textarea::placeholder{color:var(--text-placeholder);opacity:1}
 .approval-flow-preview{margin-top:10px;padding:12px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .approval-flow-preview .afp-node{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;font-size:12px}
 .approval-flow-preview .afp-node .afp-lvl{font-size:10px;font-weight:600;color:var(--text-muted);background:var(--bg-secondary);padding:2px 6px;border-radius:8px}
@@ -357,18 +364,18 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .detail-section h3{font-size:15px;font-weight:600;color:var(--text-secondary);padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 .detail-item{display:flex;flex-direction:column;gap:4px}
-.detail-label{font-size:12px;color:var(--text-muted);text-transform:uppercase}
-.detail-value{font-size:14px;color:var(--text);word-break:break-all}
+.detail-label{font-size:13px;font-weight:500;color:var(--text-tertiary)}
+.detail-value{font-size:14px;font-weight:500;color:var(--text-primary);word-break:break-all}
 .detail-text{font-size:14px;line-height:1.8;white-space:pre-wrap;background:var(--bg);padding:14px;border-radius:6px}
 
 /* Login page */
-.login-page{background:#f5f5f7;background-image:radial-gradient(1100px 560px at 50% -8%,rgba(255,255,255,.95),rgba(255,255,255,0) 60%),linear-gradient(180deg,#f5f5f7 0%,#eceef2 100%);display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+.login-page{background:#f5f5f7;background-image:radial-gradient(1100px 560px at 50% -8%,rgba(255,255,255,.95),rgba(255,255,255,0) 60%),linear-gradient(180deg,#f5f5f7 0%,#eceef2 100%);display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:inherit}
 .login-container{width:100%;max-width:460px;padding:20px}
 .login-card{width:100%;box-sizing:border-box;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(0,0,0,.05);border-radius:24px;padding:40px 38px;box-shadow:0 8px 30px rgba(0,0,0,.08);text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:300px}
 .login-logo{width:54px;height:54px;border-radius:14px;margin:0 auto 18px;background:linear-gradient(150deg,#2b2b30,#1d1d1f);color:#fff;font-size:26px;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;letter-spacing:-.03em;box-shadow:0 6px 16px rgba(0,0,0,.18)}
 .login-card h1{font-size:24px;font-weight:600;letter-spacing:-.01em;color:#1d1d1f;margin-bottom:8px}
-.login-brand-sub{font-size:13.5px;color:#6e6e73;margin-bottom:4px;line-height:1.4}
-.login-signin-hint{font-size:13px;color:#a1a1a6;margin-bottom:26px;line-height:1.4}
+.login-brand-sub{font-size:13.5px;color:#6e6e73;margin-bottom:4px;line-height:1.6}
+.login-signin-hint{font-size:13px;color:var(--text-tertiary);margin-bottom:26px;line-height:1.6}
 
 .login-card input{width:100%;height:46px;padding:0 14px;border:1px solid #e2e2e7;border-radius:12px;font-size:15px;margin-bottom:12px;outline:none;font-family:inherit;background:#fbfbfd;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}
 .login-card input:focus{border-color:#007aff;box-shadow:0 0 0 3px rgba(0,122,255,.12)}
@@ -378,15 +385,15 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .login-hint{background:#f5f5f7;border:1px solid #ececf0;border-radius:12px;padding:14px;margin-top:18px;font-size:12px;color:#6e6e73;text-align:left}
 
 /* Enter-system Welcome/Splash overlay (shown ONLY when entering the system via enterApp()) */
-.welcome-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+.welcome-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:inherit}
 .welcome-screen.show{display:flex}
 .welcome-screen.hidden{opacity:0;pointer-events:none}
 .welcome-bg{position:absolute;inset:-12%;background:radial-gradient(closest-side at 50% 46%,rgba(64,108,176,.55),rgba(64,108,176,0) 70%),radial-gradient(120% 80% at 16% 12%,rgba(150,205,225,.95),rgba(150,205,225,0) 55%),radial-gradient(120% 90% at 86% 24%,rgba(172,226,212,.92),rgba(172,226,212,0) 55%),linear-gradient(180deg,#f3f8fb 0%,#e6eef4 55%,#d3e2f0 100%);animation:welcomeFloat 16s ease-in-out infinite alternate}
 @keyframes welcomeFloat{0%{transform:scale(1.06) translateY(0)}100%{transform:scale(1.14) translateY(-14px)}}
 .welcome-content{position:relative;z-index:2;text-align:center;animation:welcomeFade .9s ease both}
 @keyframes welcomeFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.welcome-title{font-size:clamp(64px,12vw,96px);font-weight:600;letter-spacing:-.02em;line-height:1;margin:0;background:linear-gradient(180deg,#ffffff 0%,#e6f0fb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 22px rgba(90,130,180,.35))}
-.welcome-brand{margin-top:20px;font-size:18px;font-weight:500;letter-spacing:.01em;color:rgba(46,66,96,.72)}
+.welcome-title{font-size:clamp(76px,13vw,116px);font-weight:600;letter-spacing:-.02em;line-height:1;margin:0;background:linear-gradient(180deg,#ffffff 0%,#e6f0fb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 22px rgba(90,130,180,.35))}
+.welcome-brand{margin-top:20px;font-size:20px;font-weight:500;letter-spacing:.01em;color:rgba(46,66,96,.72)}
 .welcome-foot{position:relative;z-index:2;margin-top:32px;font-size:15px;font-weight:400;letter-spacing:.01em;color:rgba(46,66,96,.55);animation:welcomeFade 1s ease .3s both}
 @media (prefers-reduced-motion: reduce){.welcome-bg{animation:none}.welcome-content{animation:none}.welcome-foot{animation:none}}
 .login-tabs{display:flex;margin-bottom:24px;border:1px solid #e6e6eb;border-radius:12px;overflow:hidden}
@@ -417,11 +424,11 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .login-feishu-btn:hover{background:#000}
 .login-feishu-btn:active{transform:scale(.99);background:#000}
 .login-feishu-btn .feishu-icon{display:none}
-.login-divider{display:flex;align-items:center;margin:22px 0 18px;color:#a1a1a6;font-size:12px}
+.login-divider{display:flex;align-items:center;margin:22px 0 18px;color:var(--text-tertiary);font-size:12px}
 .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:#e6e6eb}
 .login-divider span{padding:0 12px}
 .login-error{display:none;padding:11px 14px;background:#fff0f0;color:#c53030;border:1px solid #f4cccc;border-radius:12px;margin-bottom:16px;font-size:13px;text-align:left}
-.login-feishu-info{background:#f2f4f7;border:1px solid #e6e8ec;border-radius:12px;padding:12px 14px;margin-top:14px;font-size:12px;color:#6b7280;text-align:left;line-height:1.5}
+.login-feishu-info{background:#f2f4f7;border:1px solid #e6e8ec;border-radius:12px;padding:12px 14px;margin-top:14px;font-size:12px;color:var(--text-tertiary);text-align:left;line-height:1.5}
 .login-feishu-info strong{display:block;margin-bottom:4px;color:#51555c;font-weight:600}
 
 /* Overview page */
@@ -431,8 +438,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .ov-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .ov-summary-card{background:var(--card-bg);border-radius:var(--radius);padding:20px 24px;text-align:center;box-shadow:var(--shadow)}
 .ov-summary-card .ov-card-icon{font-size:28px;margin-bottom:8px}
-.ov-summary-card .ov-card-value{font-size:32px;font-weight:700;color:var(--text);margin-bottom:4px}
-.ov-summary-card .ov-card-label{font-size:13px;color:var(--text-secondary)}
+.ov-summary-card .ov-card-value{font-size:32px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.ov-summary-card .ov-card-label{font-size:13px;font-weight:500;color:var(--text-tertiary)}
 .ov-summary-card.card-total .ov-card-value{color:var(--primary)}
 .ov-summary-card.card-return .ov-card-value{color:#e65100}
 .ov-summary-card.card-rate .ov-card-value{color:#1565c0}
@@ -452,7 +459,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .rate-good{background:#e8f5e9;color:#2e7d32}
 .rate-warn{background:#fff3e0;color:#e65100}
 .rate-bad{background:#fde8e8;color:#c53030}
-.rate-na{background:#f5f5f5;color:#999}
+.rate-na{background:#f5f5f5;color:var(--text-tertiary)}
 .ov-action-bar{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
 .file-input-hidden{display:none}
 .ov-empty{text-align:center;padding:60px 20px;background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);color:var(--text-secondary)}
@@ -551,8 +558,8 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .modal-panel{background:var(--card-bg);border-radius:var(--radius-card);box-shadow:var(--shadow-modal);width:100%;max-width:520px;animation:modalIn .22s ease;overflow:hidden}
 .modal-panel.modal-large{max-width:780px}
 .modal-panel.modal-xlarge{max-width:960px}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border-light)}
-.modal-header h3{margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #EEF0F3}
+.modal-header h3{margin:0;font-size:18px;font-weight:600;line-height:24px;color:var(--text-primary);letter-spacing:-.01em}
 .modal-close{background:none;border:none;font-size:24px;color:var(--text-muted);cursor:pointer;padding:0 4px;line-height:1;transition:color .18s}
 .modal-close:hover{color:var(--text)}
 .modal-body{padding:24px;max-height:72vh;overflow-y:auto}
@@ -814,7 +821,7 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-health-metrics{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .ov-health-metric{background:var(--bg);border-radius:14px;padding:24px;min-height:120px;display:flex;flex-direction:column;justify-content:center}
 .ov-health-metric .v{font-size:28px;font-weight:700;color:var(--text);line-height:1.1}
-.ov-health-metric .l{font-size:12px;color:var(--text-muted);margin-top:9px}
+.ov-health-metric .l{font-size:12px;color:var(--text-tertiary);margin-top:9px}
 .ov-health-metric.bottleneck-metric .bm{font-size:16px;font-weight:700;color:var(--text);line-height:1.3}
 
 /* RMA Flow Overview */
@@ -825,8 +832,8 @@ select option{background:var(--card-bg);color:var(--text)}
 .ov-flow-node .nm{font-size:12px;color:var(--text-secondary);margin-bottom:8px;font-weight:500}
 .ov-flow-stats{font-size:11px;color:var(--text-muted);line-height:1.9}
 .ov-flow-stats b{color:var(--text);font-weight:600}
-.ov-flow-node:not(:last-child)::after{content:'';position:absolute;top:50%;right:-8px;width:16px;height:2px;background:#aeb0b6;transform:translateY(-50%);z-index:1}
-.ov-flow-node:not(:last-child)::before{content:'';position:absolute;top:50%;right:-9px;width:6px;height:6px;border-top:2px solid #aeb0b6;border-right:2px solid #aeb0b6;transform:translateY(-50%) rotate(45deg);z-index:2}
+.ov-flow-node:not(:last-child)::after{content:'';position:absolute;top:50%;right:-8px;width:16px;height:2px;background:rgba(107,114,128,.45);transform:translateY(-50%);z-index:1}
+.ov-flow-node:not(:last-child)::before{content:'';position:absolute;top:50%;right:-9px;width:6px;height:6px;border-top:2px solid rgba(107,114,128,.45);border-right:2px solid rgba(107,114,128,.45);transform:translateY(-50%) rotate(45deg);z-index:2}
 
 /* Need Your Attention */
 .ov-badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--danger);color:#fff;font-size:12px;font-weight:600}
@@ -1129,6 +1136,7 @@ select option{background:var(--card-bg);color:var(--text)}
                     <div class="form-card-body">
                       <div class="form-grid">
                         <div class="form-group"><label data-i18n="form.label.date"></label> <span class="required">*</span><input type="text" class="date-input" id="f-aftersales-date" inputmode="numeric" required onblur="normalizeDateInput(this)"></div>
+                        <div class="form-group"><label data-i18n="form.label.trackingNumber"></label><input type="text" id="f-tracking-number" maxlength="100" data-i18n-placeholder="form.placeholder.trackingNumber"></div>
                       </div>
                     </div>
                   </section>
@@ -1355,7 +1363,7 @@ select option{background:var(--card-bg);color:var(--text)}
 <div id="user-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:480px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="user-modal-title" style="font-size:17px" data-i18n="userModal.titleNew"></h3>
+      <h3 id="user-modal-title" data-i18n="userModal.titleNew"></h3>
       <button class="action-btn" onclick="closeUserModal()" style="font-size:20px">&times;</button>
     </div>
     <form onsubmit="saveUser(event)" style="padding:24px">
@@ -1391,7 +1399,7 @@ select option{background:var(--card-bg);color:var(--text)}
 <div id="role-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:520px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="role-modal-title" style="font-size:17px" data-i18n="roleModal.titleNew"></h3>
+      <h3 id="role-modal-title" data-i18n="roleModal.titleNew"></h3>
       <button class="action-btn" onclick="closeRoleModal()" style="font-size:20px">&times;</button>
     </div>
     <form onsubmit="saveRole(event)" style="padding:24px">
@@ -1413,7 +1421,7 @@ select option{background:var(--card-bg);color:var(--text)}
 <div id="product-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:560px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="product-modal-title" style="font-size:17px" data-i18n="productModal.titleNew"></h3>
+      <h3 id="product-modal-title" data-i18n="productModal.titleNew"></h3>
       <button class="action-btn" onclick="closeProductModal()" style="font-size:20px">&times;</button>
     </div>
     <form onsubmit="saveProduct(event)" style="padding:24px">
@@ -1439,7 +1447,7 @@ select option{background:var(--card-bg);color:var(--text)}
 <div id="product-import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:210;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:560px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 style="font-size:17px" data-i18n="productImport.title"></h3>
+      <h3 data-i18n="productImport.title"></h3>
       <button class="action-btn" onclick="closeProductImportModal()" style="font-size:20px">&times;</button>
     </div>
     <div style="padding:24px">
@@ -1471,7 +1479,7 @@ select option{background:var(--card-bg);color:var(--text)}
 <div id="approval-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:880px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 id="approval-modal-title" style="font-size:17px" data-i18n="approvalModal.title"></h3>
+      <h3 id="approval-modal-title" data-i18n="approvalModal.title"></h3>
       <button class="action-btn" onclick="closeApprovalModal()" style="font-size:20px">&times;</button>
     </div>
     <div style="padding:24px">
@@ -1595,7 +1603,7 @@ select option{background:var(--card-bg);color:var(--text)}
 <div id="import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center">
   <div style="background:var(--card-bg);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:90%;max-width:600px;max-height:90vh;overflow-y:auto">
     <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <h3 style="font-size:17px" data-i18n="importRecord.title"></h3>
+      <h3 data-i18n="importRecord.title"></h3>
       <button class="action-btn" onclick="closeImportDialog()" style="font-size:20px">&times;</button>
     </div>
     <div style="padding:24px">
@@ -2954,11 +2962,11 @@ function showEnterSplash() {
   // 清除旧定时器（防止多次调用叠加，例如 showLoginLoading→enterApp 无缝衔接场景）
   if (window._splashTimer) clearTimeout(window._splashTimer);
   if (window._splashCleanupTimer) clearTimeout(window._splashCleanupTimer);
-  // 显示约 1.4s 后淡出（800ms），露出背后已渲染好的系统界面
+  // 显示约 2.4s 后淡出（800ms），露出背后已渲染好的系统界面
   window._splashTimer = setTimeout(function () {
     el.classList.add('hidden');
     window._splashCleanupTimer = setTimeout(function () { el.style.display = 'none'; el.classList.remove('show'); if (foot) foot.style.display = 'none'; }, 850);
-  }, 1400);
+  }, 2400);
 }
 
 function enterApp() {
@@ -4315,6 +4323,7 @@ async function renderDetail(id){
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.submitter'))}</div><div class="ds-value">${esc(r.submitter_name||'-')}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.totalQty'))}</div><div class="ds-value">${totalQty}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.pendingErpQty'))}</div><div class="ds-value">${pendingErpQty}</div></div>
+      <div class="ds-card"><div class="ds-label">${esc(t('detail.label.trackingNumber'))}</div><div class="ds-value">${r.tracking_number ? esc(r.tracking_number) : '—'}</div></div>
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">
@@ -4830,6 +4839,7 @@ async function resetForm(recordId){
     document.getElementById('form-title').textContent=t('form.titleEdit');
     document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
     setDateInputValue('f-aftersales-date', record.aftersales_date || formatDateLocal(new Date()));
+    document.getElementById('f-tracking-number').value = record.tracking_number || '';
     document.getElementById('detail-items-tbody').innerHTML='';
     currentEditingRecordId = recordId;
     const items = record.items || [];
@@ -4869,6 +4879,7 @@ async function resetForm(recordId){
   document.getElementById('form-submit-btn').textContent=t('form.btnSubmit');
   const today=formatDateLocal(new Date());
   setDateInputValue('f-aftersales-date',today);
+  document.getElementById('f-tracking-number').value = '';
   document.getElementById('detail-items-tbody').innerHTML='';
   // populateApproverSelects 由 openRecordForm 统一调用,这里不再重复请求
   currentEditingRecordId = null;
@@ -5275,6 +5286,7 @@ async function submitForApproval(e){
     record.status='待'+levelNames[firstLevel]+'审批';
     record.current_approval_level=firstLevel;
     record.updated_at=now;
+    record.tracking_number=(document.getElementById('f-tracking-number').value||'').trim();
     // 编辑后重新提交,清空旧的审批历史(草稿状态本身没有)
     record.approval_history=[];
   } else {
@@ -5294,7 +5306,8 @@ async function submitForApproval(e){
       current_approval_level:firstLevel,
       approval_history:[],
       created_at:now,
-      updated_at:now
+      updated_at:now,
+      tracking_number: (document.getElementById('f-tracking-number').value||'').trim()
     };
     records.push(record);
   }
@@ -5372,6 +5385,7 @@ async function saveAsDraft(){
     record.current_approval_level=0;
     record.approval_history=[];
     record.updated_at=now;
+    record.tracking_number=(document.getElementById('f-tracking-number').value||'').trim();
   } else {
     record={
       id:await nextId(),
@@ -5389,7 +5403,8 @@ async function saveAsDraft(){
       current_approval_level:0,
       approval_history:[],
       created_at:now,
-      updated_at:now
+      updated_at:now,
+      tracking_number: (document.getElementById('f-tracking-number').value||'').trim()
     };
     records.push(record);
   }
@@ -5648,6 +5663,7 @@ async function openLegacyApprovalModal(recordId){
       <div class="detail-item"><span class="detail-label">${t('detail.label.brand')}</span><span class="detail-value">${esc(record.brand||'-')}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.totalQty')}</span><span class="detail-value" style="font-weight:700;color:var(--primary);font-size:16px">${record.total_quantity||(record.items||[]).reduce((s,it)=>s+(it.quantity||0),0)}</span></div>
       <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${record.status}">${tApprovalStatus(record.status)}</span></span></div>
+      <div class="detail-item"><span class="detail-label">${t('detail.label.trackingNumber')}</span><span class="detail-value">${record.tracking_number ? esc(record.tracking_number) : '—'}</span></div>
     </div>
     <div style="margin-top:10px">
       <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
@@ -6419,8 +6435,8 @@ async function confirmProductImport(){
       </div>`;
     if(lastImportErrors.length > 0){
       html += `<div style="margin-top:10px"><div style="font-weight:600;color:#ff3b30;margin-bottom:6px">失败明细</div>`;
-      html += lastImportErrors.slice(0,20).map(e => `<div style="color:#666">第 ${e.row} 行：${esc(e.reason)}</div>`).join('');
-      if(lastImportErrors.length > 20) html += `<div style="color:#999">还有 ${lastImportErrors.length - 20} 条失败...</div>`;
+      html += lastImportErrors.slice(0,20).map(e => `<div style="color:var(--text-secondary-v2)">第 ${e.row} 行：${esc(e.reason)}</div>`).join('');
+      if(lastImportErrors.length > 20) html += `<div style="color:var(--text-tertiary)">还有 ${lastImportErrors.length - 20} 条失败...</div>`;
       html += `<button type="button" class="btn btn-secondary" style="margin-top:10px" onclick="downloadImportErrors()">下载失败明细</button></div>`;
     }
     html += `</div>`;
@@ -6746,7 +6762,7 @@ function showConfirmDialog(title, message){
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
     overlay.innerHTML = `<div style="background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
       <h3 style="margin:0 0 12px 0">${title}</h3>
-      <div style="color:#666;margin-bottom:20px;line-height:1.6">${message}</div>
+      <div style="color:var(--text-secondary-v2);margin-bottom:20px;line-height:1.6">${message}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-secondary" id="confirm-cancel">取消</button>
         <button class="btn btn-danger" id="confirm-ok">确认删除</button>

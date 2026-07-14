@@ -266,6 +266,7 @@ async function initDatabase() {
       { name: 'sn_code', type: 'VARCHAR(255) DEFAULT \'\'' },
       { name: 'approval_flow_id', type: 'VARCHAR(64) DEFAULT \'\'' },
       { name: 'approval_flow_name', type: 'VARCHAR(255) DEFAULT \'\'' },
+      { name: 'tracking_number', type: 'VARCHAR(128) DEFAULT \'\'' },
     ];
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});

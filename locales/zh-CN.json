@@ -355,7 +355,8 @@
       "approverL1": "一级审批人",
       "approverL2": "二级审批人",
       "approverL3": "三级审批人",
-      "approvalFlow": "审批流"
+      "approvalFlow": "审批流",
+      "trackingNumber": "物流单号"
     },
     "option": {
       "pleaseSelect": "请选择",
@@ -398,7 +399,8 @@
     },
     "placeholder": {
       "feishuBound": "飞书绑定用户（不可修改）",
-      "searchFeishu": "输入姓名/英文名/邮箱搜索飞书成员..."
+      "searchFeishu": "输入姓名/英文名/邮箱搜索飞书成员...",
+      "trackingNumber": "请输入物流单号（选填）"
     },
     "roleNameRequired": "角色名称不能为空"
   },
@@ -440,7 +442,8 @@
       "createdAt": "创建时间",
       "updatedAt": "最后更新",
       "pendingErpQty": "待ERP入库数量",
-      "processingStatus": "处理状态"
+      "processingStatus": "处理状态",
+      "trackingNumber": "物流单号"
     },
     "col": {
       "index": "#",

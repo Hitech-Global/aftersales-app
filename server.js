@@ -834,7 +834,7 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
       total_quantity, current_approval_level,
       approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
-      approver_level3_id, approver_level3_name, approval_history } = req.body;
+      approver_level3_id, approver_level3_name, approval_history, tracking_number } = req.body;
 
     // 如果指定了 approval_flow_id,优先用 flow 展开 level1/2/3
     let flowLevel1Id = approver_level1_id, flowLevel1Name = approver_level1_name;
@@ -861,13 +861,13 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
         total_quantity, current_approval_level,
         approval_flow_id, approval_flow_name,
         approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
-        approver_level3_id, approver_level3_name, approval_history)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
+        approver_level3_id, approver_level3_name, approval_history, tracking_number)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
       [id, submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []),
        total_quantity || 0, current_approval_level || 0,
        approval_flow_id || '', flowName,
        flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '',
-       flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || [])]
+       flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || '']
     );
     res.json(result.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -880,7 +880,7 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
       approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
       approver_level3_id, approver_level3_name,
-      approval_level1_status, approval_level2_status, approval_history } = req.body;
+      approval_level1_status, approval_level2_status, approval_history, tracking_number } = req.body;
 
     // 若指定 approval_flow_id,优先用 flow 展开
     let flowLevel1Id = approver_level1_id, flowLevel1Name = approver_level1_name;
@@ -932,6 +932,7 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     add('approval_level1_status', approval_level1_status);
     add('approval_level2_status', approval_level2_status);
     add('approval_history', approval_history !== undefined ? JSON.stringify(approval_history) : undefined);
+    add('tracking_number', tracking_number);
 
     values.push(req.params.id);
     const result = await query(
