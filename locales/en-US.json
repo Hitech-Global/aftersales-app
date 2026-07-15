@@ -189,7 +189,7 @@
     "btnExport": "Export to Excel",
     "filter": {
       "keyword": "Keyword",
-      "keywordPlaceholder": "Search order no., SKU, brand, or model...",
+      "keywordPlaceholder": "Search ID, order no., SKU, brand, or model...",
       "brand": "Brand",
       "allBrands": "All Brands",
       "channel": "Channel",

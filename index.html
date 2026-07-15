@@ -277,7 +277,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 .detail-rma-items tbody tr:hover td.fcol{background:#f7f7f9}
 .detail-rma-items th:nth-child(6),.detail-rma-items td:nth-child(6){width:150px}
 .detail-rma-items th:nth-child(7),.detail-rma-items td:nth-child(7){width:150px}
-.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:70px}
+.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:130px}
 .detail-rma-items th:nth-child(9),.detail-rma-items td:nth-child(9){width:170px}
 .detail-rma-items th:nth-child(10),.detail-rma-items td:nth-child(10){width:150px}
 .detail-rma-items th:nth-child(11),.detail-rma-items td:nth-child(11){width:160px}
@@ -3821,7 +3821,7 @@ async function renderList(){
   if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
   await ensureShopCustomerDict();
   await ensureDictLabelCache('platform');
-  const search=(document.getElementById('search-input').value||'').toLowerCase();
+  const search=(document.getElementById('search-input').value||'').trim().toLowerCase();
   const status=document.getElementById('status-filter').value;
   const brand=document.getElementById('brand-filter').value;
   const channel=document.getElementById('channel-filter').value;
@@ -3862,7 +3862,7 @@ async function renderList(){
       (r.brand||'').toLowerCase().includes(search)||
       (r.model||'').toLowerCase().includes(search)||
       (r.submitter_name||'').toLowerCase().includes(search)||
-      (String(r.id)).includes(search);
+      (String(r.id||'')).toLowerCase().includes(search);
   });
   // 状态快捷筛选：先基于其他筛选项统计各状态数量，再应用快捷筛选
   renderQuickFilterBar(computeQuickCounts(filtered));

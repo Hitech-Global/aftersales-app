@@ -189,7 +189,7 @@
     "btnExport": "导出Excel",
     "filter": {
       "keyword": "关键词",
-      "keywordPlaceholder": "搜索订单号、SKU、品牌、型号…",
+      "keywordPlaceholder": "搜索ID、订单号、SKU、品牌、型号…",
       "brand": "品牌",
       "allBrands": "全部品牌",
       "channel": "渠道",

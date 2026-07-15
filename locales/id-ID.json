@@ -189,7 +189,7 @@
     "btnExport": "Ekspor Excel",
     "filter": {
       "keyword": "Kata Kunci",
-      "keywordPlaceholder": "Cari no. pesanan, SKU, brand, atau model...",
+      "keywordPlaceholder": "Cari ID, no. pesanan, SKU, brand, atau model...",
       "brand": "Brand",
       "allBrands": "Semua Brand",
       "channel": "Saluran",
