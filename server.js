@@ -15,7 +15,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const multer = require('multer');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const { query, initDatabase } = require('./db');
+const { query, getPool, initDatabase } = require('./db');
 
 // ==================== 加载环境变量 ====================
 let envLoaded = false;
@@ -828,13 +828,106 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/records', requireApiPermission('record_create'), async (req, res) => {
+// ===================== 售后 ID 生成（RMA-YYYYMMDD-NNNN）=====================
+// 业务时区：所有售后 ID 的日期部分按 Asia/Jakarta（UTC+7）计算。
+// 不依赖服务器默认时区、PostgreSQL session 时区、用户浏览器时区，也不直接截取 UTC 日期。
+const BUSINESS_TIMEZONE = 'Asia/Jakarta';
+
+// 固定命名空间基址，用于生成 pg_advisory_xact_lock 的锁键，避免与其他 advisory lock 冲突。
+// int8 范围约 ±9.2e18；8.1e15 + 8位日期(≤1e8) 远在其内，且不同日期得到不同锁键。
+const RMA_LOCK_NAMESPACE = 8100000000000000n;
+
+// 返回 Asia/Jakarta 业务日期 YYYYMMDD（与服务器/浏览器/PG session 时区无关）。
+function getBusinessDateString() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: BUSINESS_TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date());
+  const get = (t) => parts.find(p => p.type === t).value;
+  return `${get('year')}${get('month')}${get('day')}`;
+}
+
+// 在事务内生成下一个 RMA 编号（并发安全）。
+// 做法：按“固定命名空间 + 业务日期”获取事务级 advisory lock，锁内取当天最大四位流水号 +1，
+// 同一事务提交后自动释放锁；aftersales_records.id 的主键唯一约束作为最终兜底。
+// 注意：使用 MAX(数字后缀)+1，而非 COUNT(*)+1——删除记录后 COUNT 会回退导致复用旧号，不符合“已用编号不可复用”。
+async function generateNextRmaId(client) {
+  const datePart = getBusinessDateString();
+  const lockKey = Number(RMA_LOCK_NAMESPACE + BigInt(datePart));
+  await client.query('SELECT pg_advisory_xact_lock($1)', [lockKey]);
+
+  // 取当天最大四位流水号：按整数 MAX，避免字典序误比较（'0009' 字典序 > '0010'）。
+  const { rows } = await client.query(
+    `SELECT COALESCE(MAX(CAST(SUBSTRING(id FROM 'RMA-' || $1 || '-(\\d+)$') AS INTEGER)), 0) AS maxseq
+       FROM aftersales_records
+       WHERE id LIKE 'RMA-' || $1 || '-%'`,
+    [datePart]
+  );
+  const maxSeq = parseInt(rows[0].maxseq, 10) || 0;
+  const nextSeq = maxSeq + 1;
+  if (nextSeq > 9999) {
+    throw new Error('当日售后单数量已超过 9999，无法生成 RMA 编号（请联系管理员）');
+  }
+  return `RMA-${datePart}-${String(nextSeq).padStart(4, '0')}`;
+}
+
+// 仅允许合法临时 ID：tmp_<标准UUID>
+function isValidTempId(s) {
+  return typeof s === 'string' && /^tmp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+// 附件上传 record_id 校验：允许 tmp_<UUID> 或 RMA-YYYYMMDD-NNNN
+function isValidRecordIdForUpload(s) {
+  return isValidTempId(s) || /^RMA-\d{8}-\d{4}$/.test(s || '');
+}
+
+// 在单个事务内创建记录并（可选）将临时 UUID 下的附件迁移到正式 RMA ID。
+// temp_record_id 必须为合法 tmp_<UUID>；否则整体拒绝（400），不创建记录、不迁移附件。
+async function createRecordTx(client, { columns, values, temp_record_id }) {
+  if (temp_record_id && !isValidTempId(temp_record_id)) {
+    const e = new Error('temp_record_id 格式不合法（必须为 tmp_<UUID>）');
+    e.status = 400;
+    throw e;
+  }
+  await client.query('BEGIN');
   try {
-    const { id, submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
+    const newId = await generateNextRmaId(client);
+    const cols = ['id', ...columns];
+    const vals = [newId, ...values];
+    const placeholders = cols.map((_, i) => '$' + (i + 1)).join(', ');
+    const result = await client.query(
+      `INSERT INTO aftersales_records (${cols.join(', ')}) VALUES (${placeholders}) RETURNING *`,
+      vals
+    );
+    let migrated = 0;
+    if (temp_record_id) {
+      // 仅按完整临时 UUID 精确匹配，不使用 LIKE/前缀/模糊匹配
+      const r = await client.query(
+        'UPDATE attachments SET record_id = $1 WHERE record_id = $2',
+        [newId, temp_record_id]
+      );
+      migrated = r.rowCount || 0;
+    }
+    await client.query('COMMIT');
+    return { record: result.rows[0], migrated };
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw e;
+  }
+}
+
+app.post('/api/records', requireApiPermission('record_create'), async (req, res) => {
+  const client = await getPool().connect();
+  try {
+    // 忽略客户端传入的 id：最终主键由服务端统一生成（RMA-YYYYMMDD-NNNN），客户端不得决定编号。
+    // temp_record_id 可选：客户端在“先上传附件后保存记录”场景下使用的临时 UUID；
+    // 仅当其为合法 tmp_<UUID> 时，服务端才会把该临时 ID 下的附件迁移到正式 RMA ID（同一事务内）。
+    const { submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
       total_quantity, current_approval_level,
       approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
-      approver_level3_id, approver_level3_name, approval_history, tracking_number } = req.body;
+      approver_level3_id, approver_level3_name, approval_history, tracking_number, temp_record_id } = req.body;
+
+    if (!getPool()) return res.status(500).json({ error: '数据库未配置' });
 
     // 如果指定了 approval_flow_id,优先用 flow 展开 level1/2/3
     let flowLevel1Id = approver_level1_id, flowLevel1Name = approver_level1_name;
@@ -856,21 +949,19 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
       }
     }
 
-    const result = await query(
-      `INSERT INTO aftersales_records (id, submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
-        total_quantity, current_approval_level,
-        approval_flow_id, approval_flow_name,
-        approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
-        approver_level3_id, approver_level3_name, approval_history, tracking_number)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
-      [id, submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []),
-       total_quantity || 0, current_approval_level || 0,
-       approval_flow_id || '', flowName,
-       flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '',
-       flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || '']
-    );
-    res.json(result.rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    // 在同一事务内创建记录并（可选）迁移临时 UUID 下的附件。
+    // temp_record_id 不合法时 createRecordTx 直接抛出 400，记录与附件均不会写入。
+    const columns = ['submitter_id','submitter_name','aftersales_date','status','brand','model','category','platforms','items','total_quantity','current_approval_level','approval_flow_id','approval_flow_name','approver_level1_id','approver_level1_name','approver_level2_id','approver_level2_name','approver_level3_id','approver_level3_name','approval_history','tracking_number'];
+    const values = [submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []), total_quantity || 0, current_approval_level || 0, approval_flow_id || '', flowName, flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '', flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || ''];
+    const { record, migrated } = await createRecordTx(client, { columns, values, temp_record_id });
+    res.json({ ...record, migrated });
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+    const status = e && e.status ? e.status : 500;
+    res.status(status).json({ error: e.message });
+  } finally {
+    client.release();
+  }
 });
 
 app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res) => {
@@ -1289,6 +1380,12 @@ app.post('/api/attachments/upload', upload.array('files', 10), async (req, res) 
       if (!R2_ENABLED) req.files.forEach(f => fs.unlink(f.path, () => {}));
       return res.status(400).json({ error: '缺少 record_id' });
     }
+    // 限制 record_id 仅可为合法临时 ID（tmp_<UUID>）或正式 RMA ID（RMA-YYYYMMDD-NNNN），
+    // 拒绝纯数字、RMA 以外字符串、路径/注入字符，防止附件被挂到任意记录或越权关联。
+    if (!isValidRecordIdForUpload(record_id)) {
+      if (!R2_ENABLED) req.files.forEach(f => fs.unlink(f.path, () => {}));
+      return res.status(400).json({ error: 'record_id 格式不合法（必须为 tmp_<UUID> 或 RMA-YYYYMMDD-NNNN）' });
+    }
     const uploadedBy = req.user ? (req.user.id || req.user.username || '') : '';
     const saved = [];
     for (const f of req.files) {
@@ -1322,6 +1419,14 @@ app.get('/api/attachments/record/:recordId', requireLogin, async (req, res) => {
     );
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 该接口已停用（返回 410 Gone）。
+// 原用途：将附件的 record_id 从临时占位 ID 重新指向服务端正式生成的 RMA ID。
+// 该能力现已在 POST /api/records 的事务内完成（temp_record_id 精确迁移），
+// 独立端点缺乏归属校验、可被伪造身份越权调用，故永久停用，不再提供任何附件迁移能力。
+app.post('/api/attachments/repoint', requireLogin, (req, res) => {
+  return res.status(410).json({ error: '该接口已停用' });
 });
 
 app.delete('/api/attachments/:id', requireLogin, async (req, res) => {
@@ -2334,4 +2439,7 @@ async function startServer() {
   });
 }
 
-startServer();
+// 仅在作为主模块直接运行时启动服务器，便于被测试 harness 安全导入而不连接生产库。
+if (require.main === module) {
+  startServer();
+}

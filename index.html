@@ -1762,10 +1762,22 @@ async function saveRecordsAsync(r){ _recordsCache = null;
     return;
   }
   localStorage.setItem('aftersales_records',JSON.stringify(r)); }
-async function nextId(){
-  const r=await getRecords();
-  const numericIds=r.map(x=>Number(x.id)).filter(Number.isFinite);
-  return numericIds.length>0?Math.max(...numericIds)+1:1;
+// 生成“先上传附件后保存记录”场景使用的临时记录 ID。
+// 必须是 tmp_<标准 UUID>，与服务端 isValidTempId 校验保持一致；
+// 附件上传/迁移均基于该完整字符串精确匹配，杜绝碰撞与越权关联。
+function genUUID(){
+  if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+  // 无 crypto.randomUUID 时的 RFC4122 v4 兜底实现，仍保证为标准 UUID 格式
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+function genTempId(){ return 'tmp_' + genUUID(); }
+// 前端镜像服务端校验：仅允许 tmp_<标准UUID>
+function isValidTempId(s){
+  return typeof s === 'string' && /^tmp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 }
 async function getSalesData(){ return asArray(await getSalesAsync()); }
 async function saveSalesData(d){ _salesCache = null;
@@ -2019,9 +2031,21 @@ async function saveRecordAsync(record) {
     });
     if (!resp.ok) {
       if (resp.status === 404) {
-        const createResp = await fetch('/api/records', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(record) });
+        const createBody = { ...record };
+        // 仅当 record.id 为合法临时 UUID 时附带 temp_record_id，让服务端在同一事务内
+        // 将“先上传附件”阶段暂存在该临时 ID 下的附件精确迁移到正式 RMA ID；
+        // 编辑已有记录（record.id 为正式 RMA）时不附带，保持原行为。
+        if (isValidTempId(record.id)) createBody.temp_record_id = record.id;
+        const createResp = await fetch('/api/records', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(createBody) });
         if (!createResp.ok) {
           throw new Error(`创建记录失败 (${createResp.status}): ${await createResp.text()}`);
+        }
+        // 服务端已忽略客户端临时 ID，生成正式 RMA 编号；同步回本地记录，
+        // 保证后续展示/定位/附件关联一致，避免页面停留旧临时 ID。
+        // 附件迁移已在服务端事务内完成（temp_record_id 精确匹配），无需前端 repoint。
+        const created = await createResp.json().catch(() => null);
+        if (created && created.id) {
+          record.id = created.id;
         }
         return;
       }
@@ -4425,6 +4449,8 @@ let _platformCache = [];
 
 function closeRecordForm(){
   document.getElementById('record-form-modal').classList.add('hidden');
+  // 关闭表单时清空临时 ID，确保下次打开新建表单生成全新的 tmp_<UUID>
+  currentTempRecordId = null;
   // 清理可能残留的客户搜索/SKU 自动补全下拉(已挂到 body 上)
   document.querySelectorAll('.shop-ac-dropdown').forEach(el => el.remove());
   document.querySelectorAll('.sku-ac-dropdown').forEach(el => el.remove());
@@ -4771,9 +4797,9 @@ async function _handleItemAttachmentUpload(tr, files) {
   // 分配/使用记录的 id
   let recordId = tr.dataset.recordId || currentEditingRecordId;
   if (!recordId) {
-    // 还没 recordId，先给一个临时 id，等提交时再关联
-    recordId = await nextId();
-    currentEditingRecordId = recordId;
+    // 新建且尚未生成临时 ID：使用稳定的临时 tmp_<UUID> 暂存附件。
+    // 注意：不要写入 currentEditingRecordId，否则会被误判为“编辑已有记录”而走错保存分支。
+    recordId = currentTempRecordId || (currentTempRecordId = genTempId());
   }
   const itemIdx = parseInt(tr.dataset.index);
   try {
@@ -4789,6 +4815,8 @@ async function _handleItemAttachmentUpload(tr, files) {
 }
 
 let currentEditingRecordId = null;
+// 新建记录时用于“先上传附件后保存记录”的临时 UUID；同一表单生命周期内稳定复用，关闭表单后清空。
+let currentTempRecordId = null;
 
 function removeDetailItem(btn){
   const tbody=document.getElementById('detail-items-tbody');
@@ -4845,6 +4873,7 @@ async function resetForm(recordId){
     setDateInputValue('f-aftersales-date', record.aftersales_date || formatDateLocal(new Date()));
     document.getElementById('detail-items-tbody').innerHTML='';
     currentEditingRecordId = recordId;
+    currentTempRecordId = null;
     const items = record.items || [];
     // 并行预加载: 平台字典 + 附件 + 每个涉及平台的店铺字典
     const platformOptsPromise = loadDictOptions('platform').catch(() => []);
@@ -4885,6 +4914,9 @@ async function resetForm(recordId){
   document.getElementById('detail-items-tbody').innerHTML='';
   // populateApproverSelects 由 openRecordForm 统一调用,这里不再重复请求
   currentEditingRecordId = null;
+  // 生成稳定的临时 UUID 用于“先上传附件后保存记录”的附件暂存；同一表单生命周期内复用同一 ID，
+  // 确保多条附件都挂在同一临时 ID 下，提交时一并迁移到正式 RMA，避免串单。
+  currentTempRecordId = genTempId();
   addDetailItem(); // start with one empty row
 }
 
@@ -5292,7 +5324,7 @@ async function submitForApproval(e){
     record.approval_history=[];
   } else {
     record={
-      id:await nextId(),
+      id: currentTempRecordId,
       aftersales_date:aftersalesDate,
       platforms,
       items,
@@ -5387,7 +5419,7 @@ async function saveAsDraft(){
     record.updated_at=now;
   } else {
     record={
-      id:await nextId(),
+      id: currentTempRecordId,
       aftersales_date:aftersalesDate,
       platforms,
       items,
@@ -6131,7 +6163,6 @@ function processImportFile(file){
     pendingRecordImports=[];
     pendingRecordImportErrors=[];
     const products=await getProducts();
-    let importNextId=await nextId();
     let blankRows=0;
     for(let i=1;i<lines.length;i++){
       const row=lines[i];
@@ -6165,7 +6196,7 @@ function processImportFile(file){
       const prod=products.find(p=>p.sku_code===sku);
       const now=new Date().toISOString();
       pendingRecordImports.push({
-        id:importNextId++,
+        id:genTempId(),
         aftersales_date, platforms:[platform],
         items:[{platform, shop_customer, sku_code:sku, sn_code, order_no, tracking_number, quantity, return_reason, fault_description:fault_desc, process_type:RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp', process_progress:'pending', process_status:PROCESS_TYPE_TO_LEGACY_PENDING[RETURN_REASON_TO_PROCESS_TYPE[return_reason]||'erp']||'待ERP入库', process_status_date:now}],
         total_quantity:quantity,
