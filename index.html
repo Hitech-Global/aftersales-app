@@ -265,8 +265,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 .data-table td.cell-actions{background:var(--card-bg);box-shadow:inset 1px 0 0 var(--border-light)}
 .data-table tbody tr:hover td.cell-actions{background:#f7f7f9}
 .data-table tbody tr.row-clickable:hover td.cell-actions{background:#f0f4fb}
-/* Detail RMA Items: freeze left columns (#, Channel, Shop/Customer, Brand, SKU) during horizontal scroll */
-.detail-rma-items{table-layout:fixed;min-width:1886px}
+/* Detail RMA Items: freeze left columns (#, Channel, Shop/Customer, Brand, SKU) during horizontal scroll.
+   Explicit width overrides .data-table{width:100%} so columns are never compressed.
+   .table-container{overflow-x:auto} provides horizontal scroll. */
+.detail-rma-items{table-layout:fixed;width:2200px;min-width:2200px}
 .detail-rma-items th.fcol,.detail-rma-items td.fcol{position:sticky;z-index:2;background:var(--card-bg)}
 .detail-rma-items thead th.fcol{background:#fbfbfd;z-index:4}
 .detail-rma-items th.fcol-1,.detail-rma-items td.fcol-1{left:0;width:46px}
@@ -276,14 +278,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 .detail-rma-items th.fcol-5,.detail-rma-items td.fcol-5{left:496px;width:170px;box-shadow:3px 0 7px -3px rgba(0,0,0,.2)}
 .detail-rma-items tbody tr:hover td.fcol{background:#f7f7f9}
 .detail-rma-items th:nth-child(6),.detail-rma-items td:nth-child(6){width:150px}
-.detail-rma-items th:nth-child(7),.detail-rma-items td:nth-child(7){width:150px}
-.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:130px}
+.detail-rma-items th:nth-child(7),.detail-rma-items td:nth-child(7){width:170px}
+.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:210px}
 .detail-rma-items th:nth-child(9),.detail-rma-items td:nth-child(9){width:170px}
 .detail-rma-items th:nth-child(10),.detail-rma-items td:nth-child(10){width:150px}
 .detail-rma-items th:nth-child(11),.detail-rma-items td:nth-child(11){width:160px}
 .detail-rma-items th:nth-child(12),.detail-rma-items td:nth-child(12){width:130px}
 .detail-rma-items th:nth-child(13),.detail-rma-items td:nth-child(13){width:240px}
 .detail-rma-items th:nth-child(14),.detail-rma-items td:nth-child(14){width:130px}
+/* Force long unbroken strings (tracking/order numbers) to wrap inside their cell
+   instead of overflowing into adjacent columns. The global .detail-content
+   .data-table .cell-wrap rule does NOT apply here because the table is mounted
+   under #detail-content (an ID), not a .detail-content (class) ancestor. */
+.detail-rma-items td.cell-wrap{white-space:normal;word-break:break-word;overflow-wrap:break-word}
 .cell-sku,.cell-order{font-size:14px;font-weight:600;color:var(--text-primary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
