@@ -914,6 +914,7 @@
     "draftSaved": "草稿已保存",
     "approved": "审批通过",
     "rejected": "已拒绝",
+    "saveFailed": "审批保存失败，请重试。",
     "recordDeleted": "记录已删除",
     "userCreated": "用户已创建",
     "userUpdated": "用户已更新",

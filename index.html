@@ -268,29 +268,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 /* Detail RMA Items: freeze left columns (#, Channel, Shop/Customer, Brand, SKU) during horizontal scroll.
    Explicit width overrides .data-table{width:100%} so columns are never compressed.
    .table-container{overflow-x:auto} provides horizontal scroll. */
-.detail-rma-items{table-layout:fixed;width:2200px;min-width:2200px}
+/* Reallocated ALL 15 columns (AFTERSALES-UX-CLOSEOUT / 2026-07-16).
+   Root cause of right-side header overlap: columns 12/14/15 were narrower than
+   their nowrap header text, and column 15 had no explicit width (collapsed to
+   ~24px). With .data-table th{white-space:nowrap}, under-sized headers spill
+   into neighbours. Fix: every column gets an explicit width sized to fit its
+   longest header (EN/ZH/ID, measured) + 32px padding, with buffer. Total width
+   grows to 2358px; .table-container keeps horizontal scroll (no text compress,
+   no font shrink, no hidden fields). Sticky-left offsets (fcol-1..5) updated to
+   match. A safety white-space:normal on detail headers prevents any future
+   overlap by wrapping instead of spilling. */
+.detail-rma-items{table-layout:fixed;width:2358px;min-width:2358px}
 .detail-rma-items th.fcol,.detail-rma-items td.fcol{position:sticky;z-index:2;background:var(--card-bg)}
 .detail-rma-items thead th.fcol{background:#fbfbfd;z-index:4}
-.detail-rma-items th.fcol-1,.detail-rma-items td.fcol-1{left:0;width:46px}
-.detail-rma-items th.fcol-2,.detail-rma-items td.fcol-2{left:46px;width:130px}
-.detail-rma-items th.fcol-3,.detail-rma-items td.fcol-3{left:176px;width:200px}
-.detail-rma-items th.fcol-4,.detail-rma-items td.fcol-4{left:376px;width:120px}
-.detail-rma-items th.fcol-5,.detail-rma-items td.fcol-5{left:496px;width:170px;box-shadow:3px 0 7px -3px rgba(0,0,0,.2)}
+.detail-rma-items th.fcol-1,.detail-rma-items td.fcol-1{left:0;width:48px}
+.detail-rma-items th.fcol-2,.detail-rma-items td.fcol-2{left:48px;width:130px}
+.detail-rma-items th.fcol-3,.detail-rma-items td.fcol-3{left:178px;width:190px}
+.detail-rma-items th.fcol-4,.detail-rma-items td.fcol-4{left:368px;width:120px}
+.detail-rma-items th.fcol-5,.detail-rma-items td.fcol-5{left:488px;width:160px;box-shadow:3px 0 7px -3px rgba(0,0,0,.2)}
 .detail-rma-items tbody tr:hover td.fcol{background:#f7f7f9}
 .detail-rma-items th:nth-child(6),.detail-rma-items td:nth-child(6){width:150px}
-.detail-rma-items th:nth-child(7),.detail-rma-items td:nth-child(7){width:170px}
-.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:210px}
-.detail-rma-items th:nth-child(9),.detail-rma-items td:nth-child(9){width:170px}
-.detail-rma-items th:nth-child(10),.detail-rma-items td:nth-child(10){width:150px}
-.detail-rma-items th:nth-child(11),.detail-rma-items td:nth-child(11){width:160px}
-.detail-rma-items th:nth-child(12),.detail-rma-items td:nth-child(12){width:130px}
-.detail-rma-items th:nth-child(13),.detail-rma-items td:nth-child(13){width:240px}
-.detail-rma-items th:nth-child(14),.detail-rma-items td:nth-child(14){width:130px}
+.detail-rma-items th:nth-child(7),.detail-rma-items td:nth-child(7){width:175px}
+.detail-rma-items th:nth-child(8),.detail-rma-items td:nth-child(8){width:200px}
+.detail-rma-items th:nth-child(9),.detail-rma-items td:nth-child(9){width:90px}
+.detail-rma-items th:nth-child(10),.detail-rma-items td:nth-child(10){width:165px}
+.detail-rma-items th:nth-child(11),.detail-rma-items td:nth-child(11){width:170px}
+.detail-rma-items th:nth-child(12),.detail-rma-items td:nth-child(12){width:180px}
+.detail-rma-items th:nth-child(13),.detail-rma-items td:nth-child(13){width:200px}
+.detail-rma-items th:nth-child(14),.detail-rma-items td:nth-child(14){width:240px}
+.detail-rma-items th:nth-child(15),.detail-rma-items td:nth-child(15){width:140px}
 /* Force long unbroken strings (tracking/order numbers) to wrap inside their cell
    instead of overflowing into adjacent columns. The global .detail-content
    .data-table .cell-wrap rule does NOT apply here because the table is mounted
    under #detail-content (an ID), not a .detail-content (class) ancestor. */
 .detail-rma-items td.cell-wrap{white-space:normal;word-break:break-word;overflow-wrap:break-word}
+/* Safety net: if a header ever exceeds its column, wrap rather than overlap. */
+.detail-rma-items thead th{white-space:normal;line-height:1.35}
 .cell-sku,.cell-order{font-size:14px;font-weight:600;color:var(--text-primary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
@@ -1514,8 +1527,8 @@ select option{background:var(--card-bg);color:var(--text)}
         </div>
       </div>
       <div class="form-actions" style="margin-top:16px">
-        <button type="button" class="btn btn-primary btn-lg" id="btn-approve" onclick="doApproval('approve')" data-i18n="approvalModal.btnApprove"></button>
-        <button type="button" class="btn btn-danger btn-lg" id="btn-reject" onclick="doApproval('reject')" data-i18n="approvalModal.btnReject"></button>
+        <button type="button" class="btn btn-primary btn-lg" id="btn-approve" onclick="doApproval('approve','modal')" data-i18n="approvalModal.btnApprove"></button>
+        <button type="button" class="btn btn-danger btn-lg" id="btn-reject" onclick="doApproval('reject','modal')" data-i18n="approvalModal.btnReject"></button>
         <button type="button" class="btn btn-secondary btn-lg" onclick="closeApprovalModal()" data-i18n="approvalModal.btnCancel"></button>
       </div>
     </div>

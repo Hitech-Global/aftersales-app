@@ -914,6 +914,7 @@
     "draftSaved": "Draft disimpan",
     "approved": "Disetujui",
     "rejected": "Ditolak",
+    "saveFailed": "Gagal menyimpan persetujuan. Silakan coba lagi.",
     "recordDeleted": "Catatan dihapus",
     "userCreated": "Pengguna dibuat",
     "userUpdated": "Pengguna diperbarui",

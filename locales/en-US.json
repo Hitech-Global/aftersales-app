@@ -914,6 +914,7 @@
     "draftSaved": "Draft saved",
     "approved": "Approved",
     "rejected": "Rejected",
+    "saveFailed": "Failed to save approval. Please retry.",
     "recordDeleted": "Record deleted",
     "userCreated": "User created",
     "userUpdated": "User updated",
