@@ -410,9 +410,9 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .login-hint{background:#f5f5f7;border:1px solid #ececf0;border-radius:12px;padding:14px;margin-top:18px;font-size:12px;color:#6e6e73;text-align:left}
 
 /* Enter-system Welcome/Splash overlay (shown ONLY when entering the system via enterApp()) */
-.welcome-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transition:opacity .8s ease;font-family:inherit}
+.welcome-screen{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#eaf2f7;opacity:1;transform:scale(1);will-change:opacity,transform;transition:opacity .7s cubic-bezier(.32,.72,0,1),transform .7s cubic-bezier(.32,.72,0,1);font-family:inherit}
 .welcome-screen.show{display:flex}
-.welcome-screen.hidden{opacity:0;pointer-events:none}
+.welcome-screen.hidden{opacity:0;transform:scale(1.03);pointer-events:none}
 .welcome-bg{position:absolute;inset:-12%;background:radial-gradient(closest-side at 50% 46%,rgba(64,108,176,.55),rgba(64,108,176,0) 70%),radial-gradient(120% 80% at 16% 12%,rgba(150,205,225,.95),rgba(150,205,225,0) 55%),radial-gradient(120% 90% at 86% 24%,rgba(172,226,212,.92),rgba(172,226,212,0) 55%),linear-gradient(180deg,#f3f8fb 0%,#e6eef4 55%,#d3e2f0 100%);animation:welcomeFloat 16s ease-in-out infinite alternate}
 @keyframes welcomeFloat{0%{transform:scale(1.06) translateY(0)}100%{transform:scale(1.14) translateY(-14px)}}
 .welcome-content{position:relative;z-index:2;text-align:center;animation:welcomeFade .9s ease both}
@@ -422,7 +422,7 @@ input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .welcome-title{font-size:clamp(76px,13vw,116px);font-weight:600;letter-spacing:-.02em;line-height:1;margin:0;background:linear-gradient(180deg,#ffffff 0%,#e6f0fb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 22px rgba(90,130,180,.35))}
 .welcome-brand{margin-top:20px;font-size:20px;font-weight:500;letter-spacing:.01em;color:rgba(46,66,96,.72)}
 .welcome-foot{position:relative;z-index:2;margin-top:32px;font-size:15px;font-weight:400;letter-spacing:.01em;color:rgba(46,66,96,.55);animation:welcomeFade 1s ease .3s both}
-@media (prefers-reduced-motion: reduce){.welcome-bg{animation:none}.welcome-content{animation:none}.welcome-foot{animation:none}}
+@media (prefers-reduced-motion: reduce){.welcome-screen{transition:none}.welcome-screen.hidden{transform:none}.welcome-bg{animation:none}.welcome-content{animation:none}.welcome-foot{animation:none}}
 .login-tabs{display:flex;margin-bottom:24px;border:1px solid #e6e6eb;border-radius:12px;overflow:hidden}
 .login-tab{flex:1;padding:10px;border:none;background:#f5f5f7;font-size:14px;cursor:pointer;color:#6e6e73;font-family:inherit;transition:all .2s}
 .login-tab.active{background:#1d1d1f;color:#fff;font-weight:500}
@@ -1780,7 +1780,10 @@ async function getRecords(){
       if(!r.total_quantity) r.total_quantity=(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       return r;
     }) : [];
-    if(migrated) await saveRecordsAsync(records);
+    // 展示与迁移解耦：仅做“内存内”规范化用于正确展示，不在页面读取时触发自动批量回写（PUT）。
+    // 旧数据兼容能力保留（上方 map 完成内存迁移），迁移函数与显式保存（saveRecordsAsync/saveRecordAsync）均保留；
+    // 真正的持久化只在用户主动保存某条记录时发生。migrated 标记仅供调试参考，不再驱动写入。
+    void migrated;
     return records;
   }catch(e){return[];}
 }
@@ -1834,7 +1837,7 @@ let _productsCache = null;
 let _salesCache = null;
 let _recordsCache = null;
 let _cacheTimestamp = 0;
-const CACHE_TTL = 5000; // 5秒缓存
+const CACHE_TTL = 60000; // 60秒缓存（显式保存/审批时 _recordsCache=null 即时失效，不影响数据流转）
 
 function getAuthHeaders() {
   const user = getCurrentUser();
@@ -3050,10 +3053,23 @@ function showEnterSplash() {
   // 清除旧定时器（防止多次调用叠加，例如 showLoginLoading→enterApp 无缝衔接场景）
   if (window._splashTimer) clearTimeout(window._splashTimer);
   if (window._splashCleanupTimer) clearTimeout(window._splashCleanupTimer);
-  // 显示约 2.4s 后淡出（800ms），露出背后已渲染好的系统界面
+  // 显示约 2.4s 后淡出（opacity + 轻微 scale，Mac 风缓动 .7s），露出背后已渲染好的系统界面
   window._splashTimer = setTimeout(function () {
     el.classList.add('hidden');
-    window._splashCleanupTimer = setTimeout(function () { el.style.display = 'none'; el.classList.remove('show'); if (foot) foot.style.display = 'none'; }, 850);
+    // 用 transitionend 收口（淡出真正播完才 display:none），替代脆弱的硬定时器；
+    // 保留兜底定时器，防止 reduced-motion（无过渡）或事件丢失时无法收口。
+    var done = false;
+    var finish = function () {
+      if (done) return;
+      done = true;
+      el.removeEventListener('transitionend', onEnd);
+      el.style.display = 'none';
+      el.classList.remove('show');
+      if (foot) foot.style.display = 'none';
+    };
+    var onEnd = function (e) { if (e.target === el && e.propertyName === 'opacity') finish(); };
+    el.addEventListener('transitionend', onEnd);
+    window._splashCleanupTimer = setTimeout(finish, 900);
   }, 2400);
 }
 
