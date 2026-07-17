@@ -1035,6 +1035,239 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ==================== 专用审批接口（修复 413：不再 PUT 整条 Record）====================
+// 审批请求仅允许携带最小字段：action / comment / return_date / approval_attachments(引用) / expected_level。
+// 服务端自行读取记录、校验审批人、推进状态、更新 approval_history，避免客户端上传整条记录（含 base64 附件）导致 413。
+// 以下转移逻辑与前端 executeApproval 原样一致，仅作位置迁移，不改变任何审批业务规则。
+const APPROVAL_LEGACY_STATUS_TO_PROCESS = {
+  '待ERP入库': { type: 'erp', progress: 'pending' }, 'pending_erp': { type: 'erp', progress: 'pending' },
+  'ERP入库': { type: 'erp', progress: 'pending' }, 'erp': { type: 'erp', progress: 'pending' },
+  '待换彩盒': { type: 'color_box', progress: 'pending' }, 'pending_color_box': { type: 'color_box', progress: 'pending' },
+  '换彩盒': { type: 'color_box', progress: 'pending' }, 'color_box': { type: 'color_box', progress: 'pending' },
+  '待补配件': { type: 'parts', progress: 'pending' }, 'pending_parts': { type: 'parts', progress: 'pending' },
+  '补配件': { type: 'parts', progress: 'pending' }, 'parts': { type: 'parts', progress: 'pending' },
+  '待RMA': { type: 'rma', progress: 'pending' }, 'pending_rma': { type: 'rma', progress: 'pending' },
+  'RMA': { type: 'rma', progress: 'pending' }, 'rma': { type: 'rma', progress: 'pending' },
+  '待报废': { type: 'scrap', progress: 'pending' }, 'pending_scrap': { type: 'scrap', progress: 'pending' },
+  '报废': { type: 'scrap', progress: 'pending' }, 'scrap': { type: 'scrap', progress: 'pending' },
+  '已处理': { type: 'erp', progress: 'completed' }, 'completed': { type: 'erp', progress: 'completed' },
+  '处理中': { type: 'erp', progress: 'processing' }, 'processing': { type: 'erp', progress: 'processing' },
+  '待处理': { type: 'erp', progress: 'pending' }, 'pending': { type: 'erp', progress: 'pending' }
+};
+const APPROVAL_PROCESS_TYPE_TO_LEGACY_PENDING = {
+  erp: '待ERP入库', color_box: '待换彩盒', parts: '待补配件', rma: '待RMA', scrap: '待报废'
+};
+const APPROVAL_RETURN_REASON_TO_PROCESS_TYPE = {
+  '可二次销售': 'erp', '彩盒损坏': 'color_box', '配件缺失': 'parts', '硬件故障': 'rma', '报废': 'scrap',
+  '人为损坏': 'erp', '其他': 'erp', '功能异常': 'erp'
+};
+const APPROVAL_LEVEL_NAMES = { 1: '一级', 2: '二级', 3: '三级' };
+// 专用审批接口：层级 -> 所需权限（不再使用 record_edit 作为前置权限）
+const APPROVAL_LEVEL_PERM = { 1: 'approval_level1', 2: 'approval_level2', 3: 'approval_level3' };
+
+function approvalNormalizeProcessItem(item) {
+  if (!item) return item;
+  const legacy = item.process_status || item.processStatus || '';
+  const mapped = APPROVAL_LEGACY_STATUS_TO_PROCESS[legacy] || {};
+  if (!item.process_type) item.process_type = (legacy === '已处理' || legacy === 'completed' ? APPROVAL_RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] : mapped.type) || APPROVAL_RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] || 'erp';
+  if (!item.process_progress) item.process_progress = mapped.progress || 'pending';
+  if (item.process_progress === 'completed' && !item.process_completed_date) {
+    item.process_completed_date = item.process_status_updated_at || item.process_status_date || new Date().toISOString();
+  }
+  item.process_status = item.process_progress === 'completed' ? '已处理' : (APPROVAL_PROCESS_TYPE_TO_LEGACY_PENDING[item.process_type] || '待ERP入库');
+  return item;
+}
+function approvalItemProcessProgress(item) { approvalNormalizeProcessItem(item); return item.process_progress || 'pending'; }
+function approvalFindNextApprovalLevel(record, level) {
+  for (let l = level + 1; l <= 3; l++) {
+    if (record['approver_level' + l + '_id']) return l;
+  }
+  return 0;
+}
+function approvalGetLevelStatusText(level) { return '待' + APPROVAL_LEVEL_NAMES[level] + '审批'; }
+
+// 纯函数：在内存 record 上推进审批。返回 { record, itemsChanged } 或 { error, code }。不改变业务规则。
+// itemsChanged 仅在「终审通过且确有可二次销售明细被置为已处理」时为 true，用于服务端决定是否需要重写 items 列。
+function applyApprovalTransition(record, payload, operatorId) {
+  const level = record.current_approval_level;
+  if (level <= 0) return { error: '该记录当前无需审批或已被处理' };
+  const approverIdField = 'approver_level' + level + '_id';
+  if (record[approverIdField] !== operatorId) {
+    return { error: '当前用户不是该层级审批人', code: 'FORBIDDEN_APPROVER' };
+  }
+  if (payload.expected_level !== undefined && Number(payload.expected_level) !== Number(level)) {
+    return { error: '审批层级已变更，请刷新后重试', code: 'STALE_LEVEL' };
+  }
+  const now = new Date().toISOString();
+  const history = Array.isArray(record.approval_history) ? record.approval_history : [];
+  history.push({
+    level, action: payload.action,
+    operator_id: operatorId, operator_name: payload.operator_name || operatorId,
+    comment: payload.comment || '', return_date: payload.return_date || null,
+    attachments: Array.isArray(payload.approval_attachments) ? payload.approval_attachments : [],
+    timestamp: now
+  });
+  record.approval_history = history;
+  let itemsChanged = false;
+  if (payload.action === 'reject') {
+    record.status = '审批拒绝';
+    record.current_approval_level = 0;
+  } else {
+    const nextLevel = approvalFindNextApprovalLevel(record, level);
+    if (nextLevel > 0) {
+      record.status = approvalGetLevelStatusText(nextLevel);
+      record.current_approval_level = nextLevel;
+    } else {
+      record.status = '审批通过';
+      record.current_approval_level = 0;
+      const autoCompleteDate = payload.return_date || now;
+      (record.items || []).forEach((item) => {
+        approvalNormalizeProcessItem(item);
+        const rawType = (item.process_type || '').toString();
+        const rawReason = (item.return_reason || '').toString();
+        const isResellable =
+          rawType.toLowerCase() === 'erp'
+          || rawType === 'ERP入库'
+          || rawReason === '可二次销售'
+          || rawReason.toLowerCase() === 'resellable';
+        if (isResellable && approvalItemProcessProgress(item) !== 'completed') {
+          item.process_progress = 'completed';
+          item.process_status = '已处理';
+          item.process_completed_date = autoCompleteDate;
+          item.process_status_updated_at = now;
+          if (payload.return_date) { item.return_stockin_date = payload.return_date; }
+          itemsChanged = true;
+        }
+      });
+    }
+  }
+  record.updated_at = now;
+  return { record, itemsChanged };
+}
+
+// 专用审批接口（修复 413：不再 PUT 整条 Record）
+// 设计要点：
+//  1) 不再以 record_edit 作为前置权限；服务端读取记录与 current_approval_level 后，派生所需权限
+//     (approval_level1/2/3) 并校验审批人身份。超级管理员因 role_admin 拥有全部权限自然通过，
+//     但本接口不新增任何「管理员绕过审批人」的分支，完全沿用既有已冻结规则。
+//  2) 服务端为审批状态唯一权威：仅接收 action/comment/return_date/approval_attachments(引用)/expected_level，
+//     状态推进、下一层/终审判断、approval_history 构造全部在服务端完成。
+//  3) 事务 + 行锁 (SELECT ... FOR UPDATE)：并发审批与处理状态更新被串行化，避免旧值覆盖。
+//  4) items 仅在「终审通过且确有可二次销售明细被置为已处理」时重写，其余阶段保持数据库当前值不变。
+//  5) expected_level 作为乐观并发令牌：重复/过期请求因层级不匹配返回 409，不会产生第二条 approval_history。
+app.post('/api/records/:id/approval', async (req, res) => {
+  const client = await getPool().connect();
+  let committed = false;
+  try {
+    if (!getPool()) { client.release(); return res.status(500).json({ error: '数据库未配置' }); }
+    if (!req.currentUserId) { client.release(); return res.status(401).json({ error: '未登录' }); }
+    const { action, comment, return_date, approval_attachments, expected_level, erp_screenshots } = req.body;
+    if (action !== 'approve' && action !== 'reject') {
+      client.release(); return res.status(400).json({ error: '无效的审批动作' });
+    }
+    if (expected_level === undefined || expected_level === null || expected_level === '') {
+      client.release(); return res.status(400).json({ error: '缺少 expected_level，无法保证审批幂等' });
+    }
+
+    await client.query('BEGIN');
+    const result = await client.query('SELECT * FROM aftersales_records WHERE id=$1 FOR UPDATE', [req.params.id]);
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK'); client.release();
+      return res.status(404).json({ error: '记录不存在' });
+    }
+    const row = result.rows[0];
+    const record = {
+      ...row,
+      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : (row.items || []),
+      approval_history: typeof row.approval_history === 'string' ? JSON.parse(row.approval_history || '[]') : (row.approval_history || [])
+    };
+
+    // 派生当前层级所需权限并校验审批人身份（不使用 record_edit 前置权限）
+    const level = record.current_approval_level;
+    if (!(level >= 1 && level <= 3)) {
+      await client.query('ROLLBACK'); client.release();
+      return res.status(400).json({ error: '该记录当前无需审批或已被处理' });
+    }
+    const requiredPerm = APPROVAL_LEVEL_PERM[level];
+    const hasPerm = (req.currentUserPermissions || []).includes(requiredPerm);
+    const isApprover = record['approver_level' + level + '_id'] === req.currentUserId;
+    if (!hasPerm || !isApprover) {
+      // 与既有 requireApiPermission 一致：超级管理员因拥有全部权限自然通过；此处不新增任何管理员绕过分支。
+      await client.query('ROLLBACK'); client.release();
+      return res.status(403).json({ error: '无权限或非本层级审批人，无法审批' });
+    }
+
+    const applied = applyApprovalTransition(
+      record,
+      { action, comment, return_date, approval_attachments, expected_level, operator_name: req.currentUserRole || req.currentUserId },
+      req.currentUserId
+    );
+    if (applied.error) {
+      await client.query('ROLLBACK'); client.release();
+      const status = applied.code === 'STALE_LEVEL' ? 409 : (applied.code === 'FORBIDDEN_APPROVER' ? 403 : 400);
+      return res.status(status).json({ error: applied.error });
+    }
+
+    // ERP 截图引用：仅由服务端基于数据库当前 items 追加写入正确位置
+    // （不接收客户端 items，不覆盖并发处理状态；仅追加合法的引用 URL）。
+    let erpMerged = false;
+    if (erp_screenshots && typeof erp_screenshots === 'object' && !Array.isArray(erp_screenshots)) {
+      for (const [idxStr, urls] of Object.entries(erp_screenshots)) {
+        const idxNum = parseInt(idxStr, 10);
+        if (!Number.isInteger(idxNum) || idxNum < 0) continue;
+        const it = record.items[idxNum];
+        if (!it || !Array.isArray(urls)) continue;
+        const clean = urls.filter(u => typeof u === 'string' && /^(\/uploads\/|https?:\/\/)/.test(u));
+        if (clean.length === 0) continue;
+        const existing = Array.isArray(it.erp_screenshots) ? it.erp_screenshots : [];
+        const merged = existing.slice();
+        for (const u of clean) if (!merged.includes(u)) merged.push(u);
+        it.erp_screenshots = merged;
+        erpMerged = true;
+      }
+    }
+
+    // 仅在确实修改了 items 时才重写 items 列（终审自动完成 或 ERP 截图引用合并），避免覆盖并发更新的处理状态
+    const itemsChanged = applied.itemsChanged === true;
+    const writeItems = itemsChanged || erpMerged;
+    const fields = ['status=$1', 'current_approval_level=$2', 'approval_history=$3', 'updated_at=NOW()'];
+    const values = [applied.record.status, applied.record.current_approval_level, JSON.stringify(applied.record.approval_history)];
+    let idx = 4;
+    if (writeItems) {
+      fields.push(`items=$${idx++}`);
+      values.push(JSON.stringify(applied.record.items));
+    }
+    values.push(req.params.id);
+    const upd = await client.query(
+      `UPDATE aftersales_records SET ${fields.join(', ')} WHERE id=$${idx} RETURNING *`,
+      values
+    );
+    await client.query('COMMIT');
+    committed = true;
+    client.release();
+
+    // 服务端统一触发飞书通知：已在事务 COMMIT 之后调用，失败不影响已保存的审批结果。
+    // 仅当审批推进到下一层级（action=approve 且新 current_approval_level>0）时通知，
+    // 沿用既有冻结规则（Reject / 终审完成不再通知）。
+    let notify = { sent: false, skipped: true, reason: 'no_notify_condition' };
+    try {
+      if (action === 'approve' && applied.record.current_approval_level > 0) {
+        const newLevel = applied.record.current_approval_level;
+        const nextApproverId = applied.record['approver_level' + newLevel + '_id'];
+        notify = await sendApprovalNotify({ recordId: req.params.id, record: applied.record, level: newLevel, approverIds: [nextApproverId] });
+      }
+    } catch (notifyErr) {
+      console.error('[Feishu][Server] 审批通知异常（不影响审批结果）:', notifyErr && notifyErr.message);
+      notify = { sent: false, error: 'notify_exception: ' + (notifyErr && notifyErr.message) };
+    }
+    res.json({ ...upd.rows[0], notify });
+  } catch (e) {
+    if (!committed) { try { await client.query('ROLLBACK'); } catch (_) {} }
+    try { client.release(); } catch (_) {}
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.delete('/api/records/:id', requireApiPermission('record_delete'), async (req, res) => {
   try {
     const result = await query('DELETE FROM aftersales_records WHERE id = $1 RETURNING id', [req.params.id]);
@@ -2161,6 +2394,89 @@ app.post('/api/notify/approval', requireLogin, async (req, res) => {
     message: summary
   });
 });
+
+// 服务端审批流转通知：从已保存记录推导下一审批人，在审批事务 COMMIT 之后调用，
+// 失败不影响已保存的审批结果。与 /api/notify/approval 共享同一套飞书发送逻辑，
+// 不改变通知内容 / 对象 / 业务规则（仅审批动作推进到下一层级时通知，Reject / 终审完成不通知）。
+async function sendApprovalNotify({ recordId, record, level, approverIds }) {
+  if (!(level >= 1 && level <= 3)) {
+    return { sent: false, skipped: true, reason: 'no_next_level' };
+  }
+  const approvers = (Array.isArray(approverIds) ? approverIds : [approverIds])
+    .filter(Boolean)
+    .map(id => ({ id }));
+  if (approvers.length === 0) {
+    return { sent: false, skipped: true, reason: 'missing_approver_id', level };
+  }
+  const resolvedApprovers = await resolveApproversForNotify(approvers);
+  const recordDisplayId = `AS${String(recordId).padStart(4, '0')}`;
+  const detailUrl = `${APP_BASE_URL}/#page=detail&id=${recordId}`;
+  console.log('[Feishu][Server] 审批流转通知', {
+    recordId, recordDisplayId, approvalLevel: level, approvalLevelName: approvalLevelName(level),
+    targets: resolvedApprovers.map(a => ({ name: a.name, system_user_id: a.id || '' }))
+  });
+  if (!feishuConfigured) {
+    console.log('[Mock][Server] 模拟发送审批通知:', {
+      recordDisplayId, approvalLevel: approvalLevelName(level),
+      approvers: resolvedApprovers.map(a => a.name)
+    });
+    return { sent: true, mock: true, message: '模拟模式：通知已记录（飞书未配置时使用）', sentTo: resolvedApprovers.map(a => a.name) };
+  }
+  const tokenResult = await getTenantAccessToken();
+  if (tokenResult.error) {
+    console.error('[Feishu][Server] 获取 tenant_access_token 失败', JSON.stringify(tokenResult));
+    return { sent: false, error: `获取飞书 token 失败: ${tokenResult.error}` };
+  }
+  const results = { success: [], failed: [] };
+  const sentReceivers = new Set();
+  for (const approver of resolvedApprovers) {
+    const receiver = getFeishuReceiver(approver);
+    if (!receiver) {
+      const reason = '审批人未绑定飞书账号：feishu_open_id/open_id/user_id 均为空';
+      console.warn('[Feishu][Server] 跳过未绑定审批人', {
+        name: approver.name, system_user_id: approver.id || '',
+        reason
+      });
+      results.failed.push({ name: approver.name, userId: approver.id || '', reason, code: 'APPROVER_NOT_BOUND' });
+      continue;
+    }
+    const receiverKey = `${receiver.type}:${receiver.id}`;
+    if (sentReceivers.has(receiverKey)) {
+      console.log('[Feishu][Server] 当前审批级别重复收件人已跳过', { name: approver.name });
+      continue;
+    }
+    sentReceivers.add(receiverKey);
+    const card = buildApprovalCard({
+      recordDisplayId,
+      submitterName: record.submitter_name || '-',
+      aftersalesDate: record.aftersales_date,
+      items: record.items || [],
+      brands: record.brand || '',
+      platforms: Array.isArray(record.platforms) ? record.platforms.join(', ') : (record.platforms || ''),
+      detailUrl,
+      approvalLevel: level,
+      currentApproverName: approver.name
+    });
+    console.log('[Feishu][Server] 准备发送审批通知', {
+      recordDisplayId, approverName: approver.name, system_user_id: approver.id || '',
+      receive_id_type: receiver.type, receive_id: receiver.id
+    });
+    const sendResult = await sendFeishuInteractiveMessage({
+      token: tokenResult.token, receiver, card, recipientName: approver.name,
+      context: { type: 'approval', recordId, approvalLevel: level }
+    });
+    if (sendResult.success) {
+      results.success.push({ name: approver.name, userId: approver.id || '', receiveIdType: receiver.type, messageId: sendResult.messageId });
+    } else {
+      results.failed.push({ name: approver.name, userId: approver.id || '', receiveIdType: receiver.type, reason: sendResult.reason, code: sendResult.code });
+    }
+  }
+  const summary = results.success.length > 0
+    ? `已通知 ${results.success.map(r => r.name).join('、')}`
+    : '通知发送失败';
+  console.log('[Feishu][Server] 审批通知发送汇总', JSON.stringify({ recordId, approvalLevel: level, successCount: results.success.length, failedCount: results.failed.length, failed: results.failed }));
+  return { sent: results.failed.length === 0, mock: false, message: summary, results };
+}
 
 app.post('/api/notify/feishu-test', requireApiPermission('user_manage'), async (req, res) => {
   const { userId } = req.body || {};

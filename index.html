@@ -2121,7 +2121,7 @@ async function getDefaultFeishuRoleId(){
   return viewerRole ? viewerRole.id : 'role_viewer';
 }
 
-let currentDetailId=null, currentApprovalRecordId=null, pendingAttachments=[];
+let currentDetailId=null, currentApprovalRecordId=null, pendingAttachments=[], approvalUploadError=false;
 let listPage=1, listPageSize=20, prodPage=1, prodPageSize=20, apprPage=1, apprPageSize=20;
 
 // ==================== MIGRATION ====================
@@ -5493,7 +5493,7 @@ function canApproveRecord(record){
   return hasPermission('approval_level'+level)&&record['approver_level'+level+'_id']===user.id;
 }
 
-async function executeApproval(recordId, action, comment, returnDate, attachments){
+async function executeApproval(recordId, action, comment, returnDate, attachments, erpScreenshots){
   const records=await getRecords();
   const idx=records.findIndex(r=>String(r.id)===String(recordId));
   if(idx<0) return false;
@@ -5501,86 +5501,52 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
   const user=getCurrentUser();
   const level=record.current_approval_level;
 
+  // 仅做本地前置校验（与服务端保持一致），【不修改任何业务数据对象】。
+  // 审批状态推进、下一层/终审判断、approval_history 构造一律以服务端为唯一权威。
   const permKey='approval_level'+level;
   if(!hasPermission(permKey)){ showFlash(t('flash.noLevelPermission'),'danger'); return false; }
 
   const approverIdField='approver_level'+level+'_id';
   if(record[approverIdField]!==user.id){ showFlash(t('flash.notLevelApprover'),'danger'); return false; }
 
-  const now=new Date().toISOString();
-  record.approval_history.push({
-    level, action,
-    operator_id:user.id,
-    operator_name:user.name,
-    comment:comment||'',
-    return_date:returnDate||null,
-    attachments:attachments||[],
-    timestamp:now
-  });
-
-  if(action==='reject'){
-    record.status='审批拒绝';
-    record.current_approval_level=0;
-  }else{
-    // 审批通过：找下一个已填写的审批级别
-    const nextLevel=findNextApprovalLevel(record, level);
-    if(nextLevel>0){
-      record.status=getLevelStatusText(nextLevel);
-      record.current_approval_level=nextLevel;
-    }else{
-      record.status='审批通过';
-      record.current_approval_level=0;
-      // 治本：审批通过时，凡明细属于「可二次销售(ERP入库)」类型，无论是否填写退货日期，均自动置为已处理；
-      // 其他处理类型(待换彩盒/待补配件/待RMA/待报废)不受影响。
-      const autoCompleteDate = returnDate || now;
-      (record.items||[]).forEach((item,itemIndex)=>{
-        normalizeProcessItem(item);
-        const rawType=(item.process_type||'').toString();
-        const rawReason=(item.return_reason||'').toString();
-        const isResellable =
-            rawType.toLowerCase()==='erp'
-         || rawType==='ERP入库'
-         || rawReason==='可二次销售'
-         || rawReason.toLowerCase()==='resellable';
-        if(isResellable && itemProcessProgress(item)!=='completed'){
-          const oldProgress=itemProcessProgress(item);
-          item.process_progress='completed';
-          item.process_status='已处理';
-          item.process_completed_date=autoCompleteDate;
-          item.process_status_updated_at=now;
-          if(returnDate){ item.return_stockin_date=returnDate; } // 退货日期仅作可选补充，不阻断 completed
-          addProcessLog(record,itemIndex,{
-            operator_id:user.id,
-            operator_name:user.name,
-            processed_at:now,
-            process_date:returnDate||'',
-            process_type:'erp',
-            old_progress:oldProgress,
-            new_progress:'completed',
-            remark:comment||'',
-            attachments:attachments||[],
-            erp_return_date:returnDate||''
-          });
-        }
-      });
-    }
-  }
-
-  record.updated_at=now;
+  // ERP 截图引用仅以 URL 形式随审批请求提交；服务端基于数据库当前 items 写入正确位置。
+  const erpMap = (erpScreenshots && typeof erpScreenshots === 'object' && !Array.isArray(erpScreenshots))
+    ? Object.fromEntries(Object.entries(erpScreenshots).map(([k, v]) => [k, Array.isArray(v) ? v.filter(u => typeof u === 'string' && /^(\/uploads\/|https?:\/\/)/.test(u)) : []]))
+    : {};
+  // 仅提交最小字段；不作任何本地状态推进。失败则本地对象保持原状；成功则用服务端返回值刷新。
   try {
-    await saveRecordAsync(record);
-  } catch(e) {
+    const res = await fetch(`/api/records/${encodeURIComponent(recordId)}/approval`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        action,
+        comment: comment || '',
+        return_date: returnDate || null,
+        approval_attachments: Array.isArray(attachments)
+          ? attachments.map(a => ({ name: a.name, url: a.url || (a.data ? a.data : '') }))
+          : [],
+        expected_level: level,
+        erp_screenshots: erpMap
+      })
+    });
+    if (!res.ok) {
+      let msg = '';
+      try { const j = await res.json(); msg = (j && j.error) ? j.error : ''; } catch (_) {}
+      console.error('审批保存失败:', res.status, msg);
+      showFlash((msg ? msg + ' ' : '') + t('flash.saveFailed'), 'danger');
+      return false; // 本地 record 未被修改，保持原状态
+    }
+    // 成功：用服务端返回的最新记录替换本地缓存，杜绝前端自行推进状态。
+    // 飞书通知已由服务端在保存事务 COMMIT 之后统一触发，前端不再直接调用通知接口。
+    const saved = await res.json();
+    const i = records.findIndex(r => String(r.id) === String(recordId));
+    if (i >= 0) records[i] = saved;
+    return saved;
+  } catch (e) {
     console.error('审批保存失败:', e);
     showFlash(t('flash.saveFailed'), 'danger');
-    return false;
+    return false; // 网络异常同样不改变本地对象
   }
-  // 如果审批通过且流转到下一级，发送飞书通知给下一级审批人（非阻塞，不拖慢审批响应）
-  if(action==='approve'&&record.current_approval_level>0){
-    sendApprovalNotification(record).catch(err => {
-      console.warn('[Notify] 审批通知发送失败（不影响审批结果）:', err?.message || err);
-    });
-  }
-  return true;
 }
 
 // ==================== APPROVAL PAGE ====================
@@ -5772,6 +5738,7 @@ async function openLegacyApprovalModal(recordId){
   document.getElementById('appr-return-date').value='';
   document.getElementById('appr-comment').value='';
   pendingAttachments=[];
+  approvalUploadError=false;
   renderPendingAttachments();
   document.getElementById('appr-storage-warning').style.display='none';
 
@@ -5783,6 +5750,7 @@ function closeApprovalModal(){
   currentApprovalRecordId=null;
   pendingAttachments=[];
   pendingErpScreenshots={};
+  approvalUploadError=false;
 }
 
 async function doApproval(action, source='modal'){
@@ -5792,6 +5760,14 @@ async function doApproval(action, source='modal'){
   const rejectBtn = document.querySelector(`button[onclick="doApproval('reject','${source}')"]`);
   if(approveBtn){ approveBtn.disabled=true; approveBtn.dataset.originalText=approveBtn.textContent; approveBtn.textContent='...'; }
   if(rejectBtn){ rejectBtn.disabled=true; }
+
+  // 附件上传失败时（网络/存储错误）禁止提交审批，避免静默丢失附件
+  if (approvalUploadError) {
+    showFlash(t('error.uploadFailed', { message: '' }) || '附件上传失败，请移除失败附件后重试', 'danger');
+    if (approveBtn) { approveBtn.disabled = false; approveBtn.textContent = approveBtn.dataset.originalText || '审批通过'; }
+    if (rejectBtn) { rejectBtn.disabled = false; }
+    return;
+  }
 
   approvalAttachmentTarget=source;
   const commentEl=document.getElementById(prefix+'-comment');
@@ -5804,22 +5780,16 @@ async function doApproval(action, source='modal'){
   const returnDate=returnDateEl ? normalizeDateInput(returnDateEl) : '';
   // 注：returnDate 不再是自动“已处理”的前提（见 executeApproval 内治本逻辑）；
   // 审批通过时 ERP入库/可二次销售 明细会自动 completed，退货日期仅作可选补充，不再强制阻断审批。
-  // Save pending ERP screenshots before approval
-  if(Object.keys(pendingErpScreenshots).length>0){
-    const records=recordsForValidation;
-    const record=recordForValidation;
-    if(record){
-      Object.entries(pendingErpScreenshots).forEach(([idx,shots])=>{
-        if(shots&&record.items[parseInt(idx)]){
-          record.items[parseInt(idx)].erp_screenshots=shots;
-        }
-      });
-      await saveRecordsAsync(records);
-    }
-  }
-  const success=await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
-  if(success){
+  // ERP 截图引用不再通过完整记录 PUT 保存；改为作为专用审批请求的一部分提交，
+  // 由服务端基于数据库当前 items 写入正确位置（避免重新序列化含历史 Base64 的完整 record 触发 413）。
+  const erpShots = pendingErpScreenshots;
+  const saved = await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments, erpShots);
+  if(saved){
+    // 审批成功（即使服务端通知失败也显示成功，仅追加非阻断提醒，绝不显示为失败）
     showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
+    if (saved.notify && saved.notify.sent === false && !saved.notify.skipped) {
+      showFlash(t('flash.approvalNotifyFailed') || '审批成功，但通知发送失败', 'warning');
+    }
     if(source==='modal') closeApprovalModal();
     else {
       pendingAttachments=[];
@@ -5840,6 +5810,22 @@ async function doApproval(action, source='modal'){
   }
 }
 
+// 上传 ERP 入库截图并仅保留引用 URL（避免 base64 写入记录导致 413）
+async function uploadErpScreenshot(file, itemIndex){
+  try{
+    const fd=new FormData();
+    fd.append('files', file);
+    fd.append('record_id', currentApprovalRecordId || '');
+    fd.append('item_index', String(itemIndex));
+    const res=await fetch('/api/attachments/upload', { method:'POST', headers:getAuthHeadersMulti(), body:fd });
+    if(!res.ok){ let m=''; try{const j=await res.json(); m=j&&j.error?j.error:'';}catch(_){} showFlash(t('error.uploadFailed',{msg:m}),'warning'); return null; }
+    const arr=await res.json();
+    const att=Array.isArray(arr)?arr[0]:arr;
+    if(!att) return null;
+    return att.path || ('/uploads/'+att.filename);
+  }catch(e){ console.error('ERP 截图上传失败',e); showFlash(t('error.uploadFailed',{msg:''}),'warning'); return null; }
+}
+
 async function triggerErpUpload(itemIndex){
   const records=await getRecords();
   const record=records.find(r=>String(r.id)===String(currentApprovalRecordId));
@@ -5847,26 +5833,24 @@ async function triggerErpUpload(itemIndex){
   const input=document.createElement('input');
   input.type='file';
   input.accept='image/*';
-  input.onchange=function(e){
+  input.onchange=async function(e){
     const file=e.target.files[0];
     if(!file) return;
     if(file.size>2*1024*1024){ showFlash(t('error.imageSize'),'warning'); return; }
-    const reader=new FileReader();
-    reader.onload=function(ev){
-      if(!pendingErpScreenshots[itemIndex]) pendingErpScreenshots[itemIndex]=[];
-      pendingErpScreenshots[itemIndex].push(ev.target.result);
-      const cell=document.getElementById('erp-cell-'+itemIndex);
-      if(cell){
-        const img=document.createElement('img');
-        img.src=ev.target.result;
-        img.className='erp-screenshot-thumb';
-        img.onclick=function(){ previewErpScreenshot(this); };
-        const uploadBtn=cell.querySelector('.erp-upload-btn');
-        if(uploadBtn) cell.insertBefore(img,uploadBtn);
-        else cell.appendChild(img);
-      }
-    };
-    reader.readAsDataURL(file);
+    const url=await uploadErpScreenshot(file, itemIndex);
+    if(!url) return;
+    if(!pendingErpScreenshots[itemIndex]) pendingErpScreenshots[itemIndex]=[];
+    pendingErpScreenshots[itemIndex].push(url);
+    const cell=document.getElementById('erp-cell-'+itemIndex);
+    if(cell){
+      const img=document.createElement('img');
+      img.src=url;
+      img.className='erp-screenshot-thumb';
+      img.onclick=function(){ previewErpScreenshot(this); };
+      const uploadBtn=cell.querySelector('.erp-upload-btn');
+      if(uploadBtn) cell.insertBefore(img,uploadBtn);
+      else cell.appendChild(img);
+    }
   };
   input.click();
 }
@@ -5941,17 +5925,35 @@ function handleFileSelect(event, target='modal'){
   event.target.value='';
 }
 
+// 仅发送鉴权头、不带 Content-Type（FormData 需由浏览器自动设置 multipart boundary）
+function getAuthHeadersMulti(){
+  const h=getAuthHeaders(); delete h['Content-Type']; return h;
+}
+// 先上传到服务端，仅保留引用（避免把 base64 写入审批记录导致 413）
+async function uploadApprovalAttachment(file){
+  try{
+    const fd=new FormData();
+    fd.append('files', file);
+    fd.append('record_id', currentApprovalRecordId || '');
+    const res=await fetch('/api/attachments/upload', { method:'POST', headers:getAuthHeadersMulti(), body:fd });
+    if(!res.ok){ let m=''; try{const j=await res.json(); m=j&&j.error?j.error:'';}catch(_){} showFlash(t('error.uploadFailed',{msg:m}),'warning'); return null; }
+    const arr=await res.json();
+    const att=Array.isArray(arr)?arr[0]:arr;
+    if(!att) return null;
+    return { name: att.original_name || file.name, url: att.path || ('/uploads/'+att.filename) };
+  }catch(e){ console.error('审批附件上传失败',e); showFlash(t('error.uploadFailed',{msg:''}),'warning'); return null; }
+}
+
 function addApprovalFiles(files, target='modal'){
   setApprovalAttachmentTarget(target);
   Array.from(files).forEach(file=>{
     if(!file.type.startsWith('image/')){ showFlash(t('error.notImage', {filename: file.name}),'warning'); return; }
     if(file.size>2*1024*1024){ showFlash(t('error.imageSize'),'warning'); return; }
-    const reader=new FileReader();
-    reader.onload=function(e){
-      pendingAttachments.push({name:file.name, type:file.type, data:e.target.result});
-      renderPendingAttachments();
-    };
-    reader.readAsDataURL(file);
+      uploadApprovalAttachment(file).then(ref=>{
+        if(ref) pendingAttachments.push(ref);
+        else approvalUploadError = true;
+        renderPendingAttachments();
+      });
   });
 }
 
@@ -5997,13 +5999,12 @@ function handleApprovalPasteEvent(e, target='modal'){
     if(item.type.indexOf('image')!==-1){
       const blob=item.getAsFile();
       if(!blob||blob.size>2*1024*1024){ showFlash(t('flash.pasteImageTooLarge'),'warning'); return; }
-      const reader=new FileReader();
-      reader.onload=function(ev){
-        pendingAttachments.push({name:'paste_'+Date.now()+'.png', type:blob.type||'image/png', data:ev.target.result});
+      uploadApprovalAttachment(blob).then(ref=>{
+        if(ref) pendingAttachments.push(ref);
+        else approvalUploadError = true;
         setApprovalAttachmentTarget(target);
         renderPendingAttachments();
-      };
-      reader.readAsDataURL(blob);
+      });
       handled=true;
     }
   });
@@ -6014,10 +6015,10 @@ function handleApprovalPasteEvent(e, target='modal'){
 function renderPendingAttachments(){
   const container=getApprovalEl('appr-attachments');
   if(!container) return;
-  const sizeMB=pendingAttachments.reduce((sum,a)=>sum+(a.data.length*0.75/1024/1024),0);
+  const sizeMB=pendingAttachments.reduce((sum,a)=>sum+((a.url||a.data||'').length*0.75/1024/1024),0);
   container.innerHTML=pendingAttachments.map((att,i)=>`
     <div style="position:relative;display:inline-block;width:72px;height:72px;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0">
-      <img src="${att.data}" class="attachment-thumb" style="width:100%;height:100%;object-fit:cover" onclick="event.stopPropagation();previewPendingImage(${i})" title="${esc(att.name)}">
+      <img src="${att.url||att.data}" class="attachment-thumb" style="width:100%;height:100%;object-fit:cover" onclick="event.stopPropagation();previewPendingImage(${i})" title="${esc(att.name)}">
       <button type="button" onclick="event.stopPropagation();removePendingAttachment(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1">&times;</button>
     </div>
   `).join('');
@@ -6028,8 +6029,8 @@ function renderPendingAttachments(){
 function renderAttachmentsHTML(attachments){
   return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">`+
     attachments.map((att,i)=>`
-      <div style="width:56px;height:56px;border:1px solid var(--border);border-radius:4px;overflow:hidden;cursor:pointer" class="attachment-thumb" onclick="event.stopPropagation();previewHistoryImage(this)" data-src="${att.data}">
-        <img src="${att.data}" style="width:100%;height:100%;object-fit:cover" title="${esc(att.name||'')}">
+      <div style="width:56px;height:56px;border:1px solid var(--border);border-radius:4px;overflow:hidden;cursor:pointer" class="attachment-thumb" onclick="event.stopPropagation();previewHistoryImage(this)" data-src="${att.url||att.data}">
+        <img src="${att.url||att.data}" style="width:100%;height:100%;object-fit:cover" title="${esc(att.name||'')}">
       </div>
     `).join('')+`</div>`;
 }
@@ -6037,7 +6038,7 @@ function renderAttachmentsHTML(attachments){
 function previewPendingImage(index){
   const att=pendingAttachments[index];
   if(!att) return;
-  document.getElementById('image-preview-img').src=att.data;
+  document.getElementById('image-preview-img').src=att.url||att.data;
   document.getElementById('image-preview-overlay').classList.remove('hidden');
 }
 
