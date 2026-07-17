@@ -1197,9 +1197,31 @@ app.post('/api/records/:id/approval', async (req, res) => {
       return res.status(403).json({ error: '无权限或非本层级审批人，无法审批' });
     }
 
+    // 审批人姓名：绝不信任 X-User-Role（其为 role_id，会写成 role_admin）。
+    // 在事务内用 currentUserId 反查 users 表，取 name → username → currentUserId（永不回退 role id）。
+    // 查询失败按现有事务异常流程抛出并回滚（见下方外層 catch），不吞错、不继续审批。
+    let operatorName = req.currentUserId;
+    const uRes = await client.query(
+      `SELECT
+         COALESCE(
+           NULLIF(TRIM(name), ''),
+           NULLIF(TRIM(username), ''),
+           $1
+         ) AS operator_name
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [req.currentUserId]
+    );
+    if (uRes.rows.length > 0 && uRes.rows[0].operator_name) {
+      operatorName = uRes.rows[0].operator_name;
+    } else {
+      console.warn('[Approval] 审批用户未在 users 表中找到，历史记录将回退为 user_id:', req.currentUserId);
+    }
+
     const applied = applyApprovalTransition(
       record,
-      { action, comment, return_date, approval_attachments, expected_level, operator_name: req.currentUserRole || req.currentUserId },
+      { action, comment, return_date, approval_attachments, expected_level, operator_name: operatorName },
       req.currentUserId
     );
     if (applied.error) {
