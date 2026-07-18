@@ -301,7 +301,14 @@
   "approvalStatusDisplay": {
     "completed": "Disetujui",
     "pending": "Menunggu Persetujuan",
-    "rejected": "Ditolak"
+    "rejected": "Ditolak",
+    "draft": "Draft"
+  },
+  "result": {
+    "draftSaved": "Draf berhasil disimpan",
+    "submittedForApproval": "Berhasil dikirim untuk persetujuan",
+    "saveFailed": "Gagal menyimpan draf",
+    "submitFailed": "Gagal mengirim untuk persetujuan"
   },
   "process": {
     "pendingErp": "Menunggu Penerimaan ERP",
@@ -366,7 +373,10 @@
     "shopCustomerNoMatch": "Tidak ada pelanggan cocok",
     "skuNoMatch": "Tidak ada SKU cocok",
     "btnSubmit": "Ajukan Approval",
+    "btnSubmitting": "Mengajukan…",
     "btnSaveDraft": "Simpan Draft",
+    "btnSavingDraft": "Menyimpan draf, harap tunggu…",
+    "btnSubmittingApproval": "Mengirim untuk persetujuan, harap tunggu…",
     "btnCancel": "Batal",
     "flow": {
       "noEnabled": "Tidak ada alur persetujuan yang aktif. Harap aktifkan di Manajemen Alur Persetujuan.",
@@ -912,9 +922,12 @@
     "adminLogin": "Admin {name} sudah masuk",
     "submitSuccess": "Sudah diajukan. Menunggu approval Level 1.",
     "draftSaved": "Draft disimpan",
+    "submittingApproval": "Sedang mengajukan approval, mohon tunggu…",
+    "savingDraft": "Menyimpan draft, mohon tunggu…",
     "approved": "Disetujui",
     "rejected": "Ditolak",
     "saveFailed": "Gagal menyimpan persetujuan. Silakan coba lagi.",
+    "saveActionFailed": "Operasi gagal. Silakan coba lagi.",
     "recordDeleted": "Catatan dihapus",
     "userCreated": "Pengguna dibuat",
     "userUpdated": "Pengguna diperbarui",

@@ -903,6 +903,27 @@ select option{background:var(--card-bg);color:var(--text)}
 .action-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .empty-icon .ui-ico{width:44px;height:44px;color:var(--text-muted)}
 .table-section-icon .ui-ico{width:18px;height:18px}
+
+/* ===== 中央操作结果卡片（仅 Save Draft / Submit for Approval 成功与失败） ===== */
+.btn-spinner{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:btn-spin .7s linear infinite;}
+@keyframes btn-spin{to{transform:rotate(360deg);}}
+.center-result-card{
+  position:fixed;left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(.96);
+  width:320px;max-width:340px;min-height:72px;box-sizing:border-box;
+  display:flex;align-items:center;gap:14px;padding:16px 20px;
+  background:rgba(255,255,255,.82);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  border:1px solid rgba(0,0,0,.08);border-radius:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.12);
+  color:#1d1d1f;z-index:9999;opacity:0;pointer-events:none;
+  transition:opacity .28s ease, transform .28s ease;
+}
+.center-result-card.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.center-result-card .crc-icon{flex:0 0 auto;width:22px;height:22px;}
+.center-result-card .crc-msg{font-size:16px;font-weight:600;line-height:1.35;}
+.center-result-card.crc-error{border-color:rgba(255,59,48,.35);}
+@media (max-width:460px){ .center-result-card{width:calc(100vw - 32px);} }
 </style>
 </head>
 <body>
@@ -1216,7 +1237,7 @@ select option{background:var(--card-bg);color:var(--text)}
               </div>
               <div class="record-fs-footer form-actions">
                 <button type="submit" class="btn btn-primary" id="form-submit-btn" data-i18n="form.btnSubmit"></button>
-                <button type="button" class="btn btn-secondary" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
+                <button type="button" class="btn btn-secondary" id="form-draft-btn" onclick="saveAsDraft()" data-i18n="form.btnSaveDraft"></button>
                 <button type="button" class="btn btn-ghost" onclick="closeRecordForm()" data-i18n="form.btnCancel"></button>
               </div>
             </form>
@@ -1683,13 +1704,14 @@ const APPROVAL_STATUS_CANON = {
   '已完成':'completed', 'completed':'completed', 'approved':'completed', '审批通过':'completed',
   '一级审批通过':'completed', '二级审批通过':'completed', '三级审批通过':'completed',
   '待审批':'pending', 'pending':'pending', 'pending_approval':'pending', 'pendingApproval':'pending',
-  '待一级审批':'pending', '待二级审批':'pending', '待三级审批':'pending', '草稿':'pending',
+  '待一级审批':'pending', '待二级审批':'pending', '待三级审批':'pending', '草稿':'draft',
   '已拒绝':'rejected', 'rejected':'rejected', '审批拒绝':'rejected', '已驳回':'rejected'
 };
 const APPROVAL_STATUS_LABEL_KEY = {
   'completed':'approvalStatusDisplay.completed',
   'pending':'approvalStatusDisplay.pending',
-  'rejected':'approvalStatusDisplay.rejected'
+  'rejected':'approvalStatusDisplay.rejected',
+  'draft':'approvalStatusDisplay.draft'
 };
 // 按当前语言翻译审批状态; 未知值兜底返回原始值, 避免空白
 function tApprovalStatus(value){
@@ -5328,44 +5350,89 @@ function renderFlowPreview(flow){
   preview.style.display = 'flex';
 }
 
+let _formSubmitting = false;
+function setFormButtonsBusy(activeBtnId, loadingKey){
+  ['form-submit-btn','form-draft-btn'].forEach(function(id){
+    const b=document.getElementById(id); if(!b) return;
+    b.disabled=true;
+    if(id===activeBtnId){
+      b.dataset._origHtml=b.innerHTML;
+      b.innerHTML='<span class="btn-spinner" aria-hidden="true"></span>'+t(loadingKey);
+    }
+  });
+}
+function resetFormButtons(){
+  ['form-submit-btn','form-draft-btn'].forEach(function(id){
+    const b=document.getElementById(id); if(!b) return;
+    b.disabled=false;
+    if(b.dataset._origHtml){ b.innerHTML=b.dataset._origHtml; delete b.dataset._origHtml; }
+  });
+}
+// 中央操作结果卡片：仅服务于 Save Draft / Submit for Approval 的成功与失败。
+// 不重构全局 Toast；Mac 风格（毛玻璃、居中、淡入淡出、不挡列表、无关闭按钮）。
+let _centerResultTimer=null;
+function showCenterActionResult(type, message){
+  const old=document.getElementById('center-action-result');
+  if(old){ if(old._timer) clearTimeout(old._timer); old.remove(); }
+  const card=document.createElement('div');
+  card.id='center-action-result';
+  card.className='center-result-card '+(type==='success'?'crc-success':'crc-error');
+  const icon = type==='success'
+    ? '<svg class="crc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11" fill="#34c759"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '<svg class="crc-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11" fill="#ff3b30"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  card.innerHTML = icon + '<span class="crc-msg"></span>';
+  card.querySelector('.crc-msg').textContent = message;
+  document.body.appendChild(card);
+  // 强制回流后再加 show，触发淡入过渡
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ card.classList.add('show'); }); });
+  if(_centerResultTimer) clearTimeout(_centerResultTimer);
+  // 约 2 秒常规默认值（非业务规则），自然显示后淡出；不强制固定毫秒
+  _centerResultTimer = setTimeout(function(){
+    card.classList.remove('show');
+    setTimeout(function(){ if(card.parentNode) card.parentNode.removeChild(card); }, 420);
+  }, 2000);
+}
 async function submitForApproval(e){
   e.preventDefault();
+  if(_formSubmitting) return;
+  _formSubmitting = true;
+  setFormButtonsBusy('form-submit-btn', 'form.btnSubmittingApproval');
   const isEdit = !!currentEditingRecordId;
   if(isEdit){
-    if(!requirePermission('record_edit')) return;
+    if(!requirePermission('record_edit')){ resetFormButtons(); _formSubmitting=false; return; }
   } else {
-    if(!requirePermission('record_create')) return;
+    if(!requirePermission('record_create')){ resetFormButtons(); _formSubmitting=false; return; }
   }
 
   const aftersalesDate=getDateInputValue('f-aftersales-date');
-
-  if(!aftersalesDate){ showFlash(t('flash.selectAftersalesDate'),'warning'); return; }
+  if(!aftersalesDate){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.selectAftersalesDate'),'warning'); return; }
 
   const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
-  if(items.length===0){ showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
+  if(items.length===0){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
   for(let i=0;i<items.length;i++){
     const it=items[i];
-    if(!it.platform){ showFlash(`${t('flash.validation.platformRequired', {row: i+1})}`,'warning'); return; }
-    if(!it.sku_code){ showFlash(`${t('flash.validation.skuRequired', {row: i+1})}`,'warning'); return; }
-    if(!it.quantity||it.quantity<1){ showFlash(`${t('flash.validation.quantityMustBePositive', {row: i+1})}`,'warning'); return; }
-    if(!it.return_reason){ showFlash(`${t('flash.validation.returnReasonRequired', {row: i+1})}`,'warning'); return; }
-    if(!it.fault_description){ showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.platform){ resetFormButtons(); _formSubmitting=false; showFlash(`${t('flash.validation.platformRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.sku_code){ resetFormButtons(); _formSubmitting=false; showFlash(`${t('flash.validation.skuRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.quantity||it.quantity<1){ resetFormButtons(); _formSubmitting=false; showFlash(`${t('flash.validation.quantityMustBePositive', {row: i+1})}`,'warning'); return; }
+    if(!it.return_reason){ resetFormButtons(); _formSubmitting=false; showFlash(`${t('flash.validation.returnReasonRequired', {row: i+1})}`,'warning'); return; }
+    if(!it.fault_description){ resetFormButtons(); _formSubmitting=false; showFlash(`${t('flash.validation.faultDescriptionRequired', {row: i+1})}`,'warning'); return; }
   }
 
   // 校验审批流(由系统自动应用,用户无需选择)
   const flowId = _activeFlowId;
-  if(!flowId){ showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
+  if(!flowId){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
   const flow = _approvalFlowsCache.find(f => f.id === flowId);
-  if(!flow){ showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
+  if(!flow){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.selectApprovalFlow'),'warning'); return; }
   const flowNodes = (flow.nodes || []).slice(0, 3);
   // 第一个有 approver_id 的级别作为起始
   const firstIdx = flowNodes.findIndex(n => n.approver_id);
-  if(firstIdx < 0){ showFlash(t('flash.flowNoApprover'),'warning'); return; }
+  if(firstIdx < 0){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.flowNoApprover'),'warning'); return; }
   const firstLevel = firstIdx + 1;
   const levelNames = {1:'一级', 2:'二级', 3:'三级'};
 
-  // Collect unique platforms from items
-  const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+  try {
+    // Collect unique platforms from items
+    const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
 
   // Derive brand/model from first item's SKU
   const firstSku=items[0].sku_code;
@@ -5387,7 +5454,7 @@ async function submitForApproval(e){
   let record;
   if(isEdit){
     const idx=records.findIndex(r=>String(r.id)===String(currentEditingRecordId));
-    if(idx<0){ showFlash(t('flash.recordNotFound'),'warning'); return; }
+    if(idx<0){ throw new Error(t('flash.recordNotFound')); }
     record=records[idx];
     record.aftersales_date=aftersalesDate;
     record.platforms=platforms;
@@ -5437,27 +5504,37 @@ async function submitForApproval(e){
     }
   });
   await saveRecordsAsync(records);
-  showFlash(t('flash.approvalSubmitted') + t('approval.level' + firstLevel) + t('flash.approval'),'success');
-  // 发送飞书审批通知（非阻塞，不拖慢提交响应）
-  sendApprovalNotification(record).catch(err => {
-    console.warn('[Notify] 提交审批通知发送失败（不影响提交结果）:', err?.message || err);
-  });
-  closeRecordForm();
-  renderList();
+    // 发送飞书审批通知（非阻塞，不拖慢提交响应）
+    sendApprovalNotification(record).catch(err => {
+      console.warn('[Notify] 提交审批通知发送失败（不影响提交结果）:', err?.message || err);
+    });
+    _recordsCache=null; _cacheTimestamp=0;
+    // 确认保存成功后返回 RMA Cases，刷新列表与顶部数量，再在列表页中央显示成功卡片
+    showPage('list');
+    showCenterActionResult('success', t('result.submittedForApproval'));
+  } catch(err) {
+    showCenterActionResult('error', (t('result.submitFailed') || 'Failed to submit') + (err && err.message ? '：' + err.message : ''));
+  } finally {
+    resetFormButtons();
+    _formSubmitting = false;
+  }
 }
 
 async function saveAsDraft(){
+  if(_formSubmitting) return;
+  _formSubmitting = true;
+  setFormButtonsBusy('form-draft-btn', 'form.btnSavingDraft');
   const isEdit = !!currentEditingRecordId;
   if(isEdit){
-    if(!requirePermission('record_edit')) return;
+    if(!requirePermission('record_edit')){ resetFormButtons(); _formSubmitting=false; return; }
   } else {
-    if(!requirePermission('record_create')) return;
+    if(!requirePermission('record_create')){ resetFormButtons(); _formSubmitting=false; return; }
   }
   const aftersalesDate=getDateInputValue('f-aftersales-date');
-  if(!aftersalesDate){ showFlash(t('flash.fillAftersalesDate'),'warning'); return; }
+  if(!aftersalesDate){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.fillAftersalesDate'),'warning'); return; }
 
   const items=collectDetailItems().filter(it=>it.sku_code||it.order_no||it.fault_description);
-  if(items.length===0){ showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
+  if(items.length===0){ resetFormButtons(); _formSubmitting=false; showFlash(t('flash.addAtLeastOneDetail'),'warning'); return; }
   // Basic validation for quantities
   for(let i=0;i<items.length;i++){
     if(!items[i].quantity||items[i].quantity<1) items[i].quantity=1;
@@ -5465,7 +5542,8 @@ async function saveAsDraft(){
 
   const flowId = _activeFlowId;
 
-  const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
+  try {
+    const platforms=[...new Set(items.map(it=>it.platform).filter(Boolean))];
   const firstSku=items[0].sku_code;
   const products=await getProducts();
   const product=products.find(p=>p.sku_code===firstSku);
@@ -5483,7 +5561,7 @@ async function saveAsDraft(){
   let record;
   if(isEdit){
     const idx=records.findIndex(r=>String(r.id)===String(currentEditingRecordId));
-    if(idx<0){ showFlash(t('flash.recordNotFound'),'warning'); return; }
+    if(idx<0){ throw new Error(t('flash.recordNotFound')); }
     record=records[idx];
     record.aftersales_date=aftersalesDate;
     record.platforms=platforms;
@@ -5519,9 +5597,15 @@ async function saveAsDraft(){
     records.push(record);
   }
   await saveRecordsAsync(records);
-  showFlash(t('flash.draftSaved'),'success');
-  closeRecordForm();
-  renderList();
+    _recordsCache=null; _cacheTimestamp=0;
+    showPage('list');
+    showCenterActionResult('success', t('result.draftSaved'));
+  } catch(err) {
+    showCenterActionResult('error', (t('result.saveFailed') || 'Failed to save draft') + (err && err.message ? '：' + err.message : ''));
+  } finally {
+    resetFormButtons();
+    _formSubmitting = false;
+  }
 }
 
 // ==================== APPROVAL STATE MACHINE ====================
@@ -5845,24 +5929,26 @@ async function doApproval(action, source='modal'){
   const erpShots = pendingErpScreenshots;
   const saved = await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments, erpShots);
   if(saved){
-    // 审批成功（即使服务端通知失败也显示成功，仅追加非阻断提醒，绝不显示为失败）
-    showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
-    if (saved.notify && saved.notify.sent === false && !saved.notify.skipped) {
-      showFlash(t('flash.approvalNotifyFailed') || '审批成功，但通知发送失败', 'warning');
-    }
+    // 强制清除缓存，确保重新拉取最新数据（包含刚完成的审批结果）
+    _recordsCache=null;
+    _cacheTimestamp=0;
     if(source==='modal') closeApprovalModal();
     else {
       pendingAttachments=[];
       pendingErpScreenshots={};
     }
-    // 强制清除缓存，确保重新渲染时拉取最新数据（包含刚完成的审批结果）
-    _recordsCache=null;
-    _cacheTimestamp=0;
-    renderApproval();
-    if(document.getElementById('page-list').classList.contains('active')) renderList();
-    if(document.getElementById('page-detail').classList.contains('active')&&currentDetailId===currentApprovalRecordId){
-      await renderDetail(currentDetailId);
+    // 审批成功提示（即使服务端通知失败也显示成功，仅追加非阻断提醒，绝不显示为失败）
+    showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
+    if (saved.notify && saved.notify.sent === false && !saved.notify.skipped) {
+      showFlash(t('flash.approvalNotifyFailed') || '审批成功，但通知发送失败', 'warning');
     }
+    // 统一返回 RMA Approvals 的“待我审批 / Pending Approval”Tab：
+    // 当前用户已处理的记录会立即从自己的待办列表消失（renderApproval pending 过滤 + 缓存失效重拉）。
+    // 不得停留在审批详情页，也不得跳转到 RMA Cases。
+    document.getElementById('appr-search').value='';
+    document.getElementById('appr-tab').value='pending';
+    apprPage=1;
+    showPage('approval'); // 内部调用 renderApproval()，以 pending Tab 重新加载待办列表与数量
   }else{
     // 审批失败，恢复按钮状态
     if(approveBtn){ approveBtn.disabled=false; approveBtn.textContent=approveBtn.dataset.originalText||'审批通过'; }

@@ -301,7 +301,14 @@
   "approvalStatusDisplay": {
     "completed": "Approved",
     "pending": "Pending Approval",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "draft": "Draft"
+  },
+  "result": {
+    "draftSaved": "Draft saved",
+    "submittedForApproval": "Submitted for approval",
+    "saveFailed": "Failed to save draft",
+    "submitFailed": "Failed to submit"
   },
   "process": {
     "pendingErp": "Pending ERP Receipt",
@@ -366,7 +373,10 @@
     "shopCustomerNoMatch": "No matching customer",
     "skuNoMatch": "No matching SKU",
     "btnSubmit": "Submit for Approval",
+    "btnSubmitting": "Submitting…",
     "btnSaveDraft": "Save Draft",
+    "btnSavingDraft": "Saving draft, please wait...",
+    "btnSubmittingApproval": "Submitting, please wait...",
     "btnCancel": "Cancel",
     "flow": {
       "noEnabled": "No enabled approval flow. Please enable one in Approval Flow Management.",
@@ -912,9 +922,12 @@
     "adminLogin": "Admin {name} has signed in",
     "submitSuccess": "Submitted for approval. Waiting for Level 1 approval.",
     "draftSaved": "Draft saved",
+    "submittingApproval": "Submitting for approval, please wait…",
+    "savingDraft": "Saving draft, please wait…",
     "approved": "Approved",
     "rejected": "Rejected",
     "saveFailed": "Failed to save approval. Please retry.",
+    "saveActionFailed": "Operation failed. Please retry.",
     "recordDeleted": "Record deleted",
     "userCreated": "User created",
     "userUpdated": "User updated",

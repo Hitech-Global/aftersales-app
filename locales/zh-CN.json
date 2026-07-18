@@ -301,7 +301,14 @@
   "approvalStatusDisplay": {
     "completed": "审批通过",
     "pending": "待审批",
-    "rejected": "已拒绝"
+    "rejected": "已拒绝",
+    "draft": "草稿"
+  },
+  "result": {
+    "draftSaved": "草稿保存成功",
+    "submittedForApproval": "已成功提交审批",
+    "saveFailed": "草稿保存失败",
+    "submitFailed": "提交审批失败"
   },
   "process": {
     "pendingErp": "待ERP入库",
@@ -366,7 +373,10 @@
     "shopCustomerNoMatch": "无匹配客户",
     "skuNoMatch": "无匹配 SKU",
     "btnSubmit": "📤 提交审批",
+    "btnSubmitting": "正在提交审批…",
     "btnSaveDraft": "💾 保存草稿",
+    "btnSavingDraft": "正在保存草稿，请稍候…",
+    "btnSubmittingApproval": "正在提交审批，请稍候…",
     "btnCancel": "取消",
     "flow": {
       "noEnabled": "暂无可用的审批流,请先在「审批流管理」中启用",
@@ -912,9 +922,12 @@
     "adminLogin": "管理员 {name} 已登录",
     "submitSuccess": "审批已提交，等待一级审批",
     "draftSaved": "草稿已保存",
+    "submittingApproval": "正在提交审批，请勿重复操作",
+    "savingDraft": "正在保存草稿，请勿重复操作",
     "approved": "审批通过",
     "rejected": "已拒绝",
     "saveFailed": "审批保存失败，请重试。",
+    "saveActionFailed": "操作失败，请重试。",
     "recordDeleted": "记录已删除",
     "userCreated": "用户已创建",
     "userUpdated": "用户已更新",
