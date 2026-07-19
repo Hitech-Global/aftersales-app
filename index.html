@@ -361,6 +361,45 @@ input::placeholder,textarea::placeholder{color:var(--text-placeholder);opacity:1
 .afc-tag{font-size:11px;padding:2px 9px;background:rgba(46,157,82,.12);color:var(--primary);border:1px solid rgba(46,157,82,.3);border-radius:999px;font-weight:500}
 .approval-flow-card.empty{padding:14px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-secondary)}
 .approval-flow-card.empty .afc-name{font-weight:500}
+/* ===== CC 抄送选择器（macOS 联系人浮层）— AFTERSALES-CC-UI-01 ===== */
+.cc-summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cc-add-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px dashed var(--border);background:var(--card-bg);border-radius:16px;font-size:12px;color:var(--text-secondary);cursor:pointer;transition:border-color .15s,color .15s}
+.cc-add-btn:hover{border-color:#007AFF;color:#007AFF}
+.cc-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 3px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;font-size:12px;max-width:200px}
+.cc-chip-avatar{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;flex-shrink:0}
+.cc-chip-name{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-chip-x{border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.cc-chip-x:hover{color:var(--danger)}
+.cc-chip-disabled{opacity:.6}
+.cc-chip-disabled .cc-chip-name{color:var(--text-muted)}
+.cc-more{display:inline-flex;align-items:center;padding:4px 9px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--text-muted)}
+.cc-count{font-size:11px;color:var(--text-muted);margin-top:8px}
+.cc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;display:flex;align-items:center;justify-content:center;--cc-blue:#007AFF;animation:ccFade .16s ease}
+@keyframes ccFade{from{opacity:0}to{opacity:1}}
+.cc-sheet{width:440px;max-width:92vw;max-height:80vh;background:var(--card-bg);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden;animation:ccPop .18s ease}
+@keyframes ccPop{from{transform:translateY(8px) scale(.98);opacity:.6}to{transform:none;opacity:1}}
+.cc-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.cc-sheet-title{font-size:15px;font-weight:600;color:var(--text)}
+.cc-sheet-close{border:none;background:transparent;font-size:20px;color:var(--text-muted);cursor:pointer;line-height:1}
+.cc-sheet-search{padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.cc-sheet-search input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-secondary);color:var(--text);outline:none}
+.cc-sheet-search input:focus{border-color:var(--cc-blue)}
+.cc-sheet-body{overflow-y:auto;padding:6px 10px;flex:1}
+.cc-sheet-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:13px}
+.cc-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px;cursor:pointer}
+.cc-row:hover{background:var(--bg-secondary)}
+.cc-row.on{background:rgba(0,122,255,.12)}
+.cc-avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;flex-shrink:0}
+.cc-row-main{flex:1;min-width:0}
+.cc-row-name{font-size:14px;font-weight:500;color:var(--text)}
+.cc-row-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.cc-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:13px;flex-shrink:0}
+.cc-row.on .cc-check{background:var(--cc-blue);border-color:var(--cc-blue)}
+.cc-sheet-foot{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
+.cc-btn{padding:7px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--border)}
+.cc-btn-cancel{background:var(--card-bg);color:var(--text)}
+.cc-btn-confirm{background:var(--cc-blue);border-color:var(--cc-blue);color:#fff;font-weight:500}
+@media (prefers-reduced-motion: reduce){.cc-overlay,.cc-sheet{animation:none}}
 input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .form-actions{display:flex;gap:12px;margin-top:8px}
 /* 全屏新建表单：分组卡片 + 居中内容 + 底部固定栏优化 (v3.11.4) */
@@ -1405,16 +1444,6 @@ select option{background:var(--card-bg);color:var(--text)}
       </div>
     </div>
 
-    <div id="page-cc" class="page">
-      <div class="page-header">
-        <h2 data-i18n="cc.title"></h2>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-secondary btn-sm" onclick="renderCc()" data-i18n="customers.btnRefresh"></button>
-        </div>
-      </div>
-      <div id="cc-table-area"></div>
-    </div>
-
   </main>
 </div>
 
@@ -2375,7 +2404,6 @@ const PAGE_PERMISSIONS = {
   'customers': 'system_config'
 };
 function canAccessPage(page, recordId){
-  if(page==='cc') return !!getCurrentUser(); // 抄送给我的：任意登录用户可访问（只读）
   // 详情页：有 record_view 可直接访问；CC 抄送用户（无 record_view）可只读访问其被抄送的记录
   if(page==='detail'){
     if(hasPermission('record_view')) return true;
@@ -3271,14 +3299,12 @@ function renderSidebar(){
     roles:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     customers:'<svg class="line-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/></svg>',
     dictionaries:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
-    'approval-flows':'<svg class="line-icon" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>',
-    cc:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>'
+    'approval-flows':'<svg class="line-icon" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>'
   };
   const groups=[
     {id:'aftersales', title:t('nav.group.aftersales'), items:[
       {id:'overview', icon:ICON.overview, label:t('nav.overview'), perm:'record_view'},
       {id:'list', icon:ICON.list, label:t('nav.list'), perm:'record_view'},
-      {id:'cc', icon:ICON.cc, label:t('nav.cc'), perm:null},
     ]},
     {id:'approval', title:t('nav.group.approval'), items:[
       {id:'approval', icon:ICON.approval, label:t('nav.approval'), perm:['approval_level1','approval_level2','approval_level3','record_view']},
@@ -3334,7 +3360,7 @@ function showPage(page, recordId=null){
   }
   setSidebarActive(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries'), 'customers':t('page.title.customers'), 'cc':t('page.title.cc')};
+  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries'), 'customers':t('page.title.customers')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
@@ -3350,7 +3376,6 @@ function showPage(page, recordId=null){
   else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); renderApprovalFlows(); }
   else if(page==='dictionaries'){ document.getElementById('page-dictionaries').classList.add('active'); renderDictionaries(); }
   else if(page==='customers'){ document.getElementById('page-customers').classList.add('active'); renderCustomers(); }
-  else if(page==='cc'){ document.getElementById('page-cc').classList.add('active'); renderCc(); }
 }
 
 function updatePermissionedUI(){
@@ -3955,51 +3980,8 @@ function switchListMode(mode){
   renderList();
 }
 
-async function renderCc(){
-  const area=document.getElementById('cc-table-area');
-  if(!area) return;
-  area.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">${t('cc.loading')}</div>`;
-  try{
-    const resp=await fetch('/api/records/cc',{headers:getAuthHeaders()});
-    const result=await resp.json();
-    const records=Array.isArray(result)?result:(result.data||result.rows||[]);
-    _ccRecordsCache=records; // 缓存供详情页 CC 只读回退定位
-    if(!records.length){
-      area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('cc.empty')}</p></div>`;
-      return;
-    }
-    let html=`<div class="table-container"><table class="data-table"><thead><tr>
-      <th>${t('cc.col.id')}</th>
-      <th>${t('cc.col.submitter')}</th>
-      <th>${t('cc.col.status')}</th>
-      <th>${t('cc.col.process')}</th>
-      <th>${t('cc.col.created')}</th>
-      <th></th>
-    </tr></thead><tbody>`;
-    records.forEach(r=>{
-      const rid=escAttr(String(r.id));
-      html+=`<tr class="row-clickable" onclick="showPage('detail','${rid}')">
-        <td>${esc(String(r.id))}</td>
-        <td>${esc(r.submitter_name||'-')}</td>
-        <td>${esc(r.approval_status||'-')}</td>
-        <td>${esc(r.process_progress||'-')}</td>
-        <td class="cell-date">${formatDate(r.created_at)}</td>
-        <td class="cell-actions"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();showPage('detail','${rid}')">${t('cc.action.view')}</button></td>
-      </tr>`;
-    });
-    html+=`</tbody></table></div>`;
-    area.innerHTML=html;
-  }catch(e){
-    // 401 会话失效 → 回登录；其余错误明确提示，不得伪装成空列表
-    if(e&&e.status===401){
-      showFlash(t('flash.sessionExpired')||'会话已失效，请重新登录','warning');
-      setTimeout(()=>{ window.location.href='/login'; }, 600);
-      return;
-    }
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${t('detail.serviceUnavailable')||'服务暂不可用，请稍后重试'}</p></div>`;
-  }
-}
-
+// [AFTERSALES-CC-UI-01] renderCc removed: the standalone "CC to Me" page was deleted.
+// Backend /api/records/cc is intentionally kept (feishu read-only detail view relies on it).
 async function renderList(){
   const seq=++_renderListSeq;
   await updateBrandFilter();
@@ -4427,7 +4409,7 @@ async function renderDetail(id){
     }
     // 三.6：5xx / 网络错误 → 明确提示服务不可用，不得被 catch 静默伪装成正常缓存结果
     if(fetchStatus && fetchStatus!==403 && fetchStatus!==200){
-      detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;&#xFE0F;</div><p>${t('detail.serviceUnavailable')||'服务暂不可用，请稍后重试'}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'cc')">${t('detail.btnBack')}</button></div>`;
+      detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;&#xFE0F;</div><p>${t('detail.serviceUnavailable')||'服务暂不可用，请稍后重试'}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'overview')">${t('detail.btnBack')}</button></div>`;
       return;
     }
 
@@ -4441,7 +4423,7 @@ async function renderDetail(id){
       r=_ccRecordsCache.find(x=>String(x.id)===String(id));
     }
     if(!r){
-      detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'cc')">${t('detail.btnBack')}</button></div>`;
+      detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'overview')">${t('detail.btnBack')}</button></div>`;
       return;
     }
   const products=await getProducts();
@@ -4630,7 +4612,7 @@ async function renderDetail(id){
   } catch (e) { /* ignore */ }
   }catch(err){
     console.error('[detail] render failed', err);
-    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'cc')">${t('detail.btnBack')}</button></div>`;
+    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'overview')">${t('detail.btnBack')}</button></div>`;
   }
 }
 
@@ -8162,6 +8144,36 @@ function _afRenderPage() {
     h += '<input class="af-config-input" value="' + esc(flow.scope || '') + '" id="af-flow-scope" onchange="updateFlowField(\'scope\',this.value)" style="max-width:400px">';
     h += '</div>';
 
+    // 抄送设置（macOS 联系人浮层选择器）：适用范围下方、审批节点上方
+    {
+      const ccUsers = (flow.cc_users || []);
+      const ccActiveSet = new Set((_afUsers || []).filter(u => u.status === 'active').map(u => u.id));
+      const ccTags = ccUsers.slice(0, 3);
+      const ccExtra = ccUsers.length - ccTags.length;
+      h += '<div style="padding:14px 16px;border-top:1px solid var(--border)">';
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+      h += '<span style="font-size:13px;font-weight:600">' + esc(t('ccPicker.settingTitle')) + '</span>';
+      h += '<span style="font-size:11px;color:var(--text-muted);font-weight:400">' + esc(t('ccPicker.settingHint')) + '</span>';
+      h += '</div>';
+      h += '<div class="cc-summary">';
+      h += '<button class="cc-add-btn" onclick="openCcPicker(' + _afCurrentIdx + ')">＋ ' + esc(t('ccPicker.add')) + '</button>';
+      ccTags.forEach(c => {
+        const isActive = ccActiveSet.has(c.id);
+        const initial = (c.name || '?').trim().charAt(0).toUpperCase();
+        h += '<span class="cc-chip' + (isActive ? '' : ' cc-chip-disabled') + '">';
+        h += '<span class="cc-chip-avatar" style="background:' + avatarColor(c.name) + '">' + esc(initial) + '</span>';
+        h += '<span class="cc-chip-name">' + esc(c.name) + (isActive ? '' : esc(t('ccPicker.disabledMark') || '（已停用）')) + '</span>';
+        h += '<button class="cc-chip-x" onclick="removeCcChip(\'' + escAttr(c.id) + '\')" title="' + escAttr(c.name) + '">&times;</button>';
+        h += '</span>';
+      });
+      if (ccExtra > 0) h += '<span class="cc-more">[+' + ccExtra + ']</span>';
+      h += '</div>';
+      if (ccUsers.length) {
+        h += '<div class="cc-count">' + esc((t('ccPicker.selectedCount') || '已选择 {n} 人').replace('{n}', String(ccUsers.length))) + '</div>';
+      }
+      h += '</div>';
+    }
+
     // 可视化流程节点
     h += '<div class="af-flow-container" id="af-flow-container">';
     h += '<div class="af-flow-node af-flow-node-start"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">起始</div><div style="font-size:14px;font-weight:600">提交申请</div></div>';
@@ -8189,36 +8201,6 @@ function _afRenderPage() {
     } else {
       h += '<div class="af-empty" style="padding:24px">点击上方审批节点查看和编辑配置</div>';
     }
-
-    // CC 抄送用户（仅 active 用户可选；提交审批时通知，只读查看）
-    h += '<div style="padding:14px 16px;border-top:1px solid var(--border)">';
-    h += '<div style="font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px">';
-    h += '<span>抄送用户（CC）</span>';
-    h += '<span style="font-size:11px;color:var(--text-muted);font-weight:400">提交审批时通知，仅只读查看；停用用户不可选</span>';
-    h += '</div>';
-    const ccSel = ((flow.cc_users || []).map(c => c.id));
-    // 一.1：前端只能选择 status==='active' 的用户（服务端仍会按 users 表二次校验）
-    const ccActive = (_afUsers || []).filter(u => u.status === 'active');
-    // 一.3：历史遗留（现已停用/不存在）的 CC 用户：仅展示为锁定徽标，不可勾选、不进入新快照
-    const ccLegacy = (flow.cc_users || []).filter(c => !ccActive.some(u => u.id === c.id));
-    h += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
-    if (ccActive.length === 0 && ccLegacy.length === 0) {
-      h += '<span style="font-size:12px;color:var(--text-muted)">无可用在职用户</span>';
-    } else {
-      ccActive.forEach(u => {
-        const cked = ccSel.includes(u.id) ? 'checked' : '';
-        h += '<label style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;font-size:12px;cursor:pointer">';
-        h += '<input type="checkbox" ' + cked + ' onchange="toggleCcUser(\'' + escAttr(u.id) + '\',\'' + escAttr(u.name) + '\',this.checked)">' + esc(u.name) + ' (' + esc(u.username) + ')</label>';
-      });
-      ccLegacy.forEach(c => {
-        h += '<span title="该用户已停用/不存在，不进入新的提交快照" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card-bg);border:1px dashed var(--border);border-radius:14px;font-size:12px;color:var(--text-muted)">🔒 ' + esc(c.name || c.id) + '（已停用）</span>';
-      });
-    }
-    h += '</div>';
-    if ((flow.cc_users || []).length) {
-      h += '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">已选 ' + (flow.cc_users || []).length + ' 人：' + (flow.cc_users || []).map(c => esc(c.name)).join('、') + '（历史记录快照不受后续修改影响）</div>';
-    }
-    h += '</div>';
 
     h += '</div>';
   }
@@ -8309,16 +8291,105 @@ function updateNodeField(nodeIdx, field, value) {
   }
 }
 
-// CC 抄送用户：勾选/取消（仅改内存中的 flow.cc_users；保存时随审批流一起提交）
-function toggleCcUser(id, name, checked) {
+// ===== CC 抄送选择器（macOS 联系人浮层）— AFTERSALES-CC-UI-01 =====
+// 仅修改内存中的 flow.cc_users；随审批流“保存”按钮一起提交，不增加独立保存。
+let _ccPicker = null;
+function _ccEscHandler(e){ if(e.key === 'Escape' && _ccPicker){ cancelCcPicker(); } }
+
+function avatarColor(name){
+  let s = 0; const n = (name || '?').trim();
+  for (let i = 0; i < n.length; i++) s += n.charCodeAt(i);
+  return 'hsl(' + (s % 360) + ', 52%, 55%)';
+}
+
+function removeCcChip(id){
   const flow = _afFlows[_afCurrentIdx];
   if (!flow) return;
-  flow.cc_users = flow.cc_users || [];
-  if (checked) {
-    if (!flow.cc_users.some(c => c.id === id)) flow.cc_users.push({ id, name });
+  flow.cc_users = (flow.cc_users || []).filter(c => c.id !== id);
+  _afRenderPage();
+}
+
+function openCcPicker(flowIdx){
+  const flow = _afFlows[flowIdx];
+  if (!flow) return;
+  const ccActive = (_afUsers || []).filter(u => u.status === 'active');
+  const selIds = new Set((flow.cc_users || []).filter(c => ccActive.some(u => u.id === c.id)).map(c => c.id));
+  _ccPicker = { flowIdx, temp: selIds, search: '' };
+  let root = document.getElementById('ccPickerRoot');
+  if (!root) { root = document.createElement('div'); root.id = 'ccPickerRoot'; document.body.appendChild(root); }
+  root.innerHTML =
+    '<div class="cc-overlay" id="ccOverlay" onclick="if(event.target===this)cancelCcPicker()">' +
+      '<div class="cc-sheet" role="dialog" aria-modal="true">' +
+        '<div class="cc-sheet-head"><div class="cc-sheet-title">' + esc(t('ccPicker.title')) + '</div>' +
+          '<button class="cc-sheet-close" onclick="cancelCcPicker()" aria-label="close">&times;</button></div>' +
+        '<div class="cc-sheet-search"><input id="ccSearch" type="text" placeholder="' + escAttr(t('ccPicker.searchPlaceholder')) + '" value="" oninput="ccSearchInput(this.value)"></div>' +
+        '<div class="cc-sheet-body" id="ccSheetBody"></div>' +
+        '<div class="cc-sheet-foot"><button class="cc-btn cc-btn-cancel" onclick="cancelCcPicker()">' + esc(t('ccPicker.cancel')) + '</button>' +
+          '<button class="cc-btn cc-btn-confirm" id="ccConfirmBtn" onclick="confirmCcPicker()">' + esc(t('ccPicker.confirm')) + '</button></div>' +
+      '</div></div>';
+  renderCcSheet();
+  document.addEventListener('keydown', _ccEscHandler);
+  setTimeout(() => { const s = document.getElementById('ccSearch'); if (s) s.focus(); }, 60);
+}
+
+function renderCcSheet(){
+  const body = document.getElementById('ccSheetBody');
+  if (!body || !_ccPicker) return;
+  const flow = _afFlows[_ccPicker.flowIdx];
+  const ccActive = (_afUsers || []).filter(u => u.status === 'active');
+  const q = (_ccPicker.search || '').trim().toLowerCase();
+  const list = ccActive.filter(u => {
+    if (!q) return true;
+    return (u.name || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q);
+  });
+  // 搜索仅过滤展示，不改变已选人数
+  let h = '';
+  if (list.length === 0) {
+    h = '<div class="cc-sheet-empty">' + esc(t('ccPicker.noMatch')) + '</div>';
   } else {
-    flow.cc_users = flow.cc_users.filter(c => c.id !== id);
+    list.forEach(u => {
+      const on = _ccPicker.temp.has(u.id);
+      const initial = (u.name || '?').trim().charAt(0).toUpperCase();
+      const sub = (u.name && u.username && u.name !== u.username) ? u.username : '';
+      h += '<div class="cc-row' + (on ? ' on' : '') + '" onclick="toggleCcTemp(\'' + escAttr(u.id) + '\')">';
+      h += '<div class="cc-avatar" style="background:' + avatarColor(u.name) + '">' + esc(initial) + '</div>';
+      h += '<div class="cc-row-main"><div class="cc-row-name">' + esc(u.name) + '</div>';
+      if (sub) h += '<div class="cc-row-sub">' + esc(sub) + '</div>';
+      h += '</div><div class="cc-check">' + (on ? '✓' : '') + '</div></div>';
+    });
   }
+  body.innerHTML = h;
+  const btn = document.getElementById('ccConfirmBtn');
+  if (btn) btn.textContent = t('ccPicker.confirm') + '（' + _ccPicker.temp.size + '）';
+}
+
+function toggleCcTemp(id){
+  if (!_ccPicker) return;
+  if (_ccPicker.temp.has(id)) _ccPicker.temp.delete(id); else _ccPicker.temp.add(id);
+  renderCcSheet();
+}
+
+function ccSearchInput(v){ if (_ccPicker) { _ccPicker.search = v; renderCcSheet(); } }
+
+function confirmCcPicker(){
+  if (!_ccPicker) return;
+  const flow = _afFlows[_ccPicker.flowIdx];
+  if (!flow) { closeCcPicker(); return; }
+  const ccActive = (_afUsers || []).filter(u => u.status === 'active');
+  const legacy = (flow.cc_users || []).filter(c => !ccActive.some(u => u.id === c.id));
+  const sel = ccActive.filter(u => _ccPicker.temp.has(u.id)).map(u => ({ id: u.id, name: u.name }));
+  flow.cc_users = sel.concat(legacy);
+  closeCcPicker();
+  _afRenderPage();
+}
+
+function cancelCcPicker(){ closeCcPicker(); }
+
+function closeCcPicker(){
+  const root = document.getElementById('ccPickerRoot');
+  if (root) root.innerHTML = '';
+  _ccPicker = null;
+  document.removeEventListener('keydown', _ccEscHandler);
 }
 
 function addFlowNode() {

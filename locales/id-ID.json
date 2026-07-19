@@ -62,8 +62,7 @@
     "roles": "Role",
     "approvalFlows": "Alur Persetujuan",
     "dictionaries": "Kamus",
-    "customers": "Pelanggan",
-    "cc": "CC untuk Saya"
+    "customers": "Pelanggan"
   },
   "page": {
     "title": {
@@ -76,8 +75,7 @@
       "roles": "Role",
       "approvalFlows": "Alur Persetujuan",
       "dictionaries": "Kamus",
-      "customers": "Pelanggan",
-      "cc": "CC untuk Saya"
+    "customers": "Pelanggan"
     }
   },
   "overview": {
@@ -1332,19 +1330,16 @@
     "prevPage": "Sebelumnya",
     "nextPage": "Berikutnya"
   },
-  "cc": {
-    "title": "CC untuk Saya",
-    "loading": "Memuat…",
-    "empty": "Belum ada catatan purna jual yang di-CC untuk Anda",
-    "col": {
-      "id": "No. RMA",
-      "submitter": "Pengirim",
-      "status": "Status Approval",
-      "process": "Status Proses",
-      "created": "Dibuat"
-    },
-    "action": {
-      "view": "Lihat"
-    }
+  "ccPicker": {
+    "settingTitle": "Pengaturan CC",
+    "settingHint": "Diberitahu saat submit, hanya baca",
+    "add": "Pilih penerima",
+    "title": "Pilih Penerima CC",
+    "searchPlaceholder": "Cari nama atau akun",
+    "cancel": "Batal",
+    "confirm": "Konfirmasi",
+    "noMatch": "Tidak ada pengguna cocok",
+    "selectedCount": "Dipilih {n} orang",
+    "disabledMark": " (nonaktif)"
   }
 }

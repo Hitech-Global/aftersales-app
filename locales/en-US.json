@@ -62,8 +62,7 @@
     "roles": "Roles",
     "approvalFlows": "Approval Flow",
     "dictionaries": "Dictionaries",
-    "customers": "Customers",
-    "cc": "CC to Me"
+    "customers": "Customers"
   },
   "page": {
     "title": {
@@ -76,8 +75,7 @@
       "roles": "Roles",
       "approvalFlows": "Approval Flow",
       "dictionaries": "Dictionaries",
-      "customers": "Customers",
-      "cc": "CC to Me"
+    "customers": "Customers"
     }
   },
   "overview": {
@@ -1332,19 +1330,16 @@
     "prevPage": "Previous",
     "nextPage": "Next"
   },
-  "cc": {
-    "title": "CC to Me",
-    "loading": "Loading…",
-    "empty": "No after-sales records have been CC'd to you yet",
-    "col": {
-      "id": "RMA #",
-      "submitter": "Submitter",
-      "status": "Approval Status",
-      "process": "Processing Status",
-      "created": "Created"
-    },
-    "action": {
-      "view": "View"
-    }
+  "ccPicker": {
+    "settingTitle": "CC Recipients",
+    "settingHint": "Notified on submission, view-only",
+    "add": "Select recipients",
+    "title": "Select CC Recipients",
+    "searchPlaceholder": "Search name or account",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "noMatch": "No matching users",
+    "selectedCount": "Selected {n}",
+    "disabledMark": " (disabled)"
   }
 }

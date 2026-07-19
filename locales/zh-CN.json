@@ -62,9 +62,8 @@
     "roles": "角色管理",
     "approvalFlows": "审批流管理",
     "dictionaries": "字典管理",
-    "customers": "客户管理",
-    "cc": "抄送给我的"
-  },
+    "customers": "客户管理"
+    },
   "page": {
     "title": {
       "overview": "售后概览",
@@ -76,8 +75,7 @@
       "roles": "角色管理",
       "approvalFlows": "审批流管理",
       "dictionaries": "字典管理",
-      "customers": "客户管理",
-      "cc": "抄送给我的"
+      "customers": "客户管理"
     }
   },
   "overview": {
@@ -1332,19 +1330,16 @@
     "prevPage": "上一页",
     "nextPage": "下一页"
   },
-  "cc": {
-    "title": "抄送给我的",
-    "loading": "加载中…",
-    "empty": "暂无抄送给您的售后记录",
-    "col": {
-      "id": "RMA 编号",
-      "submitter": "提交人",
-      "status": "审批状态",
-      "process": "处理状态",
-      "created": "创建时间"
-    },
-    "action": {
-      "view": "查看"
-    }
+  "ccPicker": {
+    "settingTitle": "抄送设置",
+    "settingHint": "提交审批时通知，仅只读查看",
+    "add": "选择抄送人",
+    "title": "选择抄送人",
+    "searchPlaceholder": "搜索姓名或账号",
+    "cancel": "取消",
+    "confirm": "确定",
+    "noMatch": "无匹配用户",
+    "selectedCount": "已选择 {n} 人",
+    "disabledMark": "（已停用）"
   }
 }
