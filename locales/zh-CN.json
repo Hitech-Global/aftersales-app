@@ -62,7 +62,8 @@
     "roles": "角色管理",
     "approvalFlows": "审批流管理",
     "dictionaries": "字典管理",
-    "customers": "客户管理"
+    "customers": "客户管理",
+    "cc": "抄送给我的"
   },
   "page": {
     "title": {
@@ -75,7 +76,8 @@
       "roles": "角色管理",
       "approvalFlows": "审批流管理",
       "dictionaries": "字典管理",
-      "customers": "客户管理"
+      "customers": "客户管理",
+      "cc": "抄送给我的"
     }
   },
   "overview": {
@@ -428,6 +430,7 @@
     "titlePrefix": "售后记录 #",
     "loading": "正在加载详情...",
     "recordNotFound": "未找到该售后记录",
+    "serviceUnavailable": "服务暂不可用，请稍后重试",
     "section": {
       "basic": "基本信息",
       "items": "售后明细",
@@ -918,6 +921,7 @@
   "flash": {
     "noPermission": "你没有该操作的权限",
     "noPagePermission": "你没有该页面的访问权限",
+    "sessionExpired": "会话已失效，请重新登录",
     "welcome": "欢迎，",
     "adminLogin": "管理员 {name} 已登录",
     "submitSuccess": "审批已提交，等待一级审批",
@@ -1327,5 +1331,20 @@
     "totalCount": "共 {{count}} 条",
     "prevPage": "上一页",
     "nextPage": "下一页"
+  },
+  "cc": {
+    "title": "抄送给我的",
+    "loading": "加载中…",
+    "empty": "暂无抄送给您的售后记录",
+    "col": {
+      "id": "RMA 编号",
+      "submitter": "提交人",
+      "status": "审批状态",
+      "process": "处理状态",
+      "created": "创建时间"
+    },
+    "action": {
+      "view": "查看"
+    }
   }
 }

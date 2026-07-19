@@ -62,7 +62,8 @@
     "roles": "Role",
     "approvalFlows": "Alur Persetujuan",
     "dictionaries": "Kamus",
-    "customers": "Pelanggan"
+    "customers": "Pelanggan",
+    "cc": "CC untuk Saya"
   },
   "page": {
     "title": {
@@ -75,7 +76,8 @@
       "roles": "Role",
       "approvalFlows": "Alur Persetujuan",
       "dictionaries": "Kamus",
-      "customers": "Pelanggan"
+      "customers": "Pelanggan",
+      "cc": "CC untuk Saya"
     }
   },
   "overview": {
@@ -428,6 +430,7 @@
     "titlePrefix": "Kasus RMA #",
     "loading": "Memuat detail...",
     "recordNotFound": "Kasus RMA tidak ditemukan",
+    "serviceUnavailable": "Layanan sedang tidak tersedia, silakan coba lagi nanti",
     "section": {
       "basic": "Informasi Dasar",
       "items": "Item RMA",
@@ -918,6 +921,7 @@
   "flash": {
     "noPermission": "Anda tidak memiliki izin untuk operasi ini",
     "noPagePermission": "Anda tidak memiliki izin untuk mengakses halaman ini",
+    "sessionExpired": "Sesi telah berakhir, silakan login kembali",
     "welcome": "Selamat datang, ",
     "adminLogin": "Admin {name} sudah masuk",
     "submitSuccess": "Sudah diajukan. Menunggu approval Level 1.",
@@ -1327,5 +1331,20 @@
     "totalCount": "Total {{count}} data",
     "prevPage": "Sebelumnya",
     "nextPage": "Berikutnya"
+  },
+  "cc": {
+    "title": "CC untuk Saya",
+    "loading": "Memuat…",
+    "empty": "Belum ada catatan purna jual yang di-CC untuk Anda",
+    "col": {
+      "id": "No. RMA",
+      "submitter": "Pengirim",
+      "status": "Status Approval",
+      "process": "Status Proses",
+      "created": "Dibuat"
+    },
+    "action": {
+      "view": "Lihat"
+    }
   }
 }

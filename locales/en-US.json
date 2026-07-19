@@ -62,7 +62,8 @@
     "roles": "Roles",
     "approvalFlows": "Approval Flow",
     "dictionaries": "Dictionaries",
-    "customers": "Customers"
+    "customers": "Customers",
+    "cc": "CC to Me"
   },
   "page": {
     "title": {
@@ -75,7 +76,8 @@
       "roles": "Roles",
       "approvalFlows": "Approval Flow",
       "dictionaries": "Dictionaries",
-      "customers": "Customers"
+      "customers": "Customers",
+      "cc": "CC to Me"
     }
   },
   "overview": {
@@ -428,6 +430,7 @@
     "titlePrefix": "RMA Case #",
     "loading": "Loading details...",
     "recordNotFound": "RMA case not found",
+    "serviceUnavailable": "Service temporarily unavailable, please retry later",
     "section": {
       "basic": "Basic Information",
       "items": "RMA Items",
@@ -918,6 +921,7 @@
   "flash": {
     "noPermission": "You do not have permission for this operation",
     "noPagePermission": "You do not have permission to access this page",
+    "sessionExpired": "Session expired, please log in again",
     "welcome": "Welcome, ",
     "adminLogin": "Admin {name} has signed in",
     "submitSuccess": "Submitted for approval. Waiting for Level 1 approval.",
@@ -1327,5 +1331,20 @@
     "totalCount": "Total {{count}} records",
     "prevPage": "Previous",
     "nextPage": "Next"
+  },
+  "cc": {
+    "title": "CC to Me",
+    "loading": "Loading…",
+    "empty": "No after-sales records have been CC'd to you yet",
+    "col": {
+      "id": "RMA #",
+      "submitter": "Submitter",
+      "status": "Approval Status",
+      "process": "Processing Status",
+      "created": "Created"
+    },
+    "action": {
+      "view": "View"
+    }
   }
 }

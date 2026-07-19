@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.20"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.22"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png?v=hnm1">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png?v=hnm1">
@@ -991,7 +991,7 @@ select option{background:var(--card-bg);color:var(--text)}
       <a class="sidebar-brand"><span class="brand-icon"><img src="/assets/brand/hnm-logo.png" alt="HNM"></span><span data-i18n="app.sidebarBrand"></span></a>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.20 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.22 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1404,6 +1404,17 @@ select option{background:var(--card-bg);color:var(--text)}
         </div>
       </div>
     </div>
+
+    <div id="page-cc" class="page">
+      <div class="page-header">
+        <h2 data-i18n="cc.title"></h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="renderCc()" data-i18n="customers.btnRefresh"></button>
+        </div>
+      </div>
+      <div id="cc-table-area"></div>
+    </div>
+
   </main>
 </div>
 
@@ -1954,6 +1965,7 @@ let _rolesCache = null;
 let _productsCache = null;
 let _salesCache = null;
 let _recordsCache = null;
+let _ccRecordsCache = []; // CC 抄送记录缓存：供无 record_view 权限的 CC 用户详情回退定位（只读）
 let _cacheTimestamp = 0;
 const CACHE_TTL = 60000; // 60秒缓存（显式保存/审批时 _recordsCache=null 即时失效，不影响数据流转）
 
@@ -2156,6 +2168,12 @@ async function getRecordsAsync() {
   if (await checkDbAvailable()) {
     if (!_recordsCache || !cacheValid()) {
       const resp = await fetch('/api/records', { headers: getAuthHeaders() });
+      // 三.6：非 2xx 显式抛出带状态码的错误，供调用方区分 401/403/5xx，不得静默吞掉
+      if (!resp.ok) {
+        const err = new Error('获取记录失败: ' + resp.status);
+        err.status = resp.status;
+        throw err;
+      }
       _recordsCache = await resp.json();
       _cacheTimestamp = Date.now();
     }
@@ -2356,7 +2374,14 @@ const PAGE_PERMISSIONS = {
   'dictionaries': 'system_config',
   'customers': 'system_config'
 };
-function canAccessPage(page){
+function canAccessPage(page, recordId){
+  if(page==='cc') return !!getCurrentUser(); // 抄送给我的：任意登录用户可访问（只读）
+  // 详情页：有 record_view 可直接访问；CC 抄送用户（无 record_view）可只读访问其被抄送的记录
+  if(page==='detail'){
+    if(hasPermission('record_view')) return true;
+    if(recordId && _ccRecordsCache && _ccRecordsCache.length && _ccRecordsCache.some(x=>String(x.id)===String(recordId))) return true;
+    return false;
+  }
   const requiredPerm = PAGE_PERMISSIONS[page];
   if(!requiredPerm) return false;
   const perms = Array.isArray(requiredPerm) ? requiredPerm : [requiredPerm];
@@ -3246,12 +3271,14 @@ function renderSidebar(){
     roles:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     customers:'<svg class="line-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/></svg>',
     dictionaries:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
-    'approval-flows':'<svg class="line-icon" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>'
+    'approval-flows':'<svg class="line-icon" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>',
+    cc:'<svg class="line-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>'
   };
   const groups=[
     {id:'aftersales', title:t('nav.group.aftersales'), items:[
       {id:'overview', icon:ICON.overview, label:t('nav.overview'), perm:'record_view'},
       {id:'list', icon:ICON.list, label:t('nav.list'), perm:'record_view'},
+      {id:'cc', icon:ICON.cc, label:t('nav.cc'), perm:null},
     ]},
     {id:'approval', title:t('nav.group.approval'), items:[
       {id:'approval', icon:ICON.approval, label:t('nav.approval'), perm:['approval_level1','approval_level2','approval_level3','record_view']},
@@ -3271,17 +3298,14 @@ function renderSidebar(){
   const seen=new Set();
   let html='';
   groups.forEach(g=>{
-    const hasVisible=g.items.some(item=>{
-      if(Array.isArray(item.perm)) return item.perm.some(hasPermission);
-      return hasPermission(item.perm);
-    });
+    const navVisible = (item) => item.perm == null ? true : (Array.isArray(item.perm) ? item.perm.some(hasPermission) : hasPermission(item.perm));
+    const hasVisible=g.items.some(navVisible);
     if(!hasVisible) return;
     html+=`<div class="sidebar-group-title">${esc(g.title)}</div>`;
     g.items.forEach(item=>{
       if(seen.has(item.id)) return;            // 同一 id 只渲染一次
       seen.add(item.id);
-      const hasPerm=Array.isArray(item.perm)?item.perm.some(hasPermission):hasPermission(item.perm);
-      if(!hasPerm) return;
+      if(!navVisible(item)) return;
       html+=`<div class="sidebar-item" data-page="${item.id}" onclick="showPage('${item.id}')"><span class="icon">${item.icon}</span><span>${esc(item.label)}</span></div>`;
     });
   });
@@ -3302,7 +3326,7 @@ function setSidebarActive(page){
 // ==================== PAGE ROUTING ====================
 function showPage(page, recordId=null){
   closeRecordForm();
-  if(!canAccessPage(page)){
+  if(!canAccessPage(page, recordId)){
     showFlash(t('flash.noPagePermission'),'danger');
     const fallback=getDefaultAccessiblePage();
     if(fallback&&fallback!==page) return showPage(fallback);
@@ -3310,7 +3334,7 @@ function showPage(page, recordId=null){
   }
   setSidebarActive(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries'), 'customers':t('page.title.customers')};
+  const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries'), 'customers':t('page.title.customers'), 'cc':t('page.title.cc')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
@@ -3326,6 +3350,7 @@ function showPage(page, recordId=null){
   else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); renderApprovalFlows(); }
   else if(page==='dictionaries'){ document.getElementById('page-dictionaries').classList.add('active'); renderDictionaries(); }
   else if(page==='customers'){ document.getElementById('page-customers').classList.add('active'); renderCustomers(); }
+  else if(page==='cc'){ document.getElementById('page-cc').classList.add('active'); renderCc(); }
 }
 
 function updatePermissionedUI(){
@@ -3930,6 +3955,51 @@ function switchListMode(mode){
   renderList();
 }
 
+async function renderCc(){
+  const area=document.getElementById('cc-table-area');
+  if(!area) return;
+  area.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">${t('cc.loading')}</div>`;
+  try{
+    const resp=await fetch('/api/records/cc',{headers:getAuthHeaders()});
+    const result=await resp.json();
+    const records=Array.isArray(result)?result:(result.data||result.rows||[]);
+    _ccRecordsCache=records; // 缓存供详情页 CC 只读回退定位
+    if(!records.length){
+      area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('cc.empty')}</p></div>`;
+      return;
+    }
+    let html=`<div class="table-container"><table class="data-table"><thead><tr>
+      <th>${t('cc.col.id')}</th>
+      <th>${t('cc.col.submitter')}</th>
+      <th>${t('cc.col.status')}</th>
+      <th>${t('cc.col.process')}</th>
+      <th>${t('cc.col.created')}</th>
+      <th></th>
+    </tr></thead><tbody>`;
+    records.forEach(r=>{
+      const rid=escAttr(String(r.id));
+      html+=`<tr class="row-clickable" onclick="showPage('detail','${rid}')">
+        <td>${esc(String(r.id))}</td>
+        <td>${esc(r.submitter_name||'-')}</td>
+        <td>${esc(r.approval_status||'-')}</td>
+        <td>${esc(r.process_progress||'-')}</td>
+        <td class="cell-date">${formatDate(r.created_at)}</td>
+        <td class="cell-actions"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();showPage('detail','${rid}')">${t('cc.action.view')}</button></td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div>`;
+    area.innerHTML=html;
+  }catch(e){
+    // 401 会话失效 → 回登录；其余错误明确提示，不得伪装成空列表
+    if(e&&e.status===401){
+      showFlash(t('flash.sessionExpired')||'会话已失效，请重新登录','warning');
+      setTimeout(()=>{ window.location.href='/login'; }, 600);
+      return;
+    }
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${t('detail.serviceUnavailable')||'服务暂不可用，请稍后重试'}</p></div>`;
+  }
+}
+
 async function renderList(){
   const seq=++_renderListSeq;
   await updateBrandFilter();
@@ -4345,11 +4415,35 @@ async function renderDetail(id){
   const detailContent=document.getElementById('detail-content');
   detailContent.innerHTML=`<div class="detail-section" style="color:var(--text-muted)">${t('detail.loading')}</div>`;
   try{
-  const records=await getRecords(),r=records.find(x=>String(x.id)===String(id));
-  if(!r){
-    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage('list')">${t('detail.btnBack')}</button></div>`;
-    return;
-  }
+    let records=[];
+    let fetchStatus=200;
+    try{ records=await getRecords(); }catch(e){ fetchStatus=(e&&e.status)?e.status:0; }
+
+    // 三.6：401 会话失效 → 必须回登录，绝不回退到缓存
+    if(fetchStatus===401){
+      showFlash(t('flash.sessionExpired')||'会话已失效，请重新登录','warning');
+      setTimeout(()=>{ window.location.href='/login'; }, 600);
+      return;
+    }
+    // 三.6：5xx / 网络错误 → 明确提示服务不可用，不得被 catch 静默伪装成正常缓存结果
+    if(fetchStatus && fetchStatus!==403 && fetchStatus!==200){
+      detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;&#xFE0F;</div><p>${t('detail.serviceUnavailable')||'服务暂不可用，请稍后重试'}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'cc')">${t('detail.btnBack')}</button></div>`;
+      return;
+    }
+
+    // 全量记录（有 record_view）优先；无 record_view 的 CC 用户（403）或无全量记录时，
+    // 回退到“抄送给我的”合法缓存（三.6：403 才允许使用已合法取得的当前内存记录）
+    let r=null;
+    if(fetchStatus===200 && records && records.length){
+      r=records.find(x=>String(x.id)===String(id));
+    }
+    if(!r && _ccRecordsCache && _ccRecordsCache.length){
+      r=_ccRecordsCache.find(x=>String(x.id)===String(id));
+    }
+    if(!r){
+      detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'cc')">${t('detail.btnBack')}</button></div>`;
+      return;
+    }
   const products=await getProducts();
   const productBySku=new Map(products.map(p=>[String(p.sku_code||'').toLowerCase(),p]));
   await ensureShopCustomerDict();
@@ -4536,7 +4630,7 @@ async function renderDetail(id){
   } catch (e) { /* ignore */ }
   }catch(err){
     console.error('[detail] render failed', err);
-    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage('list')">${t('detail.btnBack')}</button></div>`;
+    detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'cc')">${t('detail.btnBack')}</button></div>`;
   }
 }
 
@@ -5538,6 +5632,7 @@ async function submitForApproval(e){
     sendApprovalNotification(record).catch(err => {
       console.warn('[Notify] 提交审批通知发送失败（不影响提交结果）:', err?.message || err);
     });
+    // CC 抄送通知已由服务端在提交成功逻辑内部触发（四.4：服务端内部调用，前端不再决定 cc_users/收件人）
     _recordsCache=null; _cacheTimestamp=0;
     // 确认保存成功后返回 RMA Cases，刷新列表与顶部数量，再在列表页中央显示成功卡片
     showPage('list');
@@ -7979,6 +8074,7 @@ async function renderApprovalFlows() {
           if (u) n.backup_approver_name = u.name;
         }
       });
+      if (!Array.isArray(f.cc_users)) f.cc_users = [];
     });
     _afCurrentIdx = 0;
     _afSelectedNode = -1;
@@ -8093,6 +8189,37 @@ function _afRenderPage() {
     } else {
       h += '<div class="af-empty" style="padding:24px">点击上方审批节点查看和编辑配置</div>';
     }
+
+    // CC 抄送用户（仅 active 用户可选；提交审批时通知，只读查看）
+    h += '<div style="padding:14px 16px;border-top:1px solid var(--border)">';
+    h += '<div style="font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px">';
+    h += '<span>抄送用户（CC）</span>';
+    h += '<span style="font-size:11px;color:var(--text-muted);font-weight:400">提交审批时通知，仅只读查看；停用用户不可选</span>';
+    h += '</div>';
+    const ccSel = ((flow.cc_users || []).map(c => c.id));
+    // 一.1：前端只能选择 status==='active' 的用户（服务端仍会按 users 表二次校验）
+    const ccActive = (_afUsers || []).filter(u => u.status === 'active');
+    // 一.3：历史遗留（现已停用/不存在）的 CC 用户：仅展示为锁定徽标，不可勾选、不进入新快照
+    const ccLegacy = (flow.cc_users || []).filter(c => !ccActive.some(u => u.id === c.id));
+    h += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    if (ccActive.length === 0 && ccLegacy.length === 0) {
+      h += '<span style="font-size:12px;color:var(--text-muted)">无可用在职用户</span>';
+    } else {
+      ccActive.forEach(u => {
+        const cked = ccSel.includes(u.id) ? 'checked' : '';
+        h += '<label style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;font-size:12px;cursor:pointer">';
+        h += '<input type="checkbox" ' + cked + ' onchange="toggleCcUser(\'' + escAttr(u.id) + '\',\'' + escAttr(u.name) + '\',this.checked)">' + esc(u.name) + ' (' + esc(u.username) + ')</label>';
+      });
+      ccLegacy.forEach(c => {
+        h += '<span title="该用户已停用/不存在，不进入新的提交快照" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--card-bg);border:1px dashed var(--border);border-radius:14px;font-size:12px;color:var(--text-muted)">🔒 ' + esc(c.name || c.id) + '（已停用）</span>';
+      });
+    }
+    h += '</div>';
+    if ((flow.cc_users || []).length) {
+      h += '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">已选 ' + (flow.cc_users || []).length + ' 人：' + (flow.cc_users || []).map(c => esc(c.name)).join('、') + '（历史记录快照不受后续修改影响）</div>';
+    }
+    h += '</div>';
+
     h += '</div>';
   }
 
@@ -8182,6 +8309,18 @@ function updateNodeField(nodeIdx, field, value) {
   }
 }
 
+// CC 抄送用户：勾选/取消（仅改内存中的 flow.cc_users；保存时随审批流一起提交）
+function toggleCcUser(id, name, checked) {
+  const flow = _afFlows[_afCurrentIdx];
+  if (!flow) return;
+  flow.cc_users = flow.cc_users || [];
+  if (checked) {
+    if (!flow.cc_users.some(c => c.id === id)) flow.cc_users.push({ id, name });
+  } else {
+    flow.cc_users = flow.cc_users.filter(c => c.id !== id);
+  }
+}
+
 function addFlowNode() {
   const flow = _afFlows[_afCurrentIdx];
   if (!flow) return;
@@ -8228,7 +8367,7 @@ async function saveFlow() {
     const resp = await fetch('/api/approval-flows/' + encodeURIComponent(flow.id), {
       method: 'PUT',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: flow.name, scope: flow.scope, enabled: flow.enabled, nodes: flow.nodes })
+      body: JSON.stringify({ name: flow.name, scope: flow.scope, enabled: flow.enabled, nodes: flow.nodes, cc_users: flow.cc_users || [] })
     });
     if (resp.ok) {
       alert('保存成功');
