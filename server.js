@@ -1156,10 +1156,13 @@ function applyApprovalTransition(record, payload, operatorId) {
 //  4) items 仅在「终审通过且确有可二次销售明细被置为已处理」时重写，其余阶段保持数据库当前值不变。
 //  5) expected_level 作为乐观并发令牌：重复/过期请求因层级不匹配返回 409，不会产生第二条 approval_history。
 app.post('/api/records/:id/approval', async (req, res) => {
-  const client = await getPool().connect();
+  const pool = getPool();
+  if (!pool) return res.status(500).json({ error: '数据库未配置' });
+
+  let client = null;
   let committed = false;
   try {
-    if (!getPool()) { client.release(); return res.status(500).json({ error: '数据库未配置' }); }
+    client = await pool.connect();
     if (!req.currentUserId) { client.release(); return res.status(401).json({ error: '未登录' }); }
     const { action, comment, return_date, approval_attachments, expected_level, erp_screenshots } = req.body;
     if (action !== 'approve' && action !== 'reject') {
