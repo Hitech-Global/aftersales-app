@@ -1,6 +1,6 @@
 {
   "name": "aftersales-management-system",
-  "version": "3.11.20",
+  "version": "3.11.21",
   "description": "售后数据管理系统 - 飞书集成版",
   "main": "server.js",
   "scripts": {
@@ -10,8 +10,12 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1080.0",
     "axios": "^1.7.0",
+    "bcryptjs": "3.0.3",
+    "connect-pg-simple": "10.0.0",
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
+    "express-rate-limit": "8.6.0",
+    "express-session": "1.19.0",
     "multer": "^2.2.0",
     "pg": "^8.13.0"
   },

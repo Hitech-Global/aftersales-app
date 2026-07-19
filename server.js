@@ -261,25 +261,183 @@ app.get('/api/version', (req, res) => {
     frontend: 'index.html',
     baseUrl: APP_BASE_URL,
     nodeEnv: NODE_ENV,
+    breakGlassEnabled: BREAKGLASS_ENABLED,
     timestamp: new Date().toISOString()
   });
 });
 
-// ==================== API 认证与权限中间件 ====================
-function apiAuth(req, res, next) {
-  // 从 header 获取当前用户信息（前端在每次请求时传入）
-  const userId = req.headers['x-user-id'];
-  const userRole = req.headers['x-user-role'];
-  const userPerms = req.headers['x-user-permissions'] || '';
-  if (userId) {
-    req.currentUserId = userId;
-    req.currentUserRole = userRole || '';
-    req.currentUserPermissions = userPerms ? userPerms.split(',').map(s => s.trim()).filter(Boolean) : [];
+// ==================== 会话与认证配置（AUTH-SECURITY-FIX-01-L1）====================
+const SESSION_SECRET = process.env.SESSION_SECRET || '';
+const SESSION_MAX_AGE_MS = parseInt(process.env.SESSION_MAX_AGE_MS || '', 10) || 24 * 60 * 60 * 1000;
+const BREAKGLASS_ENABLED = process.env.BREAKGLASS_ENABLED === 'true';
+const BREAKGLASS_PASSWORD_HASH = process.env.BREAKGLASS_PASSWORD_HASH || '';
+
+// 生产环境硬性要求 SESSION_SECRET；缺失则拒绝启动（绝不生成临时 secret）
+if (NODE_ENV === 'production' && !SESSION_SECRET) {
+  console.error('[FATAL] 生产环境缺少 SESSION_SECRET，拒绝启动。');
+  process.exit(1);
+}
+// break-glass 开启但 hash 缺失/格式错误 → 生产拒绝启动；非生产仅告警
+if (BREAKGLASS_ENABLED) {
+  const hashOk = BREAKGLASS_PASSWORD_HASH && /^\$2[aby]\$[0-9]{2}\$/.test(BREAKGLASS_PASSWORD_HASH);
+  if (!hashOk) {
+    if (NODE_ENV === 'production') {
+      console.error('[FATAL] BREAKGLASS_ENABLED=true 但 BREAKGLASS_PASSWORD_HASH 缺失或格式错误，生产环境拒绝启动。');
+      process.exit(1);
+    }
+    console.warn('[WARN] BREAKGLASS_ENABLED=true 但 BREAKGLASS_PASSWORD_HASH 缺失/格式错误：break-glass 将不可用。');
   }
-  next();
 }
 
-// 权限校验中间件工厂函数
+// Render 位于反向代理之后：在 session 中间件之前正确配置 trust proxy。
+// 仅信任单级代理（Render 实际层级），不允许客户端伪造 IP 的宽松配置。
+// 注意：express 的 trust proxy 不接受字符串型数字（'1' 会被忽略导致 XFF 不生效），
+// 因此数值型配置需转换为 Number。
+const TRUST_PROXY_RAW = process.env.TRUST_PROXY || '1';
+const TRUST_PROXY = /^\d+$/.test(TRUST_PROXY_RAW) ? parseInt(TRUST_PROXY_RAW, 10) : TRUST_PROXY_RAW;
+app.set('trust proxy', TRUST_PROXY);
+
+// ---- Session 存储（connect-pg-simple，标准 session 表）----
+const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+
+let sessionStore = null;
+const _pool = getPool();
+if (_pool) {
+  sessionStore = new PgSession({
+    pool: _pool,
+    tableName: 'session',
+    createTableIfMissing: false, // 正式表只由批准后迁移创建；不自动建表
+    disableTouch: true,          // 关闭 touch 续期，固定绝对过期
+    pruneSessionInterval: 60 * 60,
+  });
+  sessionStore.on('error', (err) => console.error('[SessionStore] 错误:', err.message));
+}
+
+const sessionMiddleware = session({
+  name: 'aftersales.sid',
+  secret: SESSION_SECRET || 'dev-only-insecure-placeholder', // 生产已在上文拒绝启动
+  store: sessionStore || undefined,
+  resave: false,
+  saveUninitialized: false,
+  rolling: false,                 // 固定绝对过期，不续期
+  cookie: {
+    httpOnly: true,
+    secure: NODE_ENV === 'production', // 仅生产 Secure；本地 HTTP 开发允许 false
+    sameSite: 'lax',
+    path: '/',
+    maxAge: SESSION_MAX_AGE_MS,
+  },
+});
+
+// 在全部 API 路由之前注册 express-session（含 OAuth callback，以便建立 Session）
+app.use('/api', sessionMiddleware);
+
+// ==================== API 默认拒绝 + 精确白名单 ====================
+// 白名单按 "HTTP 方法 + 精确路径" 匹配；只跳过 requireLogin，不跳过 express-session。
+const PUBLIC_WHITELIST = [
+  { method: 'GET',  path: '/api/version' },
+  { method: 'GET',  path: '/api/auth/feishu/login' },
+  { method: 'GET',  path: '/api/auth/feishu/callback' },
+  { method: 'GET',  path: '/api/auth/feishu/status' },
+  { method: 'POST', path: '/api/webhooks/customer-sync' }, // 仍需通过签名校验
+  { method: 'POST', path: '/api/auth/break-glass' },       // 独立认证入口：关闭时由路由返回 404，开启时走限流 + 密码校验
+];
+
+function apiPath(req) {
+  return (req.originalUrl || '/').split('?')[0];
+}
+
+function isPublicRoute(req) {
+  const p = apiPath(req);
+  // break-glass 始终作为独立认证入口（无需已有 Session）；关闭时由路由本身返回 404。
+  // 仅精确匹配 PUBLIC_WHITELIST 中的 "方法 + 路径"，不会放行其他 /api/auth/* 路径。
+  return PUBLIC_WHITELIST.some(r => r.method === req.method && r.path === p);
+}
+
+// CSRF 豁免：签名 Webhook 与 break-glass 登录（二者各有独立校验）
+const CSRF_EXEMPT = new Set(['/api/webhooks/customer-sync', '/api/auth/break-glass']);
+
+function safeEqual(a, b) {
+  try {
+    const ba = Buffer.from(String(a));
+    const bb = Buffer.from(String(b));
+    if (ba.length !== bb.length) return false;
+    return crypto.timingSafeEqual(ba, bb);
+  } catch (e) {
+    return false;
+  }
+}
+
+// 统一默认拒绝：非白名单 /api/* 必须有效服务端 Session
+app.use('/api', (req, res, next) => {
+  if (isPublicRoute(req)) return next();
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: '未登录' });
+  }
+  next();
+});
+
+// 统一 CSRF 检查：写请求默认要求，豁免项除外（使用 crypto.timingSafeEqual）
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const p = apiPath(req);
+  if (CSRF_EXEMPT.has(p)) return next();
+  if (!req.session || !req.session.userId) return res.status(401).json({ error: '未登录' });
+  const token = req.headers['x-csrf-token'] || (req.body && req.body._csrf);
+  const expected = req.session.csrfToken;
+  if (!token || !expected || !safeEqual(token, expected)) {
+    return res.status(403).json({ error: 'CSRF 校验失败', code: 'CSRF_INVALID' });
+  }
+  next();
+});
+
+// 每次受保护请求从数据库重新加载用户状态/角色/权限（X-User-* 在任何环境完全忽略）
+async function loadCurrentUser(userId) {
+  try {
+    const u = await query('SELECT id, username, name, role_id, status FROM users WHERE id = $1', [userId]);
+    if (u.rows.length === 0) return null;
+    const user = u.rows[0];
+    if (user.status !== 'active') return null; // 停用立即失效
+    const roleR = await query('SELECT permissions FROM roles WHERE id = $1', [user.role_id]);
+    const permissions = roleR.rows[0] ? (roleR.rows[0].permissions || []) : [];
+    return {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      roleId: user.role_id,
+      status: user.status,
+      permissions,
+    };
+  } catch (e) {
+    console.error('[Auth] 加载用户失败:', e.message);
+    return null; // store/db 异常 → 失败关闭
+  }
+}
+
+// 受保护请求挂载当前用户（供后续 requireLogin / requireApiPermission 使用）
+app.use('/api', async (req, res, next) => {
+  if (isPublicRoute(req)) return next();
+  try {
+    const user = await loadCurrentUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: '会话无效或用户已停用' });
+    }
+    req.currentUser = user;
+    req.currentUserId = user.id;
+    req.currentUserRole = user.roleId;
+    req.currentUserPermissions = user.permissions;
+    next();
+  } catch (e) {
+    return res.status(401).json({ error: '会话无效' });
+  }
+});
+
+// ---- 旧版请求头鉴权已移除：X-User-Id / X-User-Role / X-User-Permissions 在所有环境完全忽略 ----
+
+// 权限校验中间件工厂函数（基于服务端会话用户）
 function requireApiPermission(...perms) {
   return (req, res, next) => {
     if (!req.currentUserId) {
@@ -287,7 +445,7 @@ function requireApiPermission(...perms) {
     }
     const hasPerm = perms.some(p => (req.currentUserPermissions || []).includes(p));
     if (!hasPerm) {
-      return res.status(403).json({ error: '没有该操作的权限' });
+      return res.status(403).json({ error: '没有该操作的权限', code: 'PERMISSION_DENIED' });
     }
     next();
   };
@@ -300,16 +458,6 @@ function requireLogin(req, res, next) {
   }
   next();
 }
-
-app.use('/api/users', apiAuth);
-app.use('/api/roles', apiAuth);
-app.use('/api/records', apiAuth);
-app.use('/api/products', apiAuth);
-app.use('/api/sales', apiAuth);
-app.use('/api/notify', apiAuth);
-app.use('/api/approval-flows', apiAuth);
-app.use('/api/dictionaries', apiAuth);
-app.use('/api/attachments', apiAuth);
 
 // ==================== 妙搭 Webhook 客户同步 ====================
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
@@ -559,6 +707,7 @@ app.get('/api/webhooks/customer-sync/status', async (req, res) => {
 // 诊断接口：不校验签名，返回请求头、raw body 和多种签名计算结果，用于联调
 // 注意：不会泄露 secret 本身，仅返回前缀
 app.post('/api/webhooks/customer-sync/debug', async (req, res) => {
+  if (NODE_ENV === 'production') return res.status(404).json({ error: 'Not Found' });
   try {
     const signature = req.headers['x-webhook-signature'];
     const timestamp = req.headers['x-webhook-timestamp'];
@@ -639,6 +788,7 @@ async function uploadToR2(file) {
 
 // 初始化数据库
 app.post('/api/db/init', async (req, res) => {
+  if (NODE_ENV === 'production') return res.status(404).json({ error: 'Not Found' });
   try {
     const ok = await initDatabase();
     res.json({ success: ok });
@@ -1197,7 +1347,7 @@ app.post('/api/records/:id/approval', async (req, res) => {
     if (!hasPerm || !isApprover) {
       // 与既有 requireApiPermission 一致：超级管理员因拥有全部权限自然通过；此处不新增任何管理员绕过分支。
       await client.query('ROLLBACK'); client.release();
-      return res.status(403).json({ error: '无权限或非本层级审批人，无法审批' });
+      return res.status(403).json({ error: '无权限或非本层级审批人，无法审批', code: 'PERMISSION_DENIED' });
     }
 
     // 审批人姓名：绝不信任 X-User-Role（其为 role_id，会写成 role_admin）。
@@ -1287,8 +1437,8 @@ app.post('/api/records/:id/approval', async (req, res) => {
     }
     res.json({ ...upd.rows[0], notify });
   } catch (e) {
-    if (!committed) { try { await client.query('ROLLBACK'); } catch (_) {} }
-    try { client.release(); } catch (_) {}
+    if (client && !committed) { try { await client.query('ROLLBACK'); } catch (_) {} }
+    if (client) { try { client.release(); } catch (_) {} }
     res.status(500).json({ error: e.message });
   }
 });
@@ -1760,6 +1910,18 @@ async function getTenantAccessToken() {
   }
 }
 
+// 将飞书用户映射到系统内已存在的用户（按 feishu_open_id），不存在则返回 null
+async function mapFeishuUserToDbUser(userInfo) {
+  if (!userInfo || !userInfo.open_id) return null;
+  try {
+    const r = await query('SELECT id, username, name, role_id, status FROM users WHERE feishu_open_id = $1', [userInfo.open_id]);
+    return r.rows[0] || null;
+  } catch (e) {
+    console.error('[Auth] 飞书用户映射失败:', e.message);
+    return null;
+  }
+}
+
 // ==================== 飞书 OAuth2.0 登录 ====================
 /**
  * 飞书 OAuth2.0 网页授权
@@ -1840,35 +2002,25 @@ app.get('/api/auth/feishu/callback', async (req, res) => {
   try {
     // Step 1: 用 code 换取 user_access_token (v2 OAuth2)
     // v2 返回标准 OAuth2 格式，不是 {code, data} 包装
-    let tokenData;
-    try {
-      const tokenRes = await axios.post(
-        'https://open.feishu.cn/open-apis/authen/v2/oauth/token',
-        {
-          grant_type: 'authorization_code',
-          client_id: FEISHU_APP_ID,
-          client_secret: FEISHU_APP_SECRET,
-          code,
-          redirect_uri: `${APP_BASE_URL}/api/auth/feishu/callback`
-        },
-        { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
-      );
+    const tokenRes = await axios.post(
+      'https://open.feishu.cn/open-apis/authen/v2/oauth/token',
+      {
+        grant_type: 'authorization_code',
+        client_id: FEISHU_APP_ID,
+        client_secret: FEISHU_APP_SECRET,
+        code,
+        redirect_uri: `${APP_BASE_URL}/api/auth/feishu/callback`
+      },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+    );
 
-      if (tokenRes.data && tokenRes.data.code !== undefined && tokenRes.data.code !== 0) {
-        console.error('[Feishu] Code 换 token 失败:', tokenRes.data);
-        recordFeishuEvent('token_exchange_failed', { response: tokenRes.data });
-        return res.redirect(`/?feishu_error=${encodeURIComponent(tokenRes.data.msg || tokenRes.data.message || 'token_exchange_failed')}`);
-      }
-
-      tokenData = tokenRes.data.data || tokenRes.data;
-    } catch (tokenErr) {
-      console.error('[Feishu] Code 换 token 请求失败:', tokenErr.response?.data || tokenErr.message);
-      recordFeishuEvent('token_exchange_request_failed', {
-        response: tokenErr.response?.data || null,
-        message: tokenErr.message
-      });
-      return res.redirect(`/?feishu_error=${encodeURIComponent(tokenErr.response?.data?.msg || tokenErr.response?.data?.message || 'token_exchange_failed')}`);
+    if (tokenRes.data && tokenRes.data.code !== undefined && tokenRes.data.code !== 0) {
+      console.error('[Feishu] Code 换 token 失败:', tokenRes.data);
+      recordFeishuEvent('token_exchange_failed', { response: tokenRes.data });
+      return res.redirect(`/?feishu_error=${encodeURIComponent(tokenRes.data.msg || tokenRes.data.message || 'token_exchange_failed')}`);
     }
+
+    const tokenData = tokenRes.data.data || tokenRes.data;
 
     if (!tokenData || !tokenData.access_token) {
       console.error('[Feishu] Token 响应无效:', tokenData);
@@ -1944,12 +2096,23 @@ app.get('/api/auth/feishu/callback', async (req, res) => {
       feishu_tenant_key: userInfo.tenant_key || ''
     };
 
-    // 将用户信息编码后传给前端
-    const userDataB64 = Buffer.from(JSON.stringify(feishuUser)).toString('base64');
-    
-    // 重定向到前端，带上用户信息和来源标记
-    recordFeishuEvent('redirect_to_frontend');
-    res.redirect(`/?feishu_user=${encodeURIComponent(userDataB64)}#page=overview`);
+    // 建立服务端 Session（不再通过 URL 传递用户身份）
+    const dbUser = await mapFeishuUserToDbUser(userInfo);
+    if (!dbUser) {
+      recordFeishuEvent('feishu_user_no_db_mapping', { openId: userInfo.open_id });
+      return res.redirect('/?feishu_error=no_db_user');
+    }
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((err) => {
+        if (err) return reject(err);
+        req.session.userId = dbUser.id;
+        req.session.loginType = 'feishu';
+        req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+        req.session.save((saveErr) => saveErr ? reject(saveErr) : resolve());
+      });
+    });
+    recordFeishuEvent('redirect_to_frontend', { userId: dbUser.id });
+    res.redirect('/#page=overview');
 
   } catch (e) {
     console.error('[Feishu] OAuth 回调异常:', e.message);
@@ -1959,6 +2122,7 @@ app.get('/api/auth/feishu/callback', async (req, res) => {
 });
 
 app.get('/api/auth/feishu/debug', (req, res) => {
+  if (NODE_ENV === 'production') return res.status(404).json({ error: 'Not Found' });
   res.json({
     configured: feishuConfigured,
     appId: FEISHU_APP_ID ? FEISHU_APP_ID.slice(0, 8) + '***' : '',
@@ -1978,6 +2142,23 @@ app.get('/api/auth/feishu/status', (req, res) => {
     appName: FEISHU_APP_NAME,
     baseUrl: APP_BASE_URL,
     configured: feishuConfigured
+  });
+});
+
+// 获取当前登录用户（要求有效 Session；返回与 Session 绑定的 CSRF Token，刷新不轮换）
+app.get('/api/auth/me', (req, res) => {
+  if (!req.currentUser) return res.status(401).json({ error: '未登录' });
+  res.json({
+    success: true,
+    user: {
+      id: req.currentUser.id,
+      username: req.currentUser.username,
+      name: req.currentUser.name,
+      roleId: req.currentUser.roleId,
+      permissions: req.currentUser.permissions,
+      loginType: req.session.loginType || 'unknown',
+    },
+    csrfToken: req.session.csrfToken,
   });
 });
 
@@ -2144,9 +2325,66 @@ app.get('/api/feishu/contacts/search', async (req, res) => {
 });
 
 // 退出登录：清除飞书相关状态
-app.post('/api/auth/feishu/logout', (req, res) => {
-  res.clearCookie('feishu_session');
-  res.json({ success: true });
+// 退出登录：销毁服务端 Session（要求有效 Session + CSRF，由全局中间件校验）
+function destroySession(req, res) {
+  if (!req.session) return res.json({ success: true });
+  req.session.destroy((err) => {
+    if (err) console.error('[Auth] 登出失败:', err.message);
+    res.clearCookie('aftersales.sid');
+    res.json({ success: true });
+  });
+}
+app.post('/api/auth/feishu/logout', (req, res) => destroySession(req, res));
+app.post('/api/auth/logout', (req, res) => destroySession(req, res));
+
+// 紧急管理员登录（break-glass）：路由始终注册；关闭时立即 404，开启时走独立限流 + 密码哈希校验 + 建立 Session
+const breakGlassLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // 使用库内置 keyGenerator（正确处理 IPv6 / 代理场景），不自定义
+  handler: (req, res) => res.status(429).json({ error: '尝试次数过多，请稍后再试' }),
+});
+
+app.post('/api/auth/break-glass',
+  (req, res, next) => {
+    // 关闭状态：立即 404，绝不进入限流 / 密码校验 / 用户查询
+    if (!BREAKGLASS_ENABLED) return res.status(404).json({ error: 'Not Found' });
+    next();
+  },
+  breakGlassLimiter,
+  async (req, res) => {
+  if (!BREAKGLASS_PASSWORD_HASH || !/^\$2[aby]\$[0-9]{2}\$/.test(BREAKGLASS_PASSWORD_HASH)) {
+    return res.status(404).json({ error: 'Not Found' });
+  }
+  const { password } = req.body || {};
+  const fail = () => res.status(401).json({ error: '认证失败' }); // 统一失败响应，不泄露开关/哈希/账号
+  if (!password) return fail();
+  let ok = false;
+  try { ok = await bcrypt.compare(String(password), BREAKGLASS_PASSWORD_HASH); } catch (e) { return fail(); }
+  if (!ok) return fail();
+  let admin;
+  try {
+    const r = await query("SELECT id, username, name, role_id, status FROM users WHERE id = 'user_admin'");
+    admin = r.rows[0];
+  } catch (e) { return fail(); }
+  if (!admin || admin.status !== 'active') return fail();
+  // 建立正常服务端 Session（regenerate，产生新有效期）
+  req.session.regenerate((err) => {
+    if (err) return res.status(500).json({ error: '会话创建失败' });
+    req.session.userId = admin.id;
+    req.session.loginType = 'break-glass';
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    req.session.save((saveErr) => {
+      if (saveErr) return res.status(500).json({ error: '会话保存失败' });
+      res.json({
+        success: true,
+        csrfToken: req.session.csrfToken,
+        user: { id: admin.id, username: admin.username, name: admin.name, roleId: admin.role_id },
+      });
+    });
+  });
 });
 
 // ==================== 飞书消息推送 ====================

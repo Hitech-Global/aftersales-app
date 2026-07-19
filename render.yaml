@@ -35,3 +35,11 @@ services:
         sync: false
       - key: R2_ENDPOINT
         sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: SESSION_MAX_AGE_MS
+        sync: false
+      - key: BREAKGLASS_ENABLED
+        sync: false
+      - key: BREAKGLASS_PASSWORD_HASH
+        sync: false

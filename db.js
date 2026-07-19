@@ -323,12 +323,12 @@ async function initDatabase() {
         ]
       );
 
-      // 插入默认管理员用户
+      // 插入默认管理员用户（密码留空：认证走 break-glass 哈希，绝不在代码中硬编码弱密码）
       await query(
         `INSERT INTO users (id, username, name, password, role_id, status) 
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO NOTHING`,
-        ['user_admin', 'admin', '超级管理员', 'admin', 'role_admin', 'active']
+        ['user_admin', 'admin', '超级管理员', '', 'role_admin', 'active']
       );
 
       console.log('[DB] 已插入默认角色和管理员账号');

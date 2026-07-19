@@ -13,7 +13,8 @@
 <link rel="manifest" href="/manifest.json?v=hnm1">
 <script>
 if (window.location.protocol === 'file:') {
-  window.location.replace('http://localhost:3000/?admin');
+  // 直接以 file:// 打开时，跳转到同源入口（不再硬编码 localhost:3000）
+  window.location.replace(window.location.pathname + (window.location.pathname.indexOf('?') !== -1 ? '&' : '?') + 'admin');
 }
 </script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -1847,9 +1848,104 @@ async function getRoles(){ return await getRolesAsync(); }
 async function saveRoles(r){ await saveRolesAsync(r); }
 async function getProducts(){ return await getProductsAsync(); }
 async function saveProducts(p){ _productsCache = null; for(const prod of p) await saveProductAsync(prod).catch(e => console.error('Save product failed:', e)); }
-function getCurrentUser(){ try{return JSON.parse(localStorage.getItem('aftersales_current_user')||'null');}catch(e){return null;} }
-function getCurrentUsername(){ const u=getCurrentUser(); return u?u.name:''; }
-function setCurrentUser(u){ localStorage.setItem('aftersales_current_user',JSON.stringify(u)); }
+// 身份仅来自服务端会话，运行时保存在内存中；绝不写入/读取 localStorage 作为登录身份来源
+let _sessionUser = null;
+function getCurrentUser(){ return _sessionUser; }
+function getCurrentUsername(){ return _sessionUser ? _sessionUser.name : ''; }
+function setCurrentUser(u){ _sessionUser = u || null; }
+
+// ==================== 服务端会话集成（AUTH-SECURITY-FIX-01-L1-R1）====================
+// 服务端会话是身份唯一来源；前端仅在运行时内存中保存身份用于展示，绝不写入 localStorage。
+let sessionCsrfToken = '';
+let _sessionUnavailable = false; // 标记：/api/auth/me 网络错误或服务端 5xx，表示服务不可达
+
+// 切换到登录态（清空运行时身份），不依赖本地存储
+function showLoginScreen() {
+  const appShell = document.getElementById('app-shell');
+  const loginPage = document.getElementById('page-login');
+  if (appShell) appShell.classList.add('hidden');
+  if (loginPage) loginPage.classList.remove('hidden');
+}
+
+// 会话失效（401 / 用户停用 / 登出）：清空身份回登录页；不得从本地存储恢复
+function onSessionExpired() {
+  _sessionUser = null;
+  sessionCsrfToken = '';
+  _sessionUnavailable = false;
+  showLoginScreen();
+}
+
+// 服务暂时不可用（网络错误 / 5xx / 服务不可达）：提示且不进入业务页，不把缓存视为已登录
+function showServiceUnavailable(msg) {
+  _sessionUser = null;
+  sessionCsrfToken = '';
+  _sessionUnavailable = true;
+  showLoginScreen();
+  if (msg) showLoginError(msg);
+}
+
+// 从服务端 /api/auth/me 恢复身份（含角色/权限/CSRF Token）
+async function bootstrapSession() {
+  try {
+    const resp = await fetch('/api/auth/me', { headers: { 'Content-Type': 'application/json' } });
+    if (resp.status === 401) {
+      // 未登录 / 会话失效 / 用户停用：清空身份回登录页
+      onSessionExpired();
+      return null;
+    }
+    if (!resp.ok) {
+      // 其他服务端错误（5xx / 意外 403 等）：视为服务不可用，不进入业务页
+      showServiceUnavailable('服务暂时不可用，请稍后重试');
+      return null;
+    }
+    const data = await resp.json();
+    sessionCsrfToken = data.csrfToken || '';
+    const u = data.user || {};
+    const norm = {
+      id: u.id,
+      username: u.username,
+      name: u.name,
+      role_id: u.roleId,
+      roleId: u.roleId,
+      permissions: u.permissions || [],
+      loginType: u.loginType,
+    };
+    _sessionUser = norm;
+    return norm;
+  } catch (e) {
+    // 网络错误 / 服务不可达：显示“服务暂时不可用”，不进入业务页
+    showServiceUnavailable('服务暂时不可用，请稍后重试');
+    return null;
+  }
+}
+
+// 全局 fetch 守卫：按服务端错误码结构化处理
+//  - 401 → 未登录/会话失效：清空身份回登录页
+//  - 403 + CSRF_INVALID → 仅重新取得 CSRF Token（不自动重放写请求），提示用户重试
+//  - 403 + PERMISSION_DENIED → 不刷新、不跳转、不重放，由业务调用方按错误提示
+//  - 普通业务校验失败不被改写
+(function installSessionFetchGuard() {
+  const _orig = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const resp = await _orig(input, init);
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.indexOf('/api/') !== -1) {
+      if (resp.status === 401) {
+        onSessionExpired();
+      } else if (resp.status === 403) {
+        let code = '';
+        try { const b = await resp.clone().json().catch(() => ({})); code = (b && b.code) || ''; } catch (e) {}
+        if (code === 'CSRF_INVALID') {
+          // 仅刷新 CSRF Token（重新调用 /api/auth/me），绝不自动重放原 POST/PUT/PATCH/DELETE
+          bootstrapSession().catch(function () {});
+          showFlash('操作会话已失效，请重试本次操作', 'danger');
+        }
+        // PERMISSION_DENIED 或未知 403：保持原样，由调用方处理
+      }
+    }
+    return resp;
+  };
+})();
 
 // ==================== API 数据适配层 ====================
 let _dbAvailable = null;
@@ -1862,20 +1958,13 @@ let _cacheTimestamp = 0;
 const CACHE_TTL = 60000; // 60秒缓存（显式保存/审批时 _recordsCache=null 即时失效，不影响数据流转）
 
 function getAuthHeaders() {
-  const user = getCurrentUser();
-  let perms = '';
-  if (user) {
-    const role = getUserRole(user);
-    if (role && role.permissions) {
-      perms = Array.isArray(role.permissions) ? role.permissions.join(',') : normalizePermissions(role.permissions).join(',');
-    }
+  // 身份由服务端会话决定，客户端不再发送 X-User-* 头（旧鉴权已移除）。
+  // 写请求统一携带服务端下发的 CSRF Token。
+  const headers = { 'Content-Type': 'application/json' };
+  if (typeof sessionCsrfToken === 'string' && sessionCsrfToken) {
+    headers['X-CSRF-Token'] = sessionCsrfToken;
   }
-  return {
-    'Content-Type': 'application/json',
-    'X-User-Id': user ? user.id : '',
-    'X-User-Role': user ? user.role_id : '',
-    'X-User-Permissions': perms
-  };
+  return headers;
 }
 
 async function checkDbAvailable() {
@@ -2204,9 +2293,9 @@ async function initDefaultData(){
   let users=await getUsers();
   if(users.length===0){
     users=[
-      {id:'user_admin', username:'admin', name:'超级管理员', password:'admin', role_id:'role_admin', status:'active', created_at:new Date().toISOString()},
-      {id:'user_operator', username:'operator', name:'运营人员', password:'operator', role_id:'role_operator', status:'active', created_at:new Date().toISOString()},
-      {id:'user_viewer', username:'viewer', name:'普通用户', password:'viewer', role_id:'role_viewer', status:'active', created_at:new Date().toISOString()}
+      {id:'user_admin', username:'admin', name:'超级管理员', password:'', role_id:'role_admin', status:'active', created_at:new Date().toISOString()},
+      {id:'user_operator', username:'operator', name:'运营人员', password:'', role_id:'role_operator', status:'active', created_at:new Date().toISOString()},
+      {id:'user_viewer', username:'viewer', name:'普通用户', password:'', role_id:'role_viewer', status:'active', created_at:new Date().toISOString()}
     ];
     await saveUsers(users);
   }
@@ -2949,116 +3038,57 @@ async function initiateFeishuLogin() {
   }
 }
 
-// 处理飞书 OAuth 回调
-async function handleFeishuCallback(encodedUserData) {
-  setLoginBootState(true);
-  const errEl = document.getElementById('login-error');
-  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-  try {
-    // 修复：atob 返回二进制串（Latin-1），需用 TextDecoder 转 UTF-8
-    const binary = atob(encodedUserData);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    const jsonStr = new TextDecoder('utf-8').decode(bytes);
-    const userData = JSON.parse(jsonStr);
-    if (!hasValue(userData.feishu_open_id)) {
-      throw new Error('飞书返回的用户信息缺少 OpenID');
-    }
-    
-    // 在本地用户中查找匹配的飞书账号
-    const users = await getUsers();
-    let localUser = await findUserByFeishuIdentity(users, userData);
-    
-    if (!localUser) {
-      // 首次飞书登录，自动创建普通用户，管理员可后续提升角色权限。
-      const fsUsername = makeUniqueUsername(userData.feishu_name || userData.feishu_email?.split('@')[0], users);
-      const userIdSuffix = window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now();
-      localUser = {
-        id: 'user_fs_' + userIdSuffix,
-        username: fsUsername,
-        name: userData.feishu_name || '飞书用户',
-        password: '',
-        role_id: await getDefaultFeishuRoleId(),
-        status: 'active',
-        feishu_open_id: userData.feishu_open_id,
-        feishu_user_id: userData.feishu_user_id || userData.user_id || '',
-        feishu_union_id: userData.feishu_union_id,
-        feishu_name: userData.feishu_name || '',
-        feishu_email: userData.feishu_email || '',
-        feishu_avatar: userData.feishu_avatar || '',
-        feishu_tenant_key: userData.feishu_tenant_key || '',
-        feishu_raw_name: userData.feishu_raw_name || '',
-        feishu_en_name: userData.feishu_en_name || '',
-        created_at: new Date().toISOString()
-      };
-      users.push(localUser);
-      await saveUsers(users);
-      console.log('[Feishu] 新用户已自动创建:', localUser.name);
-    } else {
-      // 更新已有用户的飞书信息
-      let changed = false;
-      if (!localUser.feishu_open_id) { localUser.feishu_open_id = userData.feishu_open_id; changed = true; }
-      if (!localUser.feishu_user_id && (userData.feishu_user_id || userData.user_id)) { localUser.feishu_user_id = userData.feishu_user_id || userData.user_id; changed = true; }
-      if (!localUser.feishu_union_id) { localUser.feishu_union_id = userData.feishu_union_id; changed = true; }
-      if (!localUser.feishu_name || localUser.feishu_name !== userData.feishu_name) { localUser.feishu_name = userData.feishu_name; changed = true; }
-      if ((userData.feishu_email || '') !== (localUser.feishu_email || '')) { localUser.feishu_email = userData.feishu_email || ''; changed = true; }
-      if ((userData.feishu_avatar || '') !== (localUser.feishu_avatar || '')) { localUser.feishu_avatar = userData.feishu_avatar || ''; changed = true; }
-      if ((userData.feishu_tenant_key || '') !== (localUser.feishu_tenant_key || '')) { localUser.feishu_tenant_key = userData.feishu_tenant_key || ''; changed = true; }
-      if ((userData.feishu_raw_name || '') !== (localUser.feishu_raw_name || '')) { localUser.feishu_raw_name = userData.feishu_raw_name || ''; changed = true; }
-      if ((userData.feishu_en_name || '') !== (localUser.feishu_en_name || '')) { localUser.feishu_en_name = userData.feishu_en_name || ''; changed = true; }
-      // 同步更新显示名称，避免旧乱码名字残留
-      if (userData.feishu_name && localUser.name !== userData.feishu_name) {
-        localUser.name = userData.feishu_name;
-        changed = true;
-      }
-      if (changed) {
-        const idx = users.findIndex(u => u.id === localUser.id);
-        if (idx >= 0) { users[idx] = localUser; await saveUsers(users); }
-      }
-    }
-    
-    setCurrentUser(localUser);
-    enterApp();
-    showFlash(t('flash.welcome') + localUser.name,'success');
-    
-  } catch (e) {
-    console.error('[Feishu] 回调处理失败:', e);
-    showLoginError('登录处理失败，请重试');
-    await checkFeishuStatus();
-  }
-}
+// [R1] 已移除：飞书 OAuth 的 URL 身份解析（handleFeishuCallback）。身份仅来自服务端会话。
+// 真实飞书登录由服务端 /api/auth/feishu/callback 建立 Session 后重定向，前端经 /api/auth/me 取得身份。
 
 function logout() {
-  // 清除本地登录状态
-  localStorage.removeItem('aftersales_current_user');
-  localStorage.removeItem('aftersales_login_error');
-  
-  // 调用后端接口清除飞书 OAuth 相关状态
+  // 销毁服务端会话（带 CSRF，由全局中间件校验）；失败也继续清空前端态
+  fetch('/api/auth/logout', { method: 'POST', headers: getAuthHeaders(), keepalive: true }).catch(() => {});
+  // 清除飞书 OAuth 相关状态（若有）
   fetch('/api/auth/feishu/logout', { method: 'POST', keepalive: true }).catch(() => {});
-  
+
+  // 清空运行时身份（不依赖 localStorage）
+  _sessionUser = null;
+  sessionCsrfToken = '';
+  _sessionUnavailable = false;
+
   document.getElementById('app-shell').classList.add('hidden');
   document.getElementById('page-login').classList.remove('hidden');
   setLoginBootState(true);
-  
+
   // 清空登录错误
   const errEl = document.getElementById('login-error');
   if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-  
+
   // 重新检测飞书状态
   checkFeishuStatus();
 }
 
-// 本地账号登录
+// 本地账号登录（紧急管理员 break-glass）：经服务端校验，不再读取本地密码
 async function adminLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
-  if (!username || !password) { showLoginError(t('login.error.enterCredentials')); return; }
-  const users = await getUsers();
-  const user = users.find(u => u.username === username && u.password === password && u.status === 'active');
-  if (!user) { showLoginError(t('login.error.wrongCredentials')); return; }
-  setCurrentUser(user);
+  if (!password) { showLoginError(t('login.error.enterCredentials')); return; }
+  let resp;
+  try {
+    resp = await fetch('/api/auth/break-glass', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password }),
+    });
+  } catch (e) {
+    showLoginError(t('login.error.wrongCredentials'));
+    return;
+  }
+  // 统一失败响应：不区分"开关关闭 / 密码错误 / 用户禁用"
+  if (!resp.ok) { showLoginError(t('login.error.wrongCredentials')); return; }
+  // 服务端已建立会话；从 /api/auth/me 恢复完整身份（含角色与权限、CSRF Token）
+  const user = await bootstrapSession();
+  if (!user) {
+    onSessionExpired();
+    showLoginError(t('login.error.wrongCredentials'));
+    return;
+  }
   enterApp();
   showFlash(t('flash.admin') + ' ' + user.name + t('flash.adminLoggedIn'), 'success');
 }
@@ -7700,29 +7730,30 @@ function resolveColumns(headers){
     }
   }
 
-  // 处理飞书登录回调
-  const feishuUserData = urlParams.get('feishu_user');
-  if (feishuUserData && !getCurrentUser()) {
-    await handleFeishuCallback(feishuUserData);
-    // 清理 URL 参数（不影响页面状态）
-    if (window.history && window.history.replaceState) {
-      const cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState({}, document.title, cleanUrl);
+  // 恢复登录态：服务端会话是身份唯一来源；绝不使用 localStorage 恢复登录身份
+  let serverReachable = false;
+  let breakGlassEnabled = false;
+  try {
+    const vResp = await fetch('/api/version');
+    serverReachable = vResp.ok;
+    if (vResp.ok) {
+      const vData = await vResp.json().catch(() => ({}));
+      breakGlassEnabled = !!(vData && vData.breakGlassEnabled);
     }
-    return;
-  }
+  } catch (e) { serverReachable = false; breakGlassEnabled = false; }
 
-  // 检查本地已登录用户
-  const user = getCurrentUser();
-  if (user) {
-    try {
-      const fresh = (await getUsers()).find(u => u.id === user.id && u.status === 'active');
-      if (fresh) { setCurrentUser(fresh); enterApp(); }
-      else { localStorage.removeItem('aftersales_current_user'); }
-    } catch (e) {
-      console.warn('[init] 验证本地用户失败:', e);
-      localStorage.removeItem('aftersales_current_user');
+  if (serverReachable) {
+    // 从服务端会话恢复身份（含角色/权限/CSRF）；401→回登录页，网络/5xx→服务不可用
+    const serverUser = await bootstrapSession();
+    if (serverUser) {
+      enterApp();
+    } else if (_sessionUnavailable) {
+      showServiceUnavailable();
     }
+    // 否则已回到登录页（onSessionExpired 已处理）
+  } else {
+    // 服务端不可达：不得从 localStorage 恢复身份，显示“服务暂时不可用”
+    showServiceUnavailable();
   }
 
   // 登录页初始化
@@ -7743,9 +7774,14 @@ function resolveColumns(headers){
   });
 
   // 显示管理员本地登录入口（通过 ?admin 参数访问）
+  // 安全约束：仅当 BREAKGLASS_ENABLED=true 才暴露该入口；关闭时等同不存在（404）
   const showAdmin = urlParams.get('admin');
   if (showAdmin !== null) {
-    document.getElementById('login-panel-admin').style.display = 'block';
+    if (breakGlassEnabled) {
+      document.getElementById('login-panel-admin').style.display = 'block';
+    } else {
+      document.getElementById('login-panel-admin').style.display = 'none';
+    }
   }
 
   // 显示上次登录错误
