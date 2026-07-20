@@ -1288,8 +1288,9 @@
     "btnDeleteLevel": "Delete Level",
     "nodeStart": "Start",
     "nodeSubmit": "Submit Application",
-    "nodeEnd": "End",
-    "nodeApproved": "Approved",
+      "nodeEnd": "End",
+      "nodeCompleteCaption": "Completion",
+      "nodeApproved": "Approved",
     "hintSelectNode": "Click a node to view and edit its configuration",
     "emptySelectNode": "Click an approval node above to view and edit its configuration",
     "nodeConfig": "Node Config",
@@ -1375,7 +1376,7 @@
   },
   "ccPicker": {
     "settingTitle": "CC Recipients",
-    "settingHint": "Notified on submission, view-only",
+    "settingHint": "Notified after final approval, view-only",
     "add": "Select recipients",
     "title": "Select CC Recipients",
     "searchPlaceholder": "Search name or account",
@@ -1384,5 +1385,10 @@
     "noMatch": "No matching users",
     "selectedCount": "Selected {n}",
     "disabledMark": " (disabled)"
+  },
+  "ccCompletion": {
+    "title": "CC After Approval Completion",
+    "desc": "Notified after final approval passes; CC recipients can view only",
+    "nodeSummaryEmpty": "No CC recipients"
   }
 }

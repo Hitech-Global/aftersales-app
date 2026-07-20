@@ -1289,6 +1289,7 @@
     "nodeStart": "起始",
     "nodeSubmit": "提交申请",
     "nodeEnd": "结束",
+    "nodeCompleteCaption": "完成节点",
     "nodeApproved": "审批完成",
     "hintSelectNode": "点击节点查看和编辑配置",
     "emptySelectNode": "点击上方审批节点查看和编辑配置",
@@ -1375,7 +1376,7 @@
   },
   "ccPicker": {
     "settingTitle": "抄送设置",
-    "settingHint": "提交审批时通知，仅只读查看",
+    "settingHint": "审批通过后通知，抄送人仅可查看",
     "add": "选择抄送人",
     "title": "选择抄送人",
     "searchPlaceholder": "搜索姓名或账号",
@@ -1384,5 +1385,10 @@
     "noMatch": "无匹配用户",
     "selectedCount": "已选择 {n} 人",
     "disabledMark": "（已停用）"
+  },
+  "ccCompletion": {
+    "title": "审批完成后抄送",
+    "desc": "最终审批通过后通知，抄送人仅可查看",
+    "nodeSummaryEmpty": "未设置抄送人"
   }
 }

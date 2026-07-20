@@ -772,6 +772,14 @@ select option{background:var(--card-bg);color:var(--text)}
 .af-flow-node:hover{border-color:var(--primary)}
 .af-flow-node.active{border-color:var(--primary);background:rgba(46,125,50,.05);box-shadow:0 2px 8px rgba(46,125,50,.15)}
 .af-flow-node-start,.af-flow-node-end{border-style:dashed;color:var(--text-muted)}
+/* AFTERSALES-CC-COMPLETION-01：结束节点（审批完成）可点击，展示 CC 摘要 */
+.af-flow-node-complete{border-style:solid}
+.af-flow-node-complete:hover{border-color:var(--primary)}
+.af-flow-node-complete.active{border-color:var(--success,#2e7d32);background:rgba(46,125,50,.08);box-shadow:0 2px 10px rgba(46,125,50,.18)}
+.af-node-cc-empty{font-size:11px;color:var(--text-muted);margin-top:8px;font-style:italic}
+.af-node-cc{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;justify-content:center}
+.af-node-cc-chip{font-size:11px;background:rgba(46,125,50,.12);color:var(--text);padding:2px 8px;border-radius:10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.af-node-cc-more{font-size:11px;color:var(--text-muted);padding:2px 4px}
 .af-flow-level-tag{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--primary);color:#fff;font-size:10px;font-weight:600;margin-bottom:4px}
 .af-flow-arrow{font-size:20px;color:var(--text-muted);padding:0 6px;flex-shrink:0}
 .af-config-panel{padding:20px;border-top:1px solid var(--border)}
@@ -2405,9 +2413,10 @@ const PAGE_PERMISSIONS = {
 function canAccessPage(page, recordId){
   // 详情页：有 record_view 可直接访问；CC 抄送用户（无 record_view）可只读访问其被抄送的记录
   if(page==='detail'){
+    // 有 record_view 可直接访问；CC 抄送用户（无 record_view）可进入详情页，
+    // 实际可见记录由服务端 /api/records/cc 按 cc_users 快照授权，看不到其他记录。
     if(hasPermission('record_view')) return true;
-    if(recordId && _ccRecordsCache && _ccRecordsCache.length && _ccRecordsCache.some(x=>String(x.id)===String(recordId))) return true;
-    return false;
+    return !!getCurrentUser();
   }
   const requiredPerm = PAGE_PERMISSIONS[page];
   if(!requiredPerm) return false;
@@ -4418,8 +4427,16 @@ async function renderDetail(id){
     if(fetchStatus===200 && records && records.length){
       r=records.find(x=>String(x.id)===String(id));
     }
-    if(!r && _ccRecordsCache && _ccRecordsCache.length){
-      r=_ccRecordsCache.find(x=>String(x.id)===String(id));
+    if(!r){
+      // 无 record_view 的 CC 抄送用户：回退到“抄送给我的”实时接口（仅返回该用户被抄送的记录，天然只读）。
+      // 不依赖已删除 CC-to-Me 页面的 _ccRecordsCache 预加载。
+      try{
+        const ccResp = await fetch('/api/records/cc', { headers: getAuthHeaders() });
+        if(ccResp.ok){
+          const ccList = await ccResp.json();
+          r = (ccList||[]).find(x=>String(x.id)===String(id));
+        }
+      }catch(e){ /* ignore */ }
     }
     if(!r){
       detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'overview')">${t('detail.btnBack')}</button></div>`;
@@ -8034,6 +8051,7 @@ window.__i18n_test = async function() {
 let _afFlows = [];
 let _afCurrentIdx = 0;
 let _afSelectedNode = -1;
+let _afSelectedCompletion = false; // AFTERSALES-CC-COMPLETION-01：是否选中“审批完成”结束节点
 let _afUsers = [];
 let _afRoles = [];
 
@@ -8071,6 +8089,7 @@ async function renderApprovalFlows() {
     });
     _afCurrentIdx = 0;
     _afSelectedNode = -1;
+    _afSelectedCompletion = false;
     _afRenderPage();
   } catch (e) {
     area.innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">' + t('dictionaries.loadFailed') + esc(e.message) + '</div>';
@@ -8164,35 +8183,7 @@ function _afRenderPage() {
     h += '<input class="af-config-input" value="' + esc(flow.id === 'flow_standard' ? (flow._dirty && flow._dirty.scope ? flow.scope : t('form.flow.defaultScope')) : (flow.scope || '')) + '" id="af-flow-scope" onchange="updateFlowField(\'scope\',this.value)" style="max-width:400px">';
     h += '</div>';
 
-    // 抄送设置（macOS 联系人浮层选择器）：适用范围下方、审批节点上方
-    {
-      const ccUsers = (flow.cc_users || []);
-      const ccActiveSet = new Set((_afUsers || []).filter(u => u.status === 'active').map(u => u.id));
-      const ccTags = ccUsers.slice(0, 3);
-      const ccExtra = ccUsers.length - ccTags.length;
-      h += '<div style="padding:14px 16px;border-top:1px solid var(--border)">';
-      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
-      h += '<span style="font-size:13px;font-weight:600">' + esc(t('ccPicker.settingTitle')) + '</span>';
-      h += '<span style="font-size:11px;color:var(--text-muted);font-weight:400">' + esc(t('ccPicker.settingHint')) + '</span>';
-      h += '</div>';
-      h += '<div class="cc-summary">';
-      h += '<button class="cc-add-btn" onclick="openCcPicker(' + _afCurrentIdx + ')">＋ ' + esc(t('ccPicker.add')) + '</button>';
-      ccTags.forEach(c => {
-        const isActive = ccActiveSet.has(c.id);
-        const initial = (c.name || '?').trim().charAt(0).toUpperCase();
-        h += '<span class="cc-chip' + (isActive ? '' : ' cc-chip-disabled') + '">';
-        h += '<span class="cc-chip-avatar" style="background:' + avatarColor(c.name) + '">' + esc(initial) + '</span>';
-        h += '<span class="cc-chip-name">' + esc(c.name) + (isActive ? '' : esc(t('ccPicker.disabledMark') || '（已停用）')) + '</span>';
-        h += '<button class="cc-chip-x" onclick="removeCcChip(\'' + escAttr(c.id) + '\')" title="' + escAttr(c.name) + '">&times;</button>';
-        h += '</span>';
-      });
-      if (ccExtra > 0) h += '<span class="cc-more">[+' + ccExtra + ']</span>';
-      h += '</div>';
-      if (ccUsers.length) {
-        h += '<div class="cc-count">' + esc((t('ccPicker.selectedCount') || '已选择 {n} 人').replace('{n}', String(ccUsers.length))) + '</div>';
-      }
-      h += '</div>';
-    }
+    // 注：全局“抄送设置”已移除（AFTERSALES-CC-COMPLETION-01），改为流程图最右侧“审批完成”结束节点内配置。
 
     // 可视化流程节点
     h += '<div class="af-flow-container" id="af-flow-container">';
@@ -8206,7 +8197,22 @@ function _afRenderPage() {
       h += '</div>';
     });
     h += '<div class="af-flow-arrow">&#x2192;</div>';
-    h += '<div class="af-flow-node af-flow-node-end"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">' + t('approvalFlows.nodeEnd') + '</div><div style="font-size:14px;font-weight:600">' + t('approvalFlows.nodeApproved') + '</div></div>';
+    h += '<div class="af-flow-node af-flow-node-complete ' + (_afSelectedCompletion ? 'active' : '') + '" onclick="selectCompletionNode()">';
+    h += '<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">' + t('approvalFlows.nodeCompleteCaption') + '</div>';
+    h += '<div style="font-size:14px;font-weight:600">' + t('approvalFlows.nodeApproved') + '</div>';
+    {
+      const ccUsers = (flow.cc_users || []);
+      if (!ccUsers.length) {
+        h += '<div class="af-node-cc-empty">' + esc(t('ccCompletion.nodeSummaryEmpty')) + '</div>';
+      } else {
+        const tags = ccUsers.slice(0, 3);
+        h += '<div class="af-node-cc">';
+        tags.forEach(c => { h += '<span class="af-node-cc-chip">' + esc(c.name) + '</span>'; });
+        if (ccUsers.length > 3) h += '<span class="af-node-cc-more">+' + (ccUsers.length - 3) + '</span>';
+        h += '</div>';
+      }
+    }
+    h += '</div>';
     h += '</div>';
 
     // 节点操作栏
@@ -8216,7 +8222,9 @@ function _afRenderPage() {
     h += '</div>';
 
     // 节点配置面板
-    if (_afSelectedNode >= 0 && _afSelectedNode < (flow.nodes || []).length) {
+    if (_afSelectedCompletion) {
+      h += _afRenderCompletionConfig(flow);
+    } else if (_afSelectedNode >= 0 && _afSelectedNode < (flow.nodes || []).length) {
       h += _afRenderNodeConfig(flow.nodes[_afSelectedNode], _afSelectedNode, flow.nodes.length);
     } else {
       h += '<div class="af-empty" style="padding:24px">' + t('approvalFlows.emptySelectNode') + '</div>';
@@ -8280,14 +8288,51 @@ function _afRenderNodeConfig(node, idx, total) {
   return h;
 }
 
+// AFTERSALES-CC-COMPLETION-01：结束节点“审批完成后抄送”配置面板，复用现有 Mac 风格 CC Picker。
+function _afRenderCompletionConfig(flow) {
+  const ccUsers = (flow.cc_users || []);
+  const ccActiveSet = new Set((_afUsers || []).filter(u => u.status === 'active').map(u => u.id));
+  const ccTags = ccUsers.slice(0, 3);
+  const ccExtra = ccUsers.length - ccTags.length;
+  let h = '<div class="af-config-panel">';
+  h += '<div style="font-size:15px;font-weight:600;margin-bottom:6px">' + esc(t('ccCompletion.title')) + '</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5">' + esc(t('ccCompletion.desc')) + '</div>';
+  h += '<div class="cc-summary">';
+  h += '<button class="cc-add-btn" onclick="openCcPicker(' + _afCurrentIdx + ')">＋ ' + esc(t('ccPicker.add')) + '</button>';
+  ccTags.forEach(c => {
+    const isActive = ccActiveSet.has(c.id);
+    const initial = (c.name || '?').trim().charAt(0).toUpperCase();
+    h += '<span class="cc-chip' + (isActive ? '' : ' cc-chip-disabled') + '">';
+    h += '<span class="cc-chip-avatar" style="background:' + avatarColor(c.name) + '">' + esc(initial) + '</span>';
+    h += '<span class="cc-chip-name">' + esc(c.name) + (isActive ? '' : esc(t('ccPicker.disabledMark') || '（已停用）')) + '</span>';
+    h += '<button class="cc-chip-x" onclick="removeCcChip(\'' + escAttr(c.id) + '\')" title="' + escAttr(c.name) + '">&times;</button>';
+    h += '</span>';
+  });
+  if (ccExtra > 0) h += '<span class="cc-more">[+' + ccExtra + ']</span>';
+  h += '</div>';
+  if (ccUsers.length) {
+    h += '<div class="cc-count">' + esc((t('ccPicker.selectedCount') || '已选择 {n} 人').replace('{n}', String(ccUsers.length))) + '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
 function selectFlow(idx) {
   _afCurrentIdx = idx;
   _afSelectedNode = -1;
+  _afSelectedCompletion = false;
   _afRenderPage();
 }
 
 function selectFlowNode(idx) {
   _afSelectedNode = idx;
+  _afSelectedCompletion = false;
+  _afRenderPage();
+}
+
+function selectCompletionNode() {
+  _afSelectedCompletion = true;
+  _afSelectedNode = -1;
   _afRenderPage();
 }
 

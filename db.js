@@ -267,6 +267,9 @@ async function initDatabase() {
       { name: 'approval_flow_id', type: 'VARCHAR(64) DEFAULT \'\'' },
       { name: 'approval_flow_name', type: 'VARCHAR(255) DEFAULT \'\'' },
       { name: 'tracking_number', type: 'VARCHAR(128) DEFAULT \'\'' },
+      { name: 'cc_notify_on_completion', type: 'BOOLEAN DEFAULT FALSE' },
+      { name: 'cc_completion_notified_at', type: 'TIMESTAMP DEFAULT NULL' },
+      { name: 'cc_completion_claimed_at', type: 'TIMESTAMP DEFAULT NULL' },
     ];
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});

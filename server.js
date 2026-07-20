@@ -991,10 +991,38 @@ async function resolveFlowCcUsers(flowId) {
   }
 }
 
-// 服务端内部触发 CC 抄送飞书通知（提交审批成功后在事务外调用，失败不影响提交结果）。
-// 仅按 recordId 从数据库读取：冻结的 cc_users、实际审批人、用户飞书绑定；按用户 ID 去重；
-// 审批人与 CC 重叠时跳过重复 CC 通知；个别用户未绑定飞书/通知失败仅记录（不含 Secret），不回滚提交。
-async function notifyCcUsers(recordId) {
+// ==================== 结束后抄送（最终审批通过触发）====================
+// AFTERSALES-CC-COMPLETION-01：在最终审批通过后由服务端触发一次“结束节点抄送”完成通知。
+// 幂等（原子 claim）：仅当 flag=true、cc_completion_claimed_at IS NULL、cc_completion_notified_at IS NULL 时
+// 写 cc_completion_claimed_at=NOW()；并发/重复请求只有一个能获得 claim。飞书全部发送成功后才写
+// cc_completion_notified_at=NOW()；发送失败保留 claimed_at、notified_at 仍为 NULL、不回滚审批、不重试。
+async function triggerCompletionCc(recordId) {
+  const claim = await query(
+    `UPDATE aftersales_records
+     SET cc_completion_claimed_at = NOW()
+     WHERE id = $1
+       AND cc_notify_on_completion = true
+       AND cc_completion_claimed_at IS NULL
+       AND cc_completion_notified_at IS NULL
+     RETURNING id`,
+    [recordId]
+  );
+  if (claim.rowCount === 0) return { triggered: false, reason: 'not_eligible_or_already_claimed_or_notified' };
+  const notifyRes = await notifyCompletionCc(recordId);
+  // 仅在飞书全部发送成功后才标记“已通知”；部分/全部失败则保留 claimed_at，notified_at 仍为 NULL，不重试。
+  if (notifyRes && notifyRes.success) {
+    await query(
+      `UPDATE aftersales_records SET cc_completion_notified_at = NOW() WHERE id = $1`,
+      [recordId]
+    );
+  }
+  return notifyRes || { success: false, triggered: true };
+}
+
+// 结束后抄送：读取记录提交时冻结的 cc_users 快照，按 user_id 去重后发送“审批完成”结果通知。
+// 与提交时抄送不同：审批人若也在 CC 名单中仍须收到一次最终结果通知（规则 10），故不与审批人去重。
+// 飞书未配置时使用 Mock 记录收件人；发送失败仅记录（不含 Secret），不回滚审批业务。
+async function notifyCompletionCc(recordId) {
   try {
     if (!recordId) return { success: false, error: 'missing_recordId' };
     const { rows } = await query('SELECT * FROM aftersales_records WHERE id = $1', [recordId]);
@@ -1003,13 +1031,19 @@ async function notifyCcUsers(recordId) {
     const ccUsers = typeof rec.cc_users === 'string' ? JSON.parse(rec.cc_users || '[]') : (rec.cc_users || []);
     if (!Array.isArray(ccUsers) || !ccUsers.length) return { success: true, skipped: true, reason: 'no_cc' };
 
-    // 实际审批人（数据库权威），用于与 CC 去重
-    const approverIds = [rec.approver_level1_id, rec.approver_level2_id, rec.approver_level3_id]
-      .filter(Boolean).map(String);
-    const approverSet = new Set(approverIds);
+    // 结束节点 CC 名单内部按 user_id 去重（规则 10）
+    const seen = new Set();
+    const targets = [];
+    for (const c of ccUsers) {
+      const id = String(c && c.id);
+      if (!id) continue;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      targets.push(c);
+    }
+    if (!targets.length) return { success: true, skipped: true, reason: 'no_cc' };
 
-    // 读取 CC 用户的飞书绑定与 active 状态（数据库权威；二次过滤停用/不存在）
-    const ids = ccUsers.map(c => c && c.id).filter(Boolean);
+    const ids = targets.map(c => c.id);
     const ur = await query(
       'SELECT id, name, feishu_open_id, feishu_user_id, feishu_union_id, status FROM users WHERE id = ANY($1::text[])',
       [ids]
@@ -1023,34 +1057,25 @@ async function notifyCcUsers(recordId) {
 
     if (!feishuConfigured) {
       const sent = [], skipped = [];
-      for (const cc of ccUsers) {
-        if (approverSet.has(String(cc.id))) {
-          console.log('[Mock][CC] 与审批人重复，跳过抄送（已通过审批通知送达）', { name: cc.name, recordDisplayId });
-          skipped.push(cc.name); continue;
-        }
-        const u = userMap[cc.id];
-        if (!u || u.status !== 'active') { skipped.push(cc.name + '(停用/不存在)'); continue; }
-        sent.push(cc.name);
+      for (const c of targets) {
+        const u = userMap[c.id];
+        if (!u || u.status !== 'active') { skipped.push(c.name + '(停用/不存在)'); continue; }
+        sent.push(c.name);
       }
-      console.log('[Mock] CC 抄送通知:', { recordDisplayId, sent, dedupSkipped: skipped });
+      console.log('[Mock][CompletionCC] 审批完成抄送通知:', { recordDisplayId, sent, dedupSkipped: skipped });
       return { success: true, mock: true, sent, skipped };
     }
 
     const tokenResult = await getTenantAccessToken();
     if (tokenResult.error) {
-      console.error('[CC] 获取飞书 token 失败(不影响提交):', tokenResult.error);
+      console.error('[CompletionCC] 获取飞书 token 失败(不影响审批):', tokenResult.error);
       return { success: false, error: tokenResult.error };
     }
     const results = { success: [], failed: [] };
-    for (const cc of ccUsers) {
-      const id = String(cc.id);
-      if (approverSet.has(id)) {
-        console.log('[Feishu] CC 与审批人重复，跳过（已通过审批通知送达）', { name: cc.name });
-        continue;
-      }
-      const u = userMap[cc.id];
+    for (const c of targets) {
+      const u = userMap[c.id];
       if (!u || u.status !== 'active') {
-        console.log('[Feishu] CC 用户不存在或已停用，跳过', { id: cc.id });
+        results.failed.push({ name: c.name, reason: 'CC 用户不存在或已停用', code: 'CC_INACTIVE' });
         continue;
       }
       const receiver = getFeishuReceiver(u);
@@ -1058,31 +1083,28 @@ async function notifyCcUsers(recordId) {
         results.failed.push({ name: u.name, reason: 'CC 未绑定飞书账号', code: 'CC_NOT_BOUND' });
         continue;
       }
-      const card = buildApprovalCard({
+      const card = buildCompletionCard({
         recordDisplayId,
         submitterName: rec.submitter_name,
         aftersalesDate: rec.aftersales_date,
         items,
         brands: rec.brand,
         platforms: rec.platforms,
-        detailUrl,
-        approvalLevel: rec.current_approval_level,
-        currentApproverName: '（抄送阅知）',
-        isCc: true
+        detailUrl
       });
       const sendResult = await sendFeishuInteractiveMessage({
         token: tokenResult.token,
         receiver,
         card,
         recipientName: u.name,
-        context: { type: 'cc', recordId }
+        context: { type: 'completion_cc', recordId }
       });
       if (sendResult.success) results.success.push({ name: u.name });
       else results.failed.push({ name: u.name, reason: sendResult.reason, code: sendResult.code });
     }
     return { success: results.failed.length === 0, results, mock: false };
   } catch (e) {
-    console.error('[CC] 通知异常(不影响提交):', e.message);
+    console.error('[CompletionCC] 通知异常(不影响审批):', e.message);
     return { success: false, error: e.message };
   }
 }
@@ -1139,35 +1161,8 @@ app.get('/api/records/cc', requireLogin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 提交审批时通知 CC 用户（复用现有飞书能力；与审批人去重：同一用户既是审批人又是 CC 只通知一次）
-app.post('/api/notify/cc', requireLogin, async (req, res) => {
-  // 四.1：客户端最多只能提交 recordId；cc_users / approverIds / 飞书收件人一律由服务端按数据库解析。
-  const { recordId } = req.body;
-  if (!recordId) return res.status(400).json({ success: false, error: '缺少 recordId' });
-
-  // 四.4：记录操作权限校验（提交人 / 实际审批人 / 有 record_view 权限者方可触发重发）
-  let rec;
-  try {
-    const rr = await query(
-      'SELECT submitter_id, approver_level1_id, approver_level2_id, approver_level3_id FROM aftersales_records WHERE id = $1',
-      [recordId]
-    );
-    if (!rr.rows.length) return res.status(404).json({ success: false, error: '记录不存在' });
-    rec = rr.rows[0];
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
-  const isSubmitter = rec.submitter_id === req.currentUserId;
-  const isApprover = [rec.approver_level1_id, rec.approver_level2_id, rec.approver_level3_id].includes(req.currentUserId);
-  const hasView = (req.currentUserPermissions || []).includes('record_view');
-  if (!isSubmitter && !isApprover && !hasView) {
-    return res.status(403).json({ success: false, error: '无操作权限', code: 'PERMISSION_DENIED' });
-  }
-
-  // 服务端按 recordId 从数据库读取“冻结的 cc_users / 实际审批人 / 用户飞书绑定”并去重通知（见 notifyCcUsers）
-  const result = await notifyCcUsers(recordId);
-  res.json({ success: result.success !== false, ...result });
-});
+// AFTERSALES-CC-COMPLETION-01-R1：旧的“提交即抄送/手动重发”入口（POST /api/notify/cc + notifyCcUsers）
+// 已删除。完成抄送仅由服务端终审状态转换（triggerCompletionCc）触发，浏览器不得经额外请求触发。
 
 // ===================== 售后 ID 生成（RMA-YYYYMMDD-NNNN）=====================
 // 业务时区：所有售后 ID 的日期部分按 Asia/Jakarta（UTC+7）计算。
@@ -1295,13 +1290,13 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
     // CC 快照：仅当提交（非草稿）且指定审批流时，按当前审批流配置快照 CC 用户
     const isDraft = (status || 'draft') === 'draft';
     const flowCcUsers = (!isDraft && approval_flow_id) ? await resolveFlowCcUsers(approval_flow_id) : [];
-    const columns = ['submitter_id','submitter_name','aftersales_date','status','brand','model','category','platforms','items','total_quantity','current_approval_level','approval_flow_id','approval_flow_name','approver_level1_id','approver_level1_name','approver_level2_id','approver_level2_name','approver_level3_id','approver_level3_name','approval_history','tracking_number','cc_users'];
-    const values = [submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []), total_quantity || 0, current_approval_level || 0, approval_flow_id || '', flowName, flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '', flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || '', JSON.stringify(flowCcUsers)];
+    // AFTERSALES-CC-COMPLETION-01：新逻辑下“提交（非草稿）且指定审批流”即启用结束后抄送；
+    // 草稿或无需审批的流程不启用。提交时不再发送 CC（改由最终审批通过后由服务端触发）。
+    const ccNotifyOnCompletion = (!isDraft && approval_flow_id) ? true : false;
+    const columns = ['submitter_id','submitter_name','aftersales_date','status','brand','model','category','platforms','items','total_quantity','current_approval_level','approval_flow_id','approval_flow_name','approver_level1_id','approver_level1_name','approver_level2_id','approver_level2_name','approver_level3_id','approver_level3_name','approval_history','tracking_number','cc_users','cc_notify_on_completion'];
+    const values = [submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []), total_quantity || 0, current_approval_level || 0, approval_flow_id || '', flowName, flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '', flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || '', JSON.stringify(flowCcUsers), ccNotifyOnCompletion];
     const { record, migrated } = await createRecordTx(client, { columns, values, temp_record_id });
-    // 服务端内部触发 CC 抄送通知（提交即触发；事务外、失败不影响提交结果；绝不回滚已成功的提交）
-    if (!isDraft && record && record.id) {
-      try { notifyCcUsers(record.id).catch(e => console.error('[CC] 通知失败(不影响提交):', e.message)); } catch (_) {}
-    }
+    // 注意：提交时不再触发 CC 通知（AFTERSALES-CC-COMPLETION-01）。结束后抄送由最终审批接口触发。
     res.json({ ...record, migrated });
   } catch (e) {
     try { await client.query('ROLLBACK'); } catch (_) {}
@@ -1385,6 +1380,7 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     if (approval_flow_id && oldStatus === 'draft' && status && status !== 'draft') {
       const flowCc = await resolveFlowCcUsers(approval_flow_id);
       add('cc_users', JSON.stringify(flowCc));
+      add('cc_notify_on_completion', true); // AFTERSALES-CC-COMPLETION-01：草稿→提交即启用结束后抄送
       ccSnapshotTaken = true;
     }
 
@@ -1395,10 +1391,7 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     );
     if (result.rows.length === 0) return res.status(404).json({ error: '记录不存在' });
     const updated = result.rows[0];
-    // 服务端内部触发 CC 抄送通知（仅草稿→提交时；事务外、失败不影响提交结果；绝不回滚已成功的提交）
-    if (ccSnapshotTaken && updated) {
-      try { notifyCcUsers(updated.id).catch(e => console.error('[CC] 通知失败(不影响提交):', e.message)); } catch (_) {}
-    }
+    // 注意：提交时不再触发 CC 通知（AFTERSALES-CC-COMPLETION-01）。结束后抄送由最终审批接口触发。
     res.json(updated);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1552,6 +1545,7 @@ app.post('/api/records/:id/approval', async (req, res) => {
       items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : (row.items || []),
       approval_history: typeof row.approval_history === 'string' ? JSON.parse(row.approval_history || '[]') : (row.approval_history || [])
     };
+    const prevStatus = record.status; // 终审判定基线（AFTERSALES-CC-COMPLETION-01：用于识别首次进入“审批通过”）
 
     // 派生当前层级所需权限并校验审批人身份（不使用 record_edit 前置权限）
     const level = record.current_approval_level;
@@ -1638,6 +1632,17 @@ app.post('/api/records/:id/approval', async (req, res) => {
     await client.query('COMMIT');
     committed = true;
     client.release();
+
+    // AFTERSALES-CC-COMPLETION-01：最终审批通过后，由服务端触发“结束节点抄送”完成通知。
+    // 仅在记录首次从非“审批通过”进入“审批通过”时触发；幂等、事务外、失败不影响审批结果。
+    if (applied.record.status === '审批通过' && prevStatus !== '审批通过') {
+      try {
+        const ccRes = await triggerCompletionCc(req.params.id);
+        console.log('[CompletionCC] 触发结果:', JSON.stringify(ccRes));
+      } catch (ccErr) {
+        console.error('[CompletionCC] 触发异常(不影响审批结果):', ccErr && ccErr.message);
+      }
+    }
 
     // 服务端统一触发飞书通知：已在事务 COMMIT 之后调用，失败不影响已保存的审批结果。
     // 仅当审批推进到下一层级（action=approve 且新 current_approval_level>0）时通知，
@@ -3172,6 +3177,66 @@ function buildApprovalCard({ recordDisplayId, submitterName, aftersalesDate, ite
   };
 }
 
+// 完成后抄送卡片：与待审批卡片区分，明确“审批已完成”，只含查看详情按钮，无审批/拒绝操作。
+function buildCompletionCard({ recordDisplayId, submitterName, aftersalesDate, items, brands, platforms, detailUrl }) {
+  const skuLines = (items || []).slice(0, 5).map(it => {
+    const reason = it.return_reason || '-';
+    const process = it.process_status || '-';
+    return `• ${it.sku_code || '-'} | ${it.order_no || '-'} | ×${it.quantity || 0} | ${reason} | ${process}`;
+  });
+  if ((items || []).length > 5) skuLines.push(`... 共 ${items.length} 条明细`);
+  const skuContent = skuLines.join('\n');
+  const processSummary = {};
+  (items || []).forEach(it => { const ps = it.process_status || '未知'; processSummary[ps] = (processSummary[ps] || 0) + 1; });
+  const processText = Object.entries(processSummary).map(([k, v]) => `${k}: ${v}条`).join(' / ');
+  const totalQuantity = (items || []).reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+  const safeSkuContent = skuContent || '-';
+  return {
+    config: { wide_screen_mode: true },
+    header: {
+      title: { tag: 'plain_text', content: '✅ 售后审批已完成' },
+      template: 'green'
+    },
+    elements: [
+      {
+        tag: 'div',
+        fields: [
+          { is_short: true, text: { tag: 'lark_md', content: `**售后单号**\n${recordDisplayId}` } },
+          { is_short: true, text: { tag: 'lark_md', content: `**提交人**\n${submitterName || '-'}` } },
+          { is_short: true, text: { tag: 'lark_md', content: `**售后日期**\n${formatCardDate(aftersalesDate)}` } },
+          { is_short: true, text: { tag: 'lark_md', content: `**SKU / 数量**\n${(items || []).length} 个 SKU / ${totalQuantity} 件` } }
+        ]
+      },
+      { tag: 'hr' },
+      { tag: 'div', text: { tag: 'lark_md', content: `**审批状态**\n审批通过（已完成）` } },
+      { tag: 'div', text: { tag: 'lark_md', content: `**SKU 明细**\n${safeSkuContent}` } },
+      { tag: 'div', text: { tag: 'lark_md', content: `**处理状态分布**\n${processText || '-'}` } },
+      { tag: 'hr' },
+      {
+        tag: 'note',
+        elements: [{ tag: 'plain_text', content: `品牌：${brands || '-'} | 平台：${platforms || '-'}` }]
+      },
+      {
+        tag: 'action',
+        actions: [
+          {
+            tag: 'button',
+            text: { tag: 'plain_text', content: '🔍 查看详情' },
+            type: 'primary',
+            url: detailUrl,
+            value: {}
+          }
+        ]
+      },
+      // 四.7：完成通知明确为结果通知，抄送阅知，不得出现审批/拒绝操作按钮
+      {
+        tag: 'note',
+        elements: [{ tag: 'plain_text', content: '本消息为审批完成结果通知（抄送阅知），您无需进行审批操作。' }]
+      }
+    ]
+  };
+}
+
 function buildFeishuTestCard({ userName, detailUrl }) {
   return {
     config: { wide_screen_mode: true },
@@ -3253,4 +3318,10 @@ async function startServer() {
 // 仅在作为主模块直接运行时启动服务器，便于被测试 harness 安全导入而不连接生产库。
 if (require.main === module) {
   startServer();
+}
+
+// 模块接口：被 require 时仅导出 app / startServer（require.main 守卫，生产直接运行不受影响）。
+// 内部函数不再导出，避免测试专用 export 进入生产代码。
+if (require.main !== module) {
+  module.exports = { app, startServer };
 }

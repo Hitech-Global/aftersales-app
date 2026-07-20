@@ -1289,6 +1289,7 @@
     "nodeStart": "Awal",
     "nodeSubmit": "Ajukan",
     "nodeEnd": "Akhir",
+    "nodeCompleteCaption": "Selesai",
     "nodeApproved": "Disetujui",
     "hintSelectNode": "Klik node untuk melihat & mengedit konfigurasinya",
     "emptySelectNode": "Klik node persetujuan di atas untuk melihat & mengedit konfigurasinya",
@@ -1375,7 +1376,7 @@
   },
   "ccPicker": {
     "settingTitle": "Pengaturan CC",
-    "settingHint": "Diberitahu saat submit, hanya baca",
+    "settingHint": "Diberitahu setelah persetujuan final, penerima CC hanya dapat melihat",
     "add": "Pilih penerima",
     "title": "Pilih Penerima CC",
     "searchPlaceholder": "Cari nama atau akun",
@@ -1384,5 +1385,10 @@
     "noMatch": "Tidak ada pengguna cocok",
     "selectedCount": "Dipilih {n} orang",
     "disabledMark": " (nonaktif)"
+  },
+  "ccCompletion": {
+    "title": "CC Setelah Persetujuan Selesai",
+    "desc": "Notifikasi dikirim setelah persetujuan final; penerima CC hanya dapat melihat",
+    "nodeSummaryEmpty": "Belum ada penerima CC"
   }
 }
