@@ -386,7 +386,8 @@
       "autoTag": "Otomatis",
       "multipleHint": "Terdeteksi beberapa alur aktif. Sistem akan otomatis menerapkan alur di bawah ini.",
       "singleHint": "Alur di bawah ini diterapkan secara otomatis berdasarkan Manajemen Alur Persetujuan.",
-      "defaultName": "Alur Persetujuan Purna Jual Standar"
+      "defaultName": "Alur Persetujuan Purna Jual Standar",
+      "defaultScope": "Semua Catatan Purna Jual"
     },
     "skuPlaceholder": "Masukkan SKU...",
     "snPlaceholder": "SN Code",
@@ -785,7 +786,8 @@
     },
     "action": {
       "edit": "Edit",
-      "delete": "Hapus"
+      "delete": "Hapus",
+      "testFeishu": "Tes Notifikasi Lark"
     }
   },
   "userModal": {
@@ -827,7 +829,8 @@
     "action": {
       "edit": "Edit",
       "delete": "Hapus"
-    }
+    },
+    "permJoin": ", "
   },
   "roleModal": {
     "titleNew": "Peran Baru",
@@ -931,6 +934,7 @@
     "saveFailed": "Gagal menyimpan persetujuan. Silakan coba lagi.",
     "saveActionFailed": "Operasi gagal. Silakan coba lagi.",
     "recordDeleted": "Catatan dihapus",
+    "recordNotFound": "Rekam tidak ditemukan",
     "userCreated": "Pengguna dibuat",
     "userUpdated": "Pengguna diperbarui",
     "userDeleted": "Pengguna dihapus",
@@ -1227,7 +1231,11 @@
     "createSuccess": "Peran dibuat",
     "updateSuccess": "Peran diperbarui",
     "deleteReferenced": "Masih ada pengguna di bawah peran ini, tidak dapat dihapus",
-    "deleted": "Peran dihapus"
+    "deleted": "Peran dihapus",
+    "opSessionExpired": "Sesi untuk tindakan ini telah kedaluwarsa. Silakan coba lagi.",
+    "role_admin": { "name": "Administrator", "description": "Akses penuh sistem: kelola pengguna, peran, alur persetujuan, dan pengaturan sistem" },
+    "role_operator": { "name": "Operator", "description": "Staf operasi yang menangani catatan purna jual dan data produk" },
+    "role_viewer": { "name": "Viewer", "description": "Pengguna biasa dengan akses baca dan catatan yang di-CC" }
   },
   "excel": {
     "libraryLoadFailed": "Pustaka Excel gagal dimuat, silakan segarkan dan coba lagi",
@@ -1248,14 +1256,48 @@
     "title": "Manajemen Alur Persetujuan",
     "btnNew": "Buat Alur Baru",
     "col": {
-      "level": "Level"
+      "level": "Level",
+      "name": "Nama Alur",
+      "scope": "Cakupan",
+      "status": "Status",
+      "actions": "Tindakan"
     },
+    "stat": {
+      "total": "Total Alur",
+      "enabled": "Aktif",
+      "disabled": "Nonaktif",
+      "nodes": "Total Node"
+    },
+    "listTitle": "Daftar Alur Persetujuan",
+    "listHint": "Alur baru menyalin konfigurasi alur purna jual standar",
+    "status": {
+      "enabled": "Aktif",
+      "disabled": "Nonaktif"
+    },
+    "defaultFlow": "Alur Default",
+    "toggleLabel": "Aktifkan/Nonaktifkan",
+    "levelUnit": "tingkat",
     "btnAddLevel": "Tambah Level",
     "atLeastOneLevel": "Minimal harus ada satu level persetujuan",
     "label": {
-      "levelName": "Nama Level"
+      "levelName": "Nama Level",
+      "approvalPerm": "Izin Persetujuan",
+      "approver": "Approver",
+      "backupApprover": "Approver Cadangan"
     },
-    "btnDeleteLevel": "Hapus Level"
+    "btnDeleteLevel": "Hapus Level",
+    "nodeStart": "Awal",
+    "nodeSubmit": "Ajukan",
+    "nodeEnd": "Akhir",
+    "nodeApproved": "Disetujui",
+    "hintSelectNode": "Klik node untuk melihat & mengedit konfigurasinya",
+    "emptySelectNode": "Klik node persetujuan di atas untuk melihat & mengedit konfigurasinya",
+    "nodeConfig": "Konfigurasi Node",
+    "btnMoveUp": "Pindah Atas",
+    "btnMoveDown": "Pindah Bawah",
+    "approvalPermHint": "Daftar approver difilter otomatis ke pengguna aktif dengan izin ini",
+    "approverCount": "{n} pengguna aktif memiliki izin ini",
+    "none": "Tidak ada"
   },
   "dictionaries": {
     "title": "Manajemen Kamus",
@@ -1295,6 +1337,7 @@
     "deleteFailed": "Gagal menghapus",
     "codeRequired": "Kode wajib diisi",
     "nameRequired": "Nama wajib diisi",
+    "loading": "Memuat…",
     "loadFailed": "Gagal memuat: "
   },
   "toast": {

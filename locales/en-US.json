@@ -386,7 +386,8 @@
       "autoTag": "Auto",
       "multipleHint": "Multiple enabled flows detected. The system will automatically apply the flow below.",
       "singleHint": "The flow below is automatically applied based on Approval Flow Management.",
-      "defaultName": "Standard After-Sales Approval Flow"
+      "defaultName": "Standard After-Sales Approval Flow",
+      "defaultScope": "All After-Sales Records"
     },
     "skuPlaceholder": "Enter SKU...",
     "snPlaceholder": "SN Code",
@@ -785,7 +786,8 @@
     },
     "action": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "testFeishu": "Test Lark Notification"
     }
   },
   "userModal": {
@@ -827,7 +829,8 @@
     "action": {
       "edit": "Edit",
       "delete": "Delete"
-    }
+    },
+    "permJoin": ", "
   },
   "roleModal": {
     "titleNew": "New Role",
@@ -931,6 +934,7 @@
     "saveFailed": "Failed to save approval. Please retry.",
     "saveActionFailed": "Operation failed. Please retry.",
     "recordDeleted": "Record deleted",
+    "recordNotFound": "Record not found",
     "userCreated": "User created",
     "userUpdated": "User updated",
     "userDeleted": "User deleted",
@@ -1227,7 +1231,11 @@
     "createSuccess": "Role created",
     "updateSuccess": "Role updated",
     "deleteReferenced": "There are still users under this role, cannot delete",
-    "deleted": "Role deleted"
+    "deleted": "Role deleted",
+    "opSessionExpired": "Your session for this action has expired. Please retry.",
+    "role_admin": { "name": "Super Admin", "description": "Full system access: manage users, roles, approval flows, and system settings" },
+    "role_operator": { "name": "Operator", "description": "Operations staff who handle after-sales records and product data" },
+    "role_viewer": { "name": "Viewer", "description": "Regular user with read-only access and CC'd records" }
   },
   "excel": {
     "libraryLoadFailed": "Excel library load failed, please refresh and retry",
@@ -1248,14 +1256,48 @@
     "title": "Approval Flow Management",
     "btnNew": "New Approval Flow",
     "col": {
-      "level": "Level"
+      "level": "Level",
+      "name": "Flow Name",
+      "scope": "Scope",
+      "status": "Status",
+      "actions": "Actions"
     },
+    "stat": {
+      "total": "Total Flows",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "nodes": "Total Nodes"
+    },
+    "listTitle": "Approval Flows",
+    "listHint": "New flows copy the standard after-sales flow configuration",
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "defaultFlow": "Default Flow",
+    "toggleLabel": "Enable/Disable",
+    "levelUnit": "levels",
     "btnAddLevel": "Add Approval Level",
     "atLeastOneLevel": "At least one approval level is required",
     "label": {
-      "levelName": "Level Name"
+      "levelName": "Level Name",
+      "approvalPerm": "Approval Permission",
+      "approver": "Approver",
+      "backupApprover": "Backup Approver"
     },
-    "btnDeleteLevel": "Delete Level"
+    "btnDeleteLevel": "Delete Level",
+    "nodeStart": "Start",
+    "nodeSubmit": "Submit Application",
+    "nodeEnd": "End",
+    "nodeApproved": "Approved",
+    "hintSelectNode": "Click a node to view and edit its configuration",
+    "emptySelectNode": "Click an approval node above to view and edit its configuration",
+    "nodeConfig": "Node Config",
+    "btnMoveUp": "Move Up",
+    "btnMoveDown": "Move Down",
+    "approvalPermHint": "Approvers are auto-filtered to active users holding this permission",
+    "approverCount": "{n} active users hold this permission",
+    "none": "None"
   },
   "dictionaries": {
     "title": "Dictionaries",
@@ -1295,6 +1337,7 @@
     "deleteFailed": "Delete failed",
     "codeRequired": "Code is required",
     "nameRequired": "Name is required",
+    "loading": "Loading…",
     "loadFailed": "Load failed: "
   },
   "toast": {

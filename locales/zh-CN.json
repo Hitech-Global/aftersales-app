@@ -386,7 +386,8 @@
       "autoTag": "自动应用",
       "multipleHint": "检测到多个已启用的审批流,系统将按以下流程自动应用",
       "singleHint": "已根据「审批流管理」配置自动应用以下流程",
-      "defaultName": "标准售后审批流"
+      "defaultName": "标准售后审批流",
+      "defaultScope": "全部售后记录"
     },
     "skuPlaceholder": "输入SKU…",
     "snPlaceholder": "SN Code",
@@ -785,7 +786,8 @@
     },
     "action": {
       "edit": "编辑",
-      "delete": "删除"
+      "delete": "删除",
+      "testFeishu": "测试飞书通知"
     }
   },
   "userModal": {
@@ -827,7 +829,8 @@
     "action": {
       "edit": "编辑",
       "delete": "删除"
-    }
+    },
+    "permJoin": "、"
   },
   "roleModal": {
     "titleNew": "新建角色",
@@ -931,6 +934,7 @@
     "saveFailed": "审批保存失败，请重试。",
     "saveActionFailed": "操作失败，请重试。",
     "recordDeleted": "记录已删除",
+    "recordNotFound": "记录不存在",
     "userCreated": "用户已创建",
     "userUpdated": "用户已更新",
     "userDeleted": "用户已删除",
@@ -1227,7 +1231,11 @@
     "createSuccess": "角色已创建",
     "updateSuccess": "角色已更新",
     "deleteReferenced": "该角色下还有用户，无法删除",
-    "deleted": "角色已删除"
+    "deleted": "角色已删除",
+    "opSessionExpired": "操作会话已失效，请重试本次操作",
+    "role_admin": { "name": "超级管理员", "description": "系统最高权限，可管理用户、角色、审批流与系统配置" },
+    "role_operator": { "name": "运营人员", "description": "运营人员，可处理售后记录与商品数据" },
+    "role_viewer": { "name": "普通用户", "description": "普通用户，仅可查看与被抄送的售后记录" }
   },
   "excel": {
     "libraryLoadFailed": "Excel库加载失败，请刷新页面重试",
@@ -1248,14 +1256,48 @@
     "title": "审批流管理",
     "btnNew": "新建审批流",
     "col": {
-      "level": "审批层级"
+      "level": "审批层级",
+      "name": "流程名称",
+      "scope": "适用范围",
+      "status": "状态",
+      "actions": "操作"
     },
+    "stat": {
+      "total": "流程总数",
+      "enabled": "启用中",
+      "disabled": "已停用",
+      "nodes": "审批节点总数"
+    },
+    "listTitle": "审批流列表",
+    "listHint": "新建时自动复制标准售后审批流配置",
+    "status": {
+      "enabled": "启用",
+      "disabled": "停用"
+    },
+    "defaultFlow": "默认流程",
+    "toggleLabel": "启用/停用",
+    "levelUnit": "级",
     "btnAddLevel": "添加审批层级",
     "atLeastOneLevel": "至少保留一个审批层级",
     "label": {
-      "levelName": "层级名称"
+      "levelName": "层级名称",
+      "approvalPerm": "审批权限",
+      "approver": "审批人",
+      "backupApprover": "备选审批人"
     },
-    "btnDeleteLevel": "删除层级"
+    "btnDeleteLevel": "删除层级",
+    "nodeStart": "起始",
+    "nodeSubmit": "提交申请",
+    "nodeEnd": "结束",
+    "nodeApproved": "审批完成",
+    "hintSelectNode": "点击节点查看和编辑配置",
+    "emptySelectNode": "点击上方审批节点查看和编辑配置",
+    "nodeConfig": "节点配置",
+    "btnMoveUp": "上移",
+    "btnMoveDown": "下移",
+    "approvalPermHint": "审批人列表自动筛选具有对应权限的在职用户",
+    "approverCount": "当前有 {n} 名用户具有此权限",
+    "none": "无"
   },
   "dictionaries": {
     "title": "字典管理",
@@ -1295,6 +1337,7 @@
     "deleteFailed": "删除失败",
     "codeRequired": "代码不能为空",
     "nameRequired": "名称不能为空",
+    "loading": "加载中…",
     "loadFailed": "加载失败: "
   },
   "toast": {
