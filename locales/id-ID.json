@@ -1,4 +1,10 @@
 {
+  "theme": {
+    "label": "Tampilan",
+    "system": "Ikuti Sistem",
+    "light": "Terang",
+    "dark": "Gelap"
+  },
   "app": {
     "title": "Hitech After-Sales",
     "sidebarBrand": "Hitech After-Sales",

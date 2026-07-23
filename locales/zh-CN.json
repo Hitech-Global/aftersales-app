@@ -1,4 +1,10 @@
 {
+  "theme": {
+    "label": "外观模式",
+    "system": "跟随系统",
+    "light": "浅色模式",
+    "dark": "深色模式"
+  },
   "app": {
     "title": "Hitech 售后管理",
     "sidebarBrand": "Hitech 售后管理",
