@@ -308,7 +308,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
    under #detail-content (an ID), not a .detail-content (class) ancestor. */
 .detail-rma-items td.cell-wrap{white-space:normal;word-break:break-word;overflow-wrap:break-word}
 /* Safety net: if a header ever exceeds its column, wrap rather than overlap. */
-.detail-rma-items thead th{white-space:normal;line-height:1.35}
+.detail-rma-items thead th{white-space:normal;line-height:1.35;position:sticky;top:0;z-index:3;background:#fbfbfd;box-shadow:0 2px 4px rgba(0,0,0,.06)}
+/* 纵向冻结：独立滚动容器，长列表向下滚动时表头(top:0)固定。
+   仅作用于详情页 RMA Items 表，不波及列表页其他表；横向冻结列(fcol)仍生效。
+   z-index: 角单元(fcol th)=4 > 表头普通 th=3 > body fcol td=2 > 普通 td。 */
+.rma-items-scroll{overflow:auto;max-height:60vh;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.18) transparent}
+.rma-items-scroll::-webkit-scrollbar{height:8px;width:8px}
+.rma-items-scroll::-webkit-scrollbar-track{background:transparent}
+.rma-items-scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:8px}
+.rma-items-scroll::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.4)}
 .cell-sku,.cell-order{font-size:14px;font-weight:600;color:var(--text-primary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .data-table td.cell-desc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku-more{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:999px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);font-size:11px;font-weight:500;white-space:nowrap}
@@ -4822,7 +4830,7 @@ async function renderDetail(id){
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.completedErpQty'))}</div><div class="ds-value">${completedErpQty}</div></div>
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
-      <div class="table-container">
+      <div class="table-container rma-items-scroll">
         <table class="data-table detail-rma-items"><thead><tr><th class="fcol fcol-1">${t('detail.col.index')}</th><th class="fcol fcol-2">${t('detail.col.platform')}</th><th class="fcol fcol-3">${t('detail.col.shopCustomer')}</th><th class="fcol fcol-4">${t('detail.col.brand')}</th><th class="fcol fcol-5">${t('detail.col.sku')}</th><th>${t('detail.col.snCode')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.trackingNumber')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('detail.col.erpDate')}</th><th>${t('detail.col.desc')}</th><th>${t('detail.col.attachment')}</th></tr></thead>
           <tbody>${(r.items||[]).map((it,i)=>`<tr>
             <td class="cell-id fcol fcol-1">${i+1}</td>
