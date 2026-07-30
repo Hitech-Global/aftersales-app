@@ -2718,6 +2718,9 @@ function hasOpenErpItems(record){
 function pendingErpQuantity(record){
   return (record?.items||[]).reduce((sum,it)=>sum+(itemProcessType(it)==='erp' && itemProcessProgress(it)!=='completed' ? (Number(it.quantity)||0) : 0),0);
 }
+function completedErpQuantity(record){
+  return (record?.items||[]).reduce((sum,it)=>sum+(itemProcessType(it)==='erp' && itemProcessProgress(it)==='completed' ? (Number(it.quantity)||0) : 0),0);
+}
 function addProcessLog(record, itemIndex, log){
   if(!record.process_logs) record.process_logs=[];
   record.process_logs.push({item_index:itemIndex, ...log});
@@ -4689,6 +4692,7 @@ async function renderDetail(id){
   await ensureShopCustomerDict();
   await ensureDictLabelCache('platform');
   const pendingErpQty=pendingErpQuantity(r);
+  const completedErpQty=completedErpQuantity(r);
   const _items=r.items||[];
   const totalQty=r.total_quantity||_items.reduce((s,it)=>s+(it.quantity||0),0);
   const allCompleted=_items.length>0 && _items.every(it=>itemProcessProgress(it)==='completed');
@@ -4815,6 +4819,7 @@ async function renderDetail(id){
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.submitter'))}</div><div class="ds-value">${esc(r.submitter_name||'-')}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.totalQty'))}</div><div class="ds-value">${totalQty}</div></div>
       <div class="ds-card"><div class="ds-label">${esc(t('detail.label.pendingErpQty'))}</div><div class="ds-value">${pendingErpQty}</div></div>
+      <div class="ds-card"><div class="ds-label">${esc(t('detail.label.completedErpQty'))}</div><div class="ds-value">${completedErpQty}</div></div>
     </div>
     <div class="detail-section"><h3>${t('detail.section.items')}</h3>
       <div class="table-container">

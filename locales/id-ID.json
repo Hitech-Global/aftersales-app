@@ -459,6 +459,7 @@
       "createdAt": "Dibuat pada",
       "updatedAt": "Update Terakhir",
       "pendingErpQty": "Qty Menunggu ERP",
+      "completedErpQty": "Qty ERP Selesai",
       "processingStatus": "Status Pemrosesan"
     },
     "col": {

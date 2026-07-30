@@ -459,6 +459,7 @@
       "createdAt": "创建时间",
       "updatedAt": "最后更新",
       "pendingErpQty": "待ERP入库数量",
+      "completedErpQty": "已ERP入库数量",
       "processingStatus": "处理状态"
     },
     "col": {

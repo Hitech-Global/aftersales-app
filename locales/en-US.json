@@ -459,6 +459,7 @@
       "createdAt": "Created At",
       "updatedAt": "Last Updated",
       "pendingErpQty": "Pending ERP Qty",
+      "completedErpQty": "Completed ERP Qty",
       "processingStatus": "Processing Status"
     },
     "col": {
