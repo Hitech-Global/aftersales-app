@@ -1419,8 +1419,8 @@ const APPROVAL_PROCESS_TYPE_TO_LEGACY_PENDING = {
   erp: '待ERP入库', color_box: '待换彩盒', parts: '待补配件', rma: '待RMA', scrap: '待报废'
 };
 const APPROVAL_RETURN_REASON_TO_PROCESS_TYPE = {
-  '可二次销售': 'erp', '彩盒损坏': 'color_box', '配件缺失': 'parts', '硬件故障': 'rma', '报废': 'scrap',
-  '人为损坏': 'erp', '其他': 'erp', '功能异常': 'erp'
+  '可二次销售': 'erp', '彩盒损坏': 'rma', '配件缺失': 'rma', '硬件故障': 'rma', '报废': 'rma',
+  '人为损坏': 'rma', '其他': 'rma', '功能异常': 'rma'
 };
 const APPROVAL_LEVEL_NAMES = { 1: '一级', 2: '二级', 3: '三级' };
 // 专用审批接口：层级 -> 所需权限（不再使用 record_edit 作为前置权限）
@@ -1430,7 +1430,7 @@ function approvalNormalizeProcessItem(item) {
   if (!item) return item;
   const legacy = item.process_status || item.processStatus || '';
   const mapped = APPROVAL_LEGACY_STATUS_TO_PROCESS[legacy] || {};
-  if (!item.process_type) item.process_type = (legacy === '已处理' || legacy === 'completed' ? APPROVAL_RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] : mapped.type) || APPROVAL_RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] || 'erp';
+  if (!item.process_type) item.process_type = (legacy === '已处理' || legacy === 'completed' ? APPROVAL_RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] : mapped.type) || APPROVAL_RETURN_REASON_TO_PROCESS_TYPE[item.return_reason] || 'rma';
   if (!item.process_progress) item.process_progress = mapped.progress || 'pending';
   if (item.process_progress === 'completed' && !item.process_completed_date) {
     item.process_completed_date = item.process_status_updated_at || item.process_status_date || new Date().toISOString();
