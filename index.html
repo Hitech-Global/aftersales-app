@@ -1775,14 +1775,14 @@ html[data-theme="dark"]{color-scheme:dark}
       <div class="form-grid">
         <div class="form-group"><label data-i18n="productModal.label.country"></label><input type="text" id="p-country" data-i18n-placeholder="productModal.countryPlaceholder"></div>
         <div class="form-group"><label data-i18n="productModal.label.brand"></label> <span class="required">*</span><input type="text" id="p-brand" required data-i18n-placeholder="productModal.brandPlaceholder"></div>
-        <div class="form-group"><label data-i18n="productModal.label.skuCode"></label> <span class="required">*</span><input type="text" id="p-sku-code" required data-i18n-placeholder="productModal.skuPlaceholder"></div>
+        <div class="form-group"><label data-i18n="productModal.label.skuCode"></label> <span class="required">*</span><input type="text" id="p-sku-code" required data-i18n-placeholder="productModal.skuPlaceholder" oninput="clearSkuError()"><div id="sku-error" style="display:none;color:#e53935;font-size:12px;margin-top:4px"></div></div>
         <div class="form-group"><label data-i18n="productModal.label.model"></label><input type="text" id="p-model" data-i18n-placeholder="productModal.modelPlaceholder"></div>
         <div class="form-group"><label data-i18n="productModal.label.category"></label><input type="text" id="p-category" data-i18n-placeholder="productModal.categoryPlaceholder"></div>
         <div class="form-group"><label data-i18n="productModal.label.eanCode"></label><input type="text" id="p-ean-code" data-i18n-placeholder="productModal.eanPlaceholder"></div>
         <div class="form-group"><label data-i18n="productModal.label.status"></label><select id="p-status"><option value="active" data-i18n="productModal.statusActive"></option><option value="disabled" data-i18n="productModal.statusDisabled"></option></select></div>
       </div>
       <div class="form-actions" style="margin-top:24px">
-        <button type="submit" class="btn btn-primary" data-i18n="productModal.btnSave"></button>
+        <button type="submit" class="btn btn-primary" id="btn-save-product" data-i18n="productModal.btnSave"></button>
         <button type="button" class="btn btn-secondary" onclick="closeProductModal()" data-i18n="productModal.btnCancel"></button>
       </div>
     </form>
@@ -2402,15 +2402,52 @@ async function saveProductAsync(product) {
       headers: getAuthHeaders(),
       body: JSON.stringify(product)
     });
+    if (resp.ok) return;
     if (resp.status === 404) {
-      await fetch('/api/products', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(product) });
+      const c = await fetch('/api/products', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(product) });
+      if (!c.ok) {
+        const msg = await readApiError(c);
+        throw new Error(msg || `创建商品失败 (HTTP ${c.status})`);
+      }
+      return;
     }
-    return;
+    const msg = await readApiError(resp);
+    throw new Error(msg || `保存商品失败 (HTTP ${resp.status})`);
   }
   const products = await getProductsAsync();
   const idx = products.findIndex(p => p.id === product.id);
   if (idx >= 0) products[idx] = product; else products.push(product);
   localStorage.setItem('aftersales_products', JSON.stringify(products));
+}
+
+// 单条商品持久化：新建=1 个 POST，编辑=1 个 PUT，并严格校验 HTTP 状态
+async function saveProductSingle(product, isNew) {
+  _productsCache = null;
+  if (!(await checkDbAvailable())) {
+    // 服务端不可用时回退 localStorage（保持原有离线语义）
+    const products = await getProductsAsync();
+    const idx = products.findIndex(p => p.id === product.id);
+    if (idx >= 0) products[idx] = product; else products.push(product);
+    localStorage.setItem('aftersales_products', JSON.stringify(products));
+    return { ok: true, offline: true };
+  }
+  const url = isNew ? '/api/products' : `/api/products/${product.id}`;
+  const method = isNew ? 'POST' : 'PUT';
+  const resp = await fetch(url, { method, headers: getAuthHeaders(), body: JSON.stringify(product) });
+  if (!resp.ok) {
+    const msg = await readApiError(resp);
+    throw new Error(msg || `保存商品失败 (HTTP ${resp.status})`);
+  }
+  return { ok: true, status: resp.status };
+}
+
+// 读取后端错误体中的 message / error 字段，便于前端给出明确提示
+async function readApiError(resp) {
+  try {
+    const j = await resp.json();
+    if (j && (j.error || j.message)) return j.error || j.message;
+  } catch (_) { /* 非 JSON 响应，忽略 */ }
+  return '';
 }
 async function deleteProductAsync(id) {
   _productsCache = null;
@@ -7354,6 +7391,7 @@ async function openProductModal(productId){
   if(productId && !requirePermission('product_edit')) return;
   if(!productId && !requirePermission('product_create')) return;
   document.getElementById('product-modal').classList.remove('hidden');
+  clearSkuError();
   const products=await getProducts();
   if(productId){
     const p=products.find(x=>x.id===productId);
@@ -7384,43 +7422,70 @@ function closeProductModal(){ document.getElementById('product-modal').classList
 
 async function saveProduct(e){
   e.preventDefault();
-  const editId=document.getElementById('prod-edit-id').value;
-  if(editId && !requirePermission('product_edit')) return;
-  if(!editId && !requirePermission('product_create')) return;
-  const brand=document.getElementById('p-brand').value.trim();
-  const skuCode=document.getElementById('p-sku-code').value.trim();
-  if(!brand) return showFlash(t('flash.brandRequired'),'warning');
-  if(!skuCode) return showFlash(t('flash.skuRequired'),'warning');
+  const btn=document.getElementById('btn-save-product');
+  // 防重复点击：保存进行中直接忽略后续点击（按钮同步置灰前的再入保护）
+  if(btn && btn.disabled) return;
+  const saveLabel=btn?btn.textContent:'';
+  if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  try{
+    clearSkuError();
+    const editId=document.getElementById('prod-edit-id').value;
+    if(editId && !requirePermission('product_edit')) return;
+    if(!editId && !requirePermission('product_create')) return;
+    const brand=document.getElementById('p-brand').value.trim();
+    const skuCode=document.getElementById('p-sku-code').value.trim();
+    if(!brand) return showFlash(t('flash.brandRequired'),'warning');
+    if(!skuCode) return showFlash(t('flash.skuRequired'),'warning');
 
-  const products=await getProducts();
-  // Check SKU uniqueness
-  const dup=products.find(p=>p.sku_code===skuCode&&p.id!==editId);
-  if(dup) return showFlash(t('flash.skuExists'),'warning');
+    const products=await getProducts();
+    // SKU 唯一性校验（规则保持不变：仅按 sku_code 判断，不涉及 country 唯一性业务规则）
+    const dup=products.find(p=>p.sku_code===skuCode&&p.id!==editId);
+    if(dup){
+      showSkuError(t('flash.skuExists'));
+      showFlash(t('flash.skuExists'),'danger');
+      return;
+    }
 
-  const now=new Date().toISOString();
-  const data={
-    id:editId||'prod_'+Date.now(),
-    country:document.getElementById('p-country').value.trim(),
-    brand,
-    sku_code:skuCode,
-    model:document.getElementById('p-model').value.trim(),
-    category:document.getElementById('p-category').value.trim(),
-    ean_code:document.getElementById('p-ean-code').value.trim(),
-    status:document.getElementById('p-status').value,
-    updated_at:now
-  };
+    const now=new Date().toISOString();
+    const data={
+      id:editId||'prod_'+Date.now(),
+      country:document.getElementById('p-country').value.trim(),
+      brand,
+      sku_code:skuCode,
+      model:document.getElementById('p-model').value.trim(),
+      category:document.getElementById('p-category').value.trim(),
+      ean_code:document.getElementById('p-ean-code').value.trim(),
+      status:document.getElementById('p-status').value,
+      updated_at:now
+    };
+    if(editId){
+      const idx=products.findIndex(p=>p.id===editId);
+      if(idx>=0) data.created_at=products[idx].created_at;
+    }else{
+      data.created_at=now;
+    }
 
-  if(editId){
-    const idx=products.findIndex(p=>p.id===editId);
-    if(idx>=0){ data.created_at=products[idx].created_at; products[idx]=data; }
-  }else{
-    data.created_at=now; products.push(data);
+    // 单条保存：新建=1 个 POST，编辑=1 个 PUT，绝不遍历现有商品列表
+    const isNew=!editId;
+    await saveProductSingle(data, isNew);
+    closeProductModal();
+    showFlash(isNew?t('flash.product.createSuccess'):t('flash.product.updateSuccess'),'success');
+    renderProducts();
+  }catch(err){
+    console.error('Save product failed:', err);
+    showFlash((err && err.message)?err.message:'保存失败，请重试','danger');
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=saveLabel||t('productModal.btnSave'); }
   }
-  await saveProducts(products);
-  closeProductModal();
-  showFlash(editId?t('flash.product.updateSuccess'):t('flash.product.createSuccess'),'success');
-  renderProducts();
 }
+
+function showSkuError(msg){
+  const el=document.getElementById('sku-error');
+  if(!el) return;
+  if(msg){ el.textContent=msg; el.style.display='block'; }
+  else { el.textContent=''; el.style.display='none'; }
+}
+function clearSkuError(){ showSkuError(''); }
 
 async function deleteProduct(id){
   if(!requirePermission('product_delete')) return;
