@@ -64,7 +64,7 @@
     "overview": "Ringkasan",
     "list": "Kasus RMA",
     "detail": "Detail Kasus RMA",
-    "approval": "Persetujuan RMA",
+    "approval": "Pusat Persetujuan",
     "products": "Produk",
     "users": "Pengguna",
     "roles": "Role",
@@ -78,7 +78,7 @@
       "list": "Kasus RMA",
       "detail": "Detail Kasus RMA",
       "products": "Produk",
-      "approval": "Persetujuan RMA",
+      "approval": "Pusat Persetujuan",
       "users": "Pengguna",
       "roles": "Role",
       "approvalFlows": "Alur Persetujuan",
@@ -513,6 +513,10 @@
       "keyword": "Kata Kunci",
       "keywordPlaceholder": "Cari no. pesanan, SKU, brand, atau model...",
       "scope": "Scope",
+      "type": "Jenis Persetujuan",
+      "typeAll": "Semua Jenis",
+      "typeReturn": "Persetujuan Pengembalian",
+      "typeResolution": "Persetujuan Solusi",
       "pending": "Menunggu Approval Saya",
       "done": "Sudah Diproses",
       "all": "Semua",
@@ -522,6 +526,8 @@
     "btnClear": "Bersihkan",
     "empty": "Belum ada riwayat approval",
     "col": {
+      "type": "Jenis Persetujuan",
+      "item": "Objek Persetujuan",
       "createdAt": "Diajukan pada",
       "initiator": "Pemohon",
       "approver": "Approver",
@@ -542,6 +548,17 @@
     "flow": {
       "completed": "Selesai",
       "rejected": "Ditolak"
+    },
+    "type": {
+      "return": "Persetujuan Pengembalian",
+      "resolution": "Persetujuan Solusi"
+    },
+    "task": {
+      "pending": "Menunggu Persetujuan Saya",
+      "processed": "Sudah Diproses",
+      "item": "Item Purna Jual",
+      "wholeRecord": "Seluruh Kasus",
+      "approve": "Setujui"
     },
     "level": "Level Approval"
   },
