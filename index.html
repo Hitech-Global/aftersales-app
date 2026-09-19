@@ -4508,15 +4508,32 @@ async function renderList(){
   const endD=getDateInputValue('list-end-date');
   const user=getCurrentUser();
 
+  const matchesItemFilters=it=>{
+    if(channel&&it.platform!==channel) return false;
+    if(returnReason&&normalizeReturnReasonToCode(it.return_reason)!==returnReason) return false;
+    if(progressFilter&&itemProcessProgress(it)!==progressFilter) return false;
+    if(processingApprovalFilter&&itemProcessingApproval(it)!==processingApprovalFilter) return false;
+    if(processingPlanFilter&&it.processing_plan_type!==processingPlanFilter) return false;
+    if(processingNodeFilter&&!itemProcessingNodes(it).includes(processingNodeFilter)) return false;
+    return true;
+  };
+  const hasItemFilters=!!(channel||returnReason||progressFilter||processingApprovalFilter||processingPlanFilter||processingNodeFilter);
+
   let filtered=records;
   if(status) filtered=filtered.filter(r=>r.status===status);
   if(brand) filtered=filtered.filter(r=>r.brand===brand);
-  if(channel) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.platform===channel));
-  if(returnReason) filtered=filtered.filter(r=>(r.items||[]).some(it=>normalizeReturnReasonToCode(it.return_reason)===returnReason));
-  if(progressFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessProgress(it)===progressFilter));
-  if(processingApprovalFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessingApproval(it)===processingApprovalFilter));
-  if(processingPlanFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.processing_plan_type===processingPlanFilter));
-  if(processingNodeFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessingNodes(it).includes(processingNodeFilter)));
+  if(listMode==='item'){
+    // By Item 用“同一条明细同时满足全部条件”的 AND 语义，避免不同明细拼出一个假匹配。
+    if(hasItemFilters) filtered=filtered.filter(r=>(r.items||[]).some(matchesItemFilters));
+  }else{
+    // By Case 保留记录级筛选语义。
+    if(channel) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.platform===channel));
+    if(returnReason) filtered=filtered.filter(r=>(r.items||[]).some(it=>normalizeReturnReasonToCode(it.return_reason)===returnReason));
+    if(progressFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessProgress(it)===progressFilter));
+    if(processingApprovalFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessingApproval(it)===processingApprovalFilter));
+    if(processingPlanFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.processing_plan_type===processingPlanFilter));
+    if(processingNodeFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessingNodes(it).includes(processingNodeFilter)));
+  }
   if(riskFilter==='pending') filtered=filtered.filter(r=>(r.items||[]).some(it=>isPendingProcessItem(it)));
   if(riskFilter==='overdue') filtered=filtered.filter(r=>(r.items||[]).some(it=>isOverdueItem(it,r)));
   if(startD||endD){
@@ -4586,10 +4603,7 @@ async function renderList(){
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
-        const showItem=(!progressFilter||itemProcessProgress(it)===progressFilter)
-          &&(!processingApprovalFilter||itemProcessingApproval(it)===processingApprovalFilter)
-          &&(!processingPlanFilter||it.processing_plan_type===processingPlanFilter)
-          &&(!processingNodeFilter||itemProcessingNodes(it).includes(processingNodeFilter));
+        const showItem=matchesItemFilters(it);
         if(!showItem) return;
         const canApprove = canApproveRecord(r);
         const canProcess = r.status==='审批通过' && isPendingProcessItem(it) && hasPermission('record_edit');
