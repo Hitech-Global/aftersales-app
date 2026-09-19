@@ -909,12 +909,15 @@ app.post('/api/roles', requireApiPermission('role_manage'), async (req, res) => 
 // ---- 售后记录 API ----
 
 // 根据 approval_flow_id 展开为 approver_level1/2/3 字段
-async function resolveFlowApprovers(flowId) {
+async function resolveFlowApprovers(flowId, expectedType = null) {
   if (!flowId) return null;
   try {
-    const { rows } = await query('SELECT id, name, nodes FROM approval_flows WHERE id = $1', [flowId]);
+    const { rows } = await query('SELECT id, name, nodes, flow_type, enabled FROM approval_flows WHERE id = $1', [flowId]);
     if (!rows.length) return { _deleted: true };
     const flow = rows[0];
+    const flowType = flow.flow_type || 'return_approval';
+    if (expectedType && flowType !== expectedType) return { _wrong_type: true, actual_type: flowType };
+    if (!flow.enabled) return { _disabled: true };
     const nodes = typeof flow.nodes === 'string' ? JSON.parse(flow.nodes || '[]') : (flow.nodes || []);
     // 查所有相关用户拿到 name
     const ids = [...new Set(nodes.slice(0, 3).map(n => n.approver_id).filter(Boolean))];
@@ -926,6 +929,7 @@ async function resolveFlowApprovers(flowId) {
     const out = {
       approval_flow_id: flow.id,
       approval_flow_name: flow.name,
+      approval_flow_type: flowType,
       approver_level1_id: '', approver_level1_name: '',
       approver_level2_id: '', approver_level2_name: '',
       approver_level3_id: '', approver_level3_name: ''
@@ -1271,7 +1275,7 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
     let flowLevel3Id = approver_level3_id, flowLevel3Name = approver_level3_name;
     let flowName = '';
     if (approval_flow_id) {
-      const expanded = await resolveFlowApprovers(approval_flow_id);
+      const expanded = await resolveFlowApprovers(approval_flow_id, 'return_approval');
       if (expanded && !expanded._deleted) {
         flowLevel1Id = expanded.approver_level1_id;
         flowLevel1Name = expanded.approver_level1_name;
@@ -1282,6 +1286,10 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
         flowName = expanded.approval_flow_name;
       } else if (expanded && expanded._deleted) {
         return res.status(400).json({ error: '所选审批流已被删除' });
+      } else if (expanded && expanded._wrong_type) {
+        return res.status(400).json({ error: '该审批流不是退货审批流' });
+      } else if (expanded && expanded._disabled) {
+        return res.status(400).json({ error: '所选审批流已停用' });
       }
     }
 
@@ -1322,7 +1330,7 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     let flowLevel3Id = approver_level3_id, flowLevel3Name = approver_level3_name;
     let flowName;
     if (approval_flow_id !== undefined) {
-      const expanded = await resolveFlowApprovers(approval_flow_id);
+      const expanded = await resolveFlowApprovers(approval_flow_id, 'return_approval');
       if (expanded && !expanded._deleted) {
         flowLevel1Id = expanded.approver_level1_id;
         flowLevel1Name = expanded.approver_level1_name;
@@ -1333,6 +1341,10 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
         flowName = expanded.approval_flow_name;
       } else if (expanded && expanded._deleted) {
         return res.status(400).json({ error: '所选审批流已被删除' });
+      } else if (expanded && expanded._wrong_type) {
+        return res.status(400).json({ error: '该审批流不是退货审批流' });
+      } else if (expanded && expanded._disabled) {
+        return res.status(400).json({ error: '所选审批流已停用' });
       }
     }
 
@@ -1448,7 +1460,7 @@ function approvalFindNextApprovalLevel(record, level) {
 function approvalGetLevelStatusText(level) { return '待' + APPROVAL_LEVEL_NAMES[level] + '审批'; }
 
 // 纯函数：在内存 record 上推进审批。返回 { record, itemsChanged } 或 { error, code }。不改变业务规则。
-// itemsChanged 仅在「终审通过且确有可二次销售明细被置为已处理」时为 true，用于服务端决定是否需要重写 items 列。
+// itemsChanged 保留为兼容字段；退货审批不再修改明细处理状态，因此当前始终为 false。
 function applyApprovalTransition(record, payload, operatorId) {
   const level = record.current_approval_level;
   if (level <= 0) return { error: '该记录当前无需审批或已被处理' };
@@ -1479,27 +1491,10 @@ function applyApprovalTransition(record, payload, operatorId) {
       record.status = approvalGetLevelStatusText(nextLevel);
       record.current_approval_level = nextLevel;
     } else {
+      // 退货审批只决定“是否接受退货进入售后处理”，不再代替实际处理。
+      // 包括可二次销售在内，审批通过后都需要另行提交“售后处理方案审批”。
       record.status = '审批通过';
       record.current_approval_level = 0;
-      const autoCompleteDate = payload.return_date || now;
-      (record.items || []).forEach((item) => {
-        approvalNormalizeProcessItem(item);
-        const rawType = (item.process_type || '').toString();
-        const rawReason = (item.return_reason || '').toString();
-        const isResellable =
-          rawType.toLowerCase() === 'erp'
-          || rawType === 'ERP入库'
-          || rawReason === '可二次销售'
-          || rawReason.toLowerCase() === 'resellable';
-        if (isResellable && approvalItemProcessProgress(item) !== 'completed') {
-          item.process_progress = 'completed';
-          item.process_status = '已处理';
-          item.process_completed_date = autoCompleteDate;
-          item.process_status_updated_at = now;
-          if (payload.return_date) { item.return_stockin_date = payload.return_date; }
-          itemsChanged = true;
-        }
-      });
     }
   }
   record.updated_at = now;
@@ -1514,7 +1509,7 @@ function applyApprovalTransition(record, payload, operatorId) {
 //  2) 服务端为审批状态唯一权威：仅接收 action/comment/return_date/approval_attachments(引用)/expected_level，
 //     状态推进、下一层/终审判断、approval_history 构造全部在服务端完成。
 //  3) 事务 + 行锁 (SELECT ... FOR UPDATE)：并发审批与处理状态更新被串行化，避免旧值覆盖。
-//  4) items 仅在「终审通过且确有可二次销售明细被置为已处理」时重写，其余阶段保持数据库当前值不变。
+//  4) 退货审批不再推进商品处理状态；处理由独立的方案审批与执行 API 负责。
 //  5) expected_level 作为乐观并发令牌：重复/过期请求因层级不匹配返回 409，不会产生第二条 approval_history。
 app.post('/api/records/:id/approval', async (req, res) => {
   const pool = getPool();
@@ -1672,6 +1667,86 @@ app.delete('/api/records/:id', requireApiPermission('record_delete'), async (req
     if (result.rows.length === 0) return res.status(404).json({ error: '记录不存在' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ==================== 售后处理方案审批 + 执行工作流 ====================
+const PROCESSING_PLAN_TYPES = new Set(['resellable','replace_now_repair_return','repair_return_warehouse','repair_send_customer']);
+
+function processingJsonArray(v){if(Array.isArray(v))return v;if(typeof v==='string'){try{const x=JSON.parse(v||'[]');return Array.isArray(x)?x:[];}catch(_){}}return [];}
+function processingJsonObject(v){if(v&&typeof v==='object'&&!Array.isArray(v))return v;if(typeof v==='string'){try{const x=JSON.parse(v||'{}');return x&&typeof x==='object'&&!Array.isArray(x)?x:{};}catch(_){}}return {};}
+function normalizeProcessingRequestRow(row){return row?{...row,flow_nodes:processingJsonArray(row.flow_nodes),item_refs:processingJsonArray(row.item_refs),plan:processingJsonObject(row.plan),approval_history:processingJsonArray(row.approval_history)}:row;}
+function processingFirstLevel(nodes){for(let i=0;i<Math.min(3,nodes.length);i++)if(nodes[i]&&nodes[i].approver_id)return i+1;return 0;}
+function processingNextLevel(nodes,current){for(let l=current+1;l<=3;l++){const n=nodes[l-1];if(n&&n.approver_id)return l;}return 0;}
+function processingRequestId(){return 'proc_'+Date.now()+'_'+crypto.randomBytes(4).toString('hex');}
+function processingPlanSnapshot(b){return{type:String(b.plan_type||''),factory_name:String(b.factory_name||'').trim(),replacement_sku:String(b.replacement_sku||'').trim(),replacement_quantity:Math.max(0,Number(b.replacement_quantity)||0),remark:String(b.remark||'').trim()};}
+async function loadEnabledProcessingFlow(client){
+  const {rows}=await client.query(`SELECT * FROM approval_flows WHERE enabled=true AND COALESCE(flow_type,'return_approval')='processing_approval' ORDER BY created_at ASC LIMIT 1`);
+  if(!rows.length){const e=new Error('未配置启用的售后处理审批流，请先在审批流管理中新建并启用');e.status=400;throw e;}
+  const flow=rows[0],nodes=processingJsonArray(flow.nodes).slice(0,3),firstLevel=processingFirstLevel(nodes);
+  if(!firstLevel){const e=new Error('售后处理审批流没有有效审批人');e.status=400;throw e;}
+  const ids=[...new Set(nodes.map(n=>n&&n.approver_id).filter(Boolean))],names={};
+  if(ids.length){const ur=await client.query('SELECT id,name FROM users WHERE id=ANY($1::text[])',[ids]);ur.rows.forEach(u=>{names[u.id]=u.name||'';});}
+  return{flow,firstLevel,nodes:nodes.map((n,i)=>({level:i+1,title:n&&n.title?n.title:'审批层级'+(i+1),permission:n&&n.permission?n.permission:'approval_level'+(i+1),approver_id:n&&n.approver_id?n.approver_id:'',approver_name:n&&n.approver_id?(names[n.approver_id]||n.approver_name||''):''}))};
+}
+function initializeProcessingExecution(item,plan,now){
+  item.processing_approval_status='approved';item.processing_current_approval_level=0;item.processing_plan_type=plan.type;item.processing_execution=processingJsonObject(item.processing_execution);item.process_progress='pending';item.process_status_updated_at=now;
+  if(plan.type==='resellable'){item.customer_process_node='not_required';item.asset_process_node='pending_erp';item.process_type='erp';item.process_status='待ERP入库';}
+  else if(plan.type==='replace_now_repair_return'){item.customer_process_node='pending_replacement';item.asset_process_node='pending_factory_shipment';item.process_type='rma';item.process_status='待RMA';}
+  else{item.customer_process_node='not_required';item.asset_process_node='pending_factory_shipment';item.process_type='rma';item.process_status='待RMA';}
+}
+function processingOverallProgress(item){const c=!item.customer_process_node||item.customer_process_node==='not_required'||item.customer_process_node==='completed';return c&&item.asset_process_node==='completed'?'completed':'processing';}
+function applyProcessingActionToItem(item,action,data,now){
+  if(!item||item.processing_approval_status!=='approved'){const e=new Error('该商品处理方案尚未审批通过');e.status=409;throw e;}
+  const exec=processingJsonObject(item.processing_execution),needDate=(k)=>{const v=String(data[k]||data.date||'').trim();if(!v){const e=new Error('请填写处理日期');e.status=400;throw e;}return v;};
+  if(action==='confirm_erp_inbound'){if(item.asset_process_node!=='pending_erp'){const e=new Error('当前节点不是待 ERP 入库');e.status=409;throw e;}const d=needDate('inbound_date');exec.erp={inbound_date:d,remark:String(data.remark||'')};item.return_stockin_date=d;item.asset_process_node='completed';}
+  else if(action==='ship_replacement'){if(item.customer_process_node!=='pending_replacement'){const e=new Error('当前节点不是待客户换新');e.status=409;throw e;}const d=needDate('ship_date');exec.replacement={ship_date:d,sku:String(data.replacement_sku||'').trim(),sn:String(data.replacement_sn||'').trim(),carrier:String(data.carrier||'').trim(),tracking_number:String(data.tracking_number||'').trim(),remark:String(data.remark||'')};item.customer_process_node='completed';}
+  else if(action==='ship_to_factory'){if(item.asset_process_node!=='pending_factory_shipment'){const e=new Error('当前节点不是待寄工厂');e.status=409;throw e;}const d=needDate('ship_date');exec.factory_shipment={ship_date:d,factory_name:String(data.factory_name||'').trim(),carrier:String(data.carrier||'').trim(),tracking_number:String(data.tracking_number||'').trim(),remark:String(data.remark||'')};item.asset_process_node='factory_shipped';}
+  else if(action==='confirm_factory_received'){if(item.asset_process_node!=='factory_shipped'){const e=new Error('当前节点不是工厂运输中');e.status=409;throw e;}exec.factory_received={date:needDate('date'),remark:String(data.remark||'')};item.asset_process_node='factory_received';}
+  else if(action==='start_repair'){if(item.asset_process_node!=='factory_received'){const e=new Error('当前节点不是工厂已收货');e.status=409;throw e;}exec.repair_started={date:needDate('date'),remark:String(data.remark||'')};item.asset_process_node='repairing';}
+  else if(action==='complete_repair'){if(item.asset_process_node!=='repairing'){const e=new Error('当前节点不是维修中');e.status=409;throw e;}exec.repair_completed={date:needDate('date'),remark:String(data.remark||'')};item.asset_process_node=item.processing_plan_type==='repair_send_customer'?'pending_customer_shipment':'pending_warehouse_inbound';}
+  else if(action==='confirm_warehouse_inbound'){if(item.asset_process_node!=='pending_warehouse_inbound'){const e=new Error('当前节点不是待返仓入库');e.status=409;throw e;}const d=needDate('inbound_date');exec.warehouse_inbound={inbound_date:d,remark:String(data.remark||'')};item.return_stockin_date=d;item.asset_process_node='completed';}
+  else if(action==='ship_repaired_to_customer'){if(item.asset_process_node!=='pending_customer_shipment'){const e=new Error('当前节点不是待发客户');e.status=409;throw e;}const d=needDate('ship_date');exec.repaired_customer_shipment={ship_date:d,carrier:String(data.carrier||'').trim(),tracking_number:String(data.tracking_number||'').trim(),remark:String(data.remark||'')};item.asset_process_node='completed';}
+  else{const e=new Error('无效的售后处理动作');e.status=400;throw e;}
+  item.processing_execution=exec;item.processing_last_action=action;item.process_status_updated_at=now;item.process_progress=processingOverallProgress(item);item.process_status=item.process_progress==='completed'?'已处理':(item.process_type==='erp'?'待ERP入库':'待RMA');if(item.process_progress==='completed')item.process_completed_date=now;return item;
+}
+
+app.get('/api/processing-requests',requireLogin,async(req,res)=>{try{const{rows}=await query('SELECT * FROM aftersales_processing_requests ORDER BY created_at DESC');res.json(rows.map(normalizeProcessingRequestRow));}catch(e){res.status(500).json({error:e.message});}});
+
+app.post('/api/processing-requests',requireApiPermission('record_edit'),async(req,res)=>{
+  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});
+  const refs=Array.isArray(req.body.items)?req.body.items:[],plan=processingPlanSnapshot(req.body||{});if(!PROCESSING_PLAN_TYPES.has(plan.type))return res.status(400).json({error:'请选择有效的售后处理方案'});
+  const dedup=[],seen=new Set();for(const r of refs){const rid=String((r&&r.record_id)||'').trim(),idx=Number(r&&r.item_index),k=rid+':'+idx;if(!rid||!Number.isInteger(idx)||idx<0||seen.has(k))continue;seen.add(k);dedup.push({record_id:rid,item_index:idx});}
+  if(!dedup.length)return res.status(400).json({error:'请至少选择一条售后商品'});if(dedup.length>200)return res.status(400).json({error:'单次最多处理 200 条商品'});
+  const client=await pool.connect();try{
+    await client.query('BEGIN');const{flow,nodes,firstLevel}=await loadEnabledProcessingFlow(client),id=processingRequestId(),now=new Date().toISOString(),grouped=new Map(),itemRefs=[];
+    dedup.forEach(x=>{if(!grouped.has(x.record_id))grouped.set(x.record_id,[]);grouped.get(x.record_id).push(x.item_index);});
+    for(const rid of [...grouped.keys()].sort()){const rr=await client.query('SELECT id,status,items FROM aftersales_records WHERE id=$1 FOR UPDATE',[rid]);if(!rr.rows.length){const e=new Error('售后记录不存在：'+rid);e.status=404;throw e;}if(rr.rows[0].status!=='审批通过'){const e=new Error('仅退货审批通过的记录可提交处理方案：'+rid);e.status=409;throw e;}const items=processingJsonArray(rr.rows[0].items);
+      for(const idx of grouped.get(rid)){const item=items[idx];if(!item){const e=new Error('售后商品不存在：'+rid+' #'+(idx+1));e.status=404;throw e;}if(item.process_progress==='completed'){const e=new Error('已完成的商品不能再次提交处理方案');e.status=409;throw e;}if(item.processing_approval_status==='pending'||item.processing_approval_status==='approved'){const e=new Error('所选商品已有待审批或已批准的处理方案');e.status=409;throw e;}item.processing_request_id=id;item.processing_plan_type=plan.type;item.processing_plan=plan;item.processing_approval_status='pending';item.processing_current_approval_level=firstLevel;item.customer_process_node='not_started';item.asset_process_node='not_started';item.process_progress='pending';item.process_status_updated_at=now;itemRefs.push({record_id:rid,item_index:idx,sku_code:item.sku_code||'',quantity:Number(item.quantity)||0,return_reason:item.return_reason||''});}
+      await client.query('UPDATE aftersales_records SET items=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(items),rid]);
+    }
+    const ap=l=>nodes[l-1]||{};const ins=await client.query(`INSERT INTO aftersales_processing_requests (id,flow_id,flow_name,status,current_approval_level,approver_level1_id,approver_level1_name,approver_level2_id,approver_level2_name,approver_level3_id,approver_level3_name,flow_nodes,item_refs,plan,approval_history,submitter_id,submitter_name,created_at,updated_at) VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb,'[]'::jsonb,$14,$15,NOW(),NOW()) RETURNING *`,[id,flow.id,flow.name,firstLevel,ap(1).approver_id||'',ap(1).approver_name||'',ap(2).approver_id||'',ap(2).approver_name||'',ap(3).approver_id||'',ap(3).approver_name||'',JSON.stringify(nodes),JSON.stringify(itemRefs),JSON.stringify(plan),req.currentUserId||'',req.currentUserName||req.currentUserId||'']);
+    await client.query('COMMIT');res.json(normalizeProcessingRequestRow(ins.rows[0]));
+  }catch(e){try{await client.query('ROLLBACK');}catch(_){}res.status(e.status||500).json({error:e.message});}finally{client.release();}
+});
+
+app.post('/api/processing-requests/:id/approval',async(req,res)=>{
+  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});const{action,comment,expected_level}=req.body||{};if(!['approve','reject'].includes(action))return res.status(400).json({error:'无效的审批动作'});const client=await pool.connect();
+  try{await client.query('BEGIN');const rr=await client.query('SELECT * FROM aftersales_processing_requests WHERE id=$1 FOR UPDATE',[req.params.id]);if(!rr.rows.length){const e=new Error('处理申请不存在');e.status=404;throw e;}const request=normalizeProcessingRequestRow(rr.rows[0]);if(request.status!=='pending'||request.current_approval_level<=0){const e=new Error('该处理申请当前无需审批');e.status=409;throw e;}const level=Number(request.current_approval_level);if(expected_level!==undefined&&Number(expected_level)!==level){const e=new Error('审批层级已变更，请刷新后重试');e.status=409;throw e;}const node=request.flow_nodes[level-1]||{},perm=node.permission||('approval_level'+level);if(!(req.currentUserPermissions||[]).includes(perm)||node.approver_id!==req.currentUserId){const e=new Error('无权限或非本层级审批人，无法审批');e.status=403;throw e;}
+    const ur=await client.query('SELECT COALESCE(NULLIF(TRIM(name),\'\'),NULLIF(TRIM(username),\'\'),$1) AS operator_name FROM users WHERE id=$1 LIMIT 1',[req.currentUserId]);const op=ur.rows[0]?ur.rows[0].operator_name:req.currentUserId,now=new Date().toISOString();request.approval_history.push({level,action,operator_id:req.currentUserId,operator_name:op,comment:String(comment||''),timestamp:now});const next=action==='approve'?processingNextLevel(request.flow_nodes,level):0,finalOk=action==='approve'&&next===0;request.status=action==='reject'?'rejected':(finalOk?'approved':'pending');request.current_approval_level=action==='reject'||finalOk?0:next;
+    const grouped=new Map();request.item_refs.forEach(x=>{if(!grouped.has(x.record_id))grouped.set(x.record_id,[]);grouped.get(x.record_id).push(Number(x.item_index));});
+    for(const rid of [...grouped.keys()].sort()){const q=await client.query('SELECT id,items FROM aftersales_records WHERE id=$1 FOR UPDATE',[rid]);if(!q.rows.length){const e=new Error('关联售后记录不存在：'+rid);e.status=409;throw e;}const items=processingJsonArray(q.rows[0].items);for(const idx of grouped.get(rid)){const item=items[idx];if(!item||item.processing_request_id!==request.id){const e=new Error('处理申请与售后商品状态不一致，请刷新后重试');e.status=409;throw e;}if(action==='reject'){item.processing_approval_status='rejected';item.processing_current_approval_level=0;item.customer_process_node='not_started';item.asset_process_node='not_started';}else if(finalOk)initializeProcessingExecution(item,request.plan,now);else{item.processing_approval_status='pending';item.processing_current_approval_level=next;}}await client.query('UPDATE aftersales_records SET items=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(items),rid]);}
+    const upd=await client.query(`UPDATE aftersales_processing_requests SET status=$1,current_approval_level=$2,approval_history=$3::jsonb,updated_at=NOW() WHERE id=$4 RETURNING *`,[request.status,request.current_approval_level,JSON.stringify(request.approval_history),request.id]);await client.query('COMMIT');res.json(normalizeProcessingRequestRow(upd.rows[0]));
+  }catch(e){try{await client.query('ROLLBACK');}catch(_){}res.status(e.status||500).json({error:e.message});}finally{client.release();}
+});
+
+app.post('/api/processing-actions/batch',requireApiPermission('record_edit'),async(req,res)=>{
+  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});const action=String((req.body&&req.body.action)||''),data=processingJsonObject(req.body&&req.body.data),refs=Array.isArray(req.body&&req.body.items)?req.body.items:[],dedup=[],seen=new Set();
+  for(const r of refs){const rid=String((r&&r.record_id)||'').trim(),idx=Number(r&&r.item_index),k=rid+':'+idx;if(!rid||!Number.isInteger(idx)||idx<0||seen.has(k))continue;seen.add(k);dedup.push({record_id:rid,item_index:idx});}if(!dedup.length)return res.status(400).json({error:'请至少选择一条售后商品'});if(dedup.length>200)return res.status(400).json({error:'单次最多处理 200 条商品'});
+  const client=await pool.connect();try{await client.query('BEGIN');const ur=await client.query('SELECT COALESCE(NULLIF(TRIM(name),\'\'),NULLIF(TRIM(username),\'\'),$1) AS operator_name FROM users WHERE id=$1 LIMIT 1',[req.currentUserId]);const op=ur.rows[0]?ur.rows[0].operator_name:req.currentUserId,now=new Date().toISOString(),grouped=new Map(),updated=[];dedup.forEach(x=>{if(!grouped.has(x.record_id))grouped.set(x.record_id,[]);grouped.get(x.record_id).push(x.item_index);});
+    for(const rid of [...grouped.keys()].sort()){const q=await client.query('SELECT id,status,items,process_logs FROM aftersales_records WHERE id=$1 FOR UPDATE',[rid]);if(!q.rows.length){const e=new Error('售后记录不存在：'+rid);e.status=404;throw e;}if(q.rows[0].status!=='审批通过'){const e=new Error('仅退货审批通过的记录可执行售后处理');e.status=409;throw e;}const items=processingJsonArray(q.rows[0].items),logs=processingJsonArray(q.rows[0].process_logs);for(const idx of grouped.get(rid)){const item=items[idx];if(!item){const e=new Error('售后商品不存在：'+rid+' #'+(idx+1));e.status=404;throw e;}const old=item.process_progress||'pending';applyProcessingActionToItem(item,action,data,now);logs.push({item_index:idx,operator_id:req.currentUserId||'',operator_name:op||'',processed_at:now,process_date:String(data.date||data.ship_date||data.inbound_date||''),process_type:item.process_type||'rma',old_progress:old,new_progress:item.process_progress,action,remark:String(data.remark||''),processing_request_id:item.processing_request_id||''});}await client.query('UPDATE aftersales_records SET items=$1::jsonb,process_logs=$2::jsonb,updated_at=NOW() WHERE id=$3',[JSON.stringify(items),JSON.stringify(logs),rid]);updated.push(rid);}
+    await client.query('COMMIT');res.json({success:true,updated_records:updated,updated_items:dedup.length});
+  }catch(e){try{await client.query('ROLLBACK');}catch(_){}res.status(e.status||500).json({error:e.message});}finally{client.release();}
 });
 
 // ---- 商品 API ----
@@ -1883,12 +1958,14 @@ app.get('/api/approval-flows', requireLogin, async (req, res) => {
 
 app.post('/api/approval-flows', requireApiPermission('system_config'), async (req, res) => {
   try {
-    const { id, name, scope, enabled, nodes, cc_users } = req.body;
+    const { id, name, scope, flow_type, enabled, nodes, cc_users } = req.body;
     if (!name) return res.status(400).json({ error: '流程名称不能为空' });
+    const flowType = flow_type || 'return_approval';
+    if (!['return_approval', 'processing_approval'].includes(flowType)) return res.status(400).json({ error: '无效的审批流类型' });
     const result = await query(
-      `INSERT INTO approval_flows (id, name, scope, enabled, nodes, cc_users, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING *`,
-      [id || ('flow_' + Date.now()), name, scope || '全部售后记录', enabled !== undefined ? enabled : false,
+      `INSERT INTO approval_flows (id, name, scope, flow_type, enabled, nodes, cc_users, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING *`,
+      [id || ('flow_' + Date.now()), name, scope || '全部售后记录', flowType, enabled !== undefined ? enabled : false,
        JSON.stringify(nodes || []), JSON.stringify(await sanitizeCcUsers(cc_users || []))]
     );
     const row = result.rows[0];
@@ -1899,13 +1976,16 @@ app.post('/api/approval-flows', requireApiPermission('system_config'), async (re
 app.put('/api/approval-flows/:id', requireApiPermission('system_config'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, scope, enabled, nodes, cc_users } = req.body;
+    const { name, scope, flow_type, enabled, nodes, cc_users } = req.body;
+    if (flow_type !== undefined && !['return_approval', 'processing_approval'].includes(flow_type)) return res.status(400).json({ error: '无效的审批流类型' });
+    if (id === 'flow_standard' && flow_type && flow_type !== 'return_approval') return res.status(400).json({ error: '标准售后审批流必须保持为退货审批' });
     const fields = ['updated_at = NOW()'];
     const values = [];
     let idx = 1;
     const add = (field, val) => { if (val !== undefined) { fields.push(`${field} = $${idx++}`); values.push(val); } };
     add('name', name);
     add('scope', scope);
+    add('flow_type', flow_type);
     add('enabled', enabled);
     add('nodes', nodes !== undefined ? JSON.stringify(nodes) : undefined);
     // 服务端权威校验：仅保留存在且 active 的用户（过滤停用/不存在；去重），杜绝客户端伪造 CC 名单
