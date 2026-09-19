@@ -8,6 +8,8 @@
   "app": {
     "title": "Hitech 售后管理",
     "sidebarBrand": "Hitech 售后管理",
+    "sidebarCollapse": "收起导航栏",
+    "sidebarExpand": "展开导航栏",
     "subtitle": "售后、审批与处理流程管理",
     "mode": {
       "feishu": "飞书模式",
