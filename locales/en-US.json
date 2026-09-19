@@ -8,6 +8,8 @@
   "app": {
     "title": "Hitech After-Sales",
     "sidebarBrand": "Hitech After-Sales",
+    "sidebarCollapse": "Collapse navigation",
+    "sidebarExpand": "Expand navigation",
     "subtitle": "RMA & Service Workflow Management",
     "mode": {
       "feishu": "Feishu Mode",
