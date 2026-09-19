@@ -1135,9 +1135,9 @@
       "newProgress": "Progress Baru",
       "processDate": "Tanggal Proses",
       "erpDate": "Tanggal Penerimaan ERP",
-      "remark": "Catatan Proses"
+      "remark": "Catatan Penyelesaian"
     },
-   "remarkPlaceholder": "Tambahkan catatan proses, alasan pengecualian, atau komentar lanjutan",
+   "remarkPlaceholder": "Tambahkan catatan rencana penyelesaian (opsional)",
     "btnSubmitApproval": "Kirim untuk persetujuan",
     "btnSubmit": "Konfirmasi Update"
   },
