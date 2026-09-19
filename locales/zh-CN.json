@@ -69,7 +69,7 @@
     "approvalFlows": "审批流管理",
     "dictionaries": "字典管理",
     "customers": "客户管理"
-    },
+  },
   "page": {
     "title": {
       "overview": "售后概览",
@@ -1130,7 +1130,7 @@
     "onlyErpStatus": "仅\"待ERP入库\"状态可标记为已处理",
     "onlyCurrentApproverUpload": "只有当前级别审批人可以上传处理截图",
     "imageSize": "图片超过2MB，请压缩后上传",
- "uploadFailed": "附件上传失败{msg}，请重试。",
+    "uploadFailed": "附件上传失败{msg}，请重试。",
     "notImage": "文件 {filename} 不是图片，已跳过",
     "pasteImageSize": "粘贴的图片超过2MB，已跳过",
     "selectCsv": "请选择 CSV 格式的文件",
@@ -1240,9 +1240,18 @@
     "deleteReferenced": "该角色下还有用户，无法删除",
     "deleted": "角色已删除",
     "opSessionExpired": "操作会话已失效，请重试本次操作",
-    "role_admin": { "name": "超级管理员", "description": "系统最高权限，可管理用户、角色、审批流与系统配置" },
-    "role_operator": { "name": "运营人员", "description": "运营人员，可处理售后记录与商品数据" },
-    "role_viewer": { "name": "普通用户", "description": "普通用户，仅可查看与被抄送的售后记录" }
+    "role_admin": {
+      "name": "超级管理员",
+      "description": "系统最高权限，可管理用户、角色、审批流与系统配置"
+    },
+    "role_operator": {
+      "name": "运营人员",
+      "description": "运营人员，可处理售后记录与商品数据"
+    },
+    "role_viewer": {
+      "name": "普通用户",
+      "description": "普通用户，仅可查看与被抄送的售后记录"
+    }
   },
   "excel": {
     "libraryLoadFailed": "Excel库加载失败，请刷新页面重试",
@@ -1267,7 +1276,8 @@
       "name": "流程名称",
       "scope": "适用范围",
       "status": "状态",
-      "actions": "操作"
+      "actions": "操作",
+      "type": "流程类型"
     },
     "stat": {
       "total": "流程总数",
@@ -1305,7 +1315,11 @@
     "btnMoveDown": "下移",
     "approvalPermHint": "审批人列表自动筛选具有对应权限的在职用户",
     "approverCount": "当前有 {n} 名用户具有此权限",
-    "none": "无"
+    "none": "无",
+    "flowType": {
+      "return": "退货审批",
+      "processing": "售后处理审批"
+    }
   },
   "dictionaries": {
     "title": "字典管理",
@@ -1397,5 +1411,102 @@
     "title": "审批完成后抄送",
     "desc": "最终审批通过后通知，抄送人仅可查看",
     "nodeSummaryEmpty": "未设置抄送人"
+  },
+  "processing": {
+    "filter": {
+      "approvalStatus": "处理审批",
+      "allApprovalStatus": "全部处理审批",
+      "plan": "处理方案",
+      "allPlans": "全部处理方案",
+      "node": "当前处理节点",
+      "allNodes": "全部处理节点"
+    },
+    "approval": {
+      "unsubmitted": "未提交",
+      "pending": "审批中",
+      "approved": "已通过",
+      "rejected": "已拒绝"
+    },
+    "plan": {
+      "resellable": "可二次销售入库",
+      "replaceNowRepairReturn": "客户直接换新 + 故障品返厂维修后回仓",
+      "repairReturnWarehouse": "返厂维修后回仓",
+      "repairSendCustomer": "返厂维修后发给客户"
+    },
+    "node": {
+      "planApproval": "处理方案审批中",
+      "pendingReplacement": "待客户换新",
+      "pendingErp": "待 ERP 入库",
+      "pendingFactoryShipment": "待寄工厂",
+      "factoryShipped": "已寄工厂",
+      "factoryReceived": "工厂已收货",
+      "repairing": "维修中",
+      "pendingWarehouseInbound": "待返仓入库",
+      "pendingCustomerShipment": "待发客户",
+      "completed": "已完成"
+    },
+    "action": {
+      "confirmErpInbound": "确认 ERP 入库",
+      "shipReplacement": "发出换新商品",
+      "shipToFactory": "寄往工厂",
+      "confirmFactoryReceived": "确认工厂收货",
+      "startRepair": "开始维修",
+      "completeRepair": "确认维修完成",
+      "confirmWarehouseInbound": "确认返仓入库",
+      "shipRepairedToCustomer": "维修品发给客户"
+    },
+    "btn": {
+      "submitPlan": "提交处理方案",
+      "advance": "推进处理",
+      "submitApproval": "提交审批",
+      "confirmAction": "确认处理"
+    },
+    "planModal": {
+      "title": "提交售后处理方案",
+      "planType": "处理方案",
+      "factory": "工厂 / 维修方",
+      "remark": "处理说明 / 备注"
+    },
+    "actionModal": {
+      "title": "推进售后处理",
+      "action": "本次处理动作",
+      "date": "处理日期",
+      "carrier": "物流公司",
+      "tracking": "物流单号",
+      "replacementSku": "换新 SKU",
+      "replacementSn": "换新 SN"
+    },
+    "approvalModal": {
+      "title": "售后处理方案审批"
+    },
+    "approvalQueue": {
+      "title": "售后处理审批",
+      "empty": "暂无符合条件的处理审批",
+      "request": "处理申请",
+      "plan": "处理方案",
+      "items": "商品明细",
+      "review": "审批",
+      "loadFailed": "处理审批加载失败"
+    },
+    "returnApprovalQueue": {
+      "title": "退货审批"
+    },
+    "selectedCount": "已选择 {count} 条售后商品",
+    "validation": {
+      "returnApprovalRequired": "只能为退货审批已通过的商品提交处理方案。",
+      "completedSelected": "已完成的商品不能再次提交处理方案。",
+      "activePlanExists": "所选商品中存在审批中或已批准的处理方案。",
+      "planApprovalRequired": "只有处理方案审批通过的商品才能执行售后处理。",
+      "noCommonAction": "所选商品当前处理节点不一致，请筛选相同节点后再批量处理。"
+    },
+    "error": {
+      "submitPlan": "提交处理方案失败",
+      "action": "更新处理节点失败",
+      "approval": "处理审批失败"
+    },
+    "success": {
+      "planSubmitted": "处理方案已提交审批",
+      "actionUpdated": "售后处理已更新"
+    }
   }
 }
