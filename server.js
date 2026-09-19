@@ -1843,6 +1843,24 @@ app.post('/api/records/:id/resolution-approval', async (req, res) => {
           resolution.status = 'approved';
           resolution.current_approval_level = 0;
           resolution.approved_at = now;
+          // 客户直接换新：最终处理审批通过即视为换新完成。
+          // 返厂维修路线仍保留独立执行阶段，不能在审批通过时自动完成。
+          if (resolution.type === 'customer_replacement') {
+            resolution.execution_status = 'completed';
+            resolution.completed_at = now;
+            resolution.execution_history = Array.isArray(resolution.execution_history) ? resolution.execution_history : [];
+            resolution.execution_history.push({
+              stage: 'complete',
+              auto: true,
+              operator_id: req.currentUserId,
+              operator_name: req.currentUser && req.currentUser.name || req.currentUserId,
+              timestamp: now
+            });
+            item.process_progress = 'completed';
+            item.process_status = '已处理';
+            item.process_status_updated_at = now;
+            item.process_completed_date = now;
+          }
         }
       }
       item.resolution = resolution;
