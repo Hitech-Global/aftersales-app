@@ -1872,20 +1872,22 @@ html[data-theme="dark"]{color-scheme:dark}
       <div id="batch-process-summary" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"></div>
       <div class="form-grid">
         <div class="form-group">
-          <label data-i18n="batchProcess.label.newProgress"></label>
-          <select id="batch-new-progress" onchange="onBatchProgressChange()">
-            <option value="processing" data-i18n="processProgress.processing"></option>
-            <option value="completed" data-i18n="processProgress.completed"></option>
+          <label data-i18n="batchProcess.label.resolutionType"></label>
+          <select id="batch-resolution-type">
+            <option value="customer_replacement" data-i18n="resolutionType.customer_replacement"></option>
+            <option value="factory_repair_return_warehouse" data-i18n="resolutionType.factory_repair_return_warehouse"></option>
+            <option value="factory_repair_customer_replacement" data-i18n="resolutionType.factory_repair_customer_replacement"></option>
           </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="batchProcess.label.resolutionFlow"></label>
+          <select id="batch-resolution-flow"></select>
         </div>
         <div class="form-group">
           <label data-i18n="batchProcess.label.processDate"></label>
           <input type="text" class="date-input" id="batch-process-date" inputmode="numeric" onblur="normalizeDateInput(this)">
         </div>
-        <div class="form-group" id="batch-erp-date-group" style="display:none">
-          <label data-i18n="batchProcess.label.erpDate"></label>
-          <input type="text" class="date-input" id="batch-erp-date" inputmode="numeric" onblur="normalizeDateInput(this)">
-        </div>
+        <div class="form-group" id="batch-erp-date-group" style="display:none"></div>
         <div class="form-group form-group-full">
           <label data-i18n="batchProcess.label.remark"></label>
           <textarea id="batch-process-remark" rows="3" data-i18n-placeholder="batchProcess.remarkPlaceholder"></textarea>
@@ -1905,7 +1907,7 @@ html[data-theme="dark"]{color-scheme:dark}
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeBatchProcessModal()" data-i18n="approvalModal.btnCancel"></button>
-      <button class="btn btn-primary" onclick="submitBatchProcess()" data-i18n="batchProcess.btnSubmit"></button>
+      <button class="btn btn-primary" onclick="submitBatchProcess()" data-i18n="batchProcess.btnSubmitApproval"></button>
     </div>
   </div>
 </div>
@@ -2713,6 +2715,35 @@ function getDefaultAccessiblePage(){
 // ==================== UTILITIES ====================
 const PROCESS_TYPE_VALUES = ['erp','color_box','parts','rma','scrap'];
 const PROCESS_PROGRESS_VALUES = ['pending','processing','completed'];
+const RESOLUTION_TYPE_VALUES = ['customer_replacement','factory_repair_return_warehouse','factory_repair_customer_replacement'];
+const RESOLUTION_TYPE_LABELS = {
+  customer_replacement: '客户换新',
+  factory_repair_return_warehouse: '返厂维修后回仓入库',
+  factory_repair_customer_replacement: '返厂维修后给客户换新'
+};
+function tResolutionType(type){ return t('resolutionType.' + type) || RESOLUTION_TYPE_LABELS[type] || type; }
+function getItemResolution(item){ return item && item.resolution && typeof item.resolution === 'object' ? item.resolution : null; }
+function canSubmitResolution(item){ const r=getItemResolution(item); return !r || r.status==='rejected'; }
+function renderResolutionBadge(item){
+  const r=getItemResolution(item);
+  if(!r) return '';
+  const translated=s=>{const v=t(s);return v&&v!==s?v:'';};
+  const label=r.status==='pending'?(translated('resolutionApproval.pending')||'待处理审批'):r.status==='approved'?(translated('resolutionApproval.approvedShort')||'处理审批通过'):r.status==='rejected'?(translated('resolutionApproval.rejected')||'处理审批拒绝'):r.status==='in_progress'?(translated('resolutionApproval.inProgress')||'处理中'):(translated('resolutionApproval.completed')||'处理完成');
+  return ' <span class="ps-badge ps-resolution">'+esc(label)+'</span>';
+}
+function canApproveResolution(item){
+  const r=getItemResolution(item), user=getCurrentUser();
+  if(!r||r.status!=='pending'||!user) return false;
+  const a=(r.approvers||[]).find(x=>Number(x.level)===Number(r.current_approval_level));
+  return !!a && a.approver_id===user.id && hasPermission(a.permission||('approval_level'+r.current_approval_level));
+}
+function resolutionExecutionAction(item){
+  const r=getItemResolution(item);
+  if(!r||r.status!=='approved') return '';
+  if(r.execution_status==='in_progress') return 'complete';
+  if(r.execution_status==='completed') return '';
+  return 'start';
+}
 const LEGACY_STATUS_TO_PROCESS = {
   '待ERP入库':{type:'erp',progress:'pending'}, 'pending_erp':{type:'erp',progress:'pending'},
   'ERP入库':{type:'erp',progress:'pending'}, 'erp':{type:'erp',progress:'pending'},
@@ -4389,12 +4420,14 @@ async function renderList(){
         const showItem=(!progressFilter||itemProcessProgress(it)===progressFilter);
         if(!showItem) return;
         const canApprove = canApproveRecord(r);
-        const canProcess = r.status==='审批通过' && isPendingProcessItem(it) && hasPermission('record_edit');
+          const canProcess = r.status==='审批通过' && isPendingProcessItem(it) && canSubmitResolution(it) && hasPermission('record_edit');
+          const canResolutionApprove = canApproveResolution(it);
+          const execAction = resolutionExecutionAction(it);
         html+=`<tr class="row-clickable" onmousedown="onRowMouseDown(event)" onclick="onRowOpenDetail(event,'${escAttr(String(r.id))}')">
           <td class="col-checkbox"><input type="checkbox" class="item-checkbox" data-record-id="${escAttr(String(r.id))}" data-item-index="${idx}" onchange="onItemCheckboxChange()"></td>
           <td class="cell-id">${r.id}</td>
           <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
-          <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
+          <td>${renderProcessProgressBadge(itemProcessProgress(it))}${renderResolutionBadge(it)}</td>
           <td>${renderRiskBadge([it], r)}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
@@ -4410,7 +4443,9 @@ async function renderList(){
           <td class="cell-actions">${moreMenuHtml('more-'+escAttr(String(r.id))+'-'+idx, [
             {text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`showPage('detail','${escAttr(String(r.id))}')`},
             ...(canApprove?[{text:t('list.action.approve'),icon:ICON_ACTION.check,onclick:`openLegacyApprovalModal('${escAttr(String(r.id))}')`}]:[]),
-            ...(canProcess?[{text:t('list.action.process'),icon:ICON_ACTION.process,onclick:`openApprovalModal('${escAttr(String(r.id))}')`}]:[])
+            ...(canProcess?[{text:t('list.action.process'),icon:ICON_ACTION.process,onclick:`openBatchProcessForItem('${escAttr(String(r.id))}',${idx})`}]:[]),
+            ...(canResolutionApprove?[{text:t('resolutionApproval.approveAction'),icon:ICON_ACTION.check,onclick:`approveResolutionItem('${escAttr(String(r.id))}',${idx})`}]:[]),
+            ...(execAction?[{text:execAction==='start'?t('resolutionApproval.startAction'):t('resolutionApproval.completeAction'),icon:ICON_ACTION.process,onclick:`executeResolutionItem('${escAttr(String(r.id))}',${idx},'${execAction}')`}]:[])
           ])}</td>
         </tr>`;
       });
@@ -4449,7 +4484,7 @@ async function renderList(){
       const psCell=getRecordProcessSummary(items);
       const canEdit = hasPermission('record_edit') && r.status==='草稿';
       const canApprove = canApproveRecord(r);
-      const canProcess = r.status==='审批通过' && items.some(it=>isPendingProcessItem(it)) && hasPermission('record_edit');
+      const canProcess = r.status==='审批通过' && items.some(it=>isPendingProcessItem(it)&&canSubmitResolution(it)) && hasPermission('record_edit');
       html+=`<tr class="row-clickable" onmousedown="onRowMouseDown(event)" onclick="onRowOpenDetail(event,'${escAttr(String(r.id))}')">
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
@@ -4469,7 +4504,7 @@ async function renderList(){
           ...(canEdit?[{text:t('list.action.edit'),icon:ICON_ACTION.edit,onclick:`editRecord('${escAttr(String(r.id))}')`}]:[]),
           ...(hasPermission('record_delete')?[{text:t('list.action.delete'),icon:ICON_ACTION.del,onclick:`deleteRecord('${escAttr(String(r.id))}')`,danger:true}]:[]),
           ...(canApprove?[{text:t('list.action.approve'),icon:ICON_ACTION.check,onclick:`openLegacyApprovalModal('${escAttr(String(r.id))}')`}]:[]),
-          ...(canProcess?[{text:t('list.action.process'),icon:ICON_ACTION.process,onclick:`openApprovalModal('${escAttr(String(r.id))}')`}]:[])
+          ...(canProcess?[{text:t('list.action.process'),icon:ICON_ACTION.process,onclick:`openBatchProcessForRecord('${escAttr(String(r.id))}')`}]:[])
         ])}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
@@ -4643,6 +4678,89 @@ async function submitBatchProcess(){
   closeBatchProcessModal();
   clearBatchSelection();
   renderList();
+}
+
+// 处理方案审批：批量操作只提交 resolution_approval，不再绕过审批直接改 process_progress。
+let _resolutionBatchRefs = null;
+let _resolutionFlows = [];
+function openBatchProcessForItem(recordId,itemIndex){ _resolutionBatchRefs=[{recordId:String(recordId),itemIndex:Number(itemIndex)}]; openBatchProcessModal(); }
+function openBatchProcessForRecord(recordId){
+  getRecords().then(records=>{
+    const record=records.find(r=>String(r.id)===String(recordId));
+    if(!record) return;
+    _resolutionBatchRefs=(record.items||[]).map((item,index)=>({recordId:String(record.id),itemIndex:index}))
+      .filter(ref=>isPendingProcessItem(record.items[ref.itemIndex])&&canSubmitResolution(record.items[ref.itemIndex]));
+    openBatchProcessModal();
+  });
+}
+async function openBatchProcessModal(){
+  const records=await getRecords();
+  let refs=_resolutionBatchRefs;
+  if(!refs) refs=[...document.querySelectorAll('.item-checkbox:checked')].map(cb=>({recordId:String(cb.dataset.recordId),itemIndex:Number(cb.dataset.itemIndex)}));
+  refs=refs.map(ref=>{const record=records.find(r=>String(r.id)===String(ref.recordId));return {...ref,record,item:record&&record.items&&record.items[ref.itemIndex]};}).filter(ref=>ref.record&&ref.item);
+  if(!refs.length){showFlash(t('validation.selectOneItem'),'warning');return;}
+  if(refs.some(ref=>ref.record.status!=='审批通过')){showFlash(t('validation.onlyApprovedItems'),'warning');return;}
+  if(refs.some(ref=>!canSubmitResolution(ref.item))){showFlash(t('resolutionApproval.alreadySubmitted'),'warning');return;}
+  try{const resp=await fetch('/api/approval-flows?flow_type=resolution_approval',{headers:getAuthHeaders()});_resolutionFlows=resp.ok?await resp.json():[];}catch(_){_resolutionFlows=[];}
+  if(!_resolutionFlows.length){showFlash(t('resolutionApproval.noEnabledFlow'),'warning');return;}
+  const flowSelect=document.getElementById('batch-resolution-flow');
+  if(flowSelect) flowSelect.innerHTML=_resolutionFlows.map(f=>'<option value="'+escAttr(f.id)+'">'+esc(f.name)+'</option>').join('');
+  pendingAttachments=[];approvalAttachmentTarget='batch';
+  document.getElementById('batch-process-summary').textContent=t('batchProcess.summary',{count:refs.length});
+  document.getElementById('batch-resolution-type').value='customer_replacement';
+  setDateInputValue('batch-process-date',formatDateLocal(new Date()));
+  document.getElementById('batch-process-remark').value='';
+  window._resolutionBatchRefs=refs;renderPendingAttachments();
+  document.getElementById('batch-process-modal').classList.remove('hidden');
+}
+function closeBatchProcessModal(){
+  document.getElementById('batch-process-modal').classList.add('hidden');
+  pendingAttachments=[];approvalAttachmentTarget='modal';_resolutionBatchRefs=null;window._resolutionBatchRefs=null;
+}
+async function submitBatchProcess(){
+  const refs=window._resolutionBatchRefs||[];
+  const type=document.getElementById('batch-resolution-type')?.value||'';
+  const flowId=document.getElementById('batch-resolution-flow')?.value||'';
+  const remark=(document.getElementById('batch-process-remark')?.value||'').trim();
+  if(!refs.length){showFlash(t('validation.selectOneItem'),'warning');return;}
+  if(!type||!flowId){showFlash(t('resolutionApproval.selectFlowAndType'),'warning');return;}
+  try{
+    const payload={
+      flow_id:flowId,
+      items:refs.map(ref=>({
+        record_id:ref.recordId,
+        item_index:ref.itemIndex,
+        resolution_type:type,
+        remark,
+        attachments:(pendingAttachments||[]).map(a=>({name:a.name,url:a.url||''}))
+      }))
+    };
+    const resp=await fetch('/api/records/resolution-approval',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify(payload)});
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok){showFlash(data.error||t('resolutionApproval.submitFailed'),'danger');return;}
+    _recordsCache=null;_cacheTimestamp=0;showFlash(t('resolutionApproval.submitted',{count:refs.length}),'success');closeBatchProcessModal();clearBatchSelection();renderList();
+  }catch(e){showFlash(t('resolutionApproval.submitFailed')+': '+e.message,'danger');}
+}
+async function approveResolutionItem(recordId,itemIndex){
+  const approve=confirm(t('resolutionApproval.confirmApprove'));
+  if(!approve && !confirm(t('resolutionApproval.confirmReject')))return;
+  const action=approve?'approve':'reject';
+  const comment=prompt(t('resolutionApproval.commentPrompt'),'')||'';
+  try{
+    const resp=await fetch('/api/records/'+encodeURIComponent(recordId)+'/resolution-approval',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({item_indexes:[Number(itemIndex)],action,comment})});
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok){showFlash(data.error||t('resolutionApproval.approveFailed'),'danger');return;}
+    _recordsCache=null;_cacheTimestamp=0;showFlash(t('resolutionApproval.approved'),'success');renderList();
+  }catch(e){showFlash(t('resolutionApproval.approveFailed')+': '+e.message,'danger');}
+}
+async function executeResolutionItem(recordId,itemIndex,stage){
+  if(!confirm((stage==='start'?t('resolutionApproval.confirmStart'):t('resolutionApproval.confirmComplete'))+'?'))return;
+  try{
+    const resp=await fetch('/api/records/'+encodeURIComponent(recordId)+'/resolution-execution',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({item_indexes:[Number(itemIndex)],stage})});
+    const data=await resp.json().catch(()=>({}));
+    if(!resp.ok){showFlash(data.error||t('resolutionApproval.executeFailed'),'danger');return;}
+    _recordsCache=null;_cacheTimestamp=0;showFlash(t('resolutionApproval.executed'),'success');renderList();
+  }catch(e){showFlash(t('resolutionApproval.executeFailed')+': '+e.message,'danger');}
 }
 
 function renderListPagination(total){
@@ -6120,12 +6238,14 @@ async function renderApproval(){
   let filtered=records;
   if(tab==='pending'){
     filtered=records.filter(r=>{
+      const hasResolutionTask=(r.items||[]).some(it=>canApproveResolution(it));
+      if(hasResolutionTask) return true;
       if(r.status==='草稿'||r.status==='审批通过'||r.status==='审批拒绝') return false;
       const level=r.current_approval_level;
       return r['approver_level'+level+'_id']===user.id;
     });
   }else if(tab==='done'){
-    filtered=records.filter(r=>(r.approval_history||[]).some(h=>h.operator_id===user.id));
+    filtered=records.filter(r=>(r.approval_history||[]).some(h=>h.operator_id===user.id)||(r.items||[]).some(it=>getItemResolution(it)?.approval_history?.some(h=>h.operator_id===user.id)));
   }
 
   const search=(document.getElementById('appr-search').value||'').toLowerCase();
@@ -6161,6 +6281,8 @@ async function renderApproval(){
       const psCell=getRecordProcessSummary(items);
       const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
       const currentApprover=getCurrentApproverText(r);
+      const resolutionTasks=items.map((it,idx)=>({it,idx})).filter(({it})=>canApproveResolution(it));
+      const resolutionActions=resolutionTasks.map(({idx})=>({text:t('resolutionApproval.approveAction')+' #'+(idx+1),icon:ICON_ACTION.check,onclick:`event.stopPropagation();approveResolutionItem('${escAttr(String(r.id))}',${idx})`}));
       html+=`<tr class="row-clickable" onclick="showPage('detail','${escAttr(String(r.id))}')">
         <td class="cell-id">${r.id}</td>
         <td class="cell-date">${formatDateTime(r.created_at)}</td>
@@ -6172,7 +6294,7 @@ async function renderApproval(){
         <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
         <td><strong>${totalQty}</strong></td>
         <td>${esc(currentApprover)}</td>
-        <td class="cell-actions">${moreMenuHtml('more-appr-'+escAttr(String(r.id)), [{text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')`}])}</td></tr>`;
+        <td class="cell-actions">${moreMenuHtml('more-appr-'+escAttr(String(r.id)), [{text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')`},...resolutionActions])}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
     area.innerHTML=html;
@@ -8393,8 +8515,8 @@ async function renderApprovalFlows() {
     if (!Array.isArray(_afFlows)) _afFlows = [];
     // 补全: 老数据可能没有 approver_name / backup_approver_name,从 users 反查填上
     _afFlows.forEach(f => {
-      f._canonical = { name: f.name, scope: f.scope };
-      f._dirty = { name: false, scope: false };
+      f._canonical = { name: f.name, scope: f.scope, flow_type: f.flow_type || 'return_approval' };
+      f._dirty = { name: false, scope: false, flow_type: false };
       (f.nodes || []).forEach(n => {
         n._canonical = { title: n.title };
         n._dirty = { title: false };
@@ -8466,10 +8588,11 @@ function _afRenderPage() {
   h += '<span style="font-size:15px;font-weight:600">' + t('approvalFlows.listTitle') + '</span>';
   h += '<span style="font-size:12px;color:var(--text-muted)">' + t('approvalFlows.listHint') + '</span>';
   h += '</div>';
-  h += '<table class="af-table"><thead><tr><th>' + t('approvalFlows.col.name') + '</th><th>' + t('approvalFlows.col.scope') + '</th><th>' + t('approvalFlows.col.level') + '</th><th>' + t('approvalFlows.col.status') + '</th><th>' + t('approvalFlows.col.actions') + '</th></tr></thead><tbody>';
+  h += '<table class="af-table"><thead><tr><th>' + t('approvalFlows.col.name') + '</th><th>' + t('approvalFlows.col.flowType') + '</th><th>' + t('approvalFlows.col.scope') + '</th><th>' + t('approvalFlows.col.level') + '</th><th>' + t('approvalFlows.col.status') + '</th><th>' + t('approvalFlows.col.actions') + '</th></tr></thead><tbody>';
   _afFlows.forEach((f, i) => {
     h += '<tr class="' + (i === _afCurrentIdx ? 'selected' : '') + '" onclick="selectFlow(' + i + ')">';
     h += '<td style="font-weight:600">' + esc(f.id === 'flow_standard' ? t('form.flow.defaultName') : f.name) + '</td>';
+    h += '<td>' + esc(f.flow_type === 'resolution_approval' ? t('approvalFlows.flowType.resolution') : t('approvalFlows.flowType.return')) + '</td>';
     h += '<td>' + esc((f.id === 'flow_standard' && f.scope === '全部售后记录') ? t('form.flow.defaultScope') : (f.scope || '-')) + '</td>';
     h += '<td>' + (f.nodes ? f.nodes.length : 0) + ' ' + t('approvalFlows.levelUnit') + '</td>';
     h += '<td><span class="af-badge ' + (f.enabled ? 'af-badge-on' : 'af-badge-off') + '">' + (f.enabled ? t('approvalFlows.status.enabled') : t('approvalFlows.status.disabled')) + '</span></td>';
@@ -8504,6 +8627,12 @@ function _afRenderPage() {
     h += '<span style="font-size:13px;color:var(--text-secondary);width:80px;text-align:right">' + t('approvalFlows.col.scope') + '</span>';
     h += '<input class="af-config-input" value="' + esc(flow.id === 'flow_standard' ? (flow._dirty && flow._dirty.scope ? flow.scope : t('form.flow.defaultScope')) : (flow.scope || '')) + '" id="af-flow-scope" onchange="updateFlowField(\'scope\',this.value)" style="max-width:400px">';
     h += '</div>';
+    h += '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">';
+    h += '<span style="font-size:13px;color:var(--text-secondary);width:80px;text-align:right">' + t('approvalFlows.col.flowType') + '</span>';
+    h += '<select class="af-config-select" id="af-flow-type" onchange="updateFlowField(\'flow_type\',this.value)" style="max-width:400px">';
+    h += '<option value="return_approval"' + ((flow.flow_type || 'return_approval') === 'return_approval' ? ' selected' : '') + '>' + t('approvalFlows.flowType.return') + '</option>';
+    h += '<option value="resolution_approval"' + (flow.flow_type === 'resolution_approval' ? ' selected' : '') + '>' + t('approvalFlows.flowType.resolution') + '</option>';
+    h += '</select></div>';
 
     // 注：全局“抄送设置”已移除（AFTERSALES-CC-COMPLETION-01），改为流程图最右侧“审批完成”结束节点内配置。
 
@@ -8837,6 +8966,7 @@ async function saveFlow() {
   const _isStd = flow.id === 'flow_standard';
   const _saveName = (_isStd && flow._dirty && flow._canonical && !flow._dirty.name) ? flow._canonical.name : flow.name;
   const _saveScope = (_isStd && flow._dirty && flow._canonical && !flow._dirty.scope) ? flow._canonical.scope : flow.scope;
+  const _saveFlowType = flow.flow_type === 'resolution_approval' ? 'resolution_approval' : 'return_approval';
   const _saveNodes = _isStd
     ? (flow.nodes || []).map(n => Object.assign({}, n, { title: (n._dirty && n._canonical && !n._dirty.title) ? n._canonical.title : n.title }))
     : (flow.nodes || []);
@@ -8844,7 +8974,7 @@ async function saveFlow() {
     const resp = await fetch('/api/approval-flows/' + encodeURIComponent(flow.id), {
       method: 'PUT',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: _saveName, scope: _saveScope, enabled: flow.enabled, nodes: _saveNodes, cc_users: flow.cc_users || [] })
+      body: JSON.stringify({ name: _saveName, flow_type: _saveFlowType, scope: _saveScope, enabled: flow.enabled, nodes: _saveNodes, cc_users: flow.cc_users || [] })
     });
     if (resp.ok) {
       alert('保存成功');
@@ -8863,6 +8993,7 @@ async function createApprovalFlow() {
   const newFlow = {
     id: 'flow_' + Date.now(),
     name: '新审批流（复制自标准流）',
+    flow_type: 'return_approval',
     scope: standard.scope || '全部售后记录',
     enabled: false,
     nodes: JSON.parse(JSON.stringify(standard.nodes || []))
