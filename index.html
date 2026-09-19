@@ -2400,6 +2400,7 @@ async function bootstrapSession() {
 
 // ==================== API 数据适配层 ====================
 let _dbAvailable = null;
+let _dbAvailableInflight = null;
 let _usersCache = null;
 let _rolesCache = null;
 let _productsCache = null;
@@ -2587,15 +2588,20 @@ function getAuthHeaders() {
 
 async function checkDbAvailable() {
   if (_dbAvailable !== null) return _dbAvailable;
-  try {
-    const resp = await fetch('/api/db/status');
-    const data = await resp.json();
-    _dbAvailable = data.connected;
-    return _dbAvailable;
-  } catch (e) {
-    _dbAvailable = false;
-    return false;
-  }
+  if (_dbAvailableInflight) return _dbAvailableInflight;
+  const p=(async()=>{
+    try {
+      const resp = await fetch('/api/db/status');
+      const data = await resp.json();
+      _dbAvailable = !!data.connected;
+      return _dbAvailable;
+    } catch (e) {
+      _dbAvailable = false;
+      return false;
+    }
+  })();
+  _dbAvailableInflight=p;
+  try{return await p;}finally{if(_dbAvailableInflight===p)_dbAvailableInflight=null;}
 }
 
 async function fetchUsersFresh(){
