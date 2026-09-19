@@ -2482,6 +2482,51 @@ function markPageRendered(page,recordId){
 function invalidatePageSignature(page){
   Object.keys(_pageRenderSignature).forEach(key=>{if(key===page||key.startsWith(page+':'))delete _pageRenderSignature[key];});
 }
+function pageIsActive(page,recordId){
+  const el=document.getElementById('page-'+page);
+  if(!el||!el.classList.contains('active')) return false;
+  if(page==='detail') return String(currentDetailId||'')===String(recordId||'');
+  return true;
+}
+function rerenderPageBody(page,recordId){
+  if(page==='overview') return initOverview();
+  if(page==='list') return renderList();
+  if(page==='detail') return renderDetail(recordId);
+  if(page==='products') return renderProducts();
+  if(page==='approval') return renderApproval();
+  if(page==='users') return renderUsers();
+  if(page==='roles') return renderRoles();
+  if(page==='approval-flows') return renderApprovalFlows();
+  if(page==='dictionaries') return renderDictionaries();
+  if(page==='customers') return loadCustomers();
+}
+
+// VIEW HIT 先瞬开，再按需后台刷新；只有资源版本真的变化且页面仍在前台时才重绘。
+function refreshPageOnViewHit(page,recordId){
+  scheduleIdle(async()=>{
+    const before=pageStateSignature(page,recordId);
+    const jobs=[];
+    if(['overview','list','detail','approval'].includes(page)&&!resourceFresh('records')) jobs.push(fetchRecordsFresh());
+    if(['detail','products'].includes(page)&&!resourceFresh('products')) jobs.push(fetchProductsFresh());
+    if(['users','roles','approval-flows'].includes(page)&&!resourceFresh('users')) jobs.push(fetchUsersFresh());
+    if(['users','roles','approval-flows'].includes(page)&&!resourceFresh('roles')) jobs.push(fetchRolesFresh());
+    if(['list','detail','approval','dictionaries'].includes(page)&&typeof fetchDictionariesFresh==='function'&&!resourceFresh('dictionaries')) jobs.push(fetchDictionariesFresh());
+    if(page==='approval'&&typeof fetchProcessingRequestsFresh==='function'&&!resourceFresh('processingRequests')) jobs.push(fetchProcessingRequestsFresh());
+    if(page==='approval-flows'&&typeof fetchApprovalFlowsFresh==='function'&&!resourceFresh('approvalFlows')) jobs.push(fetchApprovalFlowsFresh());
+    if(page==='customers'){
+      await loadCustomers();
+      return;
+    }
+    if(!jobs.length) return;
+    await Promise.allSettled(jobs);
+    if(!pageIsActive(page,recordId)) return;
+    const after=pageStateSignature(page,recordId);
+    if(after!==before){
+      invalidatePageSignature(page);
+      rerenderPageBody(page,recordId);
+    }
+  });
+}
 
 let _prewarmStarted=false;
 function prewarmAppData(){
@@ -3983,6 +4028,7 @@ function showPage(page, recordId=null){
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
   const shouldRender=pageNeedsRender(page,recordId);
+  if(!shouldRender) refreshPageOnViewHit(page,recordId);
   if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); if(shouldRender)initOverview(); }
   else if(page==='list'){ document.getElementById('page-list').classList.add('active'); if(shouldRender)renderList(); }
   else if(page==='detail'){
