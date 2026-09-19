@@ -4010,13 +4010,22 @@ function updatePermissionedUI(){
 }
 
 // ==================== OVERVIEW PAGE ====================
-function initOverview(){
-  const now=new Date();
-  const start=new Date(now.getFullYear(), now.getMonth(), 1);
-  setDateInputValue('ov-start-date',formatDateLocal(start));
-  setDateInputValue('ov-end-date',formatDateLocal(now));
-  updateOverviewBrandFilter();
-  renderOverview();
+let _overviewInitialized=false;
+let _renderOverviewSeq=0;
+async function initOverview(){
+  const seq=++_renderOverviewSeq;
+  if(!_overviewInitialized){
+    const now=new Date();
+    const start=new Date(now.getFullYear(), now.getMonth(), 1);
+    setDateInputValue('ov-start-date',formatDateLocal(start));
+    setDateInputValue('ov-end-date',formatDateLocal(now));
+    _overviewInitialized=true;
+  }
+  const records=await getRecords();
+  if(seq!==_renderOverviewSeq) return;
+  await updateOverviewBrandFilter(records);
+  if(seq!==_renderOverviewSeq) return;
+  await renderOverview(records,seq);
 }
 
 function resetOverviewFilter(){
@@ -4026,8 +4035,8 @@ function resetOverviewFilter(){
   renderOverview();
 }
 
-async function updateOverviewBrandFilter(){
-  const records=asArray(await getRecords()), brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
+async function updateOverviewBrandFilter(recordsArg){
+  const records=asArray(recordsArg||await getRecords()), brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
   const sel=document.getElementById('ov-brand-filter'), cur=sel.value;
   sel.innerHTML='<option value="">'+t('overview.filter.allBrands')+'</option>'+brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
   sel.value=cur;
@@ -4049,7 +4058,8 @@ function isOverdueItem(item, record, days=7){
   return (new Date()-start)/86400000>=days;
 }
 
-async function renderOverview(){
+async function renderOverview(recordsArg,parentSeq){
+  const seq=parentSeq||++_renderOverviewSeq;
   const healthEl=document.getElementById('ov-health');
   const flowEl=document.getElementById('ov-flow');
   const attEl=document.getElementById('ov-attention-list');
@@ -4062,7 +4072,8 @@ async function renderOverview(){
     const startD=getDateInputValue('ov-start-date');
     const endD=getDateInputValue('ov-end-date');
     const brandF=(document.getElementById('ov-brand-filter')||{}).value||'';
-    records=asArray(await getRecords());
+    records=asArray(recordsArg||await getRecords());
+    if(seq!==_renderOverviewSeq) return;
     if(startD||endD){
       records=records.filter(r=>{
         const d=recordDateKey(r);
@@ -4211,18 +4222,23 @@ async function renderOverview(){
 
   if(asofEl) asofEl.textContent=formatDateTime(new Date());
 
-  // 7) 图表独立容错：Chart.js 未加载或渲染失败，只影响图表区域
-  safeRenderChart(function(){ renderTrend30Chart(buildTrend30(records, getDateInputValue('ov-end-date'))); });
-  safeRenderChart(function(){ renderStageDonutChart(flowDefs); });
-  safeRenderChart(function(){
-    const reasonCounts={};
-    allItems.forEach(x=>{const reason=x.item.return_reason;if(reason)reasonCounts[reason]=(reasonCounts[reason]||0)+1;});
-    renderReasonTop5Chart(Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,5));
-  });
-  safeRenderChart(function(){
-    const skuCounts={};
-    allItems.forEach(x=>{const sku=x.item.sku_code;if(sku)skuCounts[sku]=(skuCounts[sku]||0)+1;});
-    renderSkuTop10Chart(Object.entries(skuCounts).sort((a,b)=>b[1]-a[1]).slice(0,10));
+  markPageRendered('overview');
+
+  // 图表不是首屏交互必需：延后到 idle，避免 Chart.js 阻塞页面切换。
+  scheduleIdle(()=>{
+    if(seq!==_renderOverviewSeq) return;
+    safeRenderChart(function(){ renderTrend30Chart(buildTrend30(records, getDateInputValue('ov-end-date'))); });
+    safeRenderChart(function(){ renderStageDonutChart(flowDefs); });
+    safeRenderChart(function(){
+      const reasonCounts={};
+      allItems.forEach(x=>{const reason=x.item.return_reason;if(reason)reasonCounts[reason]=(reasonCounts[reason]||0)+1;});
+      renderReasonTop5Chart(Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]).slice(0,5));
+    });
+    safeRenderChart(function(){
+      const skuCounts={};
+      allItems.forEach(x=>{const sku=x.item.sku_code;if(sku)skuCounts[sku]=(skuCounts[sku]||0)+1;});
+      renderSkuTop10Chart(Object.entries(skuCounts).sort((a,b)=>b[1]-a[1]).slice(0,10));
+    });
   });
 }
 
