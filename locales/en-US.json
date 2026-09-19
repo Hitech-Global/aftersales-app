@@ -253,7 +253,8 @@
       "submitter": "Submitted By",
       "updatedAt": "Updated At",
       "actions": "Actions",
-      "risk": "Risk"
+      "risk": "Risk",
+      "nextAction": "Next Action"
     },
     "empty": {
       "noRecords": "No RMA cases yet",
@@ -281,10 +282,19 @@
     "subtitle": "Manage after-sales cases, approvals, processing progress, and RMA follow-up.",
     "quickFilter": {
       "all": "All",
+      "todo": "My To-dos",
       "pendingApproval": "Pending Approval",
       "pendingProcessing": "Pending Processing",
       "pendingRma": "Pending RMA",
       "overdue": "Overdue",
+      "completed": "Completed"
+    },
+    "nextAction": {
+      "goApproval": "Open Approval Center",
+      "submitResolution": "Submit Resolution Approval",
+      "executeProcess": "Execute Processing",
+      "pendingRma": "Waiting for RMA",
+      "pendingProcess": "Waiting for Processing",
       "completed": "Completed"
     },
     "riskPill": {
