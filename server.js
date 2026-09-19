@@ -919,7 +919,6 @@ async function resolveFlowApprovers(flowId, expectedType = null, requireEnabled 
     if (expectedType && flowType !== expectedType) return { _wrong_type: true, actual_type: flowType };
     if (requireEnabled && !flow.enabled) return { _disabled: true };
     const nodes = typeof flow.nodes === 'string' ? JSON.parse(flow.nodes || '[]') : (flow.nodes || []);
-    // 查所有相关用户拿到 name
     const ids = [...new Set(nodes.slice(0, 3).map(n => n.approver_id).filter(Boolean))];
     let nameMap = {};
     if (ids.length) {
@@ -946,6 +945,51 @@ async function resolveFlowApprovers(flowId, expectedType = null, requireEnabled 
     console.error('[resolveFlowApprovers] error:', e.message);
     return null;
   }
+}
+
+// 列表兼容老数据时使用 set-based 展开，避免 /api/records 对每条旧记录各做 1~2 次 SQL（N+1）。
+async function expandApprovalFlowsForRecords(rows) {
+  const targets = (rows || []).filter(r => r.approval_flow_id && !r.approver_level1_id);
+  if (!targets.length) return rows;
+
+  const flowIds = [...new Set(targets.map(r => r.approval_flow_id).filter(Boolean))];
+  const flowRes = await query(
+    'SELECT id, name, nodes, flow_type FROM approval_flows WHERE id = ANY($1::text[])',
+    [flowIds]
+  );
+  const flowMap = new Map();
+  const approverIds = new Set();
+
+  flowRes.rows.forEach(flow => {
+    const flowType = flow.flow_type || 'return_approval';
+    if (flowType !== 'return_approval') return;
+    const nodes = typeof flow.nodes === 'string' ? JSON.parse(flow.nodes || '[]') : (flow.nodes || []);
+    const topNodes = nodes.slice(0, 3);
+    topNodes.forEach(n => { if (n && n.approver_id) approverIds.add(n.approver_id); });
+    flowMap.set(flow.id, { flow, nodes: topNodes, flowType });
+  });
+
+  const nameMap = new Map();
+  if (approverIds.size) {
+    const userRes = await query(
+      'SELECT id, name FROM users WHERE id = ANY($1::text[])',
+      [[...approverIds]]
+    );
+    userRes.rows.forEach(u => nameMap.set(u.id, u.name || ''));
+  }
+
+  targets.forEach(record => {
+    const hit = flowMap.get(record.approval_flow_id);
+    if (!hit) return;
+    record.approval_flow_name = hit.flow.name;
+    record.approval_flow_type = hit.flowType;
+    for (let i = 0; i < 3; i++) {
+      const node = hit.nodes[i];
+      record['approver_level' + (i + 1) + '_id'] = node && node.approver_id ? node.approver_id : '';
+      record['approver_level' + (i + 1) + '_name'] = node && node.approver_id ? (nameMap.get(node.approver_id) || '') : '';
+    }
+  });
+  return rows;
 }
 
 // 服务端权威校验：仅保留 id 存在且 users 表中 status='active' 的 CC 用户。
@@ -1134,15 +1178,8 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
     }
 
     const result = await query(sql, values);
-    // 若行内有 approval_flow_id 且 level1/2/3 字段为空,按 flow 自动展开(老数据兼容)
-    for (const r of result.rows) {
-      if (r.approval_flow_id && !r.approver_level1_id) {
-        const expanded = await resolveFlowApprovers(r.approval_flow_id, 'return_approval');
-        if (expanded && !expanded._deleted && !expanded._wrong_type && !expanded._disabled) {
-          Object.assign(r, expanded);
-        }
-      }
-    }
+    // 老数据审批人展开改为批量查询：0 个目标=0 SQL；有目标时固定最多 2 条 SQL。
+    await expandApprovalFlowsForRecords(result.rows);
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
