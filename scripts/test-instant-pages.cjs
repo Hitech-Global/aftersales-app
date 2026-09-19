@@ -68,12 +68,27 @@ for (const marker of [
   'function pageNeedsRender(',
   'function refreshPageOnViewHit(',
   'function prewarmAppData(',
-  'async function preRenderAccessiblePages('
+  'async function preRenderAccessiblePages(',
+  'function performanceMutationInvalidate('
 ]) {
   assert.ok(index.includes(marker), 'missing performance marker: ' + marker);
 }
 assert.equal(/\blet _cacheTimestamp\b/.test(index), false, 'global cache timestamp must stay removed');
 assert.equal(/\b_cacheTimestamp\s*=/.test(index), false, 'legacy global cache timestamp assignment found');
+
+// VIEW HIT key must match the single physical page container.
+// In particular detail A -> B -> A must re-render A rather than falsely reuse A's old signature while DOM still shows B.
+const pageNeedsRenderBody = extractFunction(index, 'pageNeedsRender');
+assert.ok(pageNeedsRenderBody.includes('const key=page;'), 'page signature key must be the physical page key');
+assert.equal(pageNeedsRenderBody.includes("detail:'"), false, 'detail must not create per-record signature buckets');
+
+// Successful non-GET requests must run the PSI-style mutation dependency graph.
+const fetchGuardStart = index.indexOf('(function installSessionFetchGuard()');
+const fetchGuardEnd = index.indexOf('// ==================== API 数据适配层', fetchGuardStart);
+assert.ok(fetchGuardStart >= 0 && fetchGuardEnd > fetchGuardStart, 'session fetch guard not found');
+const fetchGuard = index.slice(fetchGuardStart, fetchGuardEnd);
+assert.ok(fetchGuard.includes("method!=='GET'&&method!=='HEAD'"), 'mutation hook must exclude read-only requests');
+assert.ok(fetchGuard.includes('performanceMutationInvalidate(method,url)'), 'successful writes must invalidate dependent caches');
 
 // 3) Customer views use bounded LRU.
 assert.match(index, /const CUSTOMER_PAGE_MAX = 6;/, 'customer LRU must remain bounded at 6');
@@ -138,5 +153,7 @@ assert.ok(initTail.includes('Promise.all([versionPromise,sessionPromise])'), 've
 const beforeEnter = initTail.split('if(serverUser)')[0];
 assert.equal(beforeEnter.includes('await runMigration()'), false, 'migration returned to startup critical path');
 assert.equal(beforeEnter.includes('await initDefaultData()'), false, 'default-data init returned to startup critical path');
+assert.ok(index.includes('_dbAvailable = true;'), 'restored server session should skip redundant first-page DB status probe');
+assert.ok(index.includes('fetchRecordsFresh().catch(()=>{})'), 'session restore should overlap records prefetch with app entry');
 
 console.log('instant-pages performance regression tests passed');
