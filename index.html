@@ -2513,18 +2513,20 @@ function pageStateSignature(page,recordId){
   return base.join('|');
 }
 function pageNeedsRender(page,recordId){
-  const key=page==='detail'?('detail:'+String(recordId||'')):page;
+  // 每个 page 只有一个真实 DOM 容器；detail 的 recordId 已经包含在 signature 中，
+  // 因此 key 必须仍是单一 "detail"，否则 A→B→A 会错误命中旧签名但 DOM 实际仍是 B。
+  const key=page;
   const sig=pageStateSignature(page,recordId);
   if(_pageRenderSignature[key]===sig) return false;
   _pageRenderSignature[key]=sig;
   return true;
 }
 function markPageRendered(page,recordId){
-  const key=page==='detail'?('detail:'+String(recordId||'')):page;
+  const key=page;
   _pageRenderSignature[key]=pageStateSignature(page,recordId);
 }
 function invalidatePageSignature(page){
-  Object.keys(_pageRenderSignature).forEach(key=>{if(key===page||key.startsWith(page+':'))delete _pageRenderSignature[key];});
+  delete _pageRenderSignature[page];
 }
 function pageIsActive(page,recordId){
   const el=document.getElementById('page-'+page);
