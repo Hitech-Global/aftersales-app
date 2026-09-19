@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.31"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.32"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png?v=hnm1">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png?v=hnm1">
@@ -1300,7 +1300,7 @@ html[data-theme="dark"]{color-scheme:dark}
       </button>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.31 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.32 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -4823,7 +4823,7 @@ async function openBatchProcessModal(){
   try{const resp=await fetch('/api/approval-flows?flow_type=resolution_approval',{headers:getAuthHeaders()});_resolutionFlows=resp.ok?await resp.json():[];}catch(_){_resolutionFlows=[];}
   if(!_resolutionFlows.length){showFlash(t('resolutionApproval.noEnabledFlow'),'warning');return;}
   const flowSelect=document.getElementById('batch-resolution-flow');
-  if(flowSelect) flowSelect.innerHTML=_resolutionFlows.map(f=>'<option value="'+escAttr(f.id)+'">'+esc(t('approvalFlows.flowType.resolution')+' · '+(f.name||t('approvalFlows.flowType.resolution')) )+'</option>').join('');
+  if(flowSelect) flowSelect.innerHTML=_resolutionFlows.map((f,i)=>'<option value="'+escAttr(f.id)+'">'+esc(t('approvalFlows.flowType.resolution')+(_resolutionFlows.length>1?' '+(i+1):''))+'</option>').join('');
   pendingAttachments=[];approvalAttachmentTarget='batch';
   document.getElementById('batch-process-summary').textContent=t('batchProcess.summary',{count:refs.length});
   document.getElementById('batch-resolution-type').value='customer_replacement';
