@@ -64,7 +64,7 @@
     "overview": "售后概览",
     "list": "售后列表",
     "detail": "售后记录详情",
-    "approval": "售后记录审批",
+    "approval": "审批中心",
     "products": "商品管理",
     "users": "用户管理",
     "roles": "角色管理",
@@ -78,7 +78,7 @@
       "list": "售后列表",
       "detail": "售后记录详情",
       "products": "商品管理",
-      "approval": "售后记录审批",
+      "approval": "审批中心",
       "users": "用户管理",
       "roles": "角色管理",
       "approvalFlows": "审批流管理",
@@ -513,6 +513,10 @@
       "keyword": "关键词",
       "keywordPlaceholder": "搜索订单号、SKU、品牌、型号…",
       "scope": "范围",
+      "type": "审批类型",
+      "typeAll": "全部类型",
+      "typeReturn": "退货审批",
+      "typeResolution": "处理方案审批",
       "pending": "待我审批",
       "done": "已审批",
       "all": "全部",
@@ -522,6 +526,8 @@
     "btnClear": "清除",
     "empty": "暂无审批记录",
     "col": {
+      "type": "审批类型",
+      "item": "审批对象",
       "createdAt": "流程发起时间",
       "initiator": "发起人",
       "approver": "审批人",
@@ -542,6 +548,17 @@
     "flow": {
       "completed": "已完成",
       "rejected": "已拒绝"
+    },
+    "type": {
+      "return": "退货审批",
+      "resolution": "处理方案审批"
+    },
+    "task": {
+      "pending": "待我审批",
+      "processed": "已处理",
+      "item": "售后明细",
+      "wholeRecord": "整单",
+      "approve": "审批"
     },
     "level": "审批级别"
   },
