@@ -1137,7 +1137,7 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
     // 若行内有 approval_flow_id 且 level1/2/3 字段为空,按 flow 自动展开(老数据兼容)
     for (const r of result.rows) {
       if (r.approval_flow_id && !r.approver_level1_id) {
-        const expanded = await resolveFlowApprovers(r.approval_flow_id);
+        const expanded = await resolveFlowApprovers(r.approval_flow_id, 'return_approval');
         if (expanded && !expanded._deleted) {
           Object.assign(r, expanded);
         }
@@ -1692,7 +1692,7 @@ function applyProcessingActionToItem(item,action,data,now){
   item.processing_execution=exec;item.processing_last_action=action;item.process_status_updated_at=now;item.process_progress=processingOverallProgress(item);item.process_status=item.process_progress==='completed'?'已处理':(item.process_type==='erp'?'待ERP入库':'待RMA');if(item.process_progress==='completed')item.process_completed_date=now;return item;
 }
 
-app.get('/api/processing-requests',requireLogin,async(req,res)=>{try{const{rows}=await query('SELECT * FROM aftersales_processing_requests ORDER BY created_at DESC');res.json(rows.map(normalizeProcessingRequestRow));}catch(e){res.status(500).json({error:e.message});}});
+app.get('/api/processing-requests',requireApiPermission('record_view'),async(req,res)=>{try{const{rows}=await query('SELECT * FROM aftersales_processing_requests ORDER BY created_at DESC');res.json(rows.map(normalizeProcessingRequestRow));}catch(e){res.status(500).json({error:e.message});}});
 
 app.post('/api/processing-requests',requireApiPermission('record_edit'),async(req,res)=>{
   const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});
@@ -1716,19 +1716,53 @@ app.post('/api/processing-requests',requireApiPermission('record_edit'),async(re
       `INSERT INTO aftersales_processing_requests (id,flow_id,flow_name,status,current_approval_level,approver_level1_id,approver_level1_name,approver_level2_id,approver_level2_name,approver_level3_id,approver_level3_name,flow_nodes,item_refs,plan,approval_history,submitter_id,submitter_name,created_at,updated_at) VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb,'[]'::jsonb,$14,$15,NOW(),NOW()) RETURNING *`,
       [id,flow.id,flow.name,firstLevel,ap(1).approver_id||'',ap(1).approver_name||'',ap(2).approver_id||'',ap(2).approver_name||'',ap(3).approver_id||'',ap(3).approver_name||'',JSON.stringify(nodes),JSON.stringify(itemRefs),JSON.stringify(plan),req.currentUserId||'',submitterName||req.currentUserId||'']
     );
-    await client.query('COMMIT');res.json(normalizeProcessingRequestRow(ins.rows[0]));
+    await client.query('COMMIT');
+    const savedRequest=normalizeProcessingRequestRow(ins.rows[0]);
+    let notify={sent:false,skipped:true,reason:'notify_not_attempted'};
+    try{
+      const firstApprover=savedRequest.flow_nodes[firstLevel-1]||{};
+      notify=await sendProcessingApprovalNotify({
+        request:savedRequest,
+        level:firstLevel,
+        approverIds:[firstApprover.approver_id]
+      });
+    }catch(notifyErr){
+      console.error('[Feishu][Processing] 首层审批通知异常（不影响已保存申请）:',notifyErr&&notifyErr.message);
+      notify={sent:false,error:'notify_exception: '+(notifyErr&&notifyErr.message)};
+    }
+    res.json({...savedRequest,notify});
   }catch(e){try{await client.query('ROLLBACK');}catch(_){}res.status(e.status||500).json({error:e.message});}finally{client.release();}
 });
 
 app.post('/api/processing-requests/:id/approval',async(req,res)=>{
   const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});
   if(!req.currentUserId)return res.status(401).json({error:'未登录'});
-  const{action,comment,expected_level}=req.body||{};if(!['approve','reject'].includes(action))return res.status(400).json({error:'无效的审批动作'});const client=await pool.connect();
+  const{action,comment,expected_level}=req.body||{};
+  if(!['approve','reject'].includes(action))return res.status(400).json({error:'无效的审批动作'});
+  if(expected_level===undefined||expected_level===null||expected_level==='')return res.status(400).json({error:'缺少 expected_level，无法保证审批幂等'});
+  const client=await pool.connect();
   try{await client.query('BEGIN');const rr=await client.query('SELECT * FROM aftersales_processing_requests WHERE id=$1 FOR UPDATE',[req.params.id]);if(!rr.rows.length){const e=new Error('处理申请不存在');e.status=404;throw e;}const request=normalizeProcessingRequestRow(rr.rows[0]);if(request.status!=='pending'||request.current_approval_level<=0){const e=new Error('该处理申请当前无需审批');e.status=409;throw e;}const level=Number(request.current_approval_level);if(expected_level!==undefined&&Number(expected_level)!==level){const e=new Error('审批层级已变更，请刷新后重试');e.status=409;throw e;}const node=request.flow_nodes[level-1]||{},perm=node.permission||('approval_level'+level);if(!(req.currentUserPermissions||[]).includes(perm)||node.approver_id!==req.currentUserId){const e=new Error('无权限或非本层级审批人，无法审批');e.status=403;throw e;}
     const ur=await client.query('SELECT COALESCE(NULLIF(TRIM(name),\'\'),NULLIF(TRIM(username),\'\'),$1) AS operator_name FROM users WHERE id=$1 LIMIT 1',[req.currentUserId]);const op=ur.rows[0]?ur.rows[0].operator_name:req.currentUserId,now=new Date().toISOString();request.approval_history.push({level,action,operator_id:req.currentUserId,operator_name:op,comment:String(comment||''),timestamp:now});const next=action==='approve'?processingNextLevel(request.flow_nodes,level):0,finalOk=action==='approve'&&next===0;request.status=action==='reject'?'rejected':(finalOk?'approved':'pending');request.current_approval_level=action==='reject'||finalOk?0:next;
     const grouped=new Map();request.item_refs.forEach(x=>{if(!grouped.has(x.record_id))grouped.set(x.record_id,[]);grouped.get(x.record_id).push(Number(x.item_index));});
     for(const rid of [...grouped.keys()].sort()){const q=await client.query('SELECT id,items FROM aftersales_records WHERE id=$1 FOR UPDATE',[rid]);if(!q.rows.length){const e=new Error('关联售后记录不存在：'+rid);e.status=409;throw e;}const items=processingJsonArray(q.rows[0].items);for(const idx of grouped.get(rid)){const item=items[idx];if(!item||item.processing_request_id!==request.id){const e=new Error('处理申请与售后商品状态不一致，请刷新后重试');e.status=409;throw e;}if(action==='reject'){item.processing_approval_status='rejected';item.processing_current_approval_level=0;item.customer_process_node='not_started';item.asset_process_node='not_started';}else if(finalOk)initializeProcessingExecution(item,request.plan,now);else{item.processing_approval_status='pending';item.processing_current_approval_level=next;}}await client.query('UPDATE aftersales_records SET items=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(items),rid]);}
-    const upd=await client.query(`UPDATE aftersales_processing_requests SET status=$1,current_approval_level=$2,approval_history=$3::jsonb,updated_at=NOW() WHERE id=$4 RETURNING *`,[request.status,request.current_approval_level,JSON.stringify(request.approval_history),request.id]);await client.query('COMMIT');res.json(normalizeProcessingRequestRow(upd.rows[0]));
+    const upd=await client.query(`UPDATE aftersales_processing_requests SET status=$1,current_approval_level=$2,approval_history=$3::jsonb,updated_at=NOW() WHERE id=$4 RETURNING *`,[request.status,request.current_approval_level,JSON.stringify(request.approval_history),request.id]);
+    await client.query('COMMIT');
+    const savedRequest=normalizeProcessingRequestRow(upd.rows[0]);
+    let notify={sent:false,skipped:true,reason:'no_notify_condition'};
+    try{
+      if(action==='approve'&&savedRequest.current_approval_level>0){
+        const nextNode=savedRequest.flow_nodes[savedRequest.current_approval_level-1]||{};
+        notify=await sendProcessingApprovalNotify({
+          request:savedRequest,
+          level:savedRequest.current_approval_level,
+          approverIds:[nextNode.approver_id]
+        });
+      }
+    }catch(notifyErr){
+      console.error('[Feishu][Processing] 审批流转通知异常（不影响审批结果）:',notifyErr&&notifyErr.message);
+      notify={sent:false,error:'notify_exception: '+(notifyErr&&notifyErr.message)};
+    }
+    res.json({...savedRequest,notify});
   }catch(e){try{await client.query('ROLLBACK');}catch(_){}res.status(e.status||500).json({error:e.message});}finally{client.release();}
 });
 
