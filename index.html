@@ -8282,93 +8282,131 @@ async function deleteProduct(id){
 // ==================== CUSTOMER MANAGEMENT ====================
 let _customerPage = 0;
 let _customerLimit = 20;
+let _customersInitialized = false;
+const _customerPageCache = new Map();
+const _customerPageInflight = new Map();
+const CUSTOMER_PAGE_TTL = 60000;
+const CUSTOMER_PAGE_MAX = 6;
 
-async function renderCustomers() {
-  _customerPage = 0;
-  await loadCustomers();
-}
-
-async function loadCustomers() {
-  const area = document.getElementById('customers-table-area');
-  const pagDiv = document.getElementById('customers-pagination');
-  area.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted)">${t('customers.loading')}</div>`;
-  pagDiv.innerHTML = '';
-
-  const search = document.getElementById('customer-search-input')?.value || '';
-  const status = document.getElementById('customer-status-filter')?.value || '';
-  const params = new URLSearchParams({ limit: _customerLimit, offset: _customerPage * _customerLimit });
-  if (search) params.set('search', search);
-  if (status) params.set('status', status);
-
-  try {
-    const resp = await fetch(`/api/customers?${params.toString()}`, { headers: getAuthHeaders() });
-    const result = await resp.json();
-
-    if (!result.success) {
-      area.innerHTML = `<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(result.error || t('customers.loadError'))}</p></div>`;
-      return;
-    }
-
-    const { customers, total, limit, offset } = result;
-
-    if (customers.length === 0) {
-      area.innerHTML = `<div class="empty-state"><div class="empty-icon">&#x1F3E2;</div><p>${t('customers.empty')}</p></div>`;
-      return;
-    }
-
-    let html = `<div class="table-container"><table class="data-table"><thead><tr>
-      <th>${t('customers.col.country')}</th>
-      <th>${t('customers.col.name')}</th>
-      <th>${t('customers.col.contact')}</th>
-      <th>${t('customers.col.phone')}</th>
-      <th>${t('customers.col.email')}</th>
-      <th>${t('customers.col.status')}</th>
-      <th>${t('customers.col.source')}</th>
-      <th>${t('customers.col.lastSync')}</th>
-    </tr></thead><tbody>`;
-
-    customers.forEach(c => {
-      const statusClass = c.status === 'active' ? 'user-status-active' : 'user-status-disabled';
-      html += `<tr>
-        <td><span class="country-tag">${esc(c.country || '-')}</span></td>
-        <td class="cell-name">${esc(c.customer_name || '-')}</td>
-        <td>${esc(c.contact_person || '-')}</td>
-        <td>${esc(c.phone || '-')}</td>
-        <td style="font-size:12px">${esc(c.email || '-')}</td>
-        <td><span class="user-status ${statusClass}">${c.status === 'active' ? t('customers.statusActive') : t('customers.statusInactive')}</span></td>
-        <td style="font-size:12px;color:var(--text-muted)">${esc(c.source || '-')}</td>
-        <td class="cell-date">${formatDate(c.last_synced_at)}</td>
-      </tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-    area.innerHTML = html;
-
-    // Pagination
-    const totalPages = Math.ceil(total / limit);
-    if (totalPages > 1) {
-      let pagHtml = `<span>${t('customers.totalCount', { count: total })}</span>`;
-      if (_customerPage > 0) pagHtml += `<button class="btn btn-sm" onclick="prevCustomers()">${t('customers.prevPage')}</button>`;
-      pagHtml += `<span>${_customerPage + 1} / ${totalPages}</span>`;
-      if (_customerPage < totalPages - 1) pagHtml += `<button class="btn btn-sm" onclick="nextCustomers()">${t('customers.nextPage')}</button>`;
-      pagDiv.innerHTML = pagHtml;
-    } else {
-      pagDiv.innerHTML = `<span>${t('customers.totalCount', { count: total })}</span>`;
-    }
-  } catch (err) {
-    area.innerHTML = `<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message)}</p></div>`;
+function customerPageKey(params){ return params.toString(); }
+function trimCustomerPageCache(){
+  while(_customerPageCache.size>CUSTOMER_PAGE_MAX){
+    const first=_customerPageCache.keys().next().value;
+    _customerPageCache.delete(first);
   }
 }
+async function fetchCustomerPageFresh(key,url){
+  if(_customerPageInflight.has(key)) return _customerPageInflight.get(key);
+  const p=(async()=>{
+    const resp=await fetch(url,{headers:getAuthHeaders()});
+    if(!resp.ok){const e=new Error('HTTP '+resp.status);e.status=resp.status;throw e;}
+    const result=await resp.json();
+    if(!result||!result.success) throw new Error((result&&result.error)||t('customers.loadError'));
+    _customerPageCache.delete(key);
+    _customerPageCache.set(key,{data:result,ts:Date.now()});
+    trimCustomerPageCache();
+    resourceTouch('customers');
+    return result;
+  })();
+  _customerPageInflight.set(key,p);
+  p.finally(()=>{if(_customerPageInflight.get(key)===p)_customerPageInflight.delete(key);}).catch(()=>{});
+  return p;
+}
+function renderCustomerResult(result){
+  const area=document.getElementById('customers-table-area');
+  const pagDiv=document.getElementById('customers-pagination');
+  if(!area||!pagDiv) return;
+  const customers=Array.isArray(result.customers)?result.customers:[];
+  const total=Number(result.total)||0;
+  const limit=Number(result.limit)||_customerLimit;
 
-function prevCustomers() { _customerPage--; loadCustomers(); }
-function nextCustomers() { _customerPage++; loadCustomers(); }
+  if(customers.length===0){
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F3E2;</div><p>${t('customers.empty')}</p></div>`;
+  }else{
+    let html=`<div class="table-container"><table class="data-table"><thead><tr>
+      <th>${t('customers.col.country')}</th><th>${t('customers.col.name')}</th><th>${t('customers.col.contact')}</th>
+      <th>${t('customers.col.phone')}</th><th>${t('customers.col.email')}</th><th>${t('customers.col.status')}</th>
+      <th>${t('customers.col.source')}</th><th>${t('customers.col.lastSync')}</th>
+    </tr></thead><tbody>`;
+    customers.forEach(c=>{
+      const statusClass=c.status==='active'?'user-status-active':'user-status-disabled';
+      html+=`<tr><td><span class="country-tag">${esc(c.country||'-')}</span></td><td class="cell-name">${esc(c.customer_name||'-')}</td>
+        <td>${esc(c.contact_person||'-')}</td><td>${esc(c.phone||'-')}</td><td style="font-size:12px">${esc(c.email||'-')}</td>
+        <td><span class="user-status ${statusClass}">${c.status==='active'?t('customers.statusActive'):t('customers.statusInactive')}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${esc(c.source||'-')}</td><td class="cell-date">${formatDate(c.last_synced_at)}</td></tr>`;
+    });
+    area.innerHTML=html+'</tbody></table></div>';
+  }
+
+  const totalPages=Math.ceil(total/limit);
+  if(totalPages>1){
+    let pagHtml=`<span>${t('customers.totalCount',{count:total})}</span>`;
+    if(_customerPage>0) pagHtml+=`<button class="btn btn-sm" onclick="prevCustomers()">${t('customers.prevPage')}</button>`;
+    pagHtml+=`<span>${_customerPage+1} / ${totalPages}</span>`;
+    if(_customerPage<totalPages-1) pagHtml+=`<button class="btn btn-sm" onclick="nextCustomers()">${t('customers.nextPage')}</button>`;
+    pagDiv.innerHTML=pagHtml;
+  }else{
+    pagDiv.innerHTML=`<span>${t('customers.totalCount',{count:total})}</span>`;
+  }
+}
+async function prewarmCustomersFirstPage(){
+  const params=new URLSearchParams({limit:_customerLimit,offset:0});
+  const key=customerPageKey(params);
+  const hit=_customerPageCache.get(key);
+  if(hit&&Date.now()-hit.ts<CUSTOMER_PAGE_TTL) return hit.data;
+  return fetchCustomerPageFresh(key,`/api/customers?${params.toString()}`);
+}
+async function renderCustomers(){
+  if(!_customersInitialized){_customerPage=0;_customersInitialized=true;}
+  await loadCustomers();
+}
+async function loadCustomers(){
+  const area=document.getElementById('customers-table-area');
+  const pagDiv=document.getElementById('customers-pagination');
+  const search=document.getElementById('customer-search-input')?.value||'';
+  const status=document.getElementById('customer-status-filter')?.value||'';
+  const params=new URLSearchParams({limit:_customerLimit,offset:_customerPage*_customerLimit});
+  if(search)params.set('search',search);
+  if(status)params.set('status',status);
+  const key=customerPageKey(params);
+  const url=`/api/customers?${params.toString()}`;
+  const hit=_customerPageCache.get(key);
+
+  if(hit){
+    // L1 命中：同步复用当前页快照，不闪 loading；过期数据后台刷新。
+    renderCustomerResult(hit.data);
+    if(Date.now()-hit.ts>=CUSTOMER_PAGE_TTL&&!_customerPageInflight.has(key)){
+      fetchCustomerPageFresh(key,url).then(fresh=>{
+        const active=document.getElementById('page-customers')?.classList.contains('active');
+        const nowSearch=document.getElementById('customer-search-input')?.value||'';
+        const nowStatus=document.getElementById('customer-status-filter')?.value||'';
+        const nowParams=new URLSearchParams({limit:_customerLimit,offset:_customerPage*_customerLimit});
+        if(nowSearch)nowParams.set('search',nowSearch);
+        if(nowStatus)nowParams.set('status',nowStatus);
+        if(active&&customerPageKey(nowParams)===key) renderCustomerResult(fresh);
+      }).catch(()=>{});
+    }
+    return;
+  }
+
+  if(area&&!area.innerHTML.trim()) area.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">${t('customers.loading')}</div>`;
+  if(pagDiv&&!pagDiv.innerHTML.trim()) pagDiv.innerHTML='';
+  try{
+    const result=await fetchCustomerPageFresh(key,url);
+    renderCustomerResult(result);
+  }catch(err){
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message)}</p></div>`;
+  }
+}
+function prevCustomers(){_customerPage--;invalidatePageSignature('customers');loadCustomers();}
+function nextCustomers(){_customerPage++;invalidatePageSignature('customers');loadCustomers();}
 
 // Auto-search on input
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('customer-search-input');
   const statusFilter = document.getElementById('customer-status-filter');
-  if (searchInput) searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadCustomers(); });
-  if (statusFilter) statusFilter.addEventListener('change', () => loadCustomers());
+  if (searchInput) searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { _customerPage=0; invalidatePageSignature('customers'); loadCustomers(); } });
+  if (statusFilter) statusFilter.addEventListener('change', () => { _customerPage=0; invalidatePageSignature('customers'); loadCustomers(); });
 });
 
 // ==================== USER MANAGEMENT ====================
