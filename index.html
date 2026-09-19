@@ -2196,10 +2196,14 @@ let ALL_PERMISSIONS = getAllPermissions();
 function refreshAllPermissions() { ALL_PERMISSIONS = getAllPermissions(); }
 const BRAND_COLORS=['#2e7d32','#3370ff','#ff9500','#ff3b30','#5856d6','#007aff','#ff2d55','#af52de','#5ac8fa','#ffcc00'];
 
+let _normalizedRecordsCache=null;
+let _normalizedRecordsVersion=-1;
 async function getRecords(){
   try{
     const data = await getRecordsAsync();
-    // Migrate old records to new items-based format
+    const version=resourceVersion('records');
+    if(_normalizedRecordsCache&&_normalizedRecordsVersion===version) return _normalizedRecordsCache;
+    // Migrate old records to new items-based format；同一 records 版本只做一次，避免每个页面重复 O(N) normalize。
     let migrated=false;
     let records=Array.isArray(data) ? data.map(r=>{
       if(!r.items){
@@ -2252,6 +2256,8 @@ async function getRecords(){
     // 旧数据兼容能力保留（上方 map 完成内存迁移），迁移函数与显式保存（saveRecordsAsync/saveRecordAsync）均保留；
     // 真正的持久化只在用户主动保存某条记录时发生。migrated 标记仅供调试参考，不再驱动写入。
     void migrated;
+    _normalizedRecordsCache=records;
+    _normalizedRecordsVersion=version;
     return records;
   }catch(e){return[];}
 }
