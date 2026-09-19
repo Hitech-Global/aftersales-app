@@ -9032,6 +9032,21 @@ function resolveColumns(headers){
   return result;
 }
 
+// 管理页状态必须在启动路由前初始化：支持直接用 hash 打开审批流 / 字典页，避免 TDZ 冷启动异常。
+var _afFlows = [];
+var _afCurrentIdx = 0;
+var _afSelectedNode = -1;
+var _afSelectedCompletion = false;
+var _afUsers = [];
+var _afRoles = [];
+var _renderApprovalFlowsSeq = 0;
+var DICT_CATEGORY_IDS = ['return_reason', 'platform', 'return_method', 'shop_customer', 'common'];
+var _dictAll = [];
+var _dictLoaded = false;
+var _dictCurrent = 'return_reason';
+var _dictCache = {};
+var _renderDictionariesSeq = 0;
+
 // ==================== INITIALIZATION ====================
 (async function(){
   // i18n must be ready before any page, login, or callback render.
@@ -9296,14 +9311,7 @@ window.__i18n_test = async function() {
 };
 
 // ==================== 审批流管理 ====================
-let _afFlows = [];
-let _afCurrentIdx = 0;
-let _afSelectedNode = -1;
-let _afSelectedCompletion = false; // AFTERSALES-CC-COMPLETION-01：是否选中“审批完成”结束节点
-let _afUsers = [];
-let _afRoles = [];
-
-let _renderApprovalFlowsSeq=0;
+// 状态已在 INITIALIZATION 之前初始化，保证 hash 直达本页也可立即渲染。
 async function renderApprovalFlows() {
   const seq=++_renderApprovalFlowsSeq;
   const area = document.getElementById('approval-flows-area');
@@ -9860,7 +9868,7 @@ async function deleteApprovalFlow(id, name) {
 }
 
 // ==================== 字典管理 ====================
-const DICT_CATEGORY_IDS = ['return_reason', 'platform', 'return_method', 'shop_customer', 'common'];
+// DICT_CATEGORY_IDS 已在 INITIALIZATION 前初始化。
 function _dictGetCategoryLabel(id) {
   // 从 i18n 取类别名,跟随顶部语言切换
   try {
@@ -9885,10 +9893,7 @@ function _dictCurrentName(item) {
   if (lang === 'id') return item.label_id || item.label_zh || item.label_en || item.code;
   return item.label_zh || item.label_en || item.label_id || item.code;
 }
-let _dictAll = [];
-let _dictLoaded = false;
-let _dictCurrent = 'return_reason';
-let _dictCache = {};
+// 字典缓存状态已在 INITIALIZATION 前初始化。
 
 function rebuildDictCache(){
   _dictCache={};
@@ -9914,7 +9919,6 @@ async function getDictionariesFast(){
   return await fetchDictionariesFresh();
 }
 
-let _renderDictionariesSeq=0;
 async function renderDictionaries() {
   const seq=++_renderDictionariesSeq;
   if (!document.getElementById('dict-category-list')) return;
