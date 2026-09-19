@@ -2464,7 +2464,7 @@ function pageStateSignature(page,recordId){
   if(page==='users') return base.concat([resourceVersion('users'),resourceVersion('roles')]).join('|');
   if(page==='roles') return base.concat([resourceVersion('roles'),resourceVersion('users')]).join('|');
   if(page==='approval-flows') return base.concat([resourceVersion('approvalFlows'),resourceVersion('users'),resourceVersion('roles')]).join('|');
-  if(page==='dictionaries') return base.concat([resourceVersion('dictionaries'),typeof _dictCurrent==='string'?_dictCurrent:'']).join('|');
+  if(page==='dictionaries') return base.concat([resourceVersion('dictionaries')]).join('|');
   if(page==='customers') return base.concat([resourceVersion('customers'),typeof _customerPage==='number'?_customerPage:0,val('customer-search-input'),val('customer-status-filter')]).join('|');
   return base.join('|');
 }
