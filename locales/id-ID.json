@@ -226,10 +226,11 @@
     },
     "btnManual": "Input Manual",
     "btnBatchImport": "Impor Massal",
+    "btnResolutionApproval": "Kirim Persetujuan Penyelesaian",
     "batch": {
       "selected": "{count} item dipilih",
       "selectStatus": "Pilih status proses...",
-      "btnUpdate": "Update Progress Massal",
+      "btnUpdate": "Kirim Persetujuan Penyelesaian",
       "btnCancel": "Batal"
     },
     "col": {
@@ -1094,7 +1095,7 @@
     "factory_repair_customer_replacement": "Perbaikan pabrik → penggantian pelanggan"
   },
   "resolutionApproval": {
-    "approveAction": "Setujui penyelesaian", "startAction": "Mulai eksekusi", "completeAction": "Selesaikan proses", "pending": "Menunggu persetujuan penyelesaian", "approvedShort": "Penyelesaian disetujui", "rejected": "Penyelesaian ditolak", "inProgress": "Sedang diproses", "completed": "Proses selesai", "alreadySubmitted": "Item yang dipilih sudah memiliki persetujuan penyelesaian", "noEnabledFlow": "Belum ada alur persetujuan penyelesaian yang aktif", "selectFlowAndType": "Pilih tipe penyelesaian dan alur persetujuan", "submitFailed": "Gagal mengirim persetujuan penyelesaian", "submitted": "Persetujuan penyelesaian {count} item telah dikirim", "confirmApprove": "Setujui penyelesaian ini?", "confirmReject": "Tolak penyelesaian ini?", "commentPrompt": "Komentar persetujuan (opsional)", "approveFailed": "Persetujuan penyelesaian gagal", "approved": "Persetujuan penyelesaian selesai", "confirmStart": "Mulai penyelesaian ini", "confirmComplete": "Selesaikan penyelesaian ini", "executeFailed": "Eksekusi penyelesaian gagal", "executed": "Status eksekusi diperbarui"
+    "approveAction": "Setujui penyelesaian", "startAction": "Mulai eksekusi", "completeAction": "Selesaikan proses", "selectItemsHint": "Beralih ke mode Per Item. Pilih item yang telah disetujui untuk mengirim persetujuan penyelesaian.", "pending": "Menunggu persetujuan penyelesaian", "approvedShort": "Penyelesaian disetujui", "rejected": "Penyelesaian ditolak", "inProgress": "Sedang diproses", "completed": "Proses selesai", "alreadySubmitted": "Item yang dipilih sudah memiliki persetujuan penyelesaian", "noEnabledFlow": "Belum ada alur persetujuan penyelesaian yang aktif", "selectFlowAndType": "Pilih tipe penyelesaian dan alur persetujuan", "submitFailed": "Gagal mengirim persetujuan penyelesaian", "submitted": "Persetujuan penyelesaian {count} item telah dikirim", "confirmApprove": "Setujui penyelesaian ini?", "confirmReject": "Tolak penyelesaian ini?", "commentPrompt": "Komentar persetujuan (opsional)", "approveFailed": "Persetujuan penyelesaian gagal", "approved": "Persetujuan penyelesaian selesai", "confirmStart": "Mulai penyelesaian ini", "confirmComplete": "Selesaikan penyelesaian ini", "executeFailed": "Eksekusi penyelesaian gagal", "executed": "Status eksekusi diperbarui"
   },
   "batchProcess": {
     "title": "Kirim Persetujuan Penyelesaian",
