@@ -8047,8 +8047,11 @@ async function exportAftersalesExcel(){
 }
 
 // ==================== PRODUCT MANAGEMENT ====================
+let _renderProductsSeq=0;
 async function renderProducts(){
+  const seq=++_renderProductsSeq;
   const products=await getProducts();
+  if(seq!==_renderProductsSeq) return;
   const search=(document.getElementById('prod-search').value||'').toLowerCase();
   const brandF=document.getElementById('prod-brand-filter').value;
   const countryF=document.getElementById('prod-country-filter').value;
@@ -8103,6 +8106,7 @@ async function renderProducts(){
     updateProdBatchBar();
   }
   renderProdPagination(total);
+  markPageRendered('products');
 }
 
 function renderProdPagination(total){
@@ -8328,6 +8332,7 @@ async function deleteProduct(id){
 let _customerPage = 0;
 let _customerLimit = 20;
 let _customersInitialized = false;
+let _loadCustomersSeq=0;
 const _customerPageCache = new Map();
 const _customerPageInflight = new Map();
 const CUSTOMER_PAGE_TTL = 60000;
@@ -8393,6 +8398,7 @@ function renderCustomerResult(result){
   }else{
     pagDiv.innerHTML=`<span>${t('customers.totalCount',{count:total})}</span>`;
   }
+  markPageRendered('customers');
 }
 async function prewarmCustomersFirstPage(){
   const params=new URLSearchParams({limit:_customerLimit,offset:0});
@@ -8406,6 +8412,7 @@ async function renderCustomers(){
   await loadCustomers();
 }
 async function loadCustomers(){
+  const seq=++_loadCustomersSeq;
   const area=document.getElementById('customers-table-area');
   const pagDiv=document.getElementById('customers-pagination');
   const search=document.getElementById('customer-search-input')?.value||'';
@@ -8422,6 +8429,7 @@ async function loadCustomers(){
     renderCustomerResult(hit.data);
     if(Date.now()-hit.ts>=CUSTOMER_PAGE_TTL&&!_customerPageInflight.has(key)){
       fetchCustomerPageFresh(key,url).then(fresh=>{
+        if(seq!==_loadCustomersSeq) return;
         const active=document.getElementById('page-customers')?.classList.contains('active');
         const nowSearch=document.getElementById('customer-search-input')?.value||'';
         const nowStatus=document.getElementById('customer-status-filter')?.value||'';
@@ -8438,8 +8446,10 @@ async function loadCustomers(){
   if(pagDiv&&!pagDiv.innerHTML.trim()) pagDiv.innerHTML='';
   try{
     const result=await fetchCustomerPageFresh(key,url);
+    if(seq!==_loadCustomersSeq) return;
     renderCustomerResult(result);
   }catch(err){
+    if(seq!==_loadCustomersSeq) return;
     area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message)}</p></div>`;
   }
 }
@@ -8455,10 +8465,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==================== USER MANAGEMENT ====================
+let _renderUsersSeq=0;
 async function renderUsers(){
-  const users=await getUsers(), roles=await getRoles();
+  const seq=++_renderUsersSeq;
+  const [users,roles]=await Promise.all([getUsers(),getRoles()]);
+  if(seq!==_renderUsersSeq) return;
   const area=document.getElementById('users-table-area');
-  if(users.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F464;</div><p>${t('users.empty')}</p></div>`; return; }
+  if(users.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F464;</div><p>${t('users.empty')}</p></div>`; markPageRendered('users'); return; }
   let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('users.col.username')}</th><th>${t('users.col.name')}</th><th>${t('users.col.role')}</th><th>${t('users.col.status')}</th><th>${t('users.col.feishuBind')}</th><th>${t('users.col.createdAt')}</th><th>${t('users.col.actions')}</th></tr></thead><tbody>`;
   users.forEach(u=>{
     const role=roles.find(r=>r.id===u.role_id);
@@ -8480,6 +8493,7 @@ async function renderUsers(){
   });
   html+=`</tbody></table></div>`;
   area.innerHTML=html;
+  markPageRendered('users');
 }
 
 async function sendFeishuTestNotification(userId){
@@ -8805,10 +8819,13 @@ async function deleteUser(userId){
 }
 
 // ==================== ROLE MANAGEMENT ====================
+let _renderRolesSeq=0;
 async function renderRoles(){
-  const roles=await getRoles(), users=await getUsers();
+  const seq=++_renderRolesSeq;
+  const [roles,users]=await Promise.all([getRoles(),getUsers()]);
+  if(seq!==_renderRolesSeq) return;
   const area=document.getElementById('roles-table-area');
-  if(roles.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F6E1;</div><p>${t('roles.empty')}</p></div>`; return; }
+  if(roles.length===0){ area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F6E1;</div><p>${t('roles.empty')}</p></div>`; markPageRendered('roles'); return; }
   let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('roles.col.name')}</th><th>${t('roles.col.description')}</th><th>${t('roles.col.permissions')}</th><th>${t('roles.col.userCount')}</th><th>${t('roles.col.createdAt')}</th><th>${t('roles.col.actions')}</th></tr></thead><tbody>`;
   roles.forEach(r=>{
     const userCount=users.filter(u=>u.role_id===r.id).length;
@@ -8823,6 +8840,7 @@ async function renderRoles(){
   });
   html+=`</tbody></table></div>`;
   area.innerHTML=html;
+  markPageRendered('roles');
 }
 
 async function openRoleModal(roleId){
@@ -9233,7 +9251,9 @@ let _afSelectedCompletion = false; // AFTERSALES-CC-COMPLETION-01：是否选中
 let _afUsers = [];
 let _afRoles = [];
 
+let _renderApprovalFlowsSeq=0;
 async function renderApprovalFlows() {
+  const seq=++_renderApprovalFlowsSeq;
   const area = document.getElementById('approval-flows-area');
   if (!area) return;
   if(!_afFlows.length && !area.innerHTML.trim()){
@@ -9245,6 +9265,7 @@ async function renderApprovalFlows() {
       getUsers(),
       getRoles()
     ]);
+    if(seq!==_renderApprovalFlowsSeq) return;
     // 管理页使用独立副本，避免未保存编辑污染表单读取的审批流快照。
     _afFlows = JSON.parse(JSON.stringify(Array.isArray(flows)?flows:[]));
     _afUsers = Array.isArray(users)?users:[];
@@ -9273,6 +9294,7 @@ async function renderApprovalFlows() {
     _afSelectedNode = -1;
     _afSelectedCompletion = false;
     _afRenderPage();
+    markPageRendered('approval-flows');
   } catch (e) {
     area.innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">' + t('dictionaries.loadFailed') + esc(e.message) + '</div>';
   }
@@ -9840,13 +9862,17 @@ async function getDictionariesFast(){
   return await fetchDictionariesFresh();
 }
 
+let _renderDictionariesSeq=0;
 async function renderDictionaries() {
+  const seq=++_renderDictionariesSeq;
   if (!document.getElementById('dict-category-list')) return;
   try {
     await getDictionariesFast();
+    if(seq!==_renderDictionariesSeq) return;
     rebuildDictCache();
     _dictRenderSidebar();
     _dictRenderItems();
+    markPageRendered('dictionaries');
   } catch (e) {
     document.getElementById('dict-items-area').innerHTML = '<div style="text-align:center;padding:40px;color:#e53935">' + esc(t('dictionaries.loadFailed') + e.message) + '</div>';
   }
