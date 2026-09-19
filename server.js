@@ -1526,7 +1526,7 @@ app.post('/api/records/:id/approval', async (req, res) => {
   try {
     client = await pool.connect();
     if (!req.currentUserId) { client.release(); return res.status(401).json({ error: '未登录' }); }
-    const { action, comment, return_date, approval_attachments, expected_level, erp_screenshots } = req.body;
+    const { action, comment, return_date, approval_attachments, expected_level } = req.body;
     if (action !== 'approve' && action !== 'reject') {
       client.release(); return res.status(400).json({ error: '无效的审批动作' });
     }
@@ -1596,35 +1596,10 @@ app.post('/api/records/:id/approval', async (req, res) => {
       return res.status(status).json({ error: applied.error });
     }
 
-    // ERP 截图引用：仅由服务端基于数据库当前 items 追加写入正确位置
-    // （不接收客户端 items，不覆盖并发处理状态；仅追加合法的引用 URL）。
-    let erpMerged = false;
-    if (erp_screenshots && typeof erp_screenshots === 'object' && !Array.isArray(erp_screenshots)) {
-      for (const [idxStr, urls] of Object.entries(erp_screenshots)) {
-        const idxNum = parseInt(idxStr, 10);
-        if (!Number.isInteger(idxNum) || idxNum < 0) continue;
-        const it = record.items[idxNum];
-        if (!it || !Array.isArray(urls)) continue;
-        const clean = urls.filter(u => typeof u === 'string' && /^(\/uploads\/|https?:\/\/)/.test(u));
-        if (clean.length === 0) continue;
-        const existing = Array.isArray(it.erp_screenshots) ? it.erp_screenshots : [];
-        const merged = existing.slice();
-        for (const u of clean) if (!merged.includes(u)) merged.push(u);
-        it.erp_screenshots = merged;
-        erpMerged = true;
-      }
-    }
-
-    // 仅在确实修改了 items 时才重写 items 列（终审自动完成 或 ERP 截图引用合并），避免覆盖并发更新的处理状态
-    const itemsChanged = applied.itemsChanged === true;
-    const writeItems = itemsChanged || erpMerged;
+    // 退货审批只推进审批状态，不写 items，避免与后续售后处理工作流产生状态竞争。
     const fields = ['status=$1', 'current_approval_level=$2', 'approval_history=$3', 'updated_at=NOW()'];
     const values = [applied.record.status, applied.record.current_approval_level, JSON.stringify(applied.record.approval_history)];
-    let idx = 4;
-    if (writeItems) {
-      fields.push(`items=$${idx++}`);
-      values.push(JSON.stringify(applied.record.items));
-    }
+    const idx = 4;
     values.push(req.params.id);
     const upd = await client.query(
       `UPDATE aftersales_records SET ${fields.join(', ')} WHERE id=$${idx} RETURNING *`,
