@@ -3073,6 +3073,164 @@ async function sendApprovalNotify({ recordId, record, level, approverIds }) {
   return { sent: results.failed.length === 0, mock: false, message: summary, results };
 }
 
+function processingPlanNameZh(type) {
+  const names = {
+    resellable: '可二次销售入库',
+    replace_now_repair_return: '客户直接换新 + 故障品返厂维修后回仓',
+    repair_return_warehouse: '返厂维修后回仓',
+    repair_send_customer: '返厂维修后发给客户'
+  };
+  return names[type] || type || '-';
+}
+
+function buildProcessingApprovalCard({ request, approvalLevel, currentApproverName, approvalUrl }) {
+  const refs = Array.isArray(request.item_refs) ? request.item_refs : [];
+  const plan = request.plan && typeof request.plan === 'object' ? request.plan : {};
+  const lines = refs.slice(0, 6).map(ref => {
+    const recordId = ref.record_id || '-';
+    const sku = ref.sku_code || '-';
+    const qty = Number(ref.quantity) || 0;
+    return `• ${recordId} | ${sku} | ×${qty}`;
+  });
+  if (refs.length > 6) lines.push(`... 共 ${refs.length} 条售后商品`);
+  const detailText = lines.length ? lines.join('\n') : '-';
+
+  return {
+    config: { wide_screen_mode: true },
+    header: {
+      title: {
+        tag: 'plain_text',
+        content: `🛠️ 售后处理方案审批 - 待${approvalLevelName(approvalLevel)}审批`
+      },
+      template: 'blue'
+    },
+    elements: [
+      {
+        tag: 'div',
+        fields: [
+          { is_short: true, text: { tag: 'lark_md', content: `**处理申请**\n${request.id || '-'}` } },
+          { is_short: true, text: { tag: 'lark_md', content: `**提交人**\n${request.submitter_name || '-'}` } },
+          { is_short: true, text: { tag: 'lark_md', content: `**处理方案**\n${processingPlanNameZh(plan.type)}` } },
+          { is_short: true, text: { tag: 'lark_md', content: `**当前审批人**\n${currentApproverName || '-'}` } }
+        ]
+      },
+      { tag: 'hr' },
+      { tag: 'div', text: { tag: 'lark_md', content: `**售后商品明细**\n${detailText}` } },
+      ...(plan.factory_name ? [{ tag: 'div', text: { tag: 'lark_md', content: `**工厂 / 维修方**\n${plan.factory_name}` } }] : []),
+      ...(plan.remark ? [{ tag: 'div', text: { tag: 'lark_md', content: `**处理说明**\n${plan.remark}` } }] : []),
+      {
+        tag: 'action',
+        actions: [
+          {
+            tag: 'button',
+            text: { tag: 'plain_text', content: '📝 打开审批中心' },
+            type: 'primary',
+            url: approvalUrl,
+            value: {}
+          }
+        ]
+      }
+    ]
+  };
+}
+
+// 售后处理方案审批通知：首次提交通知首层；通过后只通知下一层；拒绝/终审完成不通知。
+async function sendProcessingApprovalNotify({ request, level, approverIds }) {
+  if (!(level >= 1 && level <= 3)) {
+    return { sent: false, skipped: true, reason: 'no_next_level' };
+  }
+  const approvers = (Array.isArray(approverIds) ? approverIds : [approverIds])
+    .filter(Boolean)
+    .map(id => ({ id }));
+  if (!approvers.length) {
+    return { sent: false, skipped: true, reason: 'missing_approver_id', level };
+  }
+
+  const resolvedApprovers = await resolveApproversForNotify(approvers);
+  const approvalUrl = `${APP_BASE_URL}/#page=approval`;
+  console.log('[Feishu][Processing] 处理方案审批通知', {
+    requestId: request.id,
+    approvalLevel: level,
+    targets: resolvedApprovers.map(a => ({ name: a.name, system_user_id: a.id || '' }))
+  });
+
+  if (!feishuConfigured) {
+    console.log('[Mock][Processing] 模拟发送处理方案审批通知:', {
+      requestId: request.id,
+      approvalLevel: approvalLevelName(level),
+      approvers: resolvedApprovers.map(a => a.name)
+    });
+    return {
+      sent: true,
+      mock: true,
+      message: '模拟模式：处理方案审批通知已记录（飞书未配置时使用）',
+      sentTo: resolvedApprovers.map(a => a.name)
+    };
+  }
+
+  const tokenResult = await getTenantAccessToken();
+  if (tokenResult.error) {
+    console.error('[Feishu][Processing] 获取 tenant_access_token 失败', JSON.stringify(tokenResult));
+    return { sent: false, error: `获取飞书 token 失败: ${tokenResult.error}` };
+  }
+
+  const results = { success: [], failed: [] };
+  const sentReceivers = new Set();
+  for (const approver of resolvedApprovers) {
+    const receiver = getFeishuReceiver(approver);
+    if (!receiver) {
+      const reason = '审批人未绑定飞书账号：feishu_open_id/open_id/user_id 均为空';
+      results.failed.push({ name: approver.name, userId: approver.id || '', reason, code: 'APPROVER_NOT_BOUND' });
+      continue;
+    }
+    const receiverKey = `${receiver.type}:${receiver.id}`;
+    if (sentReceivers.has(receiverKey)) continue;
+    sentReceivers.add(receiverKey);
+
+    const card = buildProcessingApprovalCard({
+      request,
+      approvalLevel: level,
+      currentApproverName: approver.name,
+      approvalUrl
+    });
+    const sendResult = await sendFeishuInteractiveMessage({
+      token: tokenResult.token,
+      receiver,
+      card,
+      recipientName: approver.name,
+      context: { type: 'processing_approval', requestId: request.id, approvalLevel: level }
+    });
+    if (sendResult.success) {
+      results.success.push({
+        name: approver.name,
+        userId: approver.id || '',
+        receiveIdType: receiver.type,
+        messageId: sendResult.messageId
+      });
+    } else {
+      results.failed.push({
+        name: approver.name,
+        userId: approver.id || '',
+        receiveIdType: receiver.type,
+        reason: sendResult.reason,
+        code: sendResult.code
+      });
+    }
+  }
+
+  const message = results.success.length
+    ? `已通知 ${results.success.map(x => x.name).join('、')}`
+    : '通知发送失败';
+  console.log('[Feishu][Processing] 处理方案审批通知汇总', JSON.stringify({
+    requestId: request.id,
+    approvalLevel: level,
+    successCount: results.success.length,
+    failedCount: results.failed.length,
+    failed: results.failed
+  }));
+  return { sent: results.failed.length === 0, mock: false, message, results };
+}
+
 app.post('/api/notify/feishu-test', requireApiPermission('user_manage'), async (req, res) => {
   const { userId } = req.body || {};
   if (!userId) return res.status(400).json({ success: false, error: '缺少用户 ID' });
