@@ -1507,6 +1507,15 @@
     "success": {
       "planSubmitted": "Rencana proses telah diajukan untuk persetujuan",
       "actionUpdated": "Proses purna jual telah diperbarui"
+    },
+    "col": {
+      "approval": "Persetujuan Proses",
+      "plan": "Rencana Proses",
+      "node": "Tahap Saat Ini"
+    },
+    "detail": {
+      "title": "Proses Purna Jual",
+      "requestId": "Permintaan Proses"
     }
   }
 }
