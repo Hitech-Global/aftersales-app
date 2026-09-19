@@ -1706,7 +1706,16 @@ app.post('/api/processing-requests',requireApiPermission('record_edit'),async(re
       for(const idx of grouped.get(rid)){const item=items[idx];if(!item){const e=new Error('售后商品不存在：'+rid+' #'+(idx+1));e.status=404;throw e;}if(item.process_progress==='completed'){const e=new Error('已完成的商品不能再次提交处理方案');e.status=409;throw e;}if(item.processing_approval_status==='pending'||item.processing_approval_status==='approved'){const e=new Error('所选商品已有待审批或已批准的处理方案');e.status=409;throw e;}item.processing_request_id=id;item.processing_plan_type=plan.type;item.processing_plan=plan;item.processing_approval_status='pending';item.processing_current_approval_level=firstLevel;item.customer_process_node='not_started';item.asset_process_node='not_started';item.process_progress='pending';item.process_status_updated_at=now;itemRefs.push({record_id:rid,item_index:idx,sku_code:item.sku_code||'',quantity:Number(item.quantity)||0,return_reason:item.return_reason||''});}
       await client.query('UPDATE aftersales_records SET items=$1::jsonb,updated_at=NOW() WHERE id=$2',[JSON.stringify(items),rid]);
     }
-    const ap=l=>nodes[l-1]||{};const ins=await client.query(`INSERT INTO aftersales_processing_requests (id,flow_id,flow_name,status,current_approval_level,approver_level1_id,approver_level1_name,approver_level2_id,approver_level2_name,approver_level3_id,approver_level3_name,flow_nodes,item_refs,plan,approval_history,submitter_id,submitter_name,created_at,updated_at) VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb,'[]'::jsonb,$14,$15,NOW(),NOW()) RETURNING *`,[id,flow.id,flow.name,firstLevel,ap(1).approver_id||'',ap(1).approver_name||'',ap(2).approver_id||'',ap(2).approver_name||'',ap(3).approver_id||'',ap(3).approver_name||'',JSON.stringify(nodes),JSON.stringify(itemRefs),JSON.stringify(plan),req.currentUserId||'',req.currentUserName||req.currentUserId||'']);
+    const submitterRes=await client.query(
+      'SELECT COALESCE(NULLIF(TRIM(name),\'\'),NULLIF(TRIM(username),\'\'),$1) AS submitter_name FROM users WHERE id=$1 LIMIT 1',
+      [req.currentUserId]
+    );
+    const submitterName=submitterRes.rows[0]?submitterRes.rows[0].submitter_name:req.currentUserId;
+    const ap=l=>nodes[l-1]||{};
+    const ins=await client.query(
+      `INSERT INTO aftersales_processing_requests (id,flow_id,flow_name,status,current_approval_level,approver_level1_id,approver_level1_name,approver_level2_id,approver_level2_name,approver_level3_id,approver_level3_name,flow_nodes,item_refs,plan,approval_history,submitter_id,submitter_name,created_at,updated_at) VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13::jsonb,'[]'::jsonb,$14,$15,NOW(),NOW()) RETURNING *`,
+      [id,flow.id,flow.name,firstLevel,ap(1).approver_id||'',ap(1).approver_name||'',ap(2).approver_id||'',ap(2).approver_name||'',ap(3).approver_id||'',ap(3).approver_name||'',JSON.stringify(nodes),JSON.stringify(itemRefs),JSON.stringify(plan),req.currentUserId||'',submitterName||req.currentUserId||'']
+    );
     await client.query('COMMIT');res.json(normalizeProcessingRequestRow(ins.rows[0]));
   }catch(e){try{await client.query('ROLLBACK');}catch(_){}res.status(e.status||500).json({error:e.message});}finally{client.release();}
 });
