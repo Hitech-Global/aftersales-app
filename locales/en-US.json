@@ -1507,6 +1507,15 @@
     "success": {
       "planSubmitted": "Processing plan submitted for approval",
       "actionUpdated": "After-sales processing updated"
+    },
+    "col": {
+      "approval": "Processing Approval",
+      "plan": "Processing Plan",
+      "node": "Current Step"
+    },
+    "detail": {
+      "title": "After-Sales Processing",
+      "requestId": "Processing Request"
     }
   }
 }
