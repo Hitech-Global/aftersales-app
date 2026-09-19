@@ -226,10 +226,11 @@
     },
     "btnManual": "Create Manually",
     "btnBatchImport": "Batch Import",
+    "btnResolutionApproval": "Submit Resolution Approval",
     "batch": {
       "selected": "{count} items selected",
       "selectStatus": "Select processing status...",
-      "btnUpdate": "Batch Update Progress",
+      "btnUpdate": "Submit Resolution Approval",
       "btnCancel": "Cancel"
     },
     "col": {
@@ -1095,7 +1096,7 @@
     "factory_repair_customer_replacement": "Factory repair → customer replacement"
   },
   "resolutionApproval": {
-    "approveAction": "Approve resolution", "startAction": "Start execution", "completeAction": "Complete processing", "pending": "Resolution approval pending", "approvedShort": "Resolution approved", "rejected": "Resolution rejected", "inProgress": "Processing", "completed": "Processing completed", "alreadySubmitted": "Selected items already have a resolution approval", "noEnabledFlow": "No enabled resolution approval flow", "selectFlowAndType": "Select a resolution type and approval flow", "submitFailed": "Failed to submit resolution approval", "submitted": "Submitted resolution approval for {count} item(s)", "confirmApprove": "Approve this resolution?", "confirmReject": "Reject this resolution?", "commentPrompt": "Approval comment (optional)", "approveFailed": "Resolution approval failed", "approved": "Resolution approval completed", "confirmStart": "Start this resolution", "confirmComplete": "Complete this resolution", "executeFailed": "Resolution execution failed", "executed": "Resolution execution updated"
+    "approveAction": "Approve resolution", "startAction": "Start execution", "completeAction": "Complete processing", "selectItemsHint": "Switched to By Item mode. Select approved items to submit for resolution approval.", "pending": "Resolution approval pending", "approvedShort": "Resolution approved", "rejected": "Resolution rejected", "inProgress": "Processing", "completed": "Processing completed", "alreadySubmitted": "Selected items already have a resolution approval", "noEnabledFlow": "No enabled resolution approval flow", "selectFlowAndType": "Select a resolution type and approval flow", "submitFailed": "Failed to submit resolution approval", "submitted": "Submitted resolution approval for {count} item(s)", "confirmApprove": "Approve this resolution?", "confirmReject": "Reject this resolution?", "commentPrompt": "Approval comment (optional)", "approveFailed": "Resolution approval failed", "approved": "Resolution approval completed", "confirmStart": "Start this resolution", "confirmComplete": "Complete this resolution", "executeFailed": "Resolution execution failed", "executed": "Resolution execution updated"
   },
   "batchProcess": {
     "title": "Submit Resolution Approval",
