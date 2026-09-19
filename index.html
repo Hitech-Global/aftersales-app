@@ -2441,6 +2441,60 @@ function scheduleIdle(fn){
   else setTimeout(fn,0);
 }
 
+// 固定页面直接保留 DOM；签名未变化时切回页面不重新 innerHTML，等价于 PSI 的 VIEW HIT。
+// 售后系统页面数量固定，不需要为这些页面再做 LRU 淘汰。
+const _pageRenderSignature=Object.create(null);
+function currentLocaleKey(){
+  return window.__i18n&&window.__i18n.getLocale?window.__i18n.getLocale():'zh-CN';
+}
+function pageStateSignature(page,recordId){
+  const val=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  const base=[currentLocaleKey()];
+  if(page==='overview') return base.concat([resourceVersion('records'),val('ov-start-date'),val('ov-end-date'),val('ov-brand-filter')]).join('|');
+  if(page==='list') return base.concat([resourceVersion('records'),resourceVersion('dictionaries'),listMode,listPage,listPageSize,quickFilter,val('search-input'),val('status-filter'),val('brand-filter'),val('channel-filter'),val('return-reason-filter'),val('process-progress-filter'),val('processing-approval-filter'),val('processing-plan-filter'),val('processing-node-filter'),val('list-risk-filter'),val('list-start-date'),val('list-end-date')]).join('|');
+  if(page==='detail') return base.concat([resourceVersion('records'),resourceVersion('products'),resourceVersion('dictionaries'),String(recordId||'')]).join('|');
+  if(page==='products') return base.concat([resourceVersion('products'),prodPage,prodPageSize,val('prod-search'),val('prod-brand-filter'),val('prod-country-filter'),val('prod-status-filter')]).join('|');
+  if(page==='approval') return base.concat([resourceVersion('records'),resourceVersion('processingRequests'),apprPage,apprPageSize,val('appr-tab'),val('appr-search'),val('appr-start-date'),val('appr-end-date')]).join('|');
+  if(page==='users') return base.concat([resourceVersion('users'),resourceVersion('roles')]).join('|');
+  if(page==='roles') return base.concat([resourceVersion('roles'),resourceVersion('users')]).join('|');
+  if(page==='approval-flows') return base.concat([resourceVersion('approvalFlows'),resourceVersion('users'),resourceVersion('roles')]).join('|');
+  if(page==='dictionaries') return base.concat([resourceVersion('dictionaries'),typeof _dictCurrent==='string'?_dictCurrent:'']).join('|');
+  if(page==='customers') return base.concat([resourceVersion('customers'),typeof _customerPage==='number'?_customerPage:0,val('customer-search-input'),val('customer-status-filter')]).join('|');
+  return base.join('|');
+}
+function pageNeedsRender(page,recordId){
+  const key=page==='detail'?('detail:'+String(recordId||'')):page;
+  const sig=pageStateSignature(page,recordId);
+  if(_pageRenderSignature[key]===sig) return false;
+  _pageRenderSignature[key]=sig;
+  return true;
+}
+function invalidatePageSignature(page){
+  Object.keys(_pageRenderSignature).forEach(key=>{if(key===page||key.startsWith(page+':'))delete _pageRenderSignature[key];});
+}
+
+let _prewarmStarted=false;
+function prewarmAppData(){
+  if(_prewarmStarted||!getCurrentUser()) return;
+  _prewarmStarted=true;
+  scheduleIdle(async()=>{
+    const jobs=[];
+    if(hasPermission('record_view')){
+      jobs.push(getRecords());
+      if(typeof getProcessingRequestsFast==='function') jobs.push(getProcessingRequestsFast());
+    }
+    if(hasPermission('product_view')) jobs.push(getProducts());
+    if(hasPermission('user_manage')||hasPermission('system_config')||hasPermission('role_manage')){
+      jobs.push(getUsers());
+      jobs.push(getRoles());
+    }
+    if(typeof getDictionariesFast==='function') jobs.push(getDictionariesFast());
+    if(typeof getApprovalFlowsFast==='function') jobs.push(getApprovalFlowsFast());
+    if(hasPermission('system_config')&&typeof prewarmCustomersFirstPage==='function') jobs.push(prewarmCustomersFirstPage());
+    await Promise.allSettled(jobs);
+  });
+}
+
 function getAuthHeaders() {
   // 身份由服务端会话决定，客户端不再发送 X-User-* 头（旧鉴权已移除）。
   // 写请求统一携带服务端下发的 CSRF Token。
@@ -3757,6 +3811,7 @@ function enterApp() {
   updatePermissionedUI();
   updateFeishuStatusBadge();
   document.getElementById('btn-logout').textContent = t('app.logout');
+  prewarmAppData();
   
   // 检查 URL hash，决定初始页面；无 hash（如 ?lang=en-US）时默认进入概览页
   handleHashRoute();
@@ -3917,19 +3972,20 @@ function showPage(page, recordId=null){
   const titles={overview:t('page.title.overview'), list:t('page.title.list'), detail:t('page.title.detail'), products:t('page.title.products'), approval:t('page.title.approval'), users:t('page.title.users'), roles:t('page.title.roles'), 'approval-flows':t('page.title.approvalFlows'), 'dictionaries':t('page.title.dictionaries'), 'customers':t('page.title.customers')};
   document.getElementById('topbar-title').textContent=titles[page]||page;
 
-  if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); initOverview(); }
-  else if(page==='list'){ document.getElementById('page-list').classList.add('active'); renderList(); }
+  const shouldRender=pageNeedsRender(page,recordId);
+  if(page==='overview'){ document.getElementById('page-overview').classList.add('active'); if(shouldRender)initOverview(); }
+  else if(page==='list'){ document.getElementById('page-list').classList.add('active'); if(shouldRender)renderList(); }
   else if(page==='detail'){
     document.getElementById('page-detail').classList.add('active');
-    currentDetailId=recordId; renderDetail(recordId);
+    currentDetailId=recordId; if(shouldRender)renderDetail(recordId);
   }
-  else if(page==='products'){ document.getElementById('page-products').classList.add('active'); renderProducts(); }
-  else if(page==='approval'){ document.getElementById('page-approval').classList.add('active'); renderApproval(); }
-  else if(page==='users'){ document.getElementById('page-users').classList.add('active'); renderUsers(); }
-  else if(page==='roles'){ document.getElementById('page-roles').classList.add('active'); renderRoles(); }
-  else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); renderApprovalFlows(); }
-  else if(page==='dictionaries'){ document.getElementById('page-dictionaries').classList.add('active'); renderDictionaries(); }
-  else if(page==='customers'){ document.getElementById('page-customers').classList.add('active'); renderCustomers(); }
+  else if(page==='products'){ document.getElementById('page-products').classList.add('active'); if(shouldRender)renderProducts(); }
+  else if(page==='approval'){ document.getElementById('page-approval').classList.add('active'); if(shouldRender)renderApproval(); }
+  else if(page==='users'){ document.getElementById('page-users').classList.add('active'); if(shouldRender)renderUsers(); }
+  else if(page==='roles'){ document.getElementById('page-roles').classList.add('active'); if(shouldRender)renderRoles(); }
+  else if(page==='approval-flows'){ document.getElementById('page-approval-flows').classList.add('active'); if(shouldRender)renderApprovalFlows(); }
+  else if(page==='dictionaries'){ document.getElementById('page-dictionaries').classList.add('active'); if(shouldRender)renderDictionaries(); }
+  else if(page==='customers'){ document.getElementById('page-customers').classList.add('active'); if(shouldRender)renderCustomers(); }
 }
 
 function updatePermissionedUI(){
