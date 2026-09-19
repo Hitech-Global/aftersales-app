@@ -2469,6 +2469,10 @@ function pageNeedsRender(page,recordId){
   _pageRenderSignature[key]=sig;
   return true;
 }
+function markPageRendered(page,recordId){
+  const key=page==='detail'?('detail:'+String(recordId||'')):page;
+  _pageRenderSignature[key]=pageStateSignature(page,recordId);
+}
 function invalidatePageSignature(page){
   Object.keys(_pageRenderSignature).forEach(key=>{if(key===page||key.startsWith(page+':'))delete _pageRenderSignature[key];});
 }
@@ -4383,8 +4387,8 @@ function jumpFromOverview(type){
 }
 
 // ==================== LIST PAGE ====================
-async function updateBrandFilter(){
-  const records=await getRecords();
+async function updateBrandFilter(recordsArg){
+  const records=recordsArg||await getRecords();
   const brands=[...new Set(records.map(r=>r.brand).filter(Boolean))].sort();
   const current=document.getElementById('brand-filter').value;
   let html=`<option value="">${t('list.filter.allBrands')}</option>`;
@@ -4399,8 +4403,8 @@ function updateStatusFilter(){
   sel.value=cur;
 }
 
-async function updateChannelFilter(){
-  const records=await getRecords();
+async function updateChannelFilter(recordsArg){
+  const records=recordsArg||await getRecords();
   const channels=[...new Set(records.flatMap(r=>(r.items||[]).map(it=>it.platform).filter(Boolean)))].sort();
   const current=document.getElementById('channel-filter').value;
   let html=`<option value="">${t('list.filter.allChannels')}</option>`;
@@ -4598,11 +4602,15 @@ function switchListMode(mode){
 // Backend /api/records/cc is intentionally kept (feishu read-only detail view relies on it).
 async function renderList(){
   const seq=++_renderListSeq;
-  await updateBrandFilter();
-  await updateStatusFilter();
-  await updateChannelFilter();
-  await updateReturnReasonFilter();
-  await updateProcessProgressFilter();
+  const records=await getRecords();
+  if(seq!==_renderListSeq) return;
+  await Promise.all([
+    updateBrandFilter(records),
+    updateChannelFilter(records),
+    updateReturnReasonFilter()
+  ]);
+  updateStatusFilter();
+  updateProcessProgressFilter();
   if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
   if(pendingListPreset){
     document.getElementById('brand-filter').value=pendingListPreset.brand||'';
@@ -4615,8 +4623,7 @@ async function renderList(){
     setDateInputValue('list-end-date',pendingListPreset.endD||'');
     pendingListPreset=null;
   }
-  const records=await getRecords();
-  if(seq!==_renderListSeq) return; // newer renderList started, skip stale result
+  if(seq!==_renderListSeq) return;
   await ensureShopCustomerDict();
   await ensureDictLabelCache('platform');
   const search=(document.getElementById('search-input').value||'').trim().toLowerCase();
@@ -4699,6 +4706,7 @@ async function renderList(){
   if(pageRecords.length===0){
     area.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg></div><p>${records.length===0?t('list.empty.noRecords'):t('list.empty.noMatch')}</p>${records.length===0&&hasPermission('record_create')?`<button class="btn btn-primary" onclick="openRecordForm()">${t('list.empty.createFirst')}</button>`:''}</div>`;
     renderListPagination(total);
+    markPageRendered('list');
     return;
   }
 
@@ -4827,6 +4835,7 @@ async function renderList(){
     area.innerHTML=html;
   }
   renderListPagination(total);
+  markPageRendered('list');
 }
 
   /* RMA Cases 列表：整行点击进入详情（By Case / By Item 通用，不改业务逻辑/路由/权限） */
