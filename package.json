@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test:processing": "node scripts/test-processing-workflow.cjs"
+    "test:processing": "node scripts/test-processing-workflow.cjs",
+    "test:instant-pages": "node scripts/test-instant-pages.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1080.0",
