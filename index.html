@@ -2364,6 +2364,10 @@ async function bootstrapSession() {
     // 已通过同源服务端会话恢复身份，业务请求直接走 API；不再在首个页面前额外串行探测 /api/db/status。
     // 若数据库随后不可用，具体业务 API 会返回错误，不回退到可能陈旧的 localStorage 数据。
     _dbAvailable = true;
+    // 会话一恢复就并行启动最常用 records 请求；enterApp/Overview 随后会复用同一个 inflight Promise。
+    if(Array.isArray(norm.permissions)&&norm.permissions.includes('record_view')){
+      fetchRecordsFresh().catch(()=>{});
+    }
     return norm;
   } catch (e) {
     // 网络错误 / 服务不可达：显示“服务暂时不可用”，不进入业务页
