@@ -189,6 +189,18 @@ async function initDatabase() {
       )
     `);
 
+    // 兼容旧版审批流表：处理审批流新增 flow_type，必须迁移 approval_flows 本身。
+    // 之前误把该字段放进 aftersales_records 的迁移列表，旧数据库因此没有实际补列。
+    const approvalFlowMigrationColumns = [
+      { name: 'flow_type', type: 'VARCHAR(64) DEFAULT \'return_approval\'' },
+      { name: 'cc_users', type: 'JSONB DEFAULT \'[]\'' }
+    ];
+    for (const col of approvalFlowMigrationColumns) {
+      await query(`ALTER TABLE approval_flows ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch((err) => {
+        console.warn(`[DB] 审批流字段 ${col.name} 迁移失败或已存在:`, err.message);
+      });
+    }
+
     await query(`
       CREATE TABLE IF NOT EXISTS dictionaries (
         id VARCHAR(64) PRIMARY KEY,
@@ -257,7 +269,6 @@ async function initDatabase() {
     }
 
     const migrationColumns = [
-      { name: 'flow_type', type: 'VARCHAR(64) DEFAULT \'return_approval\'' },
       { name: 'model', type: 'VARCHAR(128) DEFAULT \'\'' },
       { name: 'category', type: 'VARCHAR(64) DEFAULT \'\'' },
       { name: 'total_quantity', type: 'INTEGER DEFAULT 0' },
