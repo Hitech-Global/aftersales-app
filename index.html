@@ -2361,6 +2361,9 @@ async function bootstrapSession() {
       loginType: u.loginType,
     };
     _sessionUser = norm;
+    // 已通过同源服务端会话恢复身份，业务请求直接走 API；不再在首个页面前额外串行探测 /api/db/status。
+    // 若数据库随后不可用，具体业务 API 会返回错误，不回退到可能陈旧的 localStorage 数据。
+    _dbAvailable = true;
     return norm;
   } catch (e) {
     // 网络错误 / 服务不可达：显示“服务暂时不可用”，不进入业务页
@@ -6155,15 +6158,18 @@ function resolvePlatformCode(value, platformList){
 
 // 通用字典显示映射: 将存储的内部 code(如 shopee / shopee_netac)映射为字典显示名(如 Shopee / Shopee Netac)
 // 适用于 渠道(platform)、店铺/客户(shop_customer)、退货原因(return_reason)、退货方式(return_method) 等所有字典分类
-const _dictLabelCache = {}; // category -> 已加载的字典项数组(加载失败时缓存为 [])
-// 预加载某分类字典(全量,跨父级);结果按分类缓存,重复调用只请求一次
+const _dictLabelCache = {}; // category -> 已加载的字典项数组
+const _dictLabelCacheVersion = {};
+// 同一 dictionaries 版本只构建一次；字典写入 resourceTouch 后会自动重建，避免陈旧显示。
 async function ensureDictLabelCache(category){
-  if(_dictLabelCache[category]) return _dictLabelCache[category];
+  const version=resourceVersion('dictionaries');
+  if(_dictLabelCache[category]&&_dictLabelCacheVersion[category]===version) return _dictLabelCache[category];
   try{
     _dictLabelCache[category] = await loadDictOptions(category);
   }catch(e){
     _dictLabelCache[category] = [];
   }
+  _dictLabelCacheVersion[category]=resourceVersion('dictionaries');
   return _dictLabelCache[category];
 }
 // 将存储值映射为可读显示名;找不到字典项时兜底返回原值,避免空白
