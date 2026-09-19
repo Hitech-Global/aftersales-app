@@ -6644,6 +6644,7 @@ function openProcessingApprovalModal(id){
   addDetail(t('processing.approvalQueue.plan'),tProcessingPlan((request.plan||{}).type||''));
   addDetail(t('processing.approvalQueue.items'),String((request.item_refs||[]).length));
   addDetail(t('processing.planModal.factory'),(request.plan||{}).factory_name||'-');
+  addDetail(t('processing.planModal.remark'),(request.plan||{}).remark||'-');
   root.appendChild(grid);
 
   const list=document.createElement('div');
@@ -6656,6 +6657,40 @@ function openProcessingApprovalModal(id){
     list.appendChild(row);
   });
   root.appendChild(list);
+
+  const history=request.approval_history||[];
+  if(history.length){
+    const title=document.createElement('h4');
+    title.textContent=t('detail.section.approvalHistory');
+    title.style.margin='16px 0 8px';
+    root.appendChild(title);
+    const timeline=document.createElement('div');
+    timeline.className='approval-timeline';
+    history.forEach(entry=>{
+      const item=document.createElement('div');
+      item.className='approval-timeline-item'+(entry.action==='reject'?' rejected':'');
+      const top=document.createElement('div');
+      top.style.fontSize='13px';
+      top.style.fontWeight='600';
+      top.textContent=(entry.action==='approve'?t('detail.approved'):t('detail.rejected'))+' · '+t('approval.levelPrefix',{level:entry.level})+' · '+String(entry.operator_name||'-');
+      item.appendChild(top);
+      const meta=document.createElement('div');
+      meta.style.fontSize='12px';
+      meta.style.color='var(--text-muted)';
+      meta.style.marginTop='2px';
+      meta.textContent=formatDateTime(entry.timestamp);
+      item.appendChild(meta);
+      if(entry.comment){
+        const note=document.createElement('div');
+        note.style.fontSize='13px';
+        note.style.marginTop='4px';
+        note.textContent=entry.comment;
+        item.appendChild(note);
+      }
+      timeline.appendChild(item);
+    });
+    root.appendChild(timeline);
+  }
   document.getElementById('processing-approval-modal').classList.remove('hidden');
 }
 function closeProcessingApprovalModal(){
