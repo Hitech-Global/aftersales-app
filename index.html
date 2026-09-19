@@ -1454,6 +1454,7 @@ html[data-theme="dark"]{color-scheme:dark}
               <div class="table-section-actions" id="list-actions">
                 <button class="btn btn-primary" id="btn-new-record-table" onclick="openRecordForm()" data-i18n="list.btnManual"></button>
                 <button class="btn btn-secondary-green" id="btn-import-records" onclick="openImportDialog()" data-i18n="list.btnBatchImport"></button>
+                <button class="btn btn-secondary-green" id="btn-resolution-approval" onclick="enterResolutionBatchMode()" data-i18n="list.btnResolutionApproval"></button>
                 <button class="btn btn-secondary" id="btn-export-list" onclick="exportAftersalesExcel()" data-i18n="list.btnExport"></button>
               </div>
             </div>
@@ -2804,15 +2805,25 @@ function addProcessLog(record, itemIndex, log){
 function getRecordProcessSummary(items){
   const normalized=(items||[]).map(normalizeProcessItem);
   if(normalized.length===0) return '<span style="color:var(--text-muted)">-</span>';
+  const resolutionSummary=(items||[]).reduce((out,it)=>{
+    const r=getItemResolution(it);
+    if(!r) return out;
+    out[r.status]=(out[r.status]||0)+1;
+    return out;
+  },{});
+  const resolutionBadges=Object.entries(resolutionSummary).map(([status,count])=>{
+    const sample=(items||[]).find(it=>getItemResolution(it)?.status===status);
+    return `${renderResolutionBadge(sample)}${count>1?`<span style="font-size:11px;color:var(--text-muted);margin-left:2px">(${count})</span>`:''}`;
+  }).join(' ');
   if(normalized.every(it=>itemProcessProgress(it)==='completed')){
-    return renderProcessProgressBadge('completed');
+    return renderProcessProgressBadge('completed') + (resolutionBadges?' '+resolutionBadges:'');
   }
   const open=normalized.filter(it=>itemProcessProgress(it)!=='completed');
   const typeSet=[...new Set(open.map(it=>itemProcessType(it)))];
   return typeSet.map(type=>{
     const count=open.filter(it=>itemProcessType(it)===type).length;
     return `${renderProcessTypeBadge(type)}${count>1?`<span style="font-size:11px;color:var(--text-muted);margin-left:2px">(${count})</span>`:''}`;
-  }).join(' ') + (normalized.some(it=>itemProcessProgress(it)==='completed')?` <span style="font-size:12px;color:var(--text-muted)">${t('processProgress.partial')}</span>`:'');
+  }).join(' ') + (normalized.some(it=>itemProcessProgress(it)==='completed')?` <span style="font-size:12px;color:var(--text-muted)">${t('processProgress.partial')}</span>`:'') + (resolutionBadges?' '+resolutionBadges:'');
 }
 function showFlash(msg,type='info'){
   const container=document.getElementById('toast-container');
@@ -4557,6 +4568,11 @@ function toggleSelectAllItems(masterCheckbox){
 
 function onItemCheckboxChange(){
   updateBatchBar();
+}
+
+function enterResolutionBatchMode(){
+  switchListMode('item');
+  showFlash(t('resolutionApproval.selectItemsHint'),'info');
 }
 
 function updateBatchBar(){
