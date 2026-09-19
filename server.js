@@ -909,7 +909,7 @@ app.post('/api/roles', requireApiPermission('role_manage'), async (req, res) => 
 // ---- 售后记录 API ----
 
 // 根据 approval_flow_id 展开为 approver_level1/2/3 字段
-async function resolveFlowApprovers(flowId, expectedType = null) {
+async function resolveFlowApprovers(flowId, expectedType = null, requireEnabled = false) {
   if (!flowId) return null;
   try {
     const { rows } = await query('SELECT id, name, nodes, flow_type, enabled FROM approval_flows WHERE id = $1', [flowId]);
@@ -917,7 +917,7 @@ async function resolveFlowApprovers(flowId, expectedType = null) {
     const flow = rows[0];
     const flowType = flow.flow_type || 'return_approval';
     if (expectedType && flowType !== expectedType) return { _wrong_type: true, actual_type: flowType };
-    if (!flow.enabled) return { _disabled: true };
+    if (requireEnabled && !flow.enabled) return { _disabled: true };
     const nodes = typeof flow.nodes === 'string' ? JSON.parse(flow.nodes || '[]') : (flow.nodes || []);
     // 查所有相关用户拿到 name
     const ids = [...new Set(nodes.slice(0, 3).map(n => n.approver_id).filter(Boolean))];
@@ -1138,7 +1138,7 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
     for (const r of result.rows) {
       if (r.approval_flow_id && !r.approver_level1_id) {
         const expanded = await resolveFlowApprovers(r.approval_flow_id, 'return_approval');
-        if (expanded && !expanded._deleted) {
+        if (expanded && !expanded._deleted && !expanded._wrong_type && !expanded._disabled) {
           Object.assign(r, expanded);
         }
       }
@@ -1275,8 +1275,14 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
     let flowLevel3Id = approver_level3_id, flowLevel3Name = approver_level3_name;
     let flowName = '';
     if (approval_flow_id) {
-      const expanded = await resolveFlowApprovers(approval_flow_id, 'return_approval');
-      if (expanded && !expanded._deleted) {
+      const expanded = await resolveFlowApprovers(approval_flow_id, 'return_approval', true);
+      if (expanded && expanded._deleted) {
+        return res.status(400).json({ error: '所选审批流已被删除' });
+      } else if (expanded && expanded._wrong_type) {
+        return res.status(400).json({ error: '该审批流不是退货审批流' });
+      } else if (expanded && expanded._disabled) {
+        return res.status(400).json({ error: '所选审批流已停用' });
+      } else if (expanded) {
         flowLevel1Id = expanded.approver_level1_id;
         flowLevel1Name = expanded.approver_level1_name;
         flowLevel2Id = expanded.approver_level2_id;
@@ -1284,12 +1290,6 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
         flowLevel3Id = expanded.approver_level3_id;
         flowLevel3Name = expanded.approver_level3_name;
         flowName = expanded.approval_flow_name;
-      } else if (expanded && expanded._deleted) {
-        return res.status(400).json({ error: '所选审批流已被删除' });
-      } else if (expanded && expanded._wrong_type) {
-        return res.status(400).json({ error: '该审批流不是退货审批流' });
-      } else if (expanded && expanded._disabled) {
-        return res.status(400).json({ error: '所选审批流已停用' });
       }
     }
 
@@ -1330,8 +1330,14 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     let flowLevel3Id = approver_level3_id, flowLevel3Name = approver_level3_name;
     let flowName;
     if (approval_flow_id !== undefined) {
-      const expanded = await resolveFlowApprovers(approval_flow_id, 'return_approval');
-      if (expanded && !expanded._deleted) {
+      const expanded = await resolveFlowApprovers(approval_flow_id, 'return_approval', true);
+      if (expanded && expanded._deleted) {
+        return res.status(400).json({ error: '所选审批流已被删除' });
+      } else if (expanded && expanded._wrong_type) {
+        return res.status(400).json({ error: '该审批流不是退货审批流' });
+      } else if (expanded && expanded._disabled) {
+        return res.status(400).json({ error: '所选审批流已停用' });
+      } else if (expanded) {
         flowLevel1Id = expanded.approver_level1_id;
         flowLevel1Name = expanded.approver_level1_name;
         flowLevel2Id = expanded.approver_level2_id;
@@ -1339,12 +1345,6 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
         flowLevel3Id = expanded.approver_level3_id;
         flowLevel3Name = expanded.approver_level3_name;
         flowName = expanded.approval_flow_name;
-      } else if (expanded && expanded._deleted) {
-        return res.status(400).json({ error: '所选审批流已被删除' });
-      } else if (expanded && expanded._wrong_type) {
-        return res.status(400).json({ error: '该审批流不是退货审批流' });
-      } else if (expanded && expanded._disabled) {
-        return res.status(400).json({ error: '所选审批流已停用' });
       }
     }
 
