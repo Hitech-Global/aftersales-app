@@ -253,7 +253,8 @@
       "submitter": "Diajukan oleh",
       "updatedAt": "Diperbarui pada",
       "actions": "Aksi",
-      "risk": "Risiko"
+      "risk": "Risiko",
+      "nextAction": "Tindakan Berikutnya"
     },
     "empty": {
       "noRecords": "Belum ada kasus RMA",
@@ -281,10 +282,19 @@
     "subtitle": "Kelola kasus purna jual, persetujuan, progres pemrosesan, dan tindak lanjut RMA.",
     "quickFilter": {
       "all": "Semua",
+      "todo": "Tugas Saya",
       "pendingApproval": "Menunggu Persetujuan",
       "pendingProcessing": "Menunggu Diproses",
       "pendingRma": "Menunggu RMA",
       "overdue": "Terlambat",
+      "completed": "Selesai"
+    },
+    "nextAction": {
+      "goApproval": "Buka Pusat Persetujuan",
+      "submitResolution": "Kirim Persetujuan Solusi",
+      "executeProcess": "Jalankan Proses",
+      "pendingRma": "Menunggu RMA",
+      "pendingProcess": "Menunggu Proses",
       "completed": "Selesai"
     },
     "riskPill": {

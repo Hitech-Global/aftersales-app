@@ -253,7 +253,8 @@
       "submitter": "提交人",
       "updatedAt": "更新时间",
       "actions": "操作",
-      "risk": "风险"
+      "risk": "风险",
+      "nextAction": "下一步动作"
     },
     "empty": {
       "noRecords": "暂无售后记录",
@@ -281,10 +282,19 @@
     "subtitle": "管理售后工单、审批、处理进度与 RMA 跟进。",
     "quickFilter": {
       "all": "全部",
+      "todo": "待办",
       "pendingApproval": "待审批",
       "pendingProcessing": "待处理",
       "pendingRma": "待RMA",
       "overdue": "超期",
+      "completed": "已完成"
+    },
+    "nextAction": {
+      "goApproval": "去审批中心",
+      "submitResolution": "提交处理审批",
+      "executeProcess": "执行处理",
+      "pendingRma": "等待RMA",
+      "pendingProcess": "等待处理",
       "completed": "已完成"
     },
     "riskPill": {

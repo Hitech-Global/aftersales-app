@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.26"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.27"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png?v=hnm1">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png?v=hnm1">
@@ -257,6 +257,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 .qf-pill.alert.active .qf-count{background:rgba(255,255,255,.22);color:#fff}
 .qf-pill.muted{opacity:.62}
 .qf-pill.muted .qf-count{background:var(--bg)}
+.next-action-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.next-action-approval{background:#fff3e0;color:#a65b00}
+.next-action-resolution{background:#eaf2ff;color:#1769aa}
+.next-action-process{background:#e8f6ed;color:#217a3f}
+.next-action-rma{background:#fcebed;color:#b4232f}
+.next-action-done{background:#f2f2f7;color:var(--text-muted)}
 /* 待处理/超期类状态用浅绿底，比 Completed 更有工作台感与处理优先级 */
 .qf-pill.alert:not(.active):not(.muted){background:rgba(46,157,82,.06);border-color:rgba(46,157,82,.3);color:var(--text)}
 
@@ -1294,7 +1300,7 @@ html[data-theme="dark"]{color-scheme:dark}
       </button>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.26 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.27 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -4254,7 +4260,7 @@ function updateProcessProgressFilter(){
 let listMode='record';
 let pendingListPreset=null;
 let _renderListSeq=0;
-let quickFilter=''; // 状态快捷筛选: ''=全部, pendingApproval/pendingProcessing/pendingRma/overdue/completed
+let quickFilter='todo'; // 默认进入待办工作台；all=全部
 
 // ===== 列表页快捷筛选与风险/截断辅助 =====
 function isFullyCompleted(r){
@@ -4268,6 +4274,7 @@ function matchQuickFilter(r, key){
   if(!key || key==='all') return true;
   const items=r.items||[];
   switch(key){
+    case 'todo': return isTodoRecord(r);
     case 'pendingApproval': return isPendingApproval(r);
     case 'pendingProcessing': return items.some(it=>isPendingProcessItem(it));
     case 'pendingRma': return items.some(it=>isPendingRmaItem(it));
@@ -4276,10 +4283,21 @@ function matchQuickFilter(r, key){
   }
   return true;
 }
+function isTodoRecord(r){
+  const user=getCurrentUser();
+  if(canApproveRecord(r)) return true;
+  return (r.items||[]).some(it=>{
+    if(canApproveResolution(it)) return true;
+    if(r.status==='审批通过'&&isPendingProcessItem(it)&&canSubmitResolution(it)&&hasPermission('record_edit')) return true;
+    if(resolutionExecutionAction(it)&&hasPermission('record_edit')) return true;
+    return false;
+  });
+}
 function computeQuickCounts(list){
-  const c={all:list.length,pendingApproval:0,pendingProcessing:0,pendingRma:0,overdue:0,completed:0};
+  const c={all:list.length,todo:0,pendingApproval:0,pendingProcessing:0,pendingRma:0,overdue:0,completed:0};
   for(const r of list){
     const items=r.items||[];
+    if(isTodoRecord(r)) c.todo++;
     if(isPendingApproval(r)) c.pendingApproval++;
     if(items.some(it=>isPendingProcessItem(it))) c.pendingProcessing++;
     if(items.some(it=>isPendingRmaItem(it))) c.pendingRma++;
@@ -4288,12 +4306,16 @@ function computeQuickCounts(list){
   }
   return c;
 }
-function setQuickFilter(key){ quickFilter = (key==='all')?'':key; renderList(); }
+function setQuickFilter(key){
+  if(key==='pendingApproval'){ showPage('approval'); return; }
+  quickFilter = (key==='all')?'':key; listPage=1; renderList();
+}
 function renderQuickFilterBar(counts){
   const bar=document.getElementById('quick-filter-bar');
   if(!bar) return;
   const defs=[
     {key:'all',label:t('list.quickFilter.all'),alert:false},
+    {key:'todo',label:t('list.quickFilter.todo'),alert:true},
     {key:'pendingApproval',label:t('list.quickFilter.pendingApproval'),alert:true},
     {key:'pendingProcessing',label:t('list.quickFilter.pendingProcessing'),alert:true},
     {key:'pendingRma',label:t('list.quickFilter.pendingRma'),alert:true},
@@ -4305,8 +4327,27 @@ function renderQuickFilterBar(counts){
     const active=(quickFilter||'all')===d.key;
     const muted=cnt===0?'muted':'';
     const alert=d.alert?'alert':'';
-    return `<button class="qf-pill ${active?'active':''} ${muted} ${alert}" onclick="setQuickFilter('${d.key}')"><span class="qf-label">${esc(d.label)}</span><span class="qf-count">${cnt}</span></button>`;
+    const target=d.key==='pendingApproval'?'approval':'list';
+    return `<button class="qf-pill ${active?'active':''} ${muted} ${alert}" title="${escAttr(target==='approval'?t('list.quickFilter.pendingApprovalHint'):'')}" onclick="setQuickFilter('${d.key}')"><span class="qf-label">${esc(d.label)}</span><span class="qf-count">${cnt}</span></button>`;
   }).join('');
+}
+function getNextActionForItem(record,item){
+  if(canApproveRecord(record)||canApproveResolution(item)) return {key:'approval',label:t('list.nextAction.goApproval')};
+  if(record?.status==='审批通过'&&isPendingProcessItem(item)&&canSubmitResolution(item)&&hasPermission('record_edit')) return {key:'resolution',label:t('list.nextAction.submitResolution')};
+  if(resolutionExecutionAction(item)&&hasPermission('record_edit')) return {key:'process',label:t('list.nextAction.executeProcess')};
+  if(isPendingRmaItem(item)) return {key:'rma',label:t('list.nextAction.pendingRma')};
+  if(isPendingProcessItem(item)) return {key:'process',label:t('list.nextAction.pendingProcess')};
+  return {key:'done',label:t('list.nextAction.completed')};
+}
+function getNextActionForRecord(record){
+  const items=record?.items||[];
+  const priority=['approval','resolution','process','rma','done'];
+  const actions=items.map(item=>getNextActionForItem(record,item));
+  if(canApproveRecord(record)) return {key:'approval',label:t('list.nextAction.goApproval')};
+  return priority.map(key=>actions.find(a=>a.key===key)).find(Boolean)||{key:'done',label:t('list.nextAction.completed')};
+}
+function renderNextAction(action){
+  return `<span class="next-action-chip next-action-${escAttr(action.key)}">${esc(action.label)}</span>`;
 }
 // SKU / Order No. 截断：最多显示 max 个，超出显示 +N more
 function formatSkuList(items, max){
@@ -4466,6 +4507,7 @@ async function renderList(){
       <th>${t('list.col.approvalStatus')}</th>
       <th>${t('list.col.processStatus')}</th>
       <th>${t('list.col.risk')}</th>
+      <th>${t('list.col.nextAction')}</th>
       <th>${t('list.col.date')}</th>
       <th>${t('list.col.platform')}</th>
       <th>${t('list.col.shopCustomer')}</th>
@@ -4493,6 +4535,7 @@ async function renderList(){
           <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
           <td>${renderProcessProgressBadge(itemProcessProgress(it))}${renderResolutionBadge(it)}</td>
           <td>${renderRiskBadge([it], r)}</td>
+          <td>${renderNextAction(getNextActionForItem(r,it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
           <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
@@ -4523,6 +4566,7 @@ async function renderList(){
       <th>${t('list.col.approvalStatus')}</th>
       <th>${t('list.col.processStatus')}</th>
       <th>${t('list.col.risk')}</th>
+      <th>${t('list.col.nextAction')}</th>
       <th>${t('list.col.date')}</th>
       <th>${t('list.col.platform')}</th>
       <th>${t('list.col.shopCustomer')}</th>
@@ -4549,11 +4593,13 @@ async function renderList(){
       const canEdit = hasPermission('record_edit') && r.status==='草稿';
       const canApprove = canApproveRecord(r);
       const canProcess = r.status==='审批通过' && items.some(it=>isPendingProcessItem(it)&&canSubmitResolution(it)) && hasPermission('record_edit');
+      const nextAction=getNextActionForRecord(r);
       html+=`<tr class="row-clickable" onmousedown="onRowMouseDown(event)" onclick="onRowOpenDetail(event,'${escAttr(String(r.id))}')">
         <td class="cell-id">${r.id}</td>
         <td><span class="status-badge">${esc(tApprovalStatus(r.status || r.approval_status || r.approvalStatus)) || t('approvalStatusDisplay.pending')}</span></td>
         <td>${psCell}</td>
         <td>${renderRiskBadge(items, r)}</td>
+        <td>${renderNextAction(nextAction)}</td>
         <td class="cell-date">${formatDate(r.aftersales_date)}</td>
         <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
         <td>${esc(shopCustomers.join(',')||'-')}</td>
