@@ -2600,23 +2600,24 @@ async function preRenderAccessiblePages(){
 function prewarmAppData(){
   if(_prewarmStarted||!getCurrentUser()) return;
   _prewarmStarted=true;
-  scheduleIdle(async()=>{
-    const jobs=[];
-    if(hasPermission('record_view')){
-      jobs.push(getRecords());
-      if(typeof getProcessingRequestsFast==='function') jobs.push(getProcessingRequestsFast());
-    }
-    if(hasPermission('product_view')) jobs.push(getProducts());
-    if(hasPermission('user_manage')||hasPermission('system_config')||hasPermission('role_manage')){
-      jobs.push(getUsers());
-      jobs.push(getRoles());
-    }
-    if(typeof getDictionariesFast==='function') jobs.push(getDictionariesFast());
-    if(typeof getApprovalFlowsFast==='function') jobs.push(getApprovalFlowsFast());
-    if(hasPermission('system_config')&&typeof prewarmCustomersFirstPage==='function') jobs.push(prewarmCustomersFirstPage());
-    await Promise.allSettled(jobs);
-    preRenderAccessiblePages();
-  });
+
+  // 网络预热立即发起但绝不 await：和当前首页并行下载，点击其他页面时大概率已命中内存。
+  // records 会与 bootstrapSession 已启动的请求自动合并，不产生重复 GET。
+  const jobs=[];
+  if(hasPermission('record_view')){
+    jobs.push(getRecords());
+    if(typeof getProcessingRequestsFast==='function') jobs.push(getProcessingRequestsFast());
+  }
+  if(hasPermission('product_view')) jobs.push(getProducts());
+  if(hasPermission('user_manage')||hasPermission('system_config')||hasPermission('role_manage')){
+    jobs.push(getUsers());
+    jobs.push(getRoles());
+  }
+  if(typeof getDictionariesFast==='function') jobs.push(getDictionariesFast());
+  if(typeof getApprovalFlowsFast==='function') jobs.push(getApprovalFlowsFast());
+  if(hasPermission('system_config')&&typeof prewarmCustomersFirstPage==='function') jobs.push(prewarmCustomersFirstPage());
+
+  Promise.allSettled(jobs).then(()=>scheduleIdle(()=>preRenderAccessiblePages()));
 }
 
 function getAuthHeaders() {
