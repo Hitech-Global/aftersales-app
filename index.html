@@ -1571,7 +1571,7 @@ html[data-theme="dark"]{color-scheme:dark}
           <div class="detail-card" id="detail-content"></div>
         </div>
 
-        <!-- 售后记录审批 -->
+        <!-- 审批中心：统一承载整单退货审批与明细处理审批 -->
         <div id="page-approval" class="page">
           <div class="page-header">
             <h2 data-i18n="approval.title"></h2>
@@ -1588,6 +1588,14 @@ html[data-theme="dark"]{color-scheme:dark}
                   <option value="pending" data-i18n="approval.filter.pending"></option>
                   <option value="done" data-i18n="approval.filter.done"></option>
                   <option value="all" data-i18n="approval.filter.all"></option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label data-i18n="approval.filter.type"></label>
+                <select class="filter-select" id="appr-type" onchange="apprPage=1;renderApproval()">
+                  <option value="all" data-i18n="approval.filter.typeAll"></option>
+                  <option value="return" data-i18n="approval.filter.typeReturn"></option>
+                  <option value="resolution" data-i18n="approval.filter.typeResolution"></option>
                 </select>
               </div>
               <div class="filter-group">
@@ -4811,7 +4819,10 @@ async function approveResolutionItem(recordId,itemIndex){
     const resp=await fetch('/api/records/'+encodeURIComponent(recordId)+'/resolution-approval',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({item_indexes:[Number(itemIndex)],action,comment})});
     const data=await resp.json().catch(()=>({}));
     if(!resp.ok){showFlash(data.error||t('resolutionApproval.approveFailed'),'danger');return;}
-    _recordsCache=null;_cacheTimestamp=0;showFlash(t('resolutionApproval.approved'),'success');renderList();
+    _recordsCache=null;_cacheTimestamp=0;showFlash(t('resolutionApproval.approved'),'success');
+    document.getElementById('appr-tab').value='pending';
+    if(document.getElementById('appr-type')) document.getElementById('appr-type').value='all';
+    apprPage=1;showPage('approval');
   }catch(e){showFlash(t('resolutionApproval.approveFailed')+': '+e.message,'danger');}
 }
 async function executeResolutionItem(recordId,itemIndex,stage){
@@ -6287,78 +6298,73 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
   }
 }
 
-// ==================== APPROVAL PAGE ====================
+// ==================== APPROVAL CENTER ====================
+function buildApprovalTasks(records, user, tab, typeFilter){
+  const tasks=[];
+  (records||[]).forEach(record=>{
+    const returnPending=record.status!=='草稿'&&record.status!=='审批通过'&&record.status!=='审批拒绝'&&record['approver_level'+record.current_approval_level+'_id']===user?.id;
+    const returnDone=(record.approval_history||[]).some(h=>h.operator_id===user?.id);
+    if((typeFilter==='all'||typeFilter==='return')&&((tab==='pending'&&returnPending)||(tab==='done'&&returnDone)||(tab==='all'&&(returnPending||returnDone)))){
+      tasks.push({key:'return:'+record.id,type:'return',record,item:null,itemIndex:null,pending:returnPending,submittedAt:record.created_at||record.aftersales_date});
+    }
+    (record.items||[]).forEach((item,itemIndex)=>{
+      const resolution=getItemResolution(item);
+      if(!resolution) return;
+      const resolutionPending=canApproveResolution(item);
+      const resolutionDone=(resolution.approval_history||[]).some(h=>h.operator_id===user?.id);
+      if((typeFilter==='all'||typeFilter==='resolution')&&((tab==='pending'&&resolutionPending)||(tab==='done'&&resolutionDone)||(tab==='all'&&(resolutionPending||resolutionDone)))){
+        tasks.push({key:'resolution:'+record.id+':'+itemIndex,type:'resolution',record,item,itemIndex,pending:resolutionPending,submittedAt:resolution.submitted_at||record.created_at});
+      }
+    });
+  });
+  return tasks;
+}
+function approvalTaskStatus(task){
+  if(task.pending) return t('approval.task.pending');
+  if(task.type==='resolution'){
+    const r=getItemResolution(task.item);
+    return r?.status==='rejected'?t('approval.flow.rejected'):r?.status==='approved'?t('approval.flow.completed'):t('approval.task.processed');
+  }
+  return task.record?.status==='审批拒绝'?t('approval.flow.rejected'):t('approval.task.processed');
+}
+function approvalTaskApprover(task){
+  if(task.type==='resolution'){
+    const r=getItemResolution(task.item), a=(r?.approvers||[]).find(x=>Number(x.level)===Number(r?.current_approval_level));
+    return a?.name||a?.approver_name||a?.approver_id||'-';
+  }
+  return getCurrentApproverText(task.record);
+}
 async function renderApproval(){
   const tab=document.getElementById('appr-tab').value;
+  const typeFilter=document.getElementById('appr-type')?.value||'all';
   const user=getCurrentUser();
   const records=await getRecords();
-  await ensureDictLabelCache('platform');
-  const startD=getDateInputValue('appr-start-date');
-  const endD=getDateInputValue('appr-end-date');
-
-  let filtered=records;
-  if(tab==='pending'){
-    filtered=records.filter(r=>{
-      const hasResolutionTask=(r.items||[]).some(it=>canApproveResolution(it));
-      if(hasResolutionTask) return true;
-      if(r.status==='草稿'||r.status==='审批通过'||r.status==='审批拒绝') return false;
-      const level=r.current_approval_level;
-      return r['approver_level'+level+'_id']===user.id;
-    });
-  }else if(tab==='done'){
-    filtered=records.filter(r=>(r.approval_history||[]).some(h=>h.operator_id===user.id)||(r.items||[]).some(it=>getItemResolution(it)?.approval_history?.some(h=>h.operator_id===user.id)));
-  }
-
+  const startD=getDateInputValue('appr-start-date'), endD=getDateInputValue('appr-end-date');
   const search=(document.getElementById('appr-search').value||'').toLowerCase();
-  if(search){
-    filtered=filtered.filter(r=>{
-      const items=r.items||[];
-      const itemSearch=items.some(it=>(it.sku_code||'').toLowerCase().includes(search)||(it.order_no||'').toLowerCase().includes(search));
-      return itemSearch||(r.brand||'').toLowerCase().includes(search)||(r.model||'').toLowerCase().includes(search)||(r.submitter_name||'').toLowerCase().includes(search);
-    });
-  }
-  if(startD||endD){
-    filtered=filtered.filter(r=>{
-      const d=(r.aftersales_date||r.created_at||'').substring(0,10);
-      if(startD&&d<startD) return false;
-      if(endD&&d>endD) return false;
-      return true;
-    });
-  }
-  filtered.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-
-  const total=filtered.length;
-  const start=(apprPage-1)*apprPageSize;
-  const pageRecords=filtered.slice(start,start+apprPageSize);
-  const area=document.getElementById('approval-table-area');
-
-  if(pageRecords.length===0){
+  let tasks=buildApprovalTasks(records,user,tab,typeFilter).filter(task=>{
+    const r=task.record, it=task.item, resolution=getItemResolution(it);
+    const text=[r.id,r.brand,r.model,r.submitter_name,it?.sku_code,it?.order_no,resolution?.type,resolution?.flow_name].filter(Boolean).join(' ').toLowerCase();
+    if(search&&!text.includes(search)) return false;
+    const d=(task.submittedAt||r.aftersales_date||'').substring(0,10);
+    if(startD&&d<startD) return false;
+    if(endD&&d>endD) return false;
+    return true;
+  }).sort((a,b)=>new Date(b.submittedAt||0)-new Date(a.submittedAt||0));
+  const total=tasks.length, start=(apprPage-1)*apprPageSize, pageTasks=tasks.slice(start,start+apprPageSize), area=document.getElementById('approval-table-area');
+  if(!pageTasks.length){
     area.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('approval.empty')}</p></div>`;
   }else{
-    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('list.col.id')}</th><th>${t('approval.col.createdAt')}</th><th>${t('approval.col.initiator')}</th><th>${t('approval.col.approver')}</th><th>${t('approval.col.status')}</th><th>${t('approval.col.processStatus')}</th><th>${t('approval.col.date')}</th><th>${t('approval.col.platform')}</th><th>${t('approval.col.totalQty')}</th><th>${t('approval.col.currentApprover')}</th><th>${t('approval.col.actions')}</th></tr></thead><tbody>`;
-    pageRecords.forEach(r=>{
-      const items=r.items||[];
-      const platforms=[...new Set(items.map(it=>getPlatformLabel(it.platform)).filter(Boolean))];
-      const psCell=getRecordProcessSummary(items);
-      const totalQty=r.total_quantity||(r.items||[]).reduce((s,it)=>s+(it.quantity||0),0);
-      const currentApprover=getCurrentApproverText(r);
-      const resolutionTasks=items.map((it,idx)=>({it,idx})).filter(({it})=>canApproveResolution(it));
-      const resolutionActions=resolutionTasks.map(({idx})=>({text:t('resolutionApproval.approveAction')+' #'+(idx+1),icon:ICON_ACTION.check,onclick:`event.stopPropagation();approveResolutionItem('${escAttr(String(r.id))}',${idx})`}));
-      html+=`<tr class="row-clickable" onclick="showPage('detail','${escAttr(String(r.id))}')">
-        <td class="cell-id">${r.id}</td>
-        <td class="cell-date">${formatDateTime(r.created_at)}</td>
-        <td>${esc(r.submitter_name||'-')}</td>
-        <td><span style="font-size:12px;color:var(--text-muted)">${esc(r.approver_level1_name||'-')} / ${esc(r.approver_level2_name||'-')} / ${esc(r.approver_level3_name||'-')}</span></td>
-        <td><span class="status-badge status-${r.status}">${tApprovalStatus(r.status)}</span></td>
-        <td>${psCell}</td>
-        <td class="cell-date">${formatDate(r.aftersales_date)}</td>
-        <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
-        <td><strong>${totalQty}</strong></td>
-        <td>${esc(currentApprover)}</td>
-        <td class="cell-actions">${moreMenuHtml('more-appr-'+escAttr(String(r.id)), [{text:t('list.action.view'),icon:ICON_ACTION.view,onclick:`event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')`},...resolutionActions])}</td></tr>`;
+    let html=`<div class="table-container"><table class="data-table"><thead><tr><th>${t('approval.col.type')}</th><th>${t('list.col.id')}</th><th>${t('approval.col.item')}</th><th>${t('approval.col.initiator')}</th><th>${t('approval.col.currentLevel')}</th><th>${t('approval.col.createdAt')}</th><th>${t('approval.col.status')}</th><th>${t('approval.col.actions')}</th></tr></thead><tbody>`;
+    pageTasks.forEach(task=>{
+      const r=task.record, resolution=getItemResolution(task.item), isResolution=task.type==='resolution';
+      const itemText=isResolution?(task.item?.sku_code||t('approval.task.item')):t('approval.task.wholeRecord');
+      const level=isResolution?(resolution?.current_approval_level? t('approval.levelPrefix',{level:resolution.current_approval_level}):'-'):approvalTaskApprover(task);
+      const action=isResolution&&task.pending
+        ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();approveResolutionItem('${escAttr(String(r.id))}',${task.itemIndex})">${t('approval.task.approve')}</button>`
+        : `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();showPage('detail','${escAttr(String(r.id))}')">${t('list.action.view')}</button>`;
+      html+=`<tr class="row-clickable" onclick="showPage('detail','${escAttr(String(r.id))}')"><td><span class="ps-badge ${isResolution?'ps-resolution':'ps-approval'}">${isResolution?t('approval.type.resolution'):t('approval.type.return')}</span></td><td class="cell-id">${esc(String(r.id))}</td><td>${esc(itemText)}</td><td>${esc(r.submitter_name||'-')}</td><td>${esc(level)}</td><td class="cell-date">${formatDateTime(task.submittedAt||r.created_at)}</td><td>${esc(approvalTaskStatus(task))}</td><td class="cell-actions">${action}</td></tr>`;
     });
-    html+=`</tbody></table></div>`;
-    area.innerHTML=html;
+    area.innerHTML=html+'</tbody></table></div>';
   }
   renderApprPagination(total);
 }
@@ -6387,6 +6393,7 @@ function renderApprPagination(total){
 function clearApprovalFilter(){
   document.getElementById('appr-search').value='';
   document.getElementById('appr-tab').value='pending';
+  if(document.getElementById('appr-type')) document.getElementById('appr-type').value='all';
   setDateInputValue('appr-start-date','');
   setDateInputValue('appr-end-date','');
   apprPage=1; renderApproval();
