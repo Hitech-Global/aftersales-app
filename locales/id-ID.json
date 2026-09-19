@@ -81,7 +81,7 @@
       "roles": "Role",
       "approvalFlows": "Alur Persetujuan",
       "dictionaries": "Kamus",
-    "customers": "Pelanggan"
+      "customers": "Pelanggan"
     }
   },
   "overview": {
@@ -1130,7 +1130,7 @@
     "onlyErpStatus": "Hanya item berstatus \"Menunggu Stock-In ERP\" yang dapat ditandai selesai",
     "onlyCurrentApproverUpload": "Hanya approver level saat ini yang dapat upload screenshot proses",
     "imageSize": "Gambar melebihi 2 MB. Kompres sebelum upload.",
- "uploadFailed": "Unggah lampiran gagal {msg}. Silakan coba lagi.",
+    "uploadFailed": "Unggah lampiran gagal {msg}. Silakan coba lagi.",
     "notImage": "File {filename} bukan gambar dan dilewati",
     "pasteImageSize": "Gambar yang ditempel melebihi 2 MB dan dilewati",
     "selectCsv": "Pilih file CSV",
@@ -1240,9 +1240,18 @@
     "deleteReferenced": "Masih ada pengguna di bawah peran ini, tidak dapat dihapus",
     "deleted": "Peran dihapus",
     "opSessionExpired": "Sesi untuk tindakan ini telah kedaluwarsa. Silakan coba lagi.",
-    "role_admin": { "name": "Administrator", "description": "Akses penuh sistem: kelola pengguna, peran, alur persetujuan, dan pengaturan sistem" },
-    "role_operator": { "name": "Operator", "description": "Staf operasi yang menangani catatan purna jual dan data produk" },
-    "role_viewer": { "name": "Viewer", "description": "Pengguna biasa dengan akses baca dan catatan yang di-CC" }
+    "role_admin": {
+      "name": "Administrator",
+      "description": "Akses penuh sistem: kelola pengguna, peran, alur persetujuan, dan pengaturan sistem"
+    },
+    "role_operator": {
+      "name": "Operator",
+      "description": "Staf operasi yang menangani catatan purna jual dan data produk"
+    },
+    "role_viewer": {
+      "name": "Viewer",
+      "description": "Pengguna biasa dengan akses baca dan catatan yang di-CC"
+    }
   },
   "excel": {
     "libraryLoadFailed": "Pustaka Excel gagal dimuat, silakan segarkan dan coba lagi",
@@ -1267,7 +1276,8 @@
       "name": "Nama Alur",
       "scope": "Cakupan",
       "status": "Status",
-      "actions": "Tindakan"
+      "actions": "Tindakan",
+      "type": "Jenis Alur"
     },
     "stat": {
       "total": "Total Alur",
@@ -1305,7 +1315,11 @@
     "btnMoveDown": "Pindah Bawah",
     "approvalPermHint": "Daftar approver difilter otomatis ke pengguna aktif dengan izin ini",
     "approverCount": "{n} pengguna aktif memiliki izin ini",
-    "none": "Tidak ada"
+    "none": "Tidak ada",
+    "flowType": {
+      "return": "Persetujuan Retur",
+      "processing": "Persetujuan Proses Purna Jual"
+    }
   },
   "dictionaries": {
     "title": "Manajemen Kamus",
@@ -1397,5 +1411,102 @@
     "title": "CC Setelah Persetujuan Selesai",
     "desc": "Notifikasi dikirim setelah persetujuan final; penerima CC hanya dapat melihat",
     "nodeSummaryEmpty": "Belum ada penerima CC"
+  },
+  "processing": {
+    "filter": {
+      "approvalStatus": "Persetujuan Proses",
+      "allApprovalStatus": "Semua Persetujuan Proses",
+      "plan": "Rencana Proses",
+      "allPlans": "Semua Rencana",
+      "node": "Tahap Saat Ini",
+      "allNodes": "Semua Tahap"
+    },
+    "approval": {
+      "unsubmitted": "Belum Diajukan",
+      "pending": "Menunggu Persetujuan",
+      "approved": "Disetujui",
+      "rejected": "Ditolak"
+    },
+    "plan": {
+      "resellable": "Layak Dijual Kembali / Masuk ERP",
+      "replaceNowRepairReturn": "Ganti ke Pelanggan + Unit Rusak Diperbaiki dan Kembali ke Gudang",
+      "repairReturnWarehouse": "Perbaikan Pabrik lalu Kembali ke Gudang",
+      "repairSendCustomer": "Perbaikan Pabrik lalu Kirim ke Pelanggan"
+    },
+    "node": {
+      "planApproval": "Menunggu Persetujuan Rencana",
+      "pendingReplacement": "Menunggu Penggantian",
+      "pendingErp": "Menunggu Masuk ERP",
+      "pendingFactoryShipment": "Menunggu Kirim ke Pabrik",
+      "factoryShipped": "Sudah Dikirim ke Pabrik",
+      "factoryReceived": "Sudah Diterima Pabrik",
+      "repairing": "Sedang Diperbaiki",
+      "pendingWarehouseInbound": "Menunggu Masuk Gudang",
+      "pendingCustomerShipment": "Menunggu Kirim ke Pelanggan",
+      "completed": "Selesai"
+    },
+    "action": {
+      "confirmErpInbound": "Konfirmasi Masuk ERP",
+      "shipReplacement": "Kirim Unit Pengganti",
+      "shipToFactory": "Kirim ke Pabrik",
+      "confirmFactoryReceived": "Konfirmasi Diterima Pabrik",
+      "startRepair": "Mulai Perbaikan",
+      "completeRepair": "Konfirmasi Perbaikan Selesai",
+      "confirmWarehouseInbound": "Konfirmasi Masuk Gudang",
+      "shipRepairedToCustomer": "Kirim Unit Selesai Diperbaiki ke Pelanggan"
+    },
+    "btn": {
+      "submitPlan": "Ajukan Rencana Proses",
+      "advance": "Lanjutkan Proses",
+      "submitApproval": "Ajukan Persetujuan",
+      "confirmAction": "Konfirmasi Tindakan"
+    },
+    "planModal": {
+      "title": "Ajukan Rencana Proses Purna Jual",
+      "planType": "Rencana Proses",
+      "factory": "Pabrik / Pihak Perbaikan",
+      "remark": "Catatan Proses"
+    },
+    "actionModal": {
+      "title": "Lanjutkan Proses Purna Jual",
+      "action": "Tindakan",
+      "date": "Tanggal Proses",
+      "carrier": "Kurir",
+      "tracking": "No. Resi",
+      "replacementSku": "SKU Pengganti",
+      "replacementSn": "SN Pengganti"
+    },
+    "approvalModal": {
+      "title": "Persetujuan Rencana Proses"
+    },
+    "approvalQueue": {
+      "title": "Persetujuan Proses Purna Jual",
+      "empty": "Tidak ada persetujuan proses yang sesuai",
+      "request": "Permintaan",
+      "plan": "Rencana Proses",
+      "items": "Item",
+      "review": "Review",
+      "loadFailed": "Gagal memuat persetujuan proses"
+    },
+    "returnApprovalQueue": {
+      "title": "Persetujuan Retur"
+    },
+    "selectedCount": "{count} item purna jual dipilih",
+    "validation": {
+      "returnApprovalRequired": "Hanya item dengan retur yang sudah disetujui yang dapat diajukan untuk proses.",
+      "completedSelected": "Item yang sudah selesai tidak dapat diajukan lagi.",
+      "activePlanExists": "Ada item terpilih yang sudah memiliki rencana proses menunggu/yang disetujui.",
+      "planApprovalRequired": "Rencana proses harus disetujui sebelum dieksekusi.",
+      "noCommonAction": "Item yang dipilih berada pada tahap berbeda. Filter ke tahap yang sama sebelum proses massal."
+    },
+    "error": {
+      "submitPlan": "Gagal mengajukan rencana proses",
+      "action": "Gagal memperbarui tahap proses",
+      "approval": "Persetujuan proses gagal"
+    },
+    "success": {
+      "planSubmitted": "Rencana proses telah diajukan untuk persetujuan",
+      "actionUpdated": "Proses purna jual telah diperbarui"
+    }
   }
 }
