@@ -181,8 +181,33 @@ async function initDatabase() {
         id VARCHAR(64) PRIMARY KEY,
         name VARCHAR(128) NOT NULL,
         scope VARCHAR(255) DEFAULT '全部售后记录',
+        flow_type VARCHAR(32) NOT NULL DEFAULT 'return_approval',
         enabled BOOLEAN DEFAULT true,
         nodes JSONB DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await query(`
+      CREATE TABLE IF NOT EXISTS aftersales_processing_requests (
+        id VARCHAR(64) PRIMARY KEY,
+        flow_id VARCHAR(64) DEFAULT '',
+        flow_name VARCHAR(255) DEFAULT '',
+        status VARCHAR(32) NOT NULL DEFAULT 'pending',
+        current_approval_level INTEGER NOT NULL DEFAULT 0,
+        approver_level1_id VARCHAR(64) DEFAULT '',
+        approver_level1_name VARCHAR(128) DEFAULT '',
+        approver_level2_id VARCHAR(64) DEFAULT '',
+        approver_level2_name VARCHAR(128) DEFAULT '',
+        approver_level3_id VARCHAR(64) DEFAULT '',
+        approver_level3_name VARCHAR(128) DEFAULT '',
+        flow_nodes JSONB DEFAULT '[]',
+        item_refs JSONB DEFAULT '[]',
+        plan JSONB DEFAULT '{}',
+        approval_history JSONB DEFAULT '[]',
+        submitter_id VARCHAR(64) DEFAULT '',
+        submitter_name VARCHAR(128) DEFAULT '',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
@@ -270,10 +295,14 @@ async function initDatabase() {
       { name: 'cc_notify_on_completion', type: 'BOOLEAN DEFAULT FALSE' },
       { name: 'cc_completion_notified_at', type: 'TIMESTAMP DEFAULT NULL' },
       { name: 'cc_completion_claimed_at', type: 'TIMESTAMP DEFAULT NULL' },
+      { name: 'process_logs', type: 'JSONB DEFAULT \'[]\'' },
     ];
     for (const col of migrationColumns) {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
     }
+
+    await query(`ALTER TABLE approval_flows ADD COLUMN IF NOT EXISTS flow_type VARCHAR(32) NOT NULL DEFAULT 'return_approval'`).catch(() => {});
+    await query(`UPDATE approval_flows SET flow_type = 'return_approval' WHERE flow_type IS NULL OR flow_type = ''`).catch(() => {});
 
     // 迁移：为 dictionaries 表添加 parent_code 列（用于 shop_customer 与 platform 联动）
     await query(`ALTER TABLE dictionaries ADD COLUMN IF NOT EXISTS parent_code VARCHAR(128) DEFAULT ''`).catch(() => {});
@@ -288,6 +317,9 @@ async function initDatabase() {
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver1 ON aftersales_records(approver_level1_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver2 ON aftersales_records(approver_level2_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_flow ON aftersales_records(approval_flow_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_approval_flows_type ON approval_flows(flow_type, enabled)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_processing_requests_status ON aftersales_processing_requests(status, current_approval_level)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_processing_requests_created ON aftersales_processing_requests(created_at DESC)`);
 
     console.log('[DB] 数据库表初始化完成');
 
@@ -346,9 +378,9 @@ async function initDatabase() {
         { level: 3, title: '三级审批', permission: 'approval_level3' }
       ]);
       await query(
-        `INSERT INTO approval_flows (id, name, scope, enabled, nodes) VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO approval_flows (id, name, scope, flow_type, enabled, nodes) VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO NOTHING`,
-        ['flow_standard', '标准售后审批流', '全部售后记录', true, defaultNodes]
+        ['flow_standard', '标准售后审批流', '全部售后记录', 'return_approval', true, defaultNodes]
       );
       console.log('[DB] 已插入默认标准售后审批流');
     }
