@@ -17,8 +17,7 @@ if (window.location.protocol === 'file:') {
   window.location.replace(window.location.pathname + (window.location.pathname.indexOf('?') !== -1 ? '&' : '?') + 'admin');
 }
 </script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<!-- Heavy third-party libraries are loaded on demand after first paint. -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -2448,6 +2447,43 @@ function scheduleIdle(fn){
   else setTimeout(fn,0);
 }
 
+const _externalScriptPromises=Object.create(null);
+function loadExternalScriptOnce(key,src,testFn){
+  if(testFn&&testFn()) return Promise.resolve(true);
+  if(_externalScriptPromises[key]) return _externalScriptPromises[key];
+  _externalScriptPromises[key]=new Promise(resolve=>{
+    const existing=document.querySelector('script[data-runtime-lib="'+key+'"]');
+    if(existing){
+      if(testFn&&testFn()) return resolve(true);
+      existing.addEventListener('load',()=>resolve(!testFn||testFn()),{once:true});
+      existing.addEventListener('error',()=>resolve(false),{once:true});
+      return;
+    }
+    const script=document.createElement('script');
+    script.src=src;
+    script.async=true;
+    script.dataset.runtimeLib=key;
+    script.onload=()=>resolve(!testFn||testFn());
+    script.onerror=()=>resolve(false);
+    document.head.appendChild(script);
+  });
+  return _externalScriptPromises[key];
+}
+function ensureXlsx(){
+  return loadExternalScriptOnce(
+    'xlsx',
+    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+    ()=>typeof XLSX!=='undefined'
+  );
+}
+function ensureChartJs(){
+  return loadExternalScriptOnce(
+    'chartjs',
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js',
+    ()=>typeof Chart!=='undefined'
+  );
+}
+
 // 固定页面直接保留 DOM；签名未变化时切回页面不重新 innerHTML，等价于 PSI 的 VIEW HIT。
 // 售后系统页面数量固定，不需要为这些页面再做 LRU 淘汰。
 const _pageRenderSignature=Object.create(null);
@@ -4318,8 +4354,10 @@ async function renderOverview(recordsArg,parentSeq){
   markPageRendered('overview');
 
   // 图表不是首屏交互必需：延后到 idle，避免 Chart.js 阻塞页面切换。
-  scheduleIdle(()=>{
+  scheduleIdle(async()=>{
     if(seq!==_renderOverviewSeq) return;
+    const chartReady=await ensureChartJs();
+    if(!chartReady||seq!==_renderOverviewSeq) return;
     safeRenderChart(function(){ renderTrend30Chart(buildTrend30(records, getDateInputValue('ov-end-date'))); });
     safeRenderChart(function(){ renderStageDonutChart(flowDefs); });
     safeRenderChart(function(){
@@ -7559,7 +7597,7 @@ async function downloadImportTemplate(){
   const fileName=t('importRecord.template.fileName');
   const sheetName=t('importRecord.template.sheetName');
 
-  if(typeof XLSX!=='undefined'){
+  if(await ensureXlsx()){
     // SheetJS Community Edition 不支持写入 dataValidation / named ranges，
     // 因此下拉校验和级联依赖通过 Instructions sheet 的参考表来引导用户。
     const ws=XLSX.utils.aoa_to_sheet([headers, example]);
@@ -7626,7 +7664,7 @@ function processImportFile(file){
   reader.onload=async function(e){
     let lines=[];
     if(isXlsx){
-      if(typeof XLSX==='undefined'){ showImportResult('error',t('flash.excel.libraryLoadFailed')); return; }
+      if(!(await ensureXlsx())){ showImportResult('error',t('flash.excel.libraryLoadFailed')); return; }
       const wb=XLSX.read(e.target.result,{type:'array'});
       const firstSheet=wb.Sheets[wb.SheetNames[0]];
       lines=XLSX.utils.sheet_to_json(firstSheet,{header:1,defval:''});
@@ -7893,8 +7931,9 @@ function handleProductImportFile(file){
   }
   document.getElementById('import-file-name').textContent = file.name;
   const reader = new FileReader();
-  reader.onload = function(e){
+  reader.onload = async function(e){
     try{
+      if(!(await ensureXlsx())){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
       const data = e.target.result;
       let workbook;
       if(ext === 'csv'){
@@ -7977,13 +8016,15 @@ async function confirmProductImport(){
 let lastImportErrors = [];
 async function downloadImportErrors(){
   if(!lastImportErrors || lastImportErrors.length === 0) return;
+  if(!(await ensureXlsx())){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const ws = XLSX.utils.aoa_to_sheet([['行号','失败原因'], ...lastImportErrors.map(e => [e.row, e.reason])]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '失败明细');
   XLSX.writeFile(wb, '商品导入失败明细.xlsx');
 }
 
-function downloadProductTemplate(){
+async function downloadProductTemplate(){
+  if(!(await ensureXlsx())){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const headers = ['SKU编码','商品名称','品牌','型号','品类','国家','EAN编码','状态','价格'];
   const sample = [
     ['IPHONE15-PRO-128','iPhone 15 Pro','Apple','iPhone 15 Pro','智能手机','中国','195949015726','active',''],
@@ -7996,7 +8037,8 @@ function downloadProductTemplate(){
 }
 
 async function exportProducts(){
-  const products = await getProducts();
+  const [products,xlsxReady] = await Promise.all([getProducts(),ensureXlsx()]);
+  if(!xlsxReady){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const search=(document.getElementById('prod-search').value||'').toLowerCase();
   const brandF=document.getElementById('prod-brand-filter').value;
   const countryF=document.getElementById('prod-country-filter').value;
@@ -8020,7 +8062,8 @@ async function exportProducts(){
 // ==================== AFTERSALES EXPORT ====================
 async function exportAftersalesExcel(){
   if(!requirePermission('record_export')) return;
-  const records = await getRecords();
+  const [records,xlsxReady] = await Promise.all([getRecords(),ensureXlsx()]);
+  if(!xlsxReady){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
 
   // 获取筛选条件
   const search = (document.getElementById('search-input').value||'').toLowerCase();
@@ -8994,9 +9037,9 @@ async function deleteRole(roleId){
 }
 
 // ==================== EXCEL IMPORT ====================
-function downloadTemplate(){
+async function downloadTemplate(){
   if(!requirePermission('sales_import')) return;
-  if(typeof XLSX==='undefined'){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
+  if(!(await ensureXlsx())){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const wsData=[['品牌','月份','线上出货量','线上销量','线下出货量','线下销量']];
   wsData.push(['Apple','2026-01',5000,4800,3000,2900]);
   wsData.push(['华为','2026-01',4000,3900,2500,2400]);
@@ -9009,11 +9052,11 @@ function downloadTemplate(){
   showFlash(t('flash.excel.templateDownloaded'),'success');
 }
 
-function importSalesData(event){
+async function importSalesData(event){
   if(!requirePermission('sales_import')) return;
   const file=event.target.files[0];
   if(!file) return;
-  if(typeof XLSX==='undefined'){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
+  if(!(await ensureXlsx())){ showFlash(t('flash.excel.libraryLoadFailed'),'danger'); return; }
   const reader=new FileReader();
   reader.onload=async function(e){
     try{
