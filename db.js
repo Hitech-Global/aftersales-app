@@ -180,6 +180,7 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS approval_flows (
         id VARCHAR(64) PRIMARY KEY,
         name VARCHAR(128) NOT NULL,
+        flow_type VARCHAR(64) DEFAULT 'return_approval',
         scope VARCHAR(255) DEFAULT '全部售后记录',
         enabled BOOLEAN DEFAULT true,
         nodes JSONB DEFAULT '[]',
@@ -256,6 +257,7 @@ async function initDatabase() {
     }
 
     const migrationColumns = [
+      { name: 'flow_type', type: 'VARCHAR(64) DEFAULT \'return_approval\'' },
       { name: 'model', type: 'VARCHAR(128) DEFAULT \'\'' },
       { name: 'category', type: 'VARCHAR(64) DEFAULT \'\'' },
       { name: 'total_quantity', type: 'INTEGER DEFAULT 0' },
@@ -346,9 +348,9 @@ async function initDatabase() {
         { level: 3, title: '三级审批', permission: 'approval_level3' }
       ]);
       await query(
-        `INSERT INTO approval_flows (id, name, scope, enabled, nodes) VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO approval_flows (id, name, flow_type, scope, enabled, nodes) VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO NOTHING`,
-        ['flow_standard', '标准售后审批流', '全部售后记录', true, defaultNodes]
+        ['flow_standard', '标准售后审批流', 'return_approval', '全部售后记录', true, defaultNodes]
       );
       console.log('[DB] 已插入默认标准售后审批流');
     }

@@ -1666,6 +1666,234 @@ app.post('/api/records/:id/approval', async (req, res) => {
   }
 });
 
+// ==================== 售后处理方案审批 ====================
+// 处理审批独立于退货审批：退货审批通过后，运营先为选中的明细提交处理方案，
+// 再由 resolution_approval 审批流审批；审批通过后才允许执行换新/返厂维修路线。
+const RESOLUTION_TYPES = new Set([
+  'customer_replacement',
+  'factory_repair_return_warehouse',
+  'factory_repair_customer_replacement'
+]);
+const RESOLUTION_APPROVAL_STATUS = new Set(['pending', 'approved', 'rejected']);
+
+function parseJsonValue(value, fallback) {
+  if (typeof value === 'string') {
+    try { return JSON.parse(value || ''); } catch (_) { return fallback; }
+  }
+  return value == null ? fallback : value;
+}
+
+function getResolution(item) {
+  if (!item) return null;
+  const r = parseJsonValue(item.resolution, null);
+  return r && typeof r === 'object' ? r : null;
+}
+
+function buildResolutionApprovers(flow) {
+  const nodes = parseJsonValue(flow && flow.nodes, []);
+  return nodes.slice(0, 3).map((n, i) => ({
+    level: i + 1,
+    title: n.title || ('审批层级' + (i + 1)),
+    permission: n.permission || ('approval_level' + Math.min(i + 1, 3)),
+    approver_id: n.approver_id || '',
+    approver_name: n.approver_name || '',
+    backup_approver_id: n.backup_approver_id || '',
+    backup_approver_name: n.backup_approver_name || ''
+  })).filter(n => n.approver_id);
+}
+
+async function findResolutionFlow(flowId) {
+  const sql = flowId
+    ? 'SELECT * FROM approval_flows WHERE id = $1 AND flow_type = $2 AND enabled = true'
+    : 'SELECT * FROM approval_flows WHERE flow_type = $1 AND enabled = true ORDER BY created_at ASC LIMIT 1';
+  const result = await query(sql, flowId ? [flowId, 'resolution_approval'] : ['resolution_approval']);
+  return result.rows[0] || null;
+}
+
+function nextResolutionLevel(approvers, currentLevel) {
+  return (approvers || []).find(a => Number(a.level) > Number(currentLevel) && a.approver_id);
+}
+
+app.post('/api/records/resolution-approval', requireApiPermission('record_edit'), async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(500).json({ error: '数据库未配置' });
+  const requests = Array.isArray(req.body.items) ? req.body.items : [];
+  if (!requests.length) return res.status(400).json({ error: '至少选择一条售后明细' });
+  const flow = await findResolutionFlow(req.body.flow_id);
+  if (!flow) return res.status(400).json({ error: '未启用售后处理审批流，请先在审批流管理中配置并启用' });
+  const approvers = buildResolutionApprovers(flow);
+  if (!approvers.length) return res.status(400).json({ error: '处理审批流尚未配置审批人' });
+
+  const client = await pool.connect();
+  let committed = false;
+  try {
+    await client.query('BEGIN');
+    const grouped = new Map();
+    for (const input of requests) {
+      const recordId = String(input.record_id || '');
+      const itemIndex = Number(input.item_index);
+      const type = String(input.resolution_type || '');
+      if (!recordId || !Number.isInteger(itemIndex) || itemIndex < 0 || !RESOLUTION_TYPES.has(type)) {
+        throw Object.assign(new Error('处理方案或明细参数无效'), { status: 400 });
+      }
+      const key = recordId;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push({
+        itemIndex,
+        type,
+        remark: String(input.remark || '').trim(),
+        attachments: Array.isArray(input.attachments) ? input.attachments.slice(0, 10) : []
+      });
+    }
+
+    const now = new Date().toISOString();
+    const updated = [];
+    for (const [recordId, entries] of grouped) {
+      const result = await client.query('SELECT * FROM aftersales_records WHERE id = $1 FOR UPDATE', [recordId]);
+      if (!result.rows.length) throw Object.assign(new Error('售后记录不存在: ' + recordId), { status: 404 });
+      const row = result.rows[0];
+      const items = parseJsonValue(row.items, []);
+      const seen = new Set();
+      for (const entry of entries) {
+        if (seen.has(entry.itemIndex)) continue;
+        seen.add(entry.itemIndex);
+        const item = items[entry.itemIndex];
+        if (!item) throw Object.assign(new Error('售后明细不存在: ' + recordId + '#' + entry.itemIndex), { status: 400 });
+        if (row.status !== '审批通过') throw Object.assign(new Error('仅审批通过的售后明细可以提交处理审批'), { status: 400 });
+        const existing = getResolution(item);
+        if (existing && ['pending', 'approved', 'in_progress'].includes(existing.status)) {
+          throw Object.assign(new Error('该明细已有未完成的处理方案审批'), { status: 409 });
+        }
+        item.resolution = {
+          type: entry.type,
+          status: 'pending',
+          flow_id: flow.id,
+          flow_name: flow.name,
+          current_approval_level: approvers[0].level,
+          approvers,
+          approval_history: [],
+          submitted_by: req.currentUserId,
+          submitted_at: now,
+          remark: entry.remark,
+          attachments: entry.attachments,
+          execution_status: 'not_started',
+          execution_history: []
+        };
+        item.process_status_updated_at = now;
+      }
+      await client.query(
+        'UPDATE aftersales_records SET items = $1, updated_at = NOW() WHERE id = $2',
+        [JSON.stringify(items), recordId]
+      );
+      updated.push(recordId);
+    }
+    await client.query('COMMIT');
+    committed = true;
+    res.json({ success: true, updated_records: updated.length, submitted_items: requests.length, flow_id: flow.id });
+  } catch (e) {
+    if (!committed) await client.query('ROLLBACK').catch(() => {});
+    res.status(e.status || 500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+app.post('/api/records/:id/resolution-approval', async (req, res) => {
+  const pool = getPool();
+  if (!pool) return res.status(500).json({ error: '数据库未配置' });
+  const itemIndexes = Array.isArray(req.body.item_indexes) ? req.body.item_indexes.map(Number).filter(Number.isInteger) : [];
+  const action = req.body.action;
+  if (!itemIndexes.length || !['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ error: '审批参数无效' });
+  }
+  const client = await pool.connect();
+  let committed = false;
+  try {
+    await client.query('BEGIN');
+    const result = await client.query('SELECT * FROM aftersales_records WHERE id = $1 FOR UPDATE', [req.params.id]);
+    if (!result.rows.length) throw Object.assign(new Error('记录不存在'), { status: 404 });
+    const row = result.rows[0];
+    const items = parseJsonValue(row.items, []);
+    const now = new Date().toISOString();
+    for (const itemIndex of itemIndexes) {
+      const item = items[itemIndex];
+      const resolution = getResolution(item);
+      if (!resolution || resolution.status !== 'pending') throw Object.assign(new Error('该明细当前不在待处理审批状态'), { status: 409 });
+      const level = Number(resolution.current_approval_level);
+      const approver = (resolution.approvers || []).find(a => Number(a.level) === level);
+      if (!approver || approver.approver_id !== req.currentUserId) throw Object.assign(new Error('当前用户不是该处理审批节点审批人'), { status: 403 });
+      if (!(req.currentUserPermissions || []).includes(approver.permission)) throw Object.assign(new Error('没有该处理审批节点权限'), { status: 403 });
+      if (req.body.expected_level !== undefined && Number(req.body.expected_level) !== level) {
+        throw Object.assign(new Error('处理审批层级已变更，请刷新后重试'), { status: 409 });
+      }
+      resolution.approval_history = Array.isArray(resolution.approval_history) ? resolution.approval_history : [];
+      resolution.approval_history.push({
+        level, action, operator_id: req.currentUserId,
+        operator_name: req.currentUser && req.currentUser.name || req.currentUserId,
+        comment: String(req.body.comment || ''),
+        timestamp: now
+      });
+      if (action === 'reject') {
+        resolution.status = 'rejected';
+        resolution.current_approval_level = 0;
+      } else {
+        const next = nextResolutionLevel(resolution.approvers, level);
+        if (next) resolution.current_approval_level = next.level;
+        else {
+          resolution.status = 'approved';
+          resolution.current_approval_level = 0;
+          resolution.approved_at = now;
+        }
+      }
+      item.resolution = resolution;
+    }
+    await client.query('UPDATE aftersales_records SET items = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(items), req.params.id]);
+    await client.query('COMMIT');
+    committed = true;
+    res.json({ success: true, status: action === 'reject' ? 'rejected' : 'approved' });
+  } catch (e) {
+    if (!committed) await client.query('ROLLBACK').catch(() => {});
+    res.status(e.status || 500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+app.post('/api/records/:id/resolution-execution', requireApiPermission('record_edit'), async (req, res) => {
+  const itemIndexes = Array.isArray(req.body.item_indexes) ? req.body.item_indexes.map(Number).filter(Number.isInteger) : [];
+  const stage = String(req.body.stage || 'complete');
+  if (!itemIndexes.length || !['start', 'complete'].includes(stage)) return res.status(400).json({ error: '执行参数无效' });
+  try {
+    const result = await query('SELECT * FROM aftersales_records WHERE id = $1', [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: '记录不存在' });
+    const items = parseJsonValue(result.rows[0].items, []);
+    const now = new Date().toISOString();
+    for (const itemIndex of itemIndexes) {
+      const item = items[itemIndex];
+      const resolution = getResolution(item);
+      if (!resolution || resolution.status !== 'approved') return res.status(409).json({ error: '只有处理审批通过的明细才能执行' });
+      resolution.execution_history = Array.isArray(resolution.execution_history) ? resolution.execution_history : [];
+      resolution.execution_history.push({ stage, operator_id: req.currentUserId, operator_name: req.currentUser && req.currentUser.name || req.currentUserId, timestamp: now });
+      resolution.execution_status = stage === 'start' ? 'in_progress' : 'completed';
+      if (stage === 'complete') {
+        resolution.completed_at = now;
+        item.process_progress = 'completed';
+        item.process_status = '已处理';
+        item.process_completed_date = now;
+      } else {
+        item.process_progress = 'processing';
+        item.process_status = '处理中';
+        item.process_status_updated_at = now;
+      }
+      item.resolution = resolution;
+    }
+    const updated = await query('UPDATE aftersales_records SET items = $1, updated_at = NOW() WHERE id = $2 RETURNING *', [JSON.stringify(items), req.params.id]);
+    res.json(updated.rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.delete('/api/records/:id', requireApiPermission('record_delete'), async (req, res) => {
   try {
     const result = await query('DELETE FROM aftersales_records WHERE id = $1 RETURNING id', [req.params.id]);
@@ -1857,7 +2085,14 @@ app.post('/api/sales', async (req, res) => {
 // ---- 审批流 API ----
 app.get('/api/approval-flows', requireLogin, async (req, res) => {
   try {
-    const result = await query('SELECT * FROM approval_flows ORDER BY created_at ASC');
+    const flowType = req.query.flow_type ? String(req.query.flow_type) : '';
+    const values = flowType ? [flowType] : [];
+    const result = await query(
+      flowType
+        ? 'SELECT * FROM approval_flows WHERE flow_type = $1 ORDER BY created_at ASC'
+        : 'SELECT * FROM approval_flows ORDER BY created_at ASC',
+      values
+    );
     const rows = result.rows.map(r => ({
       ...r,
       nodes: typeof r.nodes === 'string' ? JSON.parse(r.nodes || '[]') : (r.nodes || [])
@@ -1883,12 +2118,13 @@ app.get('/api/approval-flows', requireLogin, async (req, res) => {
 
 app.post('/api/approval-flows', requireApiPermission('system_config'), async (req, res) => {
   try {
-    const { id, name, scope, enabled, nodes, cc_users } = req.body;
+    const { id, name, flow_type, scope, enabled, nodes, cc_users } = req.body;
     if (!name) return res.status(400).json({ error: '流程名称不能为空' });
+    const normalizedFlowType = flow_type === 'resolution_approval' ? 'resolution_approval' : 'return_approval';
     const result = await query(
-      `INSERT INTO approval_flows (id, name, scope, enabled, nodes, cc_users, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING *`,
-      [id || ('flow_' + Date.now()), name, scope || '全部售后记录', enabled !== undefined ? enabled : false,
+      `INSERT INTO approval_flows (id, name, flow_type, scope, enabled, nodes, cc_users, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING *`,
+      [id || ('flow_' + Date.now()), name, normalizedFlowType, scope || '全部售后记录', enabled !== undefined ? enabled : false,
        JSON.stringify(nodes || []), JSON.stringify(await sanitizeCcUsers(cc_users || []))]
     );
     const row = result.rows[0];
@@ -1899,12 +2135,13 @@ app.post('/api/approval-flows', requireApiPermission('system_config'), async (re
 app.put('/api/approval-flows/:id', requireApiPermission('system_config'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, scope, enabled, nodes, cc_users } = req.body;
+    const { name, flow_type, scope, enabled, nodes, cc_users } = req.body;
     const fields = ['updated_at = NOW()'];
     const values = [];
     let idx = 1;
     const add = (field, val) => { if (val !== undefined) { fields.push(`${field} = $${idx++}`); values.push(val); } };
     add('name', name);
+    if (flow_type !== undefined) add('flow_type', flow_type === 'resolution_approval' ? 'resolution_approval' : 'return_approval');
     add('scope', scope);
     add('enabled', enabled);
     add('nodes', nodes !== undefined ? JSON.stringify(nodes) : undefined);

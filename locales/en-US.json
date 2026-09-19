@@ -510,6 +510,7 @@
       "keyword": "Keyword",
       "keywordPlaceholder": "Search order no., SKU, brand, or model...",
       "scope": "Scope",
+      "flowType": "Flow Type",
       "pending": "Pending My Approval",
       "done": "Reviewed",
       "all": "All",
@@ -1088,16 +1089,27 @@
     "faultDescriptionRequired": "Row {row}: Please fill in fault description",
     "enterReturnDate": "Enter the return stock-in date"
   },
+  "resolutionType": {
+    "customer_replacement": "Customer replacement",
+    "factory_repair_return_warehouse": "Factory repair → return to warehouse",
+    "factory_repair_customer_replacement": "Factory repair → customer replacement"
+  },
+  "resolutionApproval": {
+    "approveAction": "Approve resolution", "startAction": "Start execution", "completeAction": "Complete processing", "pending": "Resolution approval pending", "approvedShort": "Resolution approved", "rejected": "Resolution rejected", "inProgress": "Processing", "completed": "Processing completed", "alreadySubmitted": "Selected items already have a resolution approval", "noEnabledFlow": "No enabled resolution approval flow", "selectFlowAndType": "Select a resolution type and approval flow", "submitFailed": "Failed to submit resolution approval", "submitted": "Submitted resolution approval for {count} item(s)", "confirmApprove": "Approve this resolution?", "confirmReject": "Reject this resolution?", "commentPrompt": "Approval comment (optional)", "approveFailed": "Resolution approval failed", "approved": "Resolution approval completed", "confirmStart": "Start this resolution", "confirmComplete": "Complete this resolution", "executeFailed": "Resolution execution failed", "executed": "Resolution execution updated"
+  },
   "batchProcess": {
-    "title": "Batch Update Processing Progress",
+    "title": "Submit Resolution Approval",
     "summary": "{count} approved RMA items selected",
     "label": {
+      "resolutionType": "Resolution Type",
+      "resolutionFlow": "Resolution Approval Flow",
       "newProgress": "New Progress",
       "processDate": "Processing Date",
       "erpDate": "ERP Receipt Date",
       "remark": "Processing Notes"
     },
-    "remarkPlaceholder": "Add processing notes, exception reasons, or follow-up comments",
+   "remarkPlaceholder": "Add processing notes, exception reasons, or follow-up comments",
+    "btnSubmitApproval": "Submit for approval",
     "btnSubmit": "Confirm Update"
   },
   "confirm": {
@@ -1268,6 +1280,10 @@
       "scope": "Scope",
       "status": "Status",
       "actions": "Actions"
+    },
+    "flowType": {
+      "return": "Return approval",
+      "resolution": "Resolution approval"
     },
     "stat": {
       "total": "Total Flows",

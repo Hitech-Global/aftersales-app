@@ -1088,16 +1088,27 @@
     "faultDescriptionRequired": "第{row}行：请填写问题说明",
     "enterReturnDate": "请填写退货入库日期"
   },
+  "resolutionType": {
+    "customer_replacement": "客户换新",
+    "factory_repair_return_warehouse": "返厂维修后回仓入库",
+    "factory_repair_customer_replacement": "返厂维修后给客户换新"
+  },
+  "resolutionApproval": {
+    "approveAction": "审批处理方案", "startAction": "开始执行", "completeAction": "完成处理", "alreadySubmitted": "所选明细已有处理审批", "noEnabledFlow": "未启用售后处理审批流", "selectFlowAndType": "请选择处理方案和处理审批流", "submitFailed": "提交处理审批失败", "submitted": "已提交 {count} 条明细的处理审批", "confirmApprove": "确认通过处理方案？取消则提交拒绝。", "commentPrompt": "请输入审批意见（可选）", "approveFailed": "处理审批失败", "approved": "处理审批已完成", "confirmStart": "确认开始执行处理方案", "confirmComplete": "确认完成处理方案", "executeFailed": "执行处理方案失败", "executed": "处理执行状态已更新"
+  },
   "batchProcess": {
-    "title": "批量更改处理状态",
+    "title": "提交处理审批",
     "summary": "已选择 {count} 条审批通过的售后明细",
     "label": {
+      "resolutionType": "处理方案",
+      "resolutionFlow": "处理审批流",
       "newProgress": "新处理进度",
       "processDate": "处理日期",
       "erpDate": "ERP入库日期",
       "remark": "处理备注"
     },
-    "remarkPlaceholder": "填写处理说明、异常原因或后续备注",
+   "remarkPlaceholder": "填写处理说明、异常原因或后续备注",
+    "btnSubmitApproval": "提交处理审批",
     "btnSubmit": "确认更新"
   },
   "confirm": {
@@ -1266,8 +1277,13 @@
       "level": "审批层级",
       "name": "流程名称",
       "scope": "适用范围",
+      "flowType": "流程类型",
       "status": "状态",
       "actions": "操作"
+    },
+    "flowType": {
+      "return": "售后退货审批",
+      "resolution": "售后处理审批"
     },
     "stat": {
       "total": "流程总数",
