@@ -6426,7 +6426,7 @@ function canApproveRecord(record){
   return hasPermission('approval_level'+level)&&record['approver_level'+level+'_id']===user.id;
 }
 
-async function executeApproval(recordId, action, comment, returnDate, attachments, erpScreenshots){
+async function executeApproval(recordId, action, comment, returnDate, attachments){
   const records=await getRecords();
   const idx=records.findIndex(r=>String(r.id)===String(recordId));
   if(idx<0) return false;
@@ -6442,11 +6442,7 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
   const approverIdField='approver_level'+level+'_id';
   if(record[approverIdField]!==user.id){ showFlash(t('flash.notLevelApprover'),'danger'); return false; }
 
-  // ERP 截图引用仅以 URL 形式随审批请求提交；服务端基于数据库当前 items 写入正确位置。
-  const erpMap = (erpScreenshots && typeof erpScreenshots === 'object' && !Array.isArray(erpScreenshots))
-    ? Object.fromEntries(Object.entries(erpScreenshots).map(([k, v]) => [k, Array.isArray(v) ? v.filter(u => typeof u === 'string' && /^(\/uploads\/|https?:\/\/)/.test(u)) : []]))
-    : {};
-  // 仅提交最小字段；不作任何本地状态推进。失败则本地对象保持原状；成功则用服务端返回值刷新。
+  // 仅提交退货审批字段；不携带任何售后处理状态或处理凭证。
   try {
     const res = await fetch(`/api/records/${encodeURIComponent(recordId)}/approval`, {
       method: 'POST',
@@ -6458,8 +6454,7 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
         approval_attachments: Array.isArray(attachments)
           ? attachments.map(a => ({ name: a.name, url: a.url || (a.data ? a.data : '') }))
           : [],
-        expected_level: level,
-        erp_screenshots: erpMap
+        expected_level: level
       })
     });
     if (!res.ok) {
@@ -6812,11 +6807,9 @@ async function openLegacyApprovalModal(recordId){
       <div class="detail-item"><span class="detail-label">${t('detail.label.status')}</span><span class="detail-value"><span class="status-badge status-${record.status}">${tApprovalStatus(record.status)}</span></span></div>
     </div>
     <div style="margin-top:10px">
-      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.trackingNumber')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th><th>${t('approvalModal.col.erpScreenshot')}</th></tr></thead>
+      <table class="data-table" style="font-size:12px"><thead><tr><th>${t('detail.col.index')}</th><th>${t('detail.col.platform')}</th><th>${t('detail.col.shopCustomer')}</th><th>${t('detail.col.sku')}</th><th>${t('detail.col.orderNo')}</th><th>${t('detail.col.trackingNumber')}</th><th>${t('detail.col.qty')}</th><th>${t('detail.col.returnReason')}</th><th>${t('detail.col.processType')}</th><th>${t('detail.col.processProgress')}</th></tr></thead>
         <tbody>${(record.items||[]).map((it,i)=>{
           normalizeProcessItem(it);
-          const isOpenErp=itemProcessType(it)==='erp'&&itemProcessProgress(it)!=='completed';
-          const screenshots=it.erp_screenshots||[];
           return `<tr>
             <td>${i+1}</td>
             <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
@@ -6828,10 +6821,6 @@ async function openLegacyApprovalModal(recordId){
             <td>${esc(displayReturnReason(it.return_reason)||'-')}</td>
             <td>${renderProcessTypeBadge(itemProcessType(it))}</td>
             <td>${renderProcessProgressBadge(itemProcessProgress(it))}</td>
-            <td id="erp-cell-${i}">
-              ${screenshots.map(s=>`<img src="${s}" class="erp-screenshot-thumb" onclick="previewErpScreenshot(this)">`).join('')}
-              ${isOpenErp?`<span class="erp-upload-btn" onclick="triggerErpUpload(${i})">${t('approvalModal.btnUploadScreenshot')}</span>`:''}
-            </td>
           </tr>`;
         }).join('')}</tbody>
       </table>
@@ -6913,8 +6902,7 @@ async function doApproval(action, source='modal'){
   // 审批通过时 ERP入库/可二次销售 明细会自动 completed，退货日期仅作可选补充，不再强制阻断审批。
   // ERP 截图引用不再通过完整记录 PUT 保存；改为作为专用审批请求的一部分提交，
   // 由服务端基于数据库当前 items 写入正确位置（避免重新序列化含历史 Base64 的完整 record 触发 413）。
-  const erpShots = pendingErpScreenshots;
-  const saved = await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments, erpShots);
+  const saved = await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
   if(saved){
     // 强制清除缓存，确保重新拉取最新数据（包含刚完成的审批结果）
     _recordsCache=null;
