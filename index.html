@@ -5218,13 +5218,17 @@ async function deleteRecord(id){
 }
 
 // ==================== DETAIL PAGE ====================
+let _renderDetailSeq=0;
 async function renderDetail(id){
+  const seq=++_renderDetailSeq;
   const detailContent=document.getElementById('detail-content');
-  detailContent.innerHTML=`<div class="detail-section" style="color:var(--text-muted)">${t('detail.loading')}</div>`;
+  const cachedHit=Array.isArray(_recordsCache)&&_recordsCache.some(x=>String(x.id)===String(id));
+  if(!cachedHit) detailContent.innerHTML=`<div class="detail-section" style="color:var(--text-muted)">${t('detail.loading')}</div>`;
   try{
     let records=[];
     let fetchStatus=200;
     try{ records=await getRecords(); }catch(e){ fetchStatus=(e&&e.status)?e.status:0; }
+    if(seq!==_renderDetailSeq) return;
 
     // 三.6：401 会话失效 → 必须回登录，绝不回退到缓存
     if(fetchStatus===401){
@@ -5251,6 +5255,7 @@ async function renderDetail(id){
         const ccResp = await fetch('/api/records/cc', { headers: getAuthHeaders() });
         if(ccResp.ok){
           const ccList = await ccResp.json();
+          if(seq!==_renderDetailSeq) return;
           r = (ccList||[]).find(x=>String(x.id)===String(id));
         }
       }catch(e){ /* ignore */ }
@@ -5259,10 +5264,13 @@ async function renderDetail(id){
       detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F4ED;</div><p>${t('detail.recordNotFound')}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'overview')">${t('detail.btnBack')}</button></div>`;
       return;
     }
-  const products=await getProducts();
+  const [products]=await Promise.all([
+    getProducts(),
+    ensureShopCustomerDict(),
+    ensureDictLabelCache('platform')
+  ]);
+  if(seq!==_renderDetailSeq) return;
   const productBySku=new Map(products.map(p=>[String(p.sku_code||'').toLowerCase(),p]));
-  await ensureShopCustomerDict();
-  await ensureDictLabelCache('platform');
   const pendingErpQty=pendingErpQuantity(r);
   const completedErpQty=completedErpQuantity(r);
   const _items=r.items||[];
@@ -5436,9 +5444,11 @@ async function renderDetail(id){
   `;
   applyDateInputLocale();
   renderPendingAttachments();
+  markPageRendered('detail',id);
   // Load attachments for each item
   try {
     const atts = await fetchRecordAttachments(r.id);
+    if(seq!==_renderDetailSeq) return;
     (r.items || []).forEach((it, i) => {
       const cell = document.getElementById('detail-item-atts-' + i);
       if (!cell) return;
@@ -5447,6 +5457,7 @@ async function renderDetail(id){
     });
   } catch (e) { /* ignore */ }
   }catch(err){
+    if(seq!==_renderDetailSeq) return;
     console.error('[detail] render failed', err);
     detailContent.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x26A0;</div><p>${esc(err.message||String(err))}</p><button class="btn btn-primary" onclick="showPage(hasPermission('record_view')?'list':'overview')">${t('detail.btnBack')}</button></div>`;
   }
