@@ -4472,6 +4472,9 @@ async function renderList(){
   const channel=document.getElementById('channel-filter').value;
   const returnReason=document.getElementById('return-reason-filter').value;
   const progressFilter=document.getElementById('process-progress-filter')?.value || '';
+  const processingApprovalFilter=document.getElementById('processing-approval-filter')?.value || '';
+  const processingPlanFilter=document.getElementById('processing-plan-filter')?.value || '';
+  const processingNodeFilter=document.getElementById('processing-node-filter')?.value || '';
   const riskFilter=document.getElementById('list-risk-filter').value;
   const startD=getDateInputValue('list-start-date');
   const endD=getDateInputValue('list-end-date');
@@ -4483,6 +4486,9 @@ async function renderList(){
   if(channel) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.platform===channel));
   if(returnReason) filtered=filtered.filter(r=>(r.items||[]).some(it=>normalizeReturnReasonToCode(it.return_reason)===returnReason));
   if(progressFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessProgress(it)===progressFilter));
+  if(processingApprovalFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessingApproval(it)===processingApprovalFilter));
+  if(processingPlanFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>it.processing_plan_type===processingPlanFilter));
+  if(processingNodeFilter) filtered=filtered.filter(r=>(r.items||[]).some(it=>itemProcessingNodes(it).includes(processingNodeFilter)));
   if(riskFilter==='pending') filtered=filtered.filter(r=>(r.items||[]).some(it=>isPendingProcessItem(it)));
   if(riskFilter==='overdue') filtered=filtered.filter(r=>(r.items||[]).some(it=>isOverdueItem(it,r)));
   if(startD||endD){
@@ -4549,7 +4555,10 @@ async function renderList(){
     </tr></thead><tbody>`;
     pageRecords.forEach(r=>{
       (r.items||[]).forEach((it,idx)=>{
-        const showItem=(!progressFilter||itemProcessProgress(it)===progressFilter);
+        const showItem=(!progressFilter||itemProcessProgress(it)===progressFilter)
+          &&(!processingApprovalFilter||itemProcessingApproval(it)===processingApprovalFilter)
+          &&(!processingPlanFilter||it.processing_plan_type===processingPlanFilter)
+          &&(!processingNodeFilter||itemProcessingNodes(it).includes(processingNodeFilter));
         if(!showItem) return;
         const canApprove = canApproveRecord(r);
         const canProcess = r.status==='审批通过' && isPendingProcessItem(it) && hasPermission('record_edit');
@@ -4690,7 +4699,8 @@ function onItemCheckboxChange(){
 function updateBatchBar(){
   const checked=document.querySelectorAll('.item-checkbox:checked');
   const bar=document.getElementById('batch-bar');
-  document.getElementById('batch-count').textContent=checked.length;
+  const info=document.getElementById('batch-selection-info');
+  if(info) info.textContent=t('list.batch.selected',{count:checked.length});
   bar.classList.toggle('show',checked.length>0);
   const master=document.getElementById('select-all-items');
   const all=document.querySelectorAll('.item-checkbox');
@@ -4806,6 +4816,134 @@ async function submitBatchProcess(){
   closeBatchProcessModal();
   clearBatchSelection();
   renderList();
+}
+
+
+let _processingSelectedRefs=[];
+
+async function openProcessingPlanModal(){
+  const records=await getRecords();
+  const refs=getSelectedItemRefs(records);
+  if(!refs.length){ showFlash(t('validation.selectOneItem'),'warning'); return; }
+  if(refs.some(ref=>ref.record.status!=='审批通过')){ showFlash(t('processing.validation.returnApprovalRequired'),'warning'); return; }
+  if(refs.some(ref=>itemProcessProgress(ref.item)==='completed')){ showFlash(t('processing.validation.completedSelected'),'warning'); return; }
+  if(refs.some(ref=>['pending','approved'].includes(itemProcessingApproval(ref.item)))){ showFlash(t('processing.validation.activePlanExists'),'warning'); return; }
+
+  _processingSelectedRefs=refs.map(ref=>({record_id:String(ref.record.id),item_index:ref.itemIndex}));
+  document.getElementById('processing-plan-summary').textContent=t('processing.selectedCount',{count:refs.length});
+  document.getElementById('processing-plan-type').value='resellable';
+  document.getElementById('processing-plan-factory').value='';
+  document.getElementById('processing-plan-remark').value='';
+  onProcessingPlanTypeChange();
+  document.getElementById('processing-plan-modal').classList.remove('hidden');
+}
+function closeProcessingPlanModal(){
+  document.getElementById('processing-plan-modal').classList.add('hidden');
+  _processingSelectedRefs=[];
+}
+function onProcessingPlanTypeChange(){
+  const type=document.getElementById('processing-plan-type').value;
+  document.getElementById('processing-plan-factory-group').style.display=type==='resellable'?'none':'block';
+}
+async function submitProcessingPlan(){
+  if(!_processingSelectedRefs.length) return;
+  const body={
+    items:_processingSelectedRefs,
+    plan_type:document.getElementById('processing-plan-type').value,
+    factory_name:document.getElementById('processing-plan-factory').value.trim(),
+    remark:document.getElementById('processing-plan-remark').value.trim()
+  };
+  try{
+    const res=await fetch('/api/processing-requests',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify(body)});
+    if(!res.ok){
+      let data={};
+      try{ data=await res.json(); }catch(_){}
+      throw new Error(data.error||t('processing.error.submitPlan'));
+    }
+    closeProcessingPlanModal();
+    clearBatchSelection();
+    _recordsCache=null; _cacheTimestamp=0;
+    showFlash(t('processing.success.planSubmitted'),'success');
+    renderList();
+  }catch(e){
+    showFlash(e.message||t('processing.error.submitPlan'),'danger');
+  }
+}
+function commonProcessingActions(refs){
+  if(!refs.length) return [];
+  let common=processingAllowedActions(refs[0].item);
+  for(let i=1;i<refs.length;i++){
+    const available=new Set(processingAllowedActions(refs[i].item));
+    common=common.filter(action=>available.has(action));
+  }
+  return common;
+}
+async function openProcessingActionModal(){
+  const records=await getRecords();
+  const refs=getSelectedItemRefs(records);
+  if(!refs.length){ showFlash(t('validation.selectOneItem'),'warning'); return; }
+  if(refs.some(ref=>ref.record.status!=='审批通过'||itemProcessingApproval(ref.item)!=='approved')){
+    showFlash(t('processing.validation.planApprovalRequired'),'warning'); return;
+  }
+  const actions=commonProcessingActions(refs);
+  if(!actions.length){ showFlash(t('processing.validation.noCommonAction'),'warning'); return; }
+
+  _processingSelectedRefs=refs.map(ref=>({record_id:String(ref.record.id),item_index:ref.itemIndex}));
+  const select=document.getElementById('processing-action-type');
+  select.innerHTML=actions.map(action=>'<option value="'+esc(action)+'">'+esc(tProcessingAction(action))+'</option>').join('');
+  document.getElementById('processing-action-summary').textContent=t('processing.selectedCount',{count:refs.length});
+  setDateInputValue('processing-action-date',formatDateLocal(new Date()));
+  ['processing-action-factory','processing-action-carrier','processing-action-tracking','processing-action-replacement-sku','processing-action-replacement-sn','processing-action-remark'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  onProcessingActionTypeChange();
+  document.getElementById('processing-action-modal').classList.remove('hidden');
+}
+function closeProcessingActionModal(){
+  document.getElementById('processing-action-modal').classList.add('hidden');
+  _processingSelectedRefs=[];
+}
+function onProcessingActionTypeChange(){
+  const action=document.getElementById('processing-action-type').value;
+  const show=(id,visible)=>{ const el=document.getElementById(id); if(el) el.style.display=visible?'block':'none'; };
+  show('processing-action-factory-group',action==='ship_to_factory');
+  show('processing-action-carrier-group',['ship_replacement','ship_to_factory','ship_repaired_to_customer'].includes(action));
+  show('processing-action-tracking-group',['ship_replacement','ship_to_factory','ship_repaired_to_customer'].includes(action));
+  show('processing-action-replacement-sku-group',action==='ship_replacement');
+  show('processing-action-replacement-sn-group',action==='ship_replacement');
+  applyDateInputLocale();
+}
+async function submitProcessingAction(){
+  if(!_processingSelectedRefs.length) return;
+  const action=document.getElementById('processing-action-type').value;
+  const date=normalizeDateInput(document.getElementById('processing-action-date'));
+  if(!date){ showFlash(t('validation.enterProcessDate'),'warning'); return; }
+  const data={
+    date,
+    ship_date:date,
+    inbound_date:date,
+    factory_name:document.getElementById('processing-action-factory').value.trim(),
+    carrier:document.getElementById('processing-action-carrier').value.trim(),
+    tracking_number:document.getElementById('processing-action-tracking').value.trim(),
+    replacement_sku:document.getElementById('processing-action-replacement-sku').value.trim(),
+    replacement_sn:document.getElementById('processing-action-replacement-sn').value.trim(),
+    remark:document.getElementById('processing-action-remark').value.trim()
+  };
+  try{
+    const res=await fetch('/api/processing-actions/batch',{method:'POST',headers:getAuthHeaders(),body:JSON.stringify({items:_processingSelectedRefs,action,data})});
+    if(!res.ok){
+      let payload={};
+      try{ payload=await res.json(); }catch(_){}
+      throw new Error(payload.error||t('processing.error.action'));
+    }
+    closeProcessingActionModal();
+    clearBatchSelection();
+    _recordsCache=null; _cacheTimestamp=0;
+    showFlash(t('processing.success.actionUpdated'),'success');
+    renderList();
+  }catch(e){
+    showFlash(e.message||t('processing.error.action'),'danger');
+  }
 }
 
 function renderListPagination(total){
