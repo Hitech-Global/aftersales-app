@@ -4095,7 +4095,8 @@ function setSidebarActive(page){
 
 // ==================== PAGE ROUTING ====================
 function showPage(page, recordId=null){
-  closeRecordForm();
+  const formModal=document.getElementById('record-form-modal');
+  if(formModal&&!formModal.classList.contains('hidden')) closeRecordForm();
   if(!canAccessPage(page, recordId)){
     showFlash(t('flash.noPagePermission'),'danger');
     const fallback=getDefaultAccessiblePage();
