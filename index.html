@@ -2529,6 +2529,30 @@ function refreshPageOnViewHit(page,recordId){
 }
 
 let _prewarmStarted=false;
+let _preRenderStarted=false;
+function idleYield(){
+  return new Promise(resolve=>{
+    if(typeof requestIdleCallback==='function') requestIdleCallback(()=>resolve(),{timeout:700});
+    else setTimeout(resolve,0);
+  });
+}
+async function preRenderAccessiblePages(){
+  if(_preRenderStarted||!getCurrentUser()) return;
+  _preRenderStarted=true;
+  const pages=['list','products','approval','users','roles','approval-flows','dictionaries','customers'];
+  for(const page of pages){
+    if(!canAccessPage(page)) continue;
+    await idleYield();
+    const el=document.getElementById('page-'+page);
+    if(!el||el.classList.contains('active')) continue;
+    try{
+      // 只渲染隐藏 DOM，不改变路由/active 页面。完成后首个真实点击即 VIEW HIT。
+      await Promise.resolve(rerenderPageBody(page));
+    }catch(e){
+      console.warn('[pre-render]',page,e&&e.message);
+    }
+  }
+}
 function prewarmAppData(){
   if(_prewarmStarted||!getCurrentUser()) return;
   _prewarmStarted=true;
@@ -2547,6 +2571,7 @@ function prewarmAppData(){
     if(typeof getApprovalFlowsFast==='function') jobs.push(getApprovalFlowsFast());
     if(hasPermission('system_config')&&typeof prewarmCustomersFirstPage==='function') jobs.push(prewarmCustomersFirstPage());
     await Promise.allSettled(jobs);
+    preRenderAccessiblePages();
   });
 }
 
