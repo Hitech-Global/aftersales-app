@@ -64,7 +64,7 @@
     "overview": "Overview",
     "list": "RMA Cases",
     "detail": "RMA Case Details",
-    "approval": "RMA Approvals",
+    "approval": "Approval Center",
     "products": "Products",
     "users": "Users",
     "roles": "Roles",
@@ -78,7 +78,7 @@
       "list": "RMA Cases",
       "detail": "RMA Case Details",
       "products": "Products",
-      "approval": "RMA Approvals",
+      "approval": "Approval Center",
       "users": "Users",
       "roles": "Roles",
       "approvalFlows": "Approval Flow",
@@ -513,6 +513,10 @@
       "keyword": "Keyword",
       "keywordPlaceholder": "Search order no., SKU, brand, or model...",
       "scope": "Scope",
+      "type": "Approval Type",
+      "typeAll": "All Types",
+      "typeReturn": "Return Approval",
+      "typeResolution": "Resolution Approval",
       "flowType": "Flow Type",
       "pending": "Pending My Approval",
       "done": "Reviewed",
@@ -523,6 +527,8 @@
     "btnClear": "Clear",
     "empty": "No approval history",
     "col": {
+      "type": "Approval Type",
+      "item": "Approval Item",
       "createdAt": "Submitted At",
       "initiator": "Initiator",
       "approver": "Approver",
@@ -543,6 +549,17 @@
     "flow": {
       "completed": "Completed",
       "rejected": "Rejected"
+    },
+    "type": {
+      "return": "Return Approval",
+      "resolution": "Resolution Approval"
+    },
+    "task": {
+      "pending": "Pending My Approval",
+      "processed": "Processed",
+      "item": "After-sales Item",
+      "wholeRecord": "Entire Case",
+      "approve": "Approve"
     },
     "level": "Approval Level"
   },
