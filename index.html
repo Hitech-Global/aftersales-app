@@ -6676,11 +6676,12 @@ function processingQueueCell(text,className){
   td.textContent=text==null?'-':String(text);
   return td;
 }
-async function renderProcessingApprovals(tab,user,search,startD,endD){
+async function renderProcessingApprovals(tab,user,search,startD,endD,parentSeq){
   const area=document.getElementById('processing-approval-area');
   if(!area) return;
   try{
     const payload=await getProcessingRequestsFast();
+    if(parentSeq!==undefined&&parentSeq!==_renderApprovalSeq) return;
     let list=(Array.isArray(payload)?payload:[]).slice();
 
     if(tab==='pending'){
@@ -6897,13 +6898,22 @@ async function submitProcessingApproval(action){
   }
 }
 
+let _renderApprovalSeq=0;
 async function renderApproval(){
+  const seq=++_renderApprovalSeq;
   const tab=document.getElementById('appr-tab').value;
   const user=getCurrentUser();
-  const records=await getRecords();
-  await ensureDictLabelCache('platform');
   const startD=getDateInputValue('appr-start-date');
   const endD=getDateInputValue('appr-end-date');
+  const search=(document.getElementById('appr-search').value||'').toLowerCase();
+
+  const processingPromise=renderProcessingApprovals(tab,user,search,startD,endD,seq);
+  const [records]=await Promise.all([
+    getRecords(),
+    ensureDictLabelCache('platform'),
+    processingPromise
+  ]);
+  if(seq!==_renderApprovalSeq) return;
 
   let filtered=records;
   if(tab==='pending'){
@@ -6916,8 +6926,6 @@ async function renderApproval(){
     filtered=records.filter(r=>(r.approval_history||[]).some(h=>h.operator_id===user.id));
   }
 
-  const search=(document.getElementById('appr-search').value||'').toLowerCase();
-  await renderProcessingApprovals(tab,user,search,startD,endD);
   if(search){
     filtered=filtered.filter(r=>{
       const items=r.items||[];
@@ -6967,6 +6975,7 @@ async function renderApproval(){
     area.innerHTML=html;
   }
   renderApprPagination(total);
+  markPageRendered('approval');
 }
 
 function getCurrentApproverText(record){
