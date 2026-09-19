@@ -2387,6 +2387,10 @@ async function bootstrapSession() {
     const resp = await _orig(input, init);
     const url = typeof input === 'string' ? input : (input && input.url) || '';
     if (url.indexOf('/api/') !== -1) {
+      const method=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
+      if(resp.ok&&method!=='GET'&&method!=='HEAD'){
+        try{ performanceMutationInvalidate(method,url); }catch(e){ console.warn('[cache invalidate]',e&&e.message); }
+      }
       if (resp.status === 401) {
         onSessionExpired();
       } else if (resp.status === 403) {
@@ -2437,6 +2441,68 @@ function resourceInvalidate(key){
   meta.version++;
 }
 function resourceVersion(key){ return resourceMeta(key).version; }
+
+// PSI 同款 mutation-aware invalidation：任何成功写请求都按依赖图精准打脏。
+// 这层是兜底，已有业务函数里的显式 invalidation 可以继续保留；重复打脏只增加 version，不会改变业务数据。
+function performanceMutationInvalidate(method,url){
+  const u=String(url||'');
+  const pages=new Set();
+  const resources=new Set();
+  const addPages=(...items)=>items.forEach(x=>pages.add(x));
+  const addResources=(...items)=>items.forEach(x=>resources.add(x));
+
+  if(u.includes('/api/processing-requests')){
+    addResources('processingRequests','records');
+    _processingRequestsCache=null;
+    _recordsCache=null;
+    addPages('overview','list','detail','approval');
+  }else if(u.includes('/api/records')){
+    addResources('records');
+    _recordsCache=null;
+    addPages('overview','list','detail','approval');
+  }
+  if(u.includes('/api/products')){
+    addResources('products');
+    _productsCache=null;
+    addPages('products','detail');
+  }
+  if(u.includes('/api/users')){
+    addResources('users');
+    _usersCache=null;
+    addPages('users','roles','approval-flows');
+  }
+  if(u.includes('/api/roles')){
+    addResources('roles');
+    _rolesCache=null;
+    addPages('roles','users','approval-flows');
+  }
+  if(u.includes('/api/approval-flows')){
+    addResources('approvalFlows');
+    _approvalFlowsDataCache=null;
+    addPages('approval-flows');
+  }
+  if(u.includes('/api/dictionaries')){
+    addResources('dictionaries');
+    _dictLoaded=false;
+    addPages('dictionaries','list','detail');
+  }
+  if(u.includes('/api/sales')){
+    addResources('sales');
+    _salesCache=null;
+    addPages('overview');
+  }
+  if(u.includes('/api/customers')){
+    addResources('customers');
+    try{ _customerPageCache.clear(); }catch(_){}
+    addPages('customers');
+  }
+  if(u.includes('/api/attachments')){
+    addPages('detail');
+  }
+
+  resources.forEach(resourceInvalidate);
+  pages.forEach(invalidatePageSignature);
+}
 function runResourceFetch(key, loader){
   const meta=resourceMeta(key);
   if(meta.inflight) return meta.inflight;
