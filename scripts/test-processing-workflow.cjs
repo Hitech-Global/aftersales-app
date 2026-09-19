@@ -80,4 +80,36 @@ expectStatus(
   expectStatus(() => api.applyProcessingActionToItem(item, 'ship_to_factory', { date: '2026-09-20' }, NOW), 409);
 }
 
+// Return approval must not complete or otherwise mutate after-sales processing.
+{
+  const approvalStart = source.indexOf('const APPROVAL_LEGACY_STATUS_TO_PROCESS');
+  const approvalEnd = source.indexOf('// 专用审批接口（修复 413');
+  assert.ok(approvalStart >= 0 && approvalEnd > approvalStart, 'return approval helper block must exist');
+  const approvalBlock = source.slice(approvalStart, approvalEnd);
+  const approvalApi = new Function(approvalBlock + '\nreturn { applyApprovalTransition };')();
+
+  const record = {
+    status: '待一级审批',
+    current_approval_level: 1,
+    approver_level1_id: 'u1',
+    approver_level2_id: '',
+    approver_level3_id: '',
+    approval_history: [],
+    items: [
+      { return_reason: '可二次销售', process_type: 'erp', process_progress: 'pending', process_status: '待ERP入库' },
+      { return_reason: '硬件故障', process_type: 'rma', process_progress: 'pending', process_status: '待RMA' }
+    ]
+  };
+  const beforeItems = JSON.stringify(record.items);
+  const result = approvalApi.applyApprovalTransition(
+    record,
+    { action: 'approve', expected_level: 1, operator_name: 'Tester', comment: 'ok' },
+    'u1'
+  );
+  assert.equal(result.record.status, '审批通过');
+  assert.equal(result.record.current_approval_level, 0);
+  assert.equal(JSON.stringify(result.record.items), beforeItems);
+  assert.equal(result.itemsChanged, false);
+}
+
 console.log('processing-workflow tests passed');
