@@ -81,7 +81,7 @@
       "roles": "Roles",
       "approvalFlows": "Approval Flow",
       "dictionaries": "Dictionaries",
-    "customers": "Customers"
+      "customers": "Customers"
     }
   },
   "overview": {
@@ -1130,7 +1130,7 @@
     "onlyErpStatus": "Only items in \"Pending ERP Stock-In\" can be marked as completed",
     "onlyCurrentApproverUpload": "Only the current level approver can upload processing screenshots",
     "imageSize": "Image exceeds 2 MB. Compress it before uploading.",
- "uploadFailed": "Attachment upload failed {msg}. Please retry.",
+    "uploadFailed": "Attachment upload failed {msg}. Please retry.",
     "notImage": "File {filename} is not an image and was skipped",
     "pasteImageSize": "The pasted image exceeds 2 MB and was skipped",
     "selectCsv": "Select a CSV file",
@@ -1240,9 +1240,18 @@
     "deleteReferenced": "There are still users under this role, cannot delete",
     "deleted": "Role deleted",
     "opSessionExpired": "Your session for this action has expired. Please retry.",
-    "role_admin": { "name": "Super Admin", "description": "Full system access: manage users, roles, approval flows, and system settings" },
-    "role_operator": { "name": "Operator", "description": "Operations staff who handle after-sales records and product data" },
-    "role_viewer": { "name": "Viewer", "description": "Regular user with read-only access and CC'd records" }
+    "role_admin": {
+      "name": "Super Admin",
+      "description": "Full system access: manage users, roles, approval flows, and system settings"
+    },
+    "role_operator": {
+      "name": "Operator",
+      "description": "Operations staff who handle after-sales records and product data"
+    },
+    "role_viewer": {
+      "name": "Viewer",
+      "description": "Regular user with read-only access and CC'd records"
+    }
   },
   "excel": {
     "libraryLoadFailed": "Excel library load failed, please refresh and retry",
@@ -1267,7 +1276,8 @@
       "name": "Flow Name",
       "scope": "Scope",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "type": "Flow Type"
     },
     "stat": {
       "total": "Total Flows",
@@ -1295,9 +1305,9 @@
     "btnDeleteLevel": "Delete Level",
     "nodeStart": "Start",
     "nodeSubmit": "Submit Application",
-      "nodeEnd": "End",
-      "nodeCompleteCaption": "Completion",
-      "nodeApproved": "Approved",
+    "nodeEnd": "End",
+    "nodeCompleteCaption": "Completion",
+    "nodeApproved": "Approved",
     "hintSelectNode": "Click a node to view and edit its configuration",
     "emptySelectNode": "Click an approval node above to view and edit its configuration",
     "nodeConfig": "Node Config",
@@ -1305,7 +1315,11 @@
     "btnMoveDown": "Move Down",
     "approvalPermHint": "Approvers are auto-filtered to active users holding this permission",
     "approverCount": "{n} active users hold this permission",
-    "none": "None"
+    "none": "None",
+    "flowType": {
+      "return": "Return Approval",
+      "processing": "After-Sales Processing Approval"
+    }
   },
   "dictionaries": {
     "title": "Dictionaries",
@@ -1397,5 +1411,102 @@
     "title": "CC After Approval Completion",
     "desc": "Notified after final approval passes; CC recipients can view only",
     "nodeSummaryEmpty": "No CC recipients"
+  },
+  "processing": {
+    "filter": {
+      "approvalStatus": "Processing Approval",
+      "allApprovalStatus": "All Processing Approvals",
+      "plan": "Processing Plan",
+      "allPlans": "All Plans",
+      "node": "Current Step",
+      "allNodes": "All Steps"
+    },
+    "approval": {
+      "unsubmitted": "Not Submitted",
+      "pending": "Pending Approval",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "plan": {
+      "resellable": "Resellable / ERP Inbound",
+      "replaceNowRepairReturn": "Replace Customer Now + Repair Defective Unit and Return to Warehouse",
+      "repairReturnWarehouse": "Factory Repair then Return to Warehouse",
+      "repairSendCustomer": "Factory Repair then Send to Customer"
+    },
+    "node": {
+      "planApproval": "Plan Approval Pending",
+      "pendingReplacement": "Pending Replacement",
+      "pendingErp": "Pending ERP Inbound",
+      "pendingFactoryShipment": "Pending Factory Shipment",
+      "factoryShipped": "Shipped to Factory",
+      "factoryReceived": "Factory Received",
+      "repairing": "Under Repair",
+      "pendingWarehouseInbound": "Pending Warehouse Inbound",
+      "pendingCustomerShipment": "Pending Customer Shipment",
+      "completed": "Completed"
+    },
+    "action": {
+      "confirmErpInbound": "Confirm ERP Inbound",
+      "shipReplacement": "Ship Replacement",
+      "shipToFactory": "Ship to Factory",
+      "confirmFactoryReceived": "Confirm Factory Receipt",
+      "startRepair": "Start Repair",
+      "completeRepair": "Confirm Repair Complete",
+      "confirmWarehouseInbound": "Confirm Warehouse Inbound",
+      "shipRepairedToCustomer": "Ship Repaired Unit to Customer"
+    },
+    "btn": {
+      "submitPlan": "Submit Processing Plan",
+      "advance": "Advance Processing",
+      "submitApproval": "Submit for Approval",
+      "confirmAction": "Confirm Action"
+    },
+    "planModal": {
+      "title": "Submit After-Sales Processing Plan",
+      "planType": "Processing Plan",
+      "factory": "Factory / Repair Party",
+      "remark": "Processing Notes"
+    },
+    "actionModal": {
+      "title": "Advance After-Sales Processing",
+      "action": "Action",
+      "date": "Processing Date",
+      "carrier": "Carrier",
+      "tracking": "Tracking No.",
+      "replacementSku": "Replacement SKU",
+      "replacementSn": "Replacement SN"
+    },
+    "approvalModal": {
+      "title": "Processing Plan Approval"
+    },
+    "approvalQueue": {
+      "title": "After-Sales Processing Approvals",
+      "empty": "No matching processing approvals",
+      "request": "Request",
+      "plan": "Processing Plan",
+      "items": "Items",
+      "review": "Review",
+      "loadFailed": "Failed to load processing approvals"
+    },
+    "returnApprovalQueue": {
+      "title": "Return Approvals"
+    },
+    "selectedCount": "{count} after-sales items selected",
+    "validation": {
+      "returnApprovalRequired": "Only return-approved items can be submitted for processing approval.",
+      "completedSelected": "Completed items cannot be submitted again.",
+      "activePlanExists": "At least one selected item already has a pending or approved processing plan.",
+      "planApprovalRequired": "The processing plan must be approved before execution.",
+      "noCommonAction": "Selected items are at different processing steps. Filter to the same step before batch processing."
+    },
+    "error": {
+      "submitPlan": "Failed to submit processing plan",
+      "action": "Failed to update processing step",
+      "approval": "Processing approval failed"
+    },
+    "success": {
+      "planSubmitted": "Processing plan submitted for approval",
+      "actionUpdated": "After-sales processing updated"
+    }
   }
 }
