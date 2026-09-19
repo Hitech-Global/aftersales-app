@@ -1135,9 +1135,9 @@
       "newProgress": "新处理进度",
       "processDate": "处理日期",
       "erpDate": "ERP入库日期",
-      "remark": "处理备注"
+      "remark": "方案说明"
     },
-   "remarkPlaceholder": "填写处理说明、异常原因或后续备注",
+   "remarkPlaceholder": "填写换新/返厂维修方案说明（可选）",
     "btnSubmitApproval": "提交处理审批",
     "btnSubmit": "确认更新"
   },

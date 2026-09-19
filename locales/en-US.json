@@ -1136,9 +1136,9 @@
       "newProgress": "New Progress",
       "processDate": "Processing Date",
       "erpDate": "ERP Receipt Date",
-      "remark": "Processing Notes"
+      "remark": "Resolution Notes"
     },
-   "remarkPlaceholder": "Add processing notes, exception reasons, or follow-up comments",
+   "remarkPlaceholder": "Add resolution notes or exception details (optional)",
     "btnSubmitApproval": "Submit for approval",
     "btnSubmit": "Confirm Update"
   },
