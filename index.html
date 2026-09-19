@@ -1620,8 +1620,15 @@ html[data-theme="dark"]{color-scheme:dark}
               </div>
             </div>
           </div>
-          <div id="approval-table-area"></div>
-          <div class="pagination" id="appr-pagination"></div>
+          <div class="detail-section" style="margin-bottom:18px">
+            <h3 data-i18n="processing.approvalQueue.title"></h3>
+            <div id="processing-approval-area"></div>
+          </div>
+          <div class="detail-section">
+            <h3 data-i18n="processing.returnApprovalQueue.title"></h3>
+            <div id="approval-table-area"></div>
+            <div class="pagination" id="appr-pagination"></div>
+          </div>
         </div>
 
         <!-- 商品管理 -->
@@ -2030,6 +2037,27 @@ html[data-theme="dark"]{color-scheme:dark}
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeProcessingActionModal()" data-i18n="approvalModal.btnCancel"></button>
       <button class="btn btn-primary" onclick="submitProcessingAction()" data-i18n="processing.btn.confirmAction"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 售后处理方案审批 -->
+<div id="processing-approval-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeProcessingApprovalModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 data-i18n="processing.approvalModal.title"></h3>
+      <button class="modal-close" onclick="closeProcessingApprovalModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="processing-approval-summary"></div>
+      <div class="form-group form-group-full" style="margin-top:14px">
+        <label data-i18n="approvalModal.label.comment"></label>
+        <textarea id="processing-approval-comment" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="submitProcessingApproval('reject')" data-i18n="approvalModal.btnReject"></button>
+      <button class="btn btn-primary" onclick="submitProcessingApproval('approve')" data-i18n="approvalModal.btnApprove"></button>
     </div>
   </div>
 </div>
