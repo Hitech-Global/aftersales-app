@@ -1088,16 +1088,27 @@
     "faultDescriptionRequired": "Baris {row}: Silakan isi deskripsi kerusakan",
     "enterReturnDate": "Masukkan tanggal stock-in retur"
   },
+  "resolutionType": {
+    "customer_replacement": "Penggantian untuk pelanggan",
+    "factory_repair_return_warehouse": "Perbaikan pabrik → kembali ke gudang",
+    "factory_repair_customer_replacement": "Perbaikan pabrik → penggantian pelanggan"
+  },
+  "resolutionApproval": {
+    "approveAction": "Setujui penyelesaian", "startAction": "Mulai eksekusi", "completeAction": "Selesaikan proses", "pending": "Menunggu persetujuan penyelesaian", "approvedShort": "Penyelesaian disetujui", "rejected": "Penyelesaian ditolak", "inProgress": "Sedang diproses", "completed": "Proses selesai", "alreadySubmitted": "Item yang dipilih sudah memiliki persetujuan penyelesaian", "noEnabledFlow": "Belum ada alur persetujuan penyelesaian yang aktif", "selectFlowAndType": "Pilih tipe penyelesaian dan alur persetujuan", "submitFailed": "Gagal mengirim persetujuan penyelesaian", "submitted": "Persetujuan penyelesaian {count} item telah dikirim", "confirmApprove": "Setujui penyelesaian ini?", "confirmReject": "Tolak penyelesaian ini?", "commentPrompt": "Komentar persetujuan (opsional)", "approveFailed": "Persetujuan penyelesaian gagal", "approved": "Persetujuan penyelesaian selesai", "confirmStart": "Mulai penyelesaian ini", "confirmComplete": "Selesaikan penyelesaian ini", "executeFailed": "Eksekusi penyelesaian gagal", "executed": "Status eksekusi diperbarui"
+  },
   "batchProcess": {
-    "title": "Update Progress Proses Massal",
+    "title": "Kirim Persetujuan Penyelesaian",
     "summary": "{count} item RMA yang sudah disetujui dipilih",
     "label": {
+      "resolutionType": "Tipe Penyelesaian",
+      "resolutionFlow": "Alur Persetujuan Penyelesaian",
       "newProgress": "Progress Baru",
       "processDate": "Tanggal Proses",
       "erpDate": "Tanggal Penerimaan ERP",
       "remark": "Catatan Proses"
     },
-    "remarkPlaceholder": "Tambahkan catatan proses, alasan pengecualian, atau komentar lanjutan",
+   "remarkPlaceholder": "Tambahkan catatan proses, alasan pengecualian, atau komentar lanjutan",
+    "btnSubmitApproval": "Kirim untuk persetujuan",
     "btnSubmit": "Konfirmasi Update"
   },
   "confirm": {
@@ -1266,8 +1277,13 @@
       "level": "Level",
       "name": "Nama Alur",
       "scope": "Cakupan",
+      "flowType": "Tipe Alur",
       "status": "Status",
       "actions": "Tindakan"
+    },
+    "flowType": {
+      "return": "Persetujuan retur",
+      "resolution": "Persetujuan penyelesaian"
     },
     "stat": {
       "total": "Total Alur",
