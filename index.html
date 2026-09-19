@@ -2255,7 +2255,7 @@ async function getRecords(){
     return records;
   }catch(e){return[];}
 }
-async function saveRecordsAsync(r){ _recordsCache = null;
+async function saveRecordsAsync(r){ _recordsCache = null; resourceInvalidate('records');
   if (await checkDbAvailable()) {
     for (const record of r) { await saveRecordAsync(record).catch(e => console.error('Save record failed:', e)); }
     return;
@@ -2279,7 +2279,7 @@ function isValidTempId(s){
   return typeof s === 'string' && /^tmp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 }
 async function getSalesData(){ return asArray(await getSalesAsync()); }
-async function saveSalesData(d){ _salesCache = null;
+async function saveSalesData(d){ _salesCache = null; resourceInvalidate('sales');
   if (await checkDbAvailable()) {
     for (const entry of d) {
       await fetch('/api/sales', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(entry) });
@@ -2288,11 +2288,11 @@ async function saveSalesData(d){ _salesCache = null;
   }
   localStorage.setItem('aftersales_sales_data',JSON.stringify(d)); }
 async function getUsers(){ return await getUsersAsync(); }
-async function saveUsers(u){ _usersCache = null; for(const user of u) await saveUserAsync(user).catch(e => console.error('Save user failed:', e)); }
+async function saveUsers(u){ _usersCache = null; resourceInvalidate('users'); for(const user of u) await saveUserAsync(user).catch(e => console.error('Save user failed:', e)); }
 async function getRoles(){ return await getRolesAsync(); }
 async function saveRoles(r){ await saveRolesAsync(r); }
 async function getProducts(){ return await getProductsAsync(); }
-async function saveProducts(p){ _productsCache = null; for(const prod of p) await saveProductAsync(prod).catch(e => console.error('Save product failed:', e)); }
+async function saveProducts(p){ _productsCache = null; resourceInvalidate('products'); for(const prod of p) await saveProductAsync(prod).catch(e => console.error('Save product failed:', e)); }
 // 身份仅来自服务端会话，运行时保存在内存中；绝不写入/读取 localStorage 作为登录身份来源
 let _sessionUser = null;
 function getCurrentUser(){ return _sessionUser; }
@@ -2491,7 +2491,7 @@ async function getUsersAsync() {
   try { return JSON.parse(localStorage.getItem('aftersales_users') || '[]'); } catch(e) { return []; }
 }
 async function saveUserAsync(user) {
-  _usersCache = null;
+  _usersCache = null; resourceInvalidate('users');
   if (await checkDbAvailable()) {
     const resp = await fetch(`/api/users/${user.id}`, {
       method: 'PUT',
@@ -2507,7 +2507,7 @@ async function saveUserAsync(user) {
   return user;
 }
 async function createUserAsync(user) {
-  _usersCache = null;
+  _usersCache = null; resourceInvalidate('users');
   if (await checkDbAvailable()) {
     const resp = await fetch('/api/users', {
       method: 'POST',
@@ -2560,7 +2560,7 @@ async function getRolesAsync() {
   try { return JSON.parse(localStorage.getItem('aftersales_roles') || '[]'); } catch(e) { return []; }
 }
 async function saveRolesAsync(roles) {
-  _rolesCache = null;
+  _rolesCache = null; resourceInvalidate('roles');
   if (await checkDbAvailable()) {
     for (const r of roles) {
       await fetch('/api/roles', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(r) });
@@ -2597,7 +2597,7 @@ async function getProductsAsync() {
   try { return JSON.parse(localStorage.getItem('aftersales_products') || '[]'); } catch(e) { return []; }
 }
 async function saveProductAsync(product) {
-  _productsCache = null;
+  _productsCache = null; resourceInvalidate('products');
   if (await checkDbAvailable()) {
     const resp = await fetch(`/api/products/${product.id}`, {
       method: 'PUT',
@@ -2624,7 +2624,7 @@ async function saveProductAsync(product) {
 
 // 单条商品持久化：新建=1 个 POST，编辑=1 个 PUT，并严格校验 HTTP 状态
 async function saveProductSingle(product, isNew) {
-  _productsCache = null;
+  _productsCache = null; resourceInvalidate('products');
   if (!(await checkDbAvailable())) {
     // 服务端不可用时回退 localStorage（保持原有离线语义）
     const products = await getProductsAsync();
@@ -2652,7 +2652,7 @@ async function readApiError(resp) {
   return '';
 }
 async function deleteProductAsync(id) {
-  _productsCache = null;
+  _productsCache = null; resourceInvalidate('products');
   if (await checkDbAvailable()) {
     await fetch(`/api/products/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
     return;
@@ -2684,7 +2684,7 @@ async function getSalesAsync() {
   try { return JSON.parse(localStorage.getItem('aftersales_sales_data') || '[]'); } catch(e) { return []; }
 }
 async function saveSalesAsync(data) {
-  _salesCache = null;
+  _salesCache = null; resourceInvalidate('sales');
   if (await checkDbAvailable()) {
     for (const entry of data) {
       await fetch('/api/sales', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(entry) });
@@ -2722,7 +2722,7 @@ async function getRecordsAsync() {
   try { return JSON.parse(localStorage.getItem('aftersales_records') || '[]'); } catch(e) { return []; }
 }
 async function saveRecordAsync(record) {
-  _recordsCache = null;
+  _recordsCache = null; resourceInvalidate('records');
   if (await checkDbAvailable()) {
     const resp = await fetch(`/api/records/${record.id}`, {
       method: 'PUT',
@@ -2759,7 +2759,7 @@ async function saveRecordAsync(record) {
   localStorage.setItem('aftersales_records', JSON.stringify(records));
 }
 async function deleteRecordAsync(id) {
-  _recordsCache = null;
+  _recordsCache = null; resourceInvalidate('records');
   if (await checkDbAvailable()) {
     await fetch(`/api/records/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
     return;
@@ -5014,7 +5014,7 @@ async function submitProcessingPlan(){
     }
     closeProcessingPlanModal();
     clearBatchSelection();
-    _recordsCache=null; _cacheTimestamp=0;
+    _recordsCache=null; resourceInvalidate('records');
     showFlash(t('processing.success.planSubmitted'),'success');
     renderList();
   }catch(e){
@@ -5090,7 +5090,7 @@ async function submitProcessingAction(){
     }
     closeProcessingActionModal();
     clearBatchSelection();
-    _recordsCache=null; _cacheTimestamp=0;
+    _recordsCache=null; resourceInvalidate('records');
     showFlash(t('processing.success.actionUpdated'),'success');
     renderList();
   }catch(e){
@@ -6380,7 +6380,7 @@ async function submitForApproval(e){
       console.warn('[Notify] 提交审批通知发送失败（不影响提交结果）:', err?.message || err);
     });
     // CC 抄送通知已由服务端在提交成功逻辑内部触发（四.4：服务端内部调用，前端不再决定 cc_users/收件人）
-    _recordsCache=null; _cacheTimestamp=0;
+    _recordsCache=null; resourceInvalidate('records');
     // 确认保存成功后返回 RMA Cases，刷新列表与顶部数量，再在列表页中央显示成功卡片
     showPage('list');
     showCenterActionResult('success', t('result.submittedForApproval'));
@@ -6469,7 +6469,7 @@ async function saveAsDraft(){
     records.push(record);
   }
   await saveRecordsAsync(records);
-    _recordsCache=null; _cacheTimestamp=0;
+    _recordsCache=null; resourceInvalidate('records');
     showPage('list');
     showCenterActionResult('success', t('result.draftSaved'));
   } catch(err) {
@@ -6785,7 +6785,7 @@ async function submitProcessingApproval(action){
       throw new Error(payload.error||t('processing.error.approval'));
     }
     closeProcessingApprovalModal();
-    _recordsCache=null; _cacheTimestamp=0;
+    _recordsCache=null; resourceInvalidate('records');
     showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
     renderApproval();
   }catch(e){
@@ -7023,8 +7023,8 @@ async function doApproval(action, source='modal'){
   const saved = await executeApproval(currentApprovalRecordId, action, comment, returnDate, pendingAttachments);
   if(saved){
     // 强制清除缓存，确保重新拉取最新数据（包含刚完成的审批结果）
-    _recordsCache=null;
-    _cacheTimestamp=0;
+    _recordsCache=null; resourceInvalidate('records');
+   
     if(source==='modal') closeApprovalModal();
     else {
       pendingAttachments=[];
@@ -8621,7 +8621,7 @@ async function deleteUser(userId){
     const users = await getUsers();
     localStorage.setItem('aftersales_users', JSON.stringify(users.filter(u => u.id !== userId)));
   }
-  _usersCache = null;
+  _usersCache = null; resourceInvalidate('users');
   showFlash(t('flash.user.deleted'),'info');
   renderUsers();
 }
