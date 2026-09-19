@@ -5658,7 +5658,7 @@ async function populateApproverSelects(){
     if (userResp && userResp.ok) {
       _allUsersCache = (await userResp.json()) || [];
     }
-    const enabled = flows.filter(f => f.enabled);
+    const enabled = flows.filter(f => f.enabled && (f.flow_type || 'return_approval') === 'return_approval');
     if (enabled.length === 0) {
       _approvalFlowsCache = [];
       _activeFlowId = '';
@@ -8393,6 +8393,7 @@ async function renderApprovalFlows() {
     if (!Array.isArray(_afFlows)) _afFlows = [];
     // 补全: 老数据可能没有 approver_name / backup_approver_name,从 users 反查填上
     _afFlows.forEach(f => {
+      f.flow_type = f.flow_type || 'return_approval';
       f._canonical = { name: f.name, scope: f.scope };
       f._dirty = { name: false, scope: false };
       (f.nodes || []).forEach(n => {
@@ -8466,10 +8467,11 @@ function _afRenderPage() {
   h += '<span style="font-size:15px;font-weight:600">' + t('approvalFlows.listTitle') + '</span>';
   h += '<span style="font-size:12px;color:var(--text-muted)">' + t('approvalFlows.listHint') + '</span>';
   h += '</div>';
-  h += '<table class="af-table"><thead><tr><th>' + t('approvalFlows.col.name') + '</th><th>' + t('approvalFlows.col.scope') + '</th><th>' + t('approvalFlows.col.level') + '</th><th>' + t('approvalFlows.col.status') + '</th><th>' + t('approvalFlows.col.actions') + '</th></tr></thead><tbody>';
+  h += '<table class="af-table"><thead><tr><th>' + t('approvalFlows.col.name') + '</th><th>' + t('approvalFlows.col.type') + '</th><th>' + t('approvalFlows.col.scope') + '</th><th>' + t('approvalFlows.col.level') + '</th><th>' + t('approvalFlows.col.status') + '</th><th>' + t('approvalFlows.col.actions') + '</th></tr></thead><tbody>';
   _afFlows.forEach((f, i) => {
     h += '<tr class="' + (i === _afCurrentIdx ? 'selected' : '') + '" onclick="selectFlow(' + i + ')">';
     h += '<td style="font-weight:600">' + esc(f.id === 'flow_standard' ? t('form.flow.defaultName') : f.name) + '</td>';
+    h += '<td><span class="af-badge ' + ((f.flow_type || 'return_approval') === 'processing_approval' ? 'af-badge-off' : 'af-badge-on') + '">' + esc((f.flow_type || 'return_approval') === 'processing_approval' ? t('approvalFlows.flowType.processing') : t('approvalFlows.flowType.return')) + '</span></td>';
     h += '<td>' + esc((f.id === 'flow_standard' && f.scope === '全部售后记录') ? t('form.flow.defaultScope') : (f.scope || '-')) + '</td>';
     h += '<td>' + (f.nodes ? f.nodes.length : 0) + ' ' + t('approvalFlows.levelUnit') + '</td>';
     h += '<td><span class="af-badge ' + (f.enabled ? 'af-badge-on' : 'af-badge-off') + '">' + (f.enabled ? t('approvalFlows.status.enabled') : t('approvalFlows.status.disabled')) + '</span></td>';
@@ -8498,6 +8500,14 @@ function _afRenderPage() {
     h += '<div class="af-toggle ' + (flow.enabled ? 'af-toggle-on' : 'af-toggle-off') + '" onclick="toggleFlowEnabled()"><div class="af-toggle-knob"></div></div>';
     h += '<button class="af-btn af-btn-primary af-btn-sm" onclick="saveFlow()">' + t('dictionaries.btnSave') + '</button>';
     h += '</div></div>';
+
+    // 流程类型：退货审批与售后处理审批共用同一审批引擎，但互不串用。
+    h += '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">';
+    h += '<span style="font-size:13px;color:var(--text-secondary);width:80px;text-align:right">' + t('approvalFlows.col.type') + '</span>';
+    h += '<select class="af-config-select" id="af-flow-type" onchange="updateFlowField(\'flow_type\',this.value)" style="max-width:400px"' + (flow.id === 'flow_standard' ? ' disabled' : '') + '>';
+    h += '<option value="return_approval"' + ((flow.flow_type || 'return_approval') === 'return_approval' ? ' selected' : '') + '>' + t('approvalFlows.flowType.return') + '</option>';
+    h += '<option value="processing_approval"' + (flow.flow_type === 'processing_approval' ? ' selected' : '') + '>' + t('approvalFlows.flowType.processing') + '</option>';
+    h += '</select></div>';
 
     // 适用范围
     h += '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">';
@@ -8844,7 +8854,7 @@ async function saveFlow() {
     const resp = await fetch('/api/approval-flows/' + encodeURIComponent(flow.id), {
       method: 'PUT',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: _saveName, scope: _saveScope, enabled: flow.enabled, nodes: _saveNodes, cc_users: flow.cc_users || [] })
+      body: JSON.stringify({ name: _saveName, scope: _saveScope, flow_type: flow.flow_type || 'return_approval', enabled: flow.enabled, nodes: _saveNodes, cc_users: flow.cc_users || [] })
     });
     if (resp.ok) {
       alert('保存成功');
@@ -8864,8 +8874,10 @@ async function createApprovalFlow() {
     id: 'flow_' + Date.now(),
     name: '新审批流（复制自标准流）',
     scope: standard.scope || '全部售后记录',
+    flow_type: 'return_approval',
     enabled: false,
-    nodes: JSON.parse(JSON.stringify(standard.nodes || []))
+    nodes: JSON.parse(JSON.stringify(standard.nodes || [])),
+    cc_users: []
   };
   try {
     const resp = await fetch('/api/approval-flows', {
