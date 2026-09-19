@@ -1507,6 +1507,15 @@
     "success": {
       "planSubmitted": "处理方案已提交审批",
       "actionUpdated": "售后处理已更新"
+    },
+    "col": {
+      "approval": "处理审批",
+      "plan": "处理方案",
+      "node": "当前节点"
+    },
+    "detail": {
+      "title": "售后处理",
+      "requestId": "处理申请"
     }
   }
 }
