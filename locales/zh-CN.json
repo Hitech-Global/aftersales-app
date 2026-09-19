@@ -226,10 +226,11 @@
     },
     "btnManual": "手动填写",
     "btnBatchImport": "批量导入",
+    "btnResolutionApproval": "批量提交处理审批",
     "batch": {
       "selected": "已选 {count} 项明细",
       "selectStatus": "选择处理状态...",
-      "btnUpdate": "批量更改处理状态",
+      "btnUpdate": "提交处理审批",
       "btnCancel": "取消"
     },
     "col": {
@@ -1094,7 +1095,7 @@
     "factory_repair_customer_replacement": "返厂维修后给客户换新"
   },
   "resolutionApproval": {
-    "approveAction": "审批处理方案", "startAction": "开始执行", "completeAction": "完成处理", "alreadySubmitted": "所选明细已有处理审批", "noEnabledFlow": "未启用售后处理审批流", "selectFlowAndType": "请选择处理方案和处理审批流", "submitFailed": "提交处理审批失败", "submitted": "已提交 {count} 条明细的处理审批", "confirmApprove": "确认通过处理方案？取消则提交拒绝。", "commentPrompt": "请输入审批意见（可选）", "approveFailed": "处理审批失败", "approved": "处理审批已完成", "confirmStart": "确认开始执行处理方案", "confirmComplete": "确认完成处理方案", "executeFailed": "执行处理方案失败", "executed": "处理执行状态已更新"
+    "approveAction": "审批处理方案", "startAction": "开始执行", "completeAction": "完成处理", "selectItemsHint": "已切换到按明细模式，请勾选审批通过的明细后提交处理审批。", "alreadySubmitted": "所选明细已有处理审批", "noEnabledFlow": "未启用售后处理审批流", "selectFlowAndType": "请选择处理方案和处理审批流", "submitFailed": "提交处理审批失败", "submitted": "已提交 {count} 条明细的处理审批", "confirmApprove": "确认通过处理方案？取消则提交拒绝。", "commentPrompt": "请输入审批意见（可选）", "approveFailed": "处理审批失败", "approved": "处理审批已完成", "confirmStart": "确认开始执行处理方案", "confirmComplete": "确认完成处理方案", "executeFailed": "执行处理方案失败", "executed": "处理执行状态已更新"
   },
   "batchProcess": {
     "title": "提交处理审批",
