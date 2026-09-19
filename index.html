@@ -6162,15 +6162,12 @@ async function populateApproverSelects(){
   preview.innerHTML = '';
   preview.style.display = 'none';
   try {
-    // 并行加载 flows + users,users 用于把 node.approver_id 解析成中文/英文/印尼文名字
-    const [flowResp, userResp] = await Promise.all([
-      fetch('/api/approval-flows', { headers: getAuthHeaders() }),
-      fetch('/api/users', { headers: getAuthHeaders() }).catch(() => null)
+    // PSI 风格：审批流 / 用户均复用内存快照与 inflight 去重，不在每次开表单时重复 GET。
+    const [flows, users] = await Promise.all([
+      getApprovalFlowsFast(),
+      getUsers()
     ]);
-    const flows = (await flowResp.json()) || [];
-    if (userResp && userResp.ok) {
-      _allUsersCache = (await userResp.json()) || [];
-    }
+    _allUsersCache = Array.isArray(users) ? users : [];
     const enabled = flows.filter(f => f.enabled && (f.flow_type || 'return_approval') === 'return_approval');
     if (enabled.length === 0) {
       _approvalFlowsCache = [];
@@ -6199,6 +6196,25 @@ async function populateApproverSelects(){
 
 let _approvalFlowsCache = [];
 let _activeFlowId = '';
+let _approvalFlowsDataCache = null;
+
+async function fetchApprovalFlowsFresh(){
+  return runResourceFetch('approvalFlows',async()=>{
+    const resp=await fetch('/api/approval-flows',{headers:getAuthHeaders()});
+    if(!resp.ok){const e=new Error('HTTP '+resp.status);e.status=resp.status;throw e;}
+    const data=await resp.json();
+    _approvalFlowsDataCache=Array.isArray(data)?data:[];
+    resourceTouch('approvalFlows');
+    return _approvalFlowsDataCache;
+  });
+}
+async function getApprovalFlowsFast(){
+  if(_approvalFlowsDataCache){
+    refreshResourceInBackground('approvalFlows',fetchApprovalFlowsFresh);
+    return _approvalFlowsDataCache;
+  }
+  return await fetchApprovalFlowsFresh();
+}
 let _allUsersCache = [];
 
 // 翻译审批流中的默认中文名称/节点标题（数据库里存的中文，切换语言时需要翻译）
@@ -9114,16 +9130,19 @@ let _afRoles = [];
 async function renderApprovalFlows() {
   const area = document.getElementById('approval-flows-area');
   if (!area) return;
-  area.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">' + t('dictionaries.loading') + '</div>';
+  if(!_afFlows.length && !area.innerHTML.trim()){
+    area.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">' + t('dictionaries.loading') + '</div>';
+  }
   try {
-    const [flowResp, userResp, roleResp] = await Promise.all([
-      fetch('/api/approval-flows', { headers: getAuthHeaders() }),
-      fetch('/api/users', { headers: getAuthHeaders() }),
-      fetch('/api/roles', { headers: getAuthHeaders() })
+    const [flows, users, roles] = await Promise.all([
+      getApprovalFlowsFast(),
+      getUsers(),
+      getRoles()
     ]);
-    _afFlows = await flowResp.json();
-    _afUsers = await userResp.json();
-    _afRoles = await roleResp.json();
+    // 管理页使用独立副本，避免未保存编辑污染表单读取的审批流快照。
+    _afFlows = JSON.parse(JSON.stringify(Array.isArray(flows)?flows:[]));
+    _afUsers = Array.isArray(users)?users:[];
+    _afRoles = Array.isArray(roles)?roles:[];
     if (!Array.isArray(_afFlows)) _afFlows = [];
     // 补全: 老数据可能没有 approver_name / backup_approver_name,从 users 反查填上
     _afFlows.forEach(f => {
@@ -9591,6 +9610,9 @@ async function saveFlow() {
       body: JSON.stringify({ name: _saveName, scope: _saveScope, flow_type: flow.flow_type || 'return_approval', enabled: flow.enabled, nodes: _saveNodes, cc_users: flow.cc_users || [] })
     });
     if (resp.ok) {
+      _approvalFlowsDataCache=null;
+      resourceInvalidate('approvalFlows');
+      invalidatePageSignature('approval-flows');
       alert('保存成功');
     } else {
       const err = await resp.json();
@@ -9620,6 +9642,9 @@ async function createApprovalFlow() {
       body: JSON.stringify(newFlow)
     });
     if (resp.ok) {
+      _approvalFlowsDataCache=null;
+      resourceInvalidate('approvalFlows');
+      invalidatePageSignature('approval-flows');
       await renderApprovalFlows();
       _afCurrentIdx = _afFlows.length - 1;
       _afRenderPage();
@@ -9641,6 +9666,9 @@ async function deleteApprovalFlow(id, name) {
       headers: getAuthHeaders()
     });
     if (resp.ok) {
+      _approvalFlowsDataCache=null;
+      resourceInvalidate('approvalFlows');
+      invalidatePageSignature('approval-flows');
       await renderApprovalFlows();
     } else {
       const err = await resp.json();
