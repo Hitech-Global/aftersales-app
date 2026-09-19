@@ -1384,6 +1384,12 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     const oldRes = await query('SELECT status FROM aftersales_records WHERE id = $1', [req.params.id]);
     const oldStatus = oldRes.rows[0] ? oldRes.rows[0].status : null;
 
+    // 退货审批通过后，items 的业务状态只能由 processing-requests / processing-actions 专用接口修改。
+    // 阻断旧的“整条记录 PUT → 直接改 processing/completed”路径，防止绕过处理方案审批。
+    if (oldStatus === '审批通过' && items !== undefined) {
+      return res.status(409).json({ error: '退货审批通过后的售后处理必须通过处理方案审批工作流执行' });
+    }
+
     // CC 快照冻结规则（二.1/二.2）：
     // 仅当「旧状态为 draft 且本次提交为非 draft」时生成快照；
     // 已提交记录的后续 PUT / 审批 / 状态更新绝不重新解析审批流或覆盖 cc_users。
@@ -1731,7 +1737,9 @@ app.post('/api/processing-requests',requireApiPermission('record_edit'),async(re
 });
 
 app.post('/api/processing-requests/:id/approval',async(req,res)=>{
-  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});const{action,comment,expected_level}=req.body||{};if(!['approve','reject'].includes(action))return res.status(400).json({error:'无效的审批动作'});const client=await pool.connect();
+  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});
+  if(!req.currentUserId)return res.status(401).json({error:'未登录'});
+  const{action,comment,expected_level}=req.body||{};if(!['approve','reject'].includes(action))return res.status(400).json({error:'无效的审批动作'});const client=await pool.connect();
   try{await client.query('BEGIN');const rr=await client.query('SELECT * FROM aftersales_processing_requests WHERE id=$1 FOR UPDATE',[req.params.id]);if(!rr.rows.length){const e=new Error('处理申请不存在');e.status=404;throw e;}const request=normalizeProcessingRequestRow(rr.rows[0]);if(request.status!=='pending'||request.current_approval_level<=0){const e=new Error('该处理申请当前无需审批');e.status=409;throw e;}const level=Number(request.current_approval_level);if(expected_level!==undefined&&Number(expected_level)!==level){const e=new Error('审批层级已变更，请刷新后重试');e.status=409;throw e;}const node=request.flow_nodes[level-1]||{},perm=node.permission||('approval_level'+level);if(!(req.currentUserPermissions||[]).includes(perm)||node.approver_id!==req.currentUserId){const e=new Error('无权限或非本层级审批人，无法审批');e.status=403;throw e;}
     const ur=await client.query('SELECT COALESCE(NULLIF(TRIM(name),\'\'),NULLIF(TRIM(username),\'\'),$1) AS operator_name FROM users WHERE id=$1 LIMIT 1',[req.currentUserId]);const op=ur.rows[0]?ur.rows[0].operator_name:req.currentUserId,now=new Date().toISOString();request.approval_history.push({level,action,operator_id:req.currentUserId,operator_name:op,comment:String(comment||''),timestamp:now});const next=action==='approve'?processingNextLevel(request.flow_nodes,level):0,finalOk=action==='approve'&&next===0;request.status=action==='reject'?'rejected':(finalOk?'approved':'pending');request.current_approval_level=action==='reject'||finalOk?0:next;
     const grouped=new Map();request.item_refs.forEach(x=>{if(!grouped.has(x.record_id))grouped.set(x.record_id,[]);grouped.get(x.record_id).push(Number(x.item_index));});
@@ -1741,7 +1749,8 @@ app.post('/api/processing-requests/:id/approval',async(req,res)=>{
 });
 
 app.post('/api/processing-actions/batch',requireApiPermission('record_edit'),async(req,res)=>{
-  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});const action=String((req.body&&req.body.action)||''),data=processingJsonObject(req.body&&req.body.data),refs=Array.isArray(req.body&&req.body.items)?req.body.items:[],dedup=[],seen=new Set();
+  const pool=getPool();if(!pool)return res.status(500).json({error:'数据库未配置'});
+  const action=String((req.body&&req.body.action)||''),data=processingJsonObject(req.body&&req.body.data),refs=Array.isArray(req.body&&req.body.items)?req.body.items:[],dedup=[],seen=new Set();
   for(const r of refs){const rid=String((r&&r.record_id)||'').trim(),idx=Number(r&&r.item_index),k=rid+':'+idx;if(!rid||!Number.isInteger(idx)||idx<0||seen.has(k))continue;seen.add(k);dedup.push({record_id:rid,item_index:idx});}if(!dedup.length)return res.status(400).json({error:'请至少选择一条售后商品'});if(dedup.length>200)return res.status(400).json({error:'单次最多处理 200 条商品'});
   const client=await pool.connect();try{await client.query('BEGIN');const ur=await client.query('SELECT COALESCE(NULLIF(TRIM(name),\'\'),NULLIF(TRIM(username),\'\'),$1) AS operator_name FROM users WHERE id=$1 LIMIT 1',[req.currentUserId]);const op=ur.rows[0]?ur.rows[0].operator_name:req.currentUserId,now=new Date().toISOString(),grouped=new Map(),updated=[];dedup.forEach(x=>{if(!grouped.has(x.record_id))grouped.set(x.record_id,[]);grouped.get(x.record_id).push(x.item_index);});
     for(const rid of [...grouped.keys()].sort()){const q=await client.query('SELECT id,status,items,process_logs FROM aftersales_records WHERE id=$1 FOR UPDATE',[rid]);if(!q.rows.length){const e=new Error('售后记录不存在：'+rid);e.status=404;throw e;}if(q.rows[0].status!=='审批通过'){const e=new Error('仅退货审批通过的记录可执行售后处理');e.status=409;throw e;}const items=processingJsonArray(q.rows[0].items),logs=processingJsonArray(q.rows[0].process_logs);for(const idx of grouped.get(rid)){const item=items[idx];if(!item){const e=new Error('售后商品不存在：'+rid+' #'+(idx+1));e.status=404;throw e;}const old=item.process_progress||'pending';applyProcessingActionToItem(item,action,data,now);logs.push({item_index:idx,operator_id:req.currentUserId||'',operator_name:op||'',processed_at:now,process_date:String(data.date||data.ship_date||data.inbound_date||''),process_type:item.process_type||'rma',old_progress:old,new_progress:item.process_progress,action,remark:String(data.remark||''),processing_request_id:item.processing_request_id||''});}await client.query('UPDATE aftersales_records SET items=$1::jsonb,process_logs=$2::jsonb,updated_at=NOW() WHERE id=$3',[JSON.stringify(items),JSON.stringify(logs),rid]);updated.push(rid);}
