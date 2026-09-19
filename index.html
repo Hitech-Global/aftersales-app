@@ -5071,6 +5071,9 @@ async function submitProcessingPlan(){
     closeProcessingPlanModal();
     clearBatchSelection();
     _recordsCache=null; resourceInvalidate('records');
+    _processingRequestsCache=null; resourceInvalidate('processingRequests');
+    invalidatePageSignature('list');
+    invalidatePageSignature('approval');
     showFlash(t('processing.success.planSubmitted'),'success');
     renderList();
   }catch(e){
@@ -5147,6 +5150,9 @@ async function submitProcessingAction(){
     closeProcessingActionModal();
     clearBatchSelection();
     _recordsCache=null; resourceInvalidate('records');
+    invalidatePageSignature('list');
+    invalidatePageSignature('overview');
+    invalidatePageSignature('detail');
     showFlash(t('processing.success.actionUpdated'),'success');
     renderList();
   }catch(e){
@@ -6634,8 +6640,26 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
 
 // ==================== APPROVAL PAGE ====================
 
-let _processingRequestsCache=[];
+let _processingRequestsCache=null;
 let _processingApprovalCurrentId='';
+
+async function fetchProcessingRequestsFresh(){
+  return runResourceFetch('processingRequests',async()=>{
+    const res=await fetch('/api/processing-requests',{headers:getAuthHeaders()});
+    if(!res.ok){const e=new Error('HTTP '+res.status);e.status=res.status;throw e;}
+    const payload=await res.json();
+    _processingRequestsCache=Array.isArray(payload)?payload:[];
+    resourceTouch('processingRequests');
+    return _processingRequestsCache;
+  });
+}
+async function getProcessingRequestsFast(){
+  if(Array.isArray(_processingRequestsCache)){
+    refreshResourceInBackground('processingRequests',fetchProcessingRequestsFresh);
+    return _processingRequestsCache;
+  }
+  return await fetchProcessingRequestsFresh();
+}
 
 function processingQueueCell(text,className){
   const td=document.createElement('td');
@@ -6646,13 +6670,9 @@ function processingQueueCell(text,className){
 async function renderProcessingApprovals(tab,user,search,startD,endD){
   const area=document.getElementById('processing-approval-area');
   if(!area) return;
-  area.innerHTML='';
   try{
-    const res=await fetch('/api/processing-requests',{headers:getAuthHeaders()});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const payload=await res.json();
-    _processingRequestsCache=Array.isArray(payload)?payload:[];
-    let list=_processingRequestsCache.slice();
+    const payload=await getProcessingRequestsFast();
+    let list=(Array.isArray(payload)?payload:[]).slice();
 
     if(tab==='pending'){
       list=list.filter(req=>{
@@ -6858,6 +6878,9 @@ async function submitProcessingApproval(action){
     }
     closeProcessingApprovalModal();
     _recordsCache=null; resourceInvalidate('records');
+    _processingRequestsCache=null; resourceInvalidate('processingRequests');
+    invalidatePageSignature('approval');
+    invalidatePageSignature('list');
     showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
     renderApproval();
   }catch(e){
