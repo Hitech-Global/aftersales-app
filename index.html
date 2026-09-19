@@ -9729,16 +9729,39 @@ function _dictCurrentName(item) {
   return item.label_zh || item.label_en || item.label_id || item.code;
 }
 let _dictAll = [];
+let _dictLoaded = false;
 let _dictCurrent = 'return_reason';
 let _dictCache = {};
+
+function rebuildDictCache(){
+  _dictCache={};
+  (_dictAll||[]).forEach(d=>{(_dictCache[d.category]=_dictCache[d.category]||[]).push(d);});
+}
+async function fetchDictionariesFresh(){
+  return runResourceFetch('dictionaries',async()=>{
+    const resp=await fetch('/api/dictionaries',{headers:getAuthHeaders()});
+    if(!resp.ok){const e=new Error('HTTP '+resp.status);e.status=resp.status;throw e;}
+    const data=await resp.json();
+    _dictAll=Array.isArray(data)?data:[];
+    _dictLoaded=true;
+    rebuildDictCache();
+    resourceTouch('dictionaries');
+    return _dictAll;
+  });
+}
+async function getDictionariesFast(){
+  if(_dictLoaded){
+    refreshResourceInBackground('dictionaries',fetchDictionariesFresh);
+    return _dictAll;
+  }
+  return await fetchDictionariesFresh();
+}
 
 async function renderDictionaries() {
   if (!document.getElementById('dict-category-list')) return;
   try {
-    const resp = await fetch('/api/dictionaries', { headers: getAuthHeaders() });
-    _dictAll = await resp.json() || [];
-    _dictCache = {};
-    _dictAll.forEach(d => { (_dictCache[d.category] = _dictCache[d.category] || []).push(d); });
+    await getDictionariesFast();
+    rebuildDictCache();
     _dictRenderSidebar();
     _dictRenderItems();
   } catch (e) {
@@ -9838,6 +9861,10 @@ async function updateDictName(id, value, saveNow) {
       });
       if (resp.ok) {
         Object.assign(item, await resp.json());
+        rebuildDictCache();
+        resourceTouch('dictionaries');
+        invalidatePageSignature('dictionaries');
+        invalidatePageSignature('list');
         toast(t('dictionaries.saveSuccess'), 'success');
       } else {
         const err = await resp.json();
@@ -9852,11 +9879,16 @@ async function toggleDictEnabled(id) {
   if (!item) return;
   item.enabled = !item.enabled;
   try {
-    await fetch('/api/dictionaries/' + encodeURIComponent(id), {
+    const resp=await fetch('/api/dictionaries/' + encodeURIComponent(id), {
       method: 'PUT',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: item.enabled })
     });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    rebuildDictCache();
+    resourceTouch('dictionaries');
+    invalidatePageSignature('dictionaries');
+    invalidatePageSignature('list');
     _dictRenderItems();
   } catch (e) { toast(t('dictionaries.deleteFailed') + e.message, 'error'); }
 }
@@ -9866,11 +9898,16 @@ async function updateDictParent(id, parentCode) {
   if (!item) return;
   item.parent_code = parentCode || '';
   try {
-    await fetch('/api/dictionaries/' + encodeURIComponent(id), {
+    const resp=await fetch('/api/dictionaries/' + encodeURIComponent(id), {
       method: 'PUT',
       headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ parent_code: item.parent_code })
     });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    rebuildDictCache();
+    resourceTouch('dictionaries');
+    invalidatePageSignature('dictionaries');
+    invalidatePageSignature('list');
     toast(t('dictionaries.saveSuccess'), 'success');
   } catch (e) { toast(t('dictionaries.saveFailed') + e.message, 'error'); }
 }
@@ -9883,7 +9920,14 @@ async function deleteDictItem(id) {
       headers: getAuthHeaders()
     });
     if (resp.ok) {
-      await renderDictionaries();
+      _dictAll=(_dictAll||[]).filter(d=>String(d.id)!==String(id));
+      _dictLoaded=true;
+      rebuildDictCache();
+      resourceTouch('dictionaries');
+      invalidatePageSignature('dictionaries');
+      invalidatePageSignature('list');
+      _dictRenderSidebar();
+      _dictRenderItems();
       toast(t('dictionaries.deleteSuccess'), 'success');
     } else {
       const err = await resp.json();
@@ -10012,7 +10056,21 @@ async function createDictItem(code, name, parentCode) {
     });
     if (resp.ok) {
       closeDictAddForm();
-      await renderDictionaries();
+      const created=await resp.json().catch(()=>null);
+      if(created&&created.id){
+        _dictAll.push(created);
+        _dictLoaded=true;
+        rebuildDictCache();
+        resourceTouch('dictionaries');
+      }else{
+        _dictLoaded=false;
+        resourceInvalidate('dictionaries');
+        await fetchDictionariesFresh();
+      }
+      invalidatePageSignature('dictionaries');
+      invalidatePageSignature('list');
+      _dictRenderSidebar();
+      _dictRenderItems();
       toast(t('dictionaries.addSuccess'), 'success');
     } else {
       const err = await resp.json().catch(() => ({}));
@@ -10033,11 +10091,12 @@ function toast(msg, type) {
 // ==================== 字典选项加载（下拉用）====================
 async function loadDictOptions(category, parentCode) {
   try {
-    let url = '/api/dictionaries?category=' + encodeURIComponent(category);
-    if (parentCode) url += '&parent_code=' + encodeURIComponent(parentCode);
-    const resp = await fetch(url, { headers: getAuthHeaders() });
-    const list = await resp.json() || [];
-    return list.filter(d => d.enabled);
+    const all=await getDictionariesFast();
+    return (all||[]).filter(d=>{
+      if(d.category!==category||!d.enabled) return false;
+      if(parentCode&&String(d.parent_code||'')!==String(parentCode)) return false;
+      return true;
+    });
   } catch (e) { return []; }
 }
 
