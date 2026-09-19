@@ -1413,6 +1413,42 @@ html[data-theme="dark"]{color-scheme:dark}
                 <label data-i18n="list.filter.processProgress"></label>
                 <select class="filter-select" id="process-progress-filter" onchange="renderList()"><option value="" data-i18n="list.filter.allProcessProgress"></option></select>
               </div>
+              <div class="filter-group fg-wide">
+                <label data-i18n="processing.filter.approvalStatus"></label>
+                <select class="filter-select" id="processing-approval-filter" onchange="renderList()">
+                  <option value="" data-i18n="processing.filter.allApprovalStatus"></option>
+                  <option value="unsubmitted" data-i18n="processing.approval.unsubmitted"></option>
+                  <option value="pending" data-i18n="processing.approval.pending"></option>
+                  <option value="approved" data-i18n="processing.approval.approved"></option>
+                  <option value="rejected" data-i18n="processing.approval.rejected"></option>
+                </select>
+              </div>
+              <div class="filter-group fg-wide">
+                <label data-i18n="processing.filter.plan"></label>
+                <select class="filter-select" id="processing-plan-filter" onchange="renderList()">
+                  <option value="" data-i18n="processing.filter.allPlans"></option>
+                  <option value="resellable" data-i18n="processing.plan.resellable"></option>
+                  <option value="replace_now_repair_return" data-i18n="processing.plan.replaceNowRepairReturn"></option>
+                  <option value="repair_return_warehouse" data-i18n="processing.plan.repairReturnWarehouse"></option>
+                  <option value="repair_send_customer" data-i18n="processing.plan.repairSendCustomer"></option>
+                </select>
+              </div>
+              <div class="filter-group fg-wide">
+                <label data-i18n="processing.filter.node"></label>
+                <select class="filter-select" id="processing-node-filter" onchange="renderList()">
+                  <option value="" data-i18n="processing.filter.allNodes"></option>
+                  <option value="plan_approval" data-i18n="processing.node.planApproval"></option>
+                  <option value="pending_replacement" data-i18n="processing.node.pendingReplacement"></option>
+                  <option value="pending_erp" data-i18n="processing.node.pendingErp"></option>
+                  <option value="pending_factory_shipment" data-i18n="processing.node.pendingFactoryShipment"></option>
+                  <option value="factory_shipped" data-i18n="processing.node.factoryShipped"></option>
+                  <option value="factory_received" data-i18n="processing.node.factoryReceived"></option>
+                  <option value="repairing" data-i18n="processing.node.repairing"></option>
+                  <option value="pending_warehouse_inbound" data-i18n="processing.node.pendingWarehouseInbound"></option>
+                  <option value="pending_customer_shipment" data-i18n="processing.node.pendingCustomerShipment"></option>
+                  <option value="completed" data-i18n="processing.node.completed"></option>
+                </select>
+              </div>
               <div class="filter-group fg-short">
                 <label data-i18n="list.filter.risk"></label>
                 <select class="filter-select" id="list-risk-filter" onchange="renderList()">
@@ -1458,8 +1494,9 @@ html[data-theme="dark"]{color-scheme:dark}
               </div>
             </div>
             <div class="batch-bar" id="batch-bar">
-              <span class="batch-info"><span data-i18n="list.batch.selected" data-i18n-params='{"count":0}'></span></span>
-              <button class="btn btn-primary btn-sm" onclick="openBatchProcessModal()" data-i18n="list.batch.btnUpdate"></button>
+              <span class="batch-info" id="batch-selection-info"></span>
+              <button class="btn btn-primary btn-sm" onclick="openProcessingPlanModal()" data-i18n="processing.btn.submitPlan"></button>
+              <button class="btn btn-secondary-green btn-sm" onclick="openProcessingActionModal()" data-i18n="processing.btn.advance"></button>
               <button class="btn btn-secondary btn-sm" onclick="clearBatchSelection()" data-i18n="list.batch.btnCancel"></button>
             </div>
             <div id="table-area"></div>
@@ -1906,6 +1943,93 @@ html[data-theme="dark"]{color-scheme:dark}
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeBatchProcessModal()" data-i18n="approvalModal.btnCancel"></button>
       <button class="btn btn-primary" onclick="submitBatchProcess()" data-i18n="batchProcess.btnSubmit"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 售后处理方案：批量选中明细后发起“处理审批” -->
+<div id="processing-plan-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeProcessingPlanModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 data-i18n="processing.planModal.title"></h3>
+      <button class="modal-close" onclick="closeProcessingPlanModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="processing-plan-summary" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"></div>
+      <div class="form-grid">
+        <div class="form-group form-group-full">
+          <label data-i18n="processing.planModal.planType"></label>
+          <select id="processing-plan-type" onchange="onProcessingPlanTypeChange()">
+            <option value="resellable" data-i18n="processing.plan.resellable"></option>
+            <option value="replace_now_repair_return" data-i18n="processing.plan.replaceNowRepairReturn"></option>
+            <option value="repair_return_warehouse" data-i18n="processing.plan.repairReturnWarehouse"></option>
+            <option value="repair_send_customer" data-i18n="processing.plan.repairSendCustomer"></option>
+          </select>
+        </div>
+        <div class="form-group form-group-full" id="processing-plan-factory-group">
+          <label data-i18n="processing.planModal.factory"></label>
+          <input id="processing-plan-factory" type="text">
+        </div>
+        <div class="form-group form-group-full">
+          <label data-i18n="processing.planModal.remark"></label>
+          <textarea id="processing-plan-remark" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeProcessingPlanModal()" data-i18n="approvalModal.btnCancel"></button>
+      <button class="btn btn-primary" onclick="submitProcessingPlan()" data-i18n="processing.btn.submitApproval"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 已完成处理审批后的实际执行 -->
+<div id="processing-action-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeProcessingActionModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 data-i18n="processing.actionModal.title"></h3>
+      <button class="modal-close" onclick="closeProcessingActionModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="processing-action-summary" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"></div>
+      <div class="form-grid">
+        <div class="form-group form-group-full">
+          <label data-i18n="processing.actionModal.action"></label>
+          <select id="processing-action-type" onchange="onProcessingActionTypeChange()"></select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="processing.actionModal.date"></label>
+          <input type="text" class="date-input" id="processing-action-date" inputmode="numeric" onblur="normalizeDateInput(this)">
+        </div>
+        <div class="form-group" id="processing-action-factory-group">
+          <label data-i18n="processing.planModal.factory"></label>
+          <input id="processing-action-factory" type="text">
+        </div>
+        <div class="form-group" id="processing-action-carrier-group">
+          <label data-i18n="processing.actionModal.carrier"></label>
+          <input id="processing-action-carrier" type="text">
+        </div>
+        <div class="form-group" id="processing-action-tracking-group">
+          <label data-i18n="processing.actionModal.tracking"></label>
+          <input id="processing-action-tracking" type="text">
+        </div>
+        <div class="form-group" id="processing-action-replacement-sku-group">
+          <label data-i18n="processing.actionModal.replacementSku"></label>
+          <input id="processing-action-replacement-sku" type="text">
+        </div>
+        <div class="form-group" id="processing-action-replacement-sn-group">
+          <label data-i18n="processing.actionModal.replacementSn"></label>
+          <input id="processing-action-replacement-sn" type="text">
+        </div>
+        <div class="form-group form-group-full">
+          <label data-i18n="processing.planModal.remark"></label>
+          <textarea id="processing-action-remark" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeProcessingActionModal()" data-i18n="approvalModal.btnCancel"></button>
+      <button class="btn btn-primary" onclick="submitProcessingAction()" data-i18n="processing.btn.confirmAction"></button>
     </div>
   </div>
 </div>
@@ -2713,6 +2837,45 @@ function getDefaultAccessiblePage(){
 // ==================== UTILITIES ====================
 const PROCESS_TYPE_VALUES = ['erp','color_box','parts','rma','scrap'];
 const PROCESS_PROGRESS_VALUES = ['pending','processing','completed'];
+const PROCESSING_PLAN_VALUES = ['resellable','replace_now_repair_return','repair_return_warehouse','repair_send_customer'];
+
+function tProcessingPlan(type){
+  const keyMap={replace_now_repair_return:'replaceNowRepairReturn',repair_return_warehouse:'repairReturnWarehouse',repair_send_customer:'repairSendCustomer'};
+  return t('processing.plan.'+(keyMap[type]||type));
+}
+function tProcessingApproval(status){ return t('processing.approval.'+(status||'unsubmitted')); }
+function tProcessingNode(node){
+  const keyMap={plan_approval:'planApproval',pending_replacement:'pendingReplacement',pending_erp:'pendingErp',pending_factory_shipment:'pendingFactoryShipment',factory_shipped:'factoryShipped',factory_received:'factoryReceived',pending_warehouse_inbound:'pendingWarehouseInbound',pending_customer_shipment:'pendingCustomerShipment'};
+  return t('processing.node.'+(keyMap[node]||node));
+}
+function tProcessingAction(action){
+  const keyMap={confirm_erp_inbound:'confirmErpInbound',ship_replacement:'shipReplacement',ship_to_factory:'shipToFactory',confirm_factory_received:'confirmFactoryReceived',start_repair:'startRepair',complete_repair:'completeRepair',confirm_warehouse_inbound:'confirmWarehouseInbound',ship_repaired_to_customer:'shipRepairedToCustomer'};
+  return t('processing.action.'+(keyMap[action]||action));
+}
+function itemProcessingApproval(item){ return item&&item.processing_approval_status?item.processing_approval_status:'unsubmitted'; }
+function itemProcessingNodes(item){
+  if(!item) return [];
+  if(itemProcessingApproval(item)==='pending') return ['plan_approval'];
+  if(itemProcessProgress(item)==='completed') return ['completed'];
+  const out=[];
+  if(item.customer_process_node&&!['not_required','not_started','completed'].includes(item.customer_process_node)) out.push(item.customer_process_node);
+  if(item.asset_process_node&&!['not_started','completed'].includes(item.asset_process_node)) out.push(item.asset_process_node);
+  return out;
+}
+function processingAllowedActions(item){
+  if(!item||itemProcessingApproval(item)!=='approved'||itemProcessProgress(item)==='completed') return [];
+  const out=[];
+  if(item.customer_process_node==='pending_replacement') out.push('ship_replacement');
+  const node=item.asset_process_node;
+  if(node==='pending_erp') out.push('confirm_erp_inbound');
+  if(node==='pending_factory_shipment') out.push('ship_to_factory');
+  if(node==='factory_shipped') out.push('confirm_factory_received');
+  if(node==='factory_received') out.push('start_repair');
+  if(node==='repairing') out.push('complete_repair');
+  if(node==='pending_warehouse_inbound') out.push('confirm_warehouse_inbound');
+  if(node==='pending_customer_shipment') out.push('ship_repaired_to_customer');
+  return out;
+}
 const LEGACY_STATUS_TO_PROCESS = {
   '待ERP入库':{type:'erp',progress:'pending'}, 'pending_erp':{type:'erp',progress:'pending'},
   'ERP入库':{type:'erp',progress:'pending'}, 'erp':{type:'erp',progress:'pending'},
