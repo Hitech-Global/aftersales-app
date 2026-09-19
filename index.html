@@ -2400,8 +2400,46 @@ let _productsCache = null;
 let _salesCache = null;
 let _recordsCache = null;
 let _ccRecordsCache = []; // CC 抄送记录缓存：供无 record_view 权限的 CC 用户详情回退定位（只读）
-let _cacheTimestamp = 0;
-const CACHE_TTL = 60000; // 60秒缓存（显式保存/审批时 _recordsCache=null 即时失效，不影响数据流转）
+
+// PSI 同款数据层：每类资源独立 TTL + pending Promise 去重 + stale-while-revalidate。
+// 旧实现共用一个 _cacheTimestamp，会出现“刚刷新 users 导致 records 被误判新鲜”的串缓存问题。
+const CACHE_TTL = 60000;
+const _resourceMeta = Object.create(null);
+function resourceMeta(key){
+  if(!_resourceMeta[key]) _resourceMeta[key]={ts:0,version:0,inflight:null};
+  return _resourceMeta[key];
+}
+function resourceFresh(key, ttl=CACHE_TTL){
+  const meta=resourceMeta(key);
+  return meta.ts>0 && (Date.now()-meta.ts)<ttl;
+}
+function resourceTouch(key){
+  const meta=resourceMeta(key);
+  meta.ts=Date.now();
+  meta.version++;
+}
+function resourceInvalidate(key){
+  const meta=resourceMeta(key);
+  meta.ts=0;
+  meta.version++;
+}
+function resourceVersion(key){ return resourceMeta(key).version; }
+function runResourceFetch(key, loader){
+  const meta=resourceMeta(key);
+  if(meta.inflight) return meta.inflight;
+  const p=(async()=>loader())();
+  meta.inflight=p;
+  p.finally(()=>{ if(meta.inflight===p) meta.inflight=null; }).catch(()=>{});
+  return p;
+}
+function refreshResourceInBackground(key, loader){
+  if(resourceFresh(key)||resourceMeta(key).inflight) return;
+  runResourceFetch(key,loader).catch(err=>console.warn('[cache refresh]',key,err&&err.message));
+}
+function scheduleIdle(fn){
+  if(typeof requestIdleCallback==='function') requestIdleCallback(()=>fn(),{timeout:1200});
+  else setTimeout(fn,0);
+}
 
 function getAuthHeaders() {
   // 身份由服务端会话决定，客户端不再发送 X-User-* 头（旧鉴权已移除）。
@@ -2426,29 +2464,30 @@ async function checkDbAvailable() {
   }
 }
 
-function cacheValid() { return Date.now() - _cacheTimestamp < CACHE_TTL; }
+async function fetchUsersFresh(){
+  return runResourceFetch('users',async()=>{
+    const resp=await fetch('/api/users',{headers:getAuthHeaders()});
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({}));
+      const e=new Error(err.error||('HTTP '+resp.status)); e.status=resp.status; throw e;
+    }
+    const data=await resp.json();
+    _usersCache=Array.isArray(data)?data:[];
+    resourceTouch('users');
+    return _usersCache;
+  });
+}
 
-// 用户
+// 用户：有缓存立即返回；过期只后台更新，不阻塞页面切换。
 async function getUsersAsync() {
   if (await checkDbAvailable()) {
-    if (!_usersCache || !cacheValid()) {
-      try {
-        const resp = await fetch('/api/users', { headers: getAuthHeaders() });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          console.warn('[getUsersAsync] API error:', resp.status, err.error || resp.statusText);
-          return _usersCache || [];
-        }
-        _usersCache = await resp.json();
-        _cacheTimestamp = Date.now();
-      } catch (e) {
-        console.warn('[getUsersAsync] fetch error:', e);
-        return _usersCache || [];
-      }
+    if (_usersCache) {
+      refreshResourceInBackground('users',fetchUsersFresh);
+      return _usersCache;
     }
-    return _usersCache;
+    try { return await fetchUsersFresh(); }
+    catch(e){ console.warn('[getUsersAsync] fetch error:',e); return _usersCache||[]; }
   }
-  // fallback to localStorage
   try { return JSON.parse(localStorage.getItem('aftersales_users') || '[]'); } catch(e) { return []; }
 }
 async function saveUserAsync(user) {
@@ -2493,27 +2532,30 @@ async function findUserByFeishuAsync(openId, unionId) {
   return users.find(u => (openId && u.feishu_open_id === openId) || (unionId && u.feishu_union_id === unionId)) || null;
 }
 
+async function fetchRolesFresh(){
+  return runResourceFetch('roles',async()=>{
+    const resp=await fetch('/api/roles',{headers:getAuthHeaders()});
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({}));
+      const e=new Error(err.error||('HTTP '+resp.status)); e.status=resp.status; throw e;
+    }
+    let data=await resp.json();
+    if(!Array.isArray(data)) data=[];
+    _rolesCache=data.map(r=>({...r,permissions:normalizePermissions(r.permissions)}));
+    resourceTouch('roles');
+    return _rolesCache;
+  });
+}
+
 // 角色
 async function getRolesAsync() {
   if (await checkDbAvailable()) {
-    if (!_rolesCache || !cacheValid()) {
-      try {
-        const resp = await fetch('/api/roles', { headers: getAuthHeaders() });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          console.warn('[getRolesAsync] API error:', resp.status, err.error || resp.statusText);
-          return _rolesCache || [];
-        }
-        _rolesCache = await resp.json();
-        // 后端可能把 permissions 存成 JSON 字符串，统一解析成数组
-        _rolesCache = _rolesCache.map(r => ({ ...r, permissions: normalizePermissions(r.permissions) }));
-        _cacheTimestamp = Date.now();
-      } catch (e) {
-        console.warn('[getRolesAsync] fetch error:', e);
-        return _rolesCache || [];
-      }
+    if (_rolesCache) {
+      refreshResourceInBackground('roles',fetchRolesFresh);
+      return _rolesCache;
     }
-    return _rolesCache;
+    try { return await fetchRolesFresh(); }
+    catch(e){ console.warn('[getRolesAsync] fetch error:',e); return _rolesCache||[]; }
   }
   try { return JSON.parse(localStorage.getItem('aftersales_roles') || '[]'); } catch(e) { return []; }
 }
@@ -2528,21 +2570,29 @@ async function saveRolesAsync(roles) {
   localStorage.setItem('aftersales_roles', JSON.stringify(roles));
 }
 
+async function fetchProductsFresh(){
+  return runResourceFetch('products',async()=>{
+    const resp=await fetch('/api/products',{headers:getAuthHeaders()});
+    if(!resp.ok){ const e=new Error('HTTP '+resp.status); e.status=resp.status; throw e; }
+    let data; try{data=await resp.json();}catch(_){data=[];}
+    if(Array.isArray(data)) _productsCache=data;
+    else if(data&&Array.isArray(data.data)) _productsCache=data.data;
+    else if(data&&Array.isArray(data.rows)) _productsCache=data.rows;
+    else _productsCache=[];
+    resourceTouch('products');
+    return _productsCache;
+  });
+}
+
 // 商品
 async function getProductsAsync() {
   if (await checkDbAvailable()) {
-    if (!_productsCache || !cacheValid()) {
-      const resp = await fetch('/api/products', { headers: getAuthHeaders() });
-      let data;
-      try { data = await resp.json(); } catch (e) { data = []; }
-      // 兼容处理：接口异常或返回对象时回退为数组，避免 _productsCache 被污染导致后续 .map 报错（如详情页 productBySku）
-      if (Array.isArray(data)) _productsCache = data;
-      else if (data && Array.isArray(data.data)) _productsCache = data.data;
-      else if (data && Array.isArray(data.rows)) _productsCache = data.rows;
-      else _productsCache = [];
-      _cacheTimestamp = Date.now();
+    if (_productsCache) {
+      refreshResourceInBackground('products',fetchProductsFresh);
+      return _productsCache;
     }
-    return _productsCache;
+    try { return await fetchProductsFresh(); }
+    catch(e){ console.warn('[getProductsAsync] fetch error:',e); return _productsCache||[]; }
   }
   try { return JSON.parse(localStorage.getItem('aftersales_products') || '[]'); } catch(e) { return []; }
 }
@@ -2611,15 +2661,25 @@ async function deleteProductAsync(id) {
   localStorage.setItem('aftersales_products', JSON.stringify(products.filter(p => p.id !== id)));
 }
 
+async function fetchSalesFresh(){
+  return runResourceFetch('sales',async()=>{
+    const resp=await fetch('/api/sales',{headers:getAuthHeaders()});
+    if(!resp.ok){const e=new Error('HTTP '+resp.status);e.status=resp.status;throw e;}
+    const data=await resp.json();
+    _salesCache=Array.isArray(data)?data:[];
+    resourceTouch('sales');
+    return _salesCache;
+  });
+}
+
 // 销售数据
 async function getSalesAsync() {
   if (await checkDbAvailable()) {
-    if (!_salesCache || !cacheValid()) {
-      const resp = await fetch('/api/sales', { headers: getAuthHeaders() });
-      _salesCache = await resp.json();
-      _cacheTimestamp = Date.now();
+    if (_salesCache) {
+      refreshResourceInBackground('sales',fetchSalesFresh);
+      return _salesCache;
     }
-    return _salesCache;
+    try{return await fetchSalesFresh();}catch(e){return _salesCache||[];}
   }
   try { return JSON.parse(localStorage.getItem('aftersales_sales_data') || '[]'); } catch(e) { return []; }
 }
@@ -2634,21 +2694,30 @@ async function saveSalesAsync(data) {
   localStorage.setItem('aftersales_sales_data', JSON.stringify(data));
 }
 
-// 售后记录
+async function fetchRecordsFresh(){
+  return runResourceFetch('records',async()=>{
+    const resp=await fetch('/api/records',{headers:getAuthHeaders()});
+    if(!resp.ok){
+      const err=new Error('获取记录失败: '+resp.status);
+      err.status=resp.status;
+      throw err;
+    }
+    const data=await resp.json();
+    _recordsCache=Array.isArray(data)?data:[];
+    resourceTouch('records');
+    return _recordsCache;
+  });
+}
+
+// 售后记录：PSI 风格 stale-while-revalidate。
+// 有内存快照时页面直接使用快照；真实写操作仍会把 _recordsCache 置空，从而强制下一次读取最新数据。
 async function getRecordsAsync() {
   if (await checkDbAvailable()) {
-    if (!_recordsCache || !cacheValid()) {
-      const resp = await fetch('/api/records', { headers: getAuthHeaders() });
-      // 三.6：非 2xx 显式抛出带状态码的错误，供调用方区分 401/403/5xx，不得静默吞掉
-      if (!resp.ok) {
-        const err = new Error('获取记录失败: ' + resp.status);
-        err.status = resp.status;
-        throw err;
-      }
-      _recordsCache = await resp.json();
-      _cacheTimestamp = Date.now();
+    if (_recordsCache) {
+      refreshResourceInBackground('records',fetchRecordsFresh);
+      return _recordsCache;
     }
-    return _recordsCache;
+    return await fetchRecordsFresh();
   }
   try { return JSON.parse(localStorage.getItem('aftersales_records') || '[]'); } catch(e) { return []; }
 }
