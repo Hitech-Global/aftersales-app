@@ -2683,6 +2683,12 @@ async function fetchRolesFresh(){
     if(!Array.isArray(data)) data=[];
     _rolesCache=data.map(r=>({...r,permissions:normalizePermissions(r.permissions)}));
     resourceTouch('roles');
+    const current=getCurrentUser();
+    const roleEl=document.getElementById('user-role');
+    if(current&&roleEl){
+      const role=getUserRole(current);
+      if(role) roleEl.textContent=tRoleName(role);
+    }
     return _rolesCache;
   });
 }
@@ -3021,13 +3027,17 @@ function normalizePermissions(permissions){
 
 function getUserRole(user){
   if(!user) return null;
-  // 优先使用缓存（由 API 层或 initDefaultData 填充），否则从 localStorage 读取
   const roles = _rolesCache || (function(){ try{return JSON.parse(localStorage.getItem('aftersales_roles')||'[]');}catch(e){return[];} })();
   const role = roles.find(r=>r.id===user.role_id)||null;
-  if(role && !Array.isArray(role.permissions)){
-    role.permissions = normalizePermissions(role.permissions);
+  if(role){
+    if(!Array.isArray(role.permissions)) role.permissions=normalizePermissions(role.permissions);
+    return role;
   }
-  return role;
+  // /api/auth/me 已返回服务端权威 permissions；冷启动不必等待 roles GET 才能渲染侧栏。
+  if(Array.isArray(user.permissions)){
+    return {id:user.role_id||user.roleId||'',name:user.role_id||user.roleId||'',description:'',permissions:user.permissions,system:false,_sessionFallback:true};
+  }
+  return null;
 }
 
 function hasPermission(perm){
@@ -9088,8 +9098,7 @@ var _renderDictionariesSeq = 0;
   const langSelect = document.getElementById('lang-select');
   if (langSelect) langSelect.value = window.__i18n.getLocale();
 
-  await runMigration();
-  await initDefaultData();
+  // 启动关键路径不再等待旧数据迁移/默认数据检查；登录成功后 idle 执行。
   setupPasteHandler();
 
   // 解析 URL 参数（飞书 OAuth 回调等）
@@ -9116,31 +9125,36 @@ var _renderDictionariesSeq = 0;
     }
   }
 
-  // 恢复登录态：服务端会话是身份唯一来源；绝不使用 localStorage 恢复登录身份
-  let serverReachable = false;
-  let breakGlassEnabled = false;
-  try {
-    const vResp = await fetch('/api/version');
-    serverReachable = vResp.ok;
-    if (vResp.ok) {
-      const vData = await vResp.json().catch(() => ({}));
-      breakGlassEnabled = !!(vData && vData.breakGlassEnabled);
-    }
-  } catch (e) { serverReachable = false; breakGlassEnabled = false; }
+  // /api/version 与 /api/auth/me 并行，冷启动减少一个串行 RTT。
+  let serverReachable=false;
+  let breakGlassEnabled=false;
+  const versionPromise=(async()=>{
+    try{
+      const vResp=await fetch('/api/version');
+      const vData=vResp.ok?await vResp.json().catch(()=>({})):{};
+      return {reachable:vResp.ok,breakGlassEnabled:!!(vData&&vData.breakGlassEnabled)};
+    }catch(_){return {reachable:false,breakGlassEnabled:false};}
+  })();
+  const sessionPromise=bootstrapSession();
+  const [versionState,serverUser]=await Promise.all([versionPromise,sessionPromise]);
+  serverReachable=versionState.reachable||!!serverUser;
+  breakGlassEnabled=versionState.breakGlassEnabled;
 
-  if (serverReachable) {
-    // 从服务端会话恢复身份（含角色/权限/CSRF）；401→回登录页，网络/5xx→服务不可用
-    const serverUser = await bootstrapSession();
-    if (serverUser) {
-      enterApp();
-    } else if (_sessionUnavailable) {
-      showServiceUnavailable();
-    }
-    // 否则已回到登录页（onSessionExpired 已处理）
-  } else {
-    // 服务端不可达：不得从 localStorage 恢复身份，显示“服务暂时不可用”
+  if(serverUser){
+    enterApp();
+    // 兼容性维护任务保留，但移出首屏关键路径；缓存/inflight 会与预热自动去重。
+    scheduleIdle(async()=>{
+      try{
+        await runMigration();
+        await initDefaultData();
+      }catch(e){
+        console.warn('[startup maintenance]',e&&e.message);
+      }
+    });
+  }else if(!serverReachable||_sessionUnavailable){
     showServiceUnavailable();
   }
+  // 其余未登录场景已由 bootstrapSession 的 401 分支回到登录页。
 
   // 登录页初始化
   // 检测飞书配置状态
