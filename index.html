@@ -6438,6 +6438,203 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
 }
 
 // ==================== APPROVAL PAGE ====================
+
+let _processingRequestsCache=[];
+let _processingApprovalCurrentId='';
+
+function processingQueueCell(text,className){
+  const td=document.createElement('td');
+  if(className) td.className=className;
+  td.textContent=text==null?'-':String(text);
+  return td;
+}
+async function renderProcessingApprovals(tab,user,search,startD,endD){
+  const area=document.getElementById('processing-approval-area');
+  if(!area) return;
+  area.innerHTML='';
+  try{
+    const res=await fetch('/api/processing-requests',{headers:getAuthHeaders()});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const payload=await res.json();
+    _processingRequestsCache=Array.isArray(payload)?payload:[];
+    let list=_processingRequestsCache.slice();
+
+    if(tab==='pending'){
+      list=list.filter(req=>{
+        const level=Number(req.current_approval_level)||0;
+        return req.status==='pending'&&req['approver_level'+level+'_id']===user.id;
+      });
+    }else if(tab==='done'){
+      list=list.filter(req=>(req.approval_history||[]).some(item=>item.operator_id===user.id));
+    }
+    if(search){
+      list=list.filter(req=>{
+        const q=String(search).toLowerCase();
+        if(String(req.id||'').toLowerCase().includes(q)) return true;
+        if(String(req.submitter_name||'').toLowerCase().includes(q)) return true;
+        return (req.item_refs||[]).some(item=>
+          String(item.record_id||'').toLowerCase().includes(q)||
+          String(item.sku_code||'').toLowerCase().includes(q)
+        );
+      });
+    }
+    if(startD||endD){
+      list=list.filter(req=>{
+        const d=String(req.created_at||'').substring(0,10);
+        if(startD&&d<startD) return false;
+        if(endD&&d>endD) return false;
+        return true;
+      });
+    }
+
+    if(!list.length){
+      const empty=document.createElement('div');
+      empty.className='empty-state';
+      const p=document.createElement('p');
+      p.textContent=t('processing.approvalQueue.empty');
+      empty.appendChild(p);
+      area.appendChild(empty);
+      return;
+    }
+
+    const wrap=document.createElement('div');
+    wrap.className='table-container';
+    const table=document.createElement('table');
+    table.className='data-table';
+    const thead=document.createElement('thead');
+    const hr=document.createElement('tr');
+    [
+      t('processing.approvalQueue.request'),
+      t('approval.col.createdAt'),
+      t('approval.col.initiator'),
+      t('processing.approvalQueue.plan'),
+      t('processing.approvalQueue.items'),
+      t('approval.col.status'),
+      t('approval.col.currentApprover'),
+      t('approval.col.actions')
+    ].forEach(label=>{
+      const th=document.createElement('th');
+      th.textContent=label;
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    const tbody=document.createElement('tbody');
+    list.forEach(req=>{
+      const tr=document.createElement('tr');
+      const level=Number(req.current_approval_level)||0;
+      const currentApprover=level?(req['approver_level'+level+'_name']||('L'+level)):t('approval.flow.completed');
+      const plan=req.plan||{};
+      tr.appendChild(processingQueueCell(req.id,'cell-id'));
+      tr.appendChild(processingQueueCell(formatDateTime(req.created_at),'cell-date'));
+      tr.appendChild(processingQueueCell(req.submitter_name||'-'));
+      tr.appendChild(processingQueueCell(tProcessingPlan(plan.type||'')));
+      tr.appendChild(processingQueueCell((req.item_refs||[]).length));
+      tr.appendChild(processingQueueCell(tProcessingApproval(req.status)));
+      tr.appendChild(processingQueueCell(currentApprover));
+
+      const actionTd=document.createElement('td');
+      actionTd.className='cell-actions';
+      const canReview=req.status==='pending'&&level>0&&req['approver_level'+level+'_id']===user.id;
+      if(canReview){
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='btn btn-primary btn-sm';
+        btn.textContent=t('processing.approvalQueue.review');
+        btn.addEventListener('click',()=>openProcessingApprovalModal(req.id));
+        actionTd.appendChild(btn);
+      }else{
+        actionTd.textContent='-';
+      }
+      tr.appendChild(actionTd);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    area.appendChild(wrap);
+  }catch(e){
+    console.error('[processing approvals] load failed',e);
+    const empty=document.createElement('div');
+    empty.className='empty-state';
+    const p=document.createElement('p');
+    p.textContent=t('processing.approvalQueue.loadFailed');
+    empty.appendChild(p);
+    area.appendChild(empty);
+  }
+}
+function openProcessingApprovalModal(id){
+  const request=(_processingRequestsCache||[]).find(item=>String(item.id)===String(id));
+  if(!request) return;
+  _processingApprovalCurrentId=String(id);
+  document.getElementById('processing-approval-comment').value='';
+
+  const root=document.getElementById('processing-approval-summary');
+  root.innerHTML='';
+  const grid=document.createElement('div');
+  grid.className='detail-grid';
+
+  const addDetail=(label,value)=>{
+    const item=document.createElement('div');
+    item.className='detail-item';
+    const l=document.createElement('span');
+    l.className='detail-label';
+    l.textContent=label;
+    const v=document.createElement('span');
+    v.className='detail-value';
+    v.textContent=value;
+    item.appendChild(l);
+    item.appendChild(v);
+    grid.appendChild(item);
+  };
+  addDetail(t('processing.approvalQueue.plan'),tProcessingPlan((request.plan||{}).type||''));
+  addDetail(t('processing.approvalQueue.items'),String((request.item_refs||[]).length));
+  addDetail(t('processing.planModal.factory'),(request.plan||{}).factory_name||'-');
+  root.appendChild(grid);
+
+  const list=document.createElement('div');
+  list.style.marginTop='12px';
+  (request.item_refs||[]).forEach(ref=>{
+    const row=document.createElement('div');
+    row.style.padding='6px 0';
+    row.style.borderBottom='1px solid var(--border-light)';
+    row.textContent=String(ref.record_id||'-')+' · '+String(ref.sku_code||'-')+' × '+String(ref.quantity||0);
+    list.appendChild(row);
+  });
+  root.appendChild(list);
+  document.getElementById('processing-approval-modal').classList.remove('hidden');
+}
+function closeProcessingApprovalModal(){
+  document.getElementById('processing-approval-modal').classList.add('hidden');
+  _processingApprovalCurrentId='';
+}
+async function submitProcessingApproval(action){
+  const request=(_processingRequestsCache||[]).find(item=>String(item.id)===String(_processingApprovalCurrentId));
+  if(!request) return;
+  try{
+    const res=await fetch('/api/processing-requests/'+encodeURIComponent(request.id)+'/approval',{
+      method:'POST',
+      headers:getAuthHeaders(),
+      body:JSON.stringify({
+        action,
+        comment:document.getElementById('processing-approval-comment').value.trim(),
+        expected_level:request.current_approval_level
+      })
+    });
+    if(!res.ok){
+      let payload={};
+      try{ payload=await res.json(); }catch(_){}
+      throw new Error(payload.error||t('processing.error.approval'));
+    }
+    closeProcessingApprovalModal();
+    _recordsCache=null; _cacheTimestamp=0;
+    showFlash(action==='approve'?t('flash.approved'):t('flash.rejected'),'success');
+    renderApproval();
+  }catch(e){
+    showFlash(e.message||t('processing.error.approval'),'danger');
+  }
+}
+
 async function renderApproval(){
   const tab=document.getElementById('appr-tab').value;
   const user=getCurrentUser();
@@ -6458,6 +6655,7 @@ async function renderApproval(){
   }
 
   const search=(document.getElementById('appr-search').value||'').toLowerCase();
+  await renderProcessingApprovals(tab,user,search,startD,endD);
   if(search){
     filtered=filtered.filter(r=>{
       const items=r.items||[];
