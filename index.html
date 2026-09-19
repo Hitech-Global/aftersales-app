@@ -64,8 +64,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 /* Layout */
 /* Layout */
 .app-shell{display:flex;height:100vh;overflow:hidden;background:var(--bg)}
-.sidebar{width:220px;background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s}
-.sidebar-header{height:60px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar{width:220px;background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s ease}
+.sidebar-header{height:60px;display:flex;align-items:center;padding:0 10px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);position:relative}
 .sidebar-brand{font-size:15px;font-weight:600;color:#fff;display:flex;align-items:center;gap:11px;text-decoration:none}
 .sidebar-brand .brand-icon{width:44px;height:30px;background:transparent;border-radius:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
 .sidebar-brand .brand-icon img{display:block;width:100%;height:100%;object-fit:contain}
@@ -79,6 +79,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text"
 .sidebar-item .icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sidebar-item .icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sidebar-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(235,235,245,.5);text-align:center;flex-shrink:0}
+.sidebar-toggle{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:transparent;color:rgba(235,235,245,.72);cursor:pointer;flex:0 0 auto;font-size:18px;line-height:1;transition:background .18s,color .18s}
+.sidebar-toggle:hover{background:rgba(255,255,255,.10);color:#fff}
+.sidebar-toggle-icon{display:block;transform:translateX(-1px);transition:transform .2s ease}
+.sidebar.collapsed{width:54px}
+.sidebar.collapsed .sidebar-header{padding:0 8px;justify-content:center}
+.sidebar.collapsed .sidebar-brand{gap:0}
+.sidebar.collapsed .sidebar-brand .brand-icon{width:32px;height:28px}
+.sidebar.collapsed .sidebar-brand>span:last-child,.sidebar.collapsed .sidebar-group-title,.sidebar.collapsed .sidebar-footer-text{display:none}
+.sidebar.collapsed .sidebar-toggle{position:absolute;right:5px;bottom:4px;width:18px;height:18px;font-size:14px;opacity:.72}
+.sidebar.collapsed .sidebar-toggle-icon{transform:translateX(0)}
+.sidebar.collapsed .sidebar-nav{padding-left:8px;padding-right:8px}
+.sidebar.collapsed .sidebar-item{justify-content:center;padding-left:0;padding-right:0;gap:0}
+.sidebar.collapsed .sidebar-item>span:not(.icon){display:none}
+.sidebar.collapsed .sidebar-item .icon{width:24px;height:24px}
+.sidebar.collapsed .sidebar-item .icon svg{width:19px;height:19px}
+.sidebar.collapsed .sidebar-footer{padding-left:0;padding-right:0}
 
 .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .topbar{height:54px;background:rgba(255,255,255,.72);border-bottom:.5px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
@@ -698,7 +714,7 @@ select option{background:var(--card-bg);color:var(--text)}
 .detail-items-table .btn-delete-row:hover{background:#fde8e8}
 
 @media(max-width:768px){
-  .sidebar{width:0;overflow:hidden}
+  .sidebar,.sidebar.collapsed{width:0;overflow:hidden}
   .record-fs-overlay{left:0}
   .stats-grid{flex-wrap:wrap}.stat-card{flex:1 1 calc(50% - 4px);min-width:80px}
   .filter-form{flex-direction:column;align-items:stretch}
@@ -1273,9 +1289,12 @@ html[data-theme="dark"]{color-scheme:dark}
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a class="sidebar-brand"><span class="brand-icon"><img src="/assets/brand/hnm-logo.png" alt="HNM"></span><span data-i18n="app.sidebarBrand"></span></a>
+      <button class="sidebar-toggle" id="sidebar-toggle" type="button" onclick="toggleSidebarCollapse(event)" aria-expanded="true" aria-controls="sidebar">
+        <span class="sidebar-toggle-icon" aria-hidden="true">‹</span>
+      </button>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.25 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.25 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -3668,7 +3687,7 @@ function renderSidebar(){
       if(seen.has(item.id)) return;            // 同一 id 只渲染一次
       seen.add(item.id);
       if(!navVisible(item)) return;
-      html+=`<div class="sidebar-item" data-page="${item.id}" onclick="showPage('${item.id}')"><span class="icon">${item.icon}</span><span>${esc(item.label)}</span></div>`;
+      html+=`<div class="sidebar-item" data-page="${item.id}" title="${escAttr(item.label)}" aria-label="${escAttr(item.label)}" onclick="showPage('${item.id}')"><span class="icon">${item.icon}</span><span>${esc(item.label)}</span></div>`;
     });
   });
   nav.innerHTML=html;
@@ -3679,6 +3698,32 @@ function renderSidebar(){
     if(seenPages[p]) el.remove(); else seenPages[p]=true;
   });
   if(prevActive) setSidebarActive(prevActive);
+}
+
+const SIDEBAR_COLLAPSED_KEY='aftersales_sidebar_collapsed';
+function applySidebarCollapse(collapsed,persist){
+  const sidebar=document.getElementById('sidebar');
+  const toggle=document.getElementById('sidebar-toggle');
+  if(!sidebar) return;
+  sidebar.classList.toggle('collapsed',!!collapsed);
+  if(toggle){
+    toggle.setAttribute('aria-expanded',String(!collapsed));
+    toggle.setAttribute('aria-label',t(collapsed?'app.sidebarExpand':'app.sidebarCollapse')|| (collapsed?'展开导航栏':'收起导航栏'));
+    toggle.title=t(collapsed?'app.sidebarExpand':'app.sidebarCollapse')|| (collapsed?'展开导航栏':'收起导航栏');
+    const icon=toggle.querySelector('.sidebar-toggle-icon');
+    if(icon) icon.textContent=collapsed?'›':'‹';
+  }
+  if(persist){try{localStorage.setItem(SIDEBAR_COLLAPSED_KEY,collapsed?'1':'0');}catch(_){} }
+}
+function toggleSidebarCollapse(event){
+  if(event) event.stopPropagation();
+  const sidebar=document.getElementById('sidebar');
+  applySidebarCollapse(!sidebar?.classList.contains('collapsed'),true);
+}
+function initSidebarCollapse(){
+  let collapsed=false;
+  try{collapsed=localStorage.getItem(SIDEBAR_COLLAPSED_KEY)==='1';}catch(_){}
+  applySidebarCollapse(collapsed,false);
 }
 
 function setSidebarActive(page){
@@ -8151,6 +8196,7 @@ async function saveRole(e){
   closeRoleModal();
   showFlash(editId?t('flash.role.updateSuccess'):t('flash.role.createSuccess'),'success');
   renderRoles();
+  initSidebarCollapse();
   renderSidebar();
 }
 async function deleteRole(roleId){
