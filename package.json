@@ -1,6 +1,6 @@
 {
   "name": "aftersales-management-system",
-  "version": "3.11.34",
+  "version": "3.11.35",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
