@@ -282,6 +282,12 @@
     "subtitle": "管理售后工单、审批、处理进度与 RMA 跟进。",
     "quickFilter": {
       "all": "全部",
+      "returnReason": "退货原因",
+      "allReturnReasons": "全部退货原因",
+      "selectedReturnReasons": "已选 {count} 项",
+      "selectReturnReasons": "选择退货原因",
+      "clearReturnReasons": "清除选择",
+      "noReturnReasons": "暂无退货原因",
       "todo": "待办",
       "pendingApproval": "待审批",
       "pendingProcessing": "待处理",
