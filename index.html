@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.32"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.33"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png?v=hnm1">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png?v=hnm1">
@@ -429,6 +429,20 @@ input::placeholder,textarea::placeholder{color:var(--text-placeholder);opacity:1
 .cc-btn{padding:7px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--border)}
 .cc-btn-cancel{background:var(--card-bg);color:var(--text)}
 .cc-btn-confirm{background:var(--cc-blue);border-color:var(--cc-blue);color:#fff;font-weight:500}
+.appr-reason-picker{position:relative;width:100%}
+.appr-reason-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);color:var(--text);font:inherit;text-align:left;cursor:pointer;min-height:36px}
+.appr-reason-trigger:hover,.appr-reason-trigger[aria-expanded="true"]{border-color:var(--primary)}
+.appr-reason-trigger-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary)}
+.appr-reason-trigger-arrow{color:var(--text-muted);font-size:11px;flex-shrink:0}
+.appr-reason-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:400;min-width:260px;width:max-content;max-width:320px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,.18);overflow:hidden}
+.appr-reason-popover.hidden{display:none}
+.appr-reason-popover-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid var(--border-light);font-size:12px;color:var(--text-muted)}
+.appr-reason-clear{border:0;background:transparent;color:var(--primary);font:inherit;cursor:pointer;padding:2px 0}
+.appr-reason-options{max-height:260px;overflow-y:auto;padding:6px}
+.appr-reason-option{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text)}
+.appr-reason-option:hover{background:var(--bg-secondary)}
+.appr-reason-option input{width:15px;height:15px;accent-color:var(--primary);margin:0;flex-shrink:0}
+.appr-reason-empty{padding:18px 12px;text-align:center;color:var(--text-muted);font-size:13px}
 @media (prefers-reduced-motion: reduce){.cc-overlay,.cc-sheet{animation:none}}
 input[readonly]{background:#f5f6f8;color:var(--text-secondary)}
 .form-actions{display:flex;gap:12px;margin-top:8px}
@@ -1300,7 +1314,7 @@ html[data-theme="dark"]{color-scheme:dark}
       </button>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.32 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.33 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -1603,6 +1617,22 @@ html[data-theme="dark"]{color-scheme:dark}
                   <option value="return" data-i18n="approval.filter.typeReturn"></option>
                   <option value="resolution" data-i18n="approval.filter.typeResolution"></option>
                 </select>
+              </div>
+              <div class="filter-group">
+                <label data-i18n="approval.filter.returnReason"></label>
+                <div class="appr-reason-picker" id="appr-return-reason-picker">
+                  <button type="button" class="appr-reason-trigger" id="appr-return-reason-trigger" aria-expanded="false" onclick="toggleApprovalReasonPicker(event)">
+                    <span class="appr-reason-trigger-label" id="appr-return-reason-summary" data-i18n="approval.filter.allReturnReasons"></span>
+                    <span class="appr-reason-trigger-arrow">⌄</span>
+                  </button>
+                  <div class="appr-reason-popover hidden" id="appr-return-reason-popover">
+                    <div class="appr-reason-popover-head">
+                      <span data-i18n="approval.filter.selectReturnReasons"></span>
+                      <button type="button" class="appr-reason-clear" onclick="clearApprovalReasons(event)" data-i18n="approval.filter.clearReturnReasons"></button>
+                    </div>
+                    <div class="appr-reason-options" id="appr-return-reason-options"></div>
+                  </div>
+                </div>
               </div>
               <div class="filter-group">
                 <label data-i18n="approval.filter.startDate"></label>
@@ -6383,15 +6413,80 @@ function approvalTaskApprover(task){
   }
   return getCurrentApproverText(task.record);
 }
+let _approvalReasonSelected = new Set();
+let _approvalReasonPickerBound = false;
+const _approvalReasonCodeAliases = { erp:'可二次销售', color_box:'彩盒损坏', parts:'配件缺失', rma:'硬件故障', scrap:'报废' };
+
+function approvalReasonKey(value){
+  const raw=String(value||'');
+  return _approvalReasonCodeAliases[raw] || raw;
+}
+
+function getApprovalReasonOptions(records){
+  const keys=Object.keys(RETURN_REASON_KEY_MAP||{});
+  (records||[]).forEach(r=>(r.items||[]).forEach(it=>{
+    const key=approvalReasonKey(it.return_reason);
+    if(key&&!keys.includes(key)) keys.push(key);
+  }));
+  return keys.map(key=>({key,label:RETURN_REASON_KEY_MAP[key]?tReturnReason(key):(displayReturnReason(key)||key)}));
+}
+
+function renderApprovalReasonPicker(records){
+  const box=document.getElementById('appr-return-reason-options');
+  const summary=document.getElementById('appr-return-reason-summary');
+  if(!box||!summary) return;
+  const options=getApprovalReasonOptions(records);
+  const valid=new Set(options.map(o=>o.key));
+  [..._approvalReasonSelected].forEach(key=>{if(!valid.has(key))_approvalReasonSelected.delete(key);});
+  if(!_approvalReasonSelected.size) summary.textContent=t('approval.filter.allReturnReasons');
+  else if(_approvalReasonSelected.size===1){const one=options.find(o=>o.key===[..._approvalReasonSelected][0]);summary.textContent=one?one.label:t('approval.filter.selectedReturnReasons',{count:1});}
+  else summary.textContent=t('approval.filter.selectedReturnReasons',{count:_approvalReasonSelected.size});
+  box.innerHTML=options.length?options.map(o=>'<label class="appr-reason-option"><input type="checkbox" value="'+escAttr(o.key)+'" '+(_approvalReasonSelected.has(o.key)?'checked':'')+' onchange="toggleApprovalReasonValue(this)"><span>'+esc(o.label)+'</span></label>').join(''):'<div class="appr-reason-empty">'+esc(t('approval.filter.noReturnReasons'))+'</div>';
+}
+
+function toggleApprovalReasonPicker(event){
+  if(event) event.stopPropagation();
+  const pop=document.getElementById('appr-return-reason-popover'), trigger=document.getElementById('appr-return-reason-trigger');
+  if(!pop||!trigger) return;
+  if(!_approvalReasonPickerBound){
+    document.addEventListener('click',e=>{if(!e.target.closest('#appr-return-reason-picker'))closeApprovalReasonPicker();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeApprovalReasonPicker();});
+    _approvalReasonPickerBound=true;
+  }
+  const open=pop.classList.contains('hidden');
+  pop.classList.toggle('hidden',!open); trigger.setAttribute('aria-expanded',String(open));
+}
+
+function closeApprovalReasonPicker(){
+  const pop=document.getElementById('appr-return-reason-popover'), trigger=document.getElementById('appr-return-reason-trigger');
+  if(pop) pop.classList.add('hidden');
+  if(trigger) trigger.setAttribute('aria-expanded','false');
+}
+
+function toggleApprovalReasonValue(input){
+  const key=String(input.value||'');
+  if(input.checked)_approvalReasonSelected.add(key); else _approvalReasonSelected.delete(key);
+  apprPage=1; renderApproval();
+}
+
+function clearApprovalReasons(event){
+  if(event) event.stopPropagation();
+  _approvalReasonSelected.clear(); closeApprovalReasonPicker(); apprPage=1; renderApproval();
+}
+
 async function renderApproval(){
   const tab=document.getElementById('appr-tab').value;
   const typeFilter=document.getElementById('appr-type')?.value||'all';
   const user=getCurrentUser();
   const records=await getRecords();
+  renderApprovalReasonPicker(records);
   const startD=getDateInputValue('appr-start-date'), endD=getDateInputValue('appr-end-date');
   const search=(document.getElementById('appr-search').value||'').toLowerCase();
+  const reasonFilter=_approvalReasonSelected;
   let tasks=buildApprovalTasks(records,user,tab,typeFilter).filter(task=>{
     const r=task.record, it=task.item, resolution=getItemResolution(it);
+    const reasonItems=task.type==='return'?(r.items||[]):(it?[it]:[]);
+    if(reasonFilter.size&&!reasonItems.some(item=>reasonFilter.has(approvalReasonKey(item?.return_reason)))) return false;
     const text=[r.id,r.brand,r.model,r.submitter_name,it?.sku_code,it?.order_no,resolution?.type,resolution?.flow_name].filter(Boolean).join(' ').toLowerCase();
     if(search&&!text.includes(search)) return false;
     const d=(task.submittedAt||r.aftersales_date||'').substring(0,10);
@@ -6443,6 +6538,8 @@ function clearApprovalFilter(){
   document.getElementById('appr-search').value='';
   document.getElementById('appr-tab').value='pending';
   if(document.getElementById('appr-type')) document.getElementById('appr-type').value='all';
+  _approvalReasonSelected.clear();
+  closeApprovalReasonPicker();
   setDateInputValue('appr-start-date','');
   setDateInputValue('appr-end-date','');
   apprPage=1; renderApproval();
