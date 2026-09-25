@@ -282,6 +282,12 @@
     "subtitle": "Manage after-sales cases, approvals, processing progress, and RMA follow-up.",
     "quickFilter": {
       "all": "All",
+      "returnReason": "Return Reason",
+      "allReturnReasons": "All Return Reasons",
+      "selectedReturnReasons": "{count} selected",
+      "selectReturnReasons": "Select return reasons",
+      "clearReturnReasons": "Clear selection",
+      "noReturnReasons": "No return reasons",
       "todo": "My To-dos",
       "pendingApproval": "Pending Approval",
       "pendingProcessing": "Pending Processing",
