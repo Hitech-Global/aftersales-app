@@ -282,6 +282,12 @@
     "subtitle": "Kelola kasus purna jual, persetujuan, progres pemrosesan, dan tindak lanjut RMA.",
     "quickFilter": {
       "all": "Semua",
+      "returnReason": "Alasan Pengembalian",
+      "allReturnReasons": "Semua Alasan Pengembalian",
+      "selectedReturnReasons": "{count} dipilih",
+      "selectReturnReasons": "Pilih alasan pengembalian",
+      "clearReturnReasons": "Hapus pilihan",
+      "noReturnReasons": "Tidak ada alasan pengembalian",
       "todo": "Tugas Saya",
       "pendingApproval": "Menunggu Persetujuan",
       "pendingProcessing": "Menunggu Diproses",
