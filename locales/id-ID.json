@@ -536,6 +536,12 @@
       "pending": "Menunggu Approval Saya",
       "done": "Sudah Diproses",
       "all": "Semua",
+      "returnReason": "Alasan Pengembalian",
+      "allReturnReasons": "Semua Alasan Pengembalian",
+      "selectedReturnReasons": "{count} dipilih",
+      "selectReturnReasons": "Pilih alasan pengembalian",
+      "clearReturnReasons": "Hapus pilihan",
+      "noReturnReasons": "Tidak ada alasan pengembalian",
       "startDate": "Tanggal Mulai",
       "endDate": "Tanggal Selesai"
     },
