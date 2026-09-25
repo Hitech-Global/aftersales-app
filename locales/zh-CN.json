@@ -536,6 +536,12 @@
       "pending": "待我审批",
       "done": "已审批",
       "all": "全部",
+      "returnReason": "退货原因",
+      "allReturnReasons": "全部退货原因",
+      "selectedReturnReasons": "已选 {count} 项",
+      "selectReturnReasons": "选择退货原因",
+      "clearReturnReasons": "清除选择",
+      "noReturnReasons": "暂无退货原因",
       "startDate": "开始日期",
       "endDate": "结束日期"
     },

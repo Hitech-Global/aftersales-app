@@ -537,6 +537,12 @@
       "pending": "Pending My Approval",
       "done": "Reviewed",
       "all": "All",
+      "returnReason": "Return Reason",
+      "allReturnReasons": "All Return Reasons",
+      "selectedReturnReasons": "{count} selected",
+      "selectReturnReasons": "Select return reasons",
+      "clearReturnReasons": "Clear selection",
+      "noReturnReasons": "No return reasons",
       "startDate": "Start Date",
       "endDate": "End Date"
     },
