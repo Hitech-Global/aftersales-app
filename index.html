@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="app.title" data-i18n-suffix=" v3.11.33"></title>
+<title data-i18n="app.title" data-i18n-suffix=" v3.11.36"></title>
 <meta name="theme-color" content="#2e7d32">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png?v=hnm1">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png?v=hnm1">
@@ -1316,7 +1316,7 @@ html[data-theme="dark"]{color-scheme:dark}
       </button>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav"></nav>
-    <div class="sidebar-footer" id="sidebar-footer">v3.11.33 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
+    <div class="sidebar-footer" id="sidebar-footer">v3.11.36 &middot; <span id="feishu-status-dot" style="color:#4caf50;font-size:10px">&#x25CF;</span> <span id="feishu-status-text" class="sidebar-footer-text" data-i18n="app.mode.cloud"></span></div>
   </aside>
 
   <main class="main">
@@ -2050,6 +2050,7 @@ html[data-theme="dark"]{color-scheme:dark}
 
 <script src="locales/i18n.js"></script>
 <script>
+const FRONTEND_VERSION = '3.11.36';
 // 版本缓存击穿：若服务端版本高于当前已加载的构建（飞书 webview / 代理按 URL 缓存旧 HTML 所致），
 // 强制重定向到带版本参数的 URL，使浏览器/webview 拉取最新文件，避免一直显示旧构建（含旧 bug）。
 // ==================== DATA LAYER ====================
@@ -6382,19 +6383,33 @@ async function executeApproval(recordId, action, comment, returnDate, attachment
 // ==================== APPROVAL CENTER ====================
 function buildApprovalTasks(records, user, tab, typeFilter){
   const tasks=[];
+  const seen=new Set();
+  const addTask=task=>{
+    // 同一任务只允许出现一次：防止重复记录、重复加载或历史数据异常造成重复展示。
+    if(seen.has(task.key)) return;
+    seen.add(task.key);
+    tasks.push(task);
+  };
+  const isFinalReturnStatus=status=>{
+    const s=String(status||'').trim().toLowerCase();
+    return ['审批通过','approved','completed','已完成','审批拒绝','rejected','已拒绝','已驳回'].includes(s);
+  };
   (records||[]).forEach(record=>{
-    const returnPending=record.status!=='草稿'&&record.status!=='审批通过'&&record.status!=='审批拒绝'&&record['approver_level'+record.current_approval_level+'_id']===user?.id;
-    const returnDone=(record.approval_history||[]).some(h=>h.operator_id===user?.id);
+    if(!record||!record.id) return;
+    const returnPending=!isFinalReturnStatus(record.status)
+      && String(record.status||'').trim()!=='草稿'
+      && record['approver_level'+record.current_approval_level+'_id']===user?.id;
+    const returnDone=(record.approval_history||[]).some(h=>String(h.operator_id)===String(user?.id));
     if((typeFilter==='all'||typeFilter==='return')&&((tab==='pending'&&returnPending)||(tab==='done'&&returnDone)||(tab==='all'&&(returnPending||returnDone)))){
-      tasks.push({key:'return:'+record.id,type:'return',record,item:null,itemIndex:null,pending:returnPending,submittedAt:record.created_at||record.aftersales_date});
+      addTask({key:'return:'+record.id,type:'return',record,item:null,itemIndex:null,pending:returnPending,submittedAt:record.created_at||record.aftersales_date});
     }
     (record.items||[]).forEach((item,itemIndex)=>{
       const resolution=getItemResolution(item);
       if(!resolution) return;
       const resolutionPending=canApproveResolution(item);
-      const resolutionDone=(resolution.approval_history||[]).some(h=>h.operator_id===user?.id);
+      const resolutionDone=(resolution.approval_history||[]).some(h=>String(h.operator_id)===String(user?.id));
       if((typeFilter==='all'||typeFilter==='resolution')&&((tab==='pending'&&resolutionPending)||(tab==='done'&&resolutionDone)||(tab==='all'&&(resolutionPending||resolutionDone)))){
-        tasks.push({key:'resolution:'+record.id+':'+itemIndex,type:'resolution',record,item,itemIndex,pending:resolutionPending,submittedAt:resolution.submitted_at||record.created_at});
+        addTask({key:'resolution:'+record.id+':'+itemIndex,type:'resolution',record,item,itemIndex,pending:resolutionPending,submittedAt:resolution.submitted_at||record.created_at});
       }
     });
   });
@@ -8492,6 +8507,13 @@ function resolveColumns(headers){
     if (vResp.ok) {
       const vData = await vResp.json().catch(() => ({}));
       breakGlassEnabled = !!(vData && vData.breakGlassEnabled);
+      const serverVersion = String(vData && vData.version || '');
+      // 版本不一致时给入口 URL 加版本参数，避免飞书 WebView/代理继续复用旧首页。
+      if (serverVersion && serverVersion !== FRONTEND_VERSION && !urlParams.get('v')) {
+        const nextUrl = window.location.pathname + '?v=' + encodeURIComponent(serverVersion) + window.location.hash;
+        window.location.replace(nextUrl);
+        return;
+      }
     }
   } catch (e) { serverReachable = false; breakGlassEnabled = false; }
 
