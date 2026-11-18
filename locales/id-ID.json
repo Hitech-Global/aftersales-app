@@ -86,12 +86,22 @@
     "customers": "Pelanggan"
     }
   },
+  "country": {
+    "label": "Negara",
+    "all": "Semua Negara",
+    "id": "Indonesia",
+    "my": "Malaysia",
+    "th": "Thailand",
+    "sg": "Singapura"
+  },
   "overview": {
     "filter": {
       "startDate": "Tanggal Mulai",
       "endDate": "Tanggal Selesai",
       "brand": "Brand",
-      "allBrands": "Semua Brand"
+      "allBrands": "Semua Brand",
+      "country": "Negara",
+      "allCountries": "Semua Negara"
     },
     "btnReset": "Reset",
     "btnDownloadTemplate": "Unduh Template Penjualan",
@@ -200,6 +210,8 @@
       "keywordPlaceholder": "Cari ID, no. pesanan, SKU, brand, atau model...",
       "brand": "Brand",
       "allBrands": "Semua Brand",
+      "country": "Negara",
+      "allCountries": "Semua Negara",
       "channel": "Saluran",
       "allChannels": "Semua Saluran",
       "approvalStatus": "Status Approval",
@@ -242,6 +254,7 @@
       "processType": "Tipe Proses",
       "processProgress": "Progress Proses",
       "date": "Tanggal RMA",
+      "country": "Negara",
       "platform": "Saluran",
       "shopCustomer": "Toko/Pelanggan",
       "returnReason": "Alasan Retur",
@@ -383,6 +396,7 @@
     "btnAddRow": "+ Tambah Item",
     "totalQty": "Total Qty:",
     "label": {
+      "country": "Negara",
       "date": "Tanggal RMA",
       "approverL1": "Approver Level 1",
       "approverL2": "Approver Level 2",
@@ -1049,6 +1063,7 @@
     "approval": "Persetujuan",
     "adminLoggedIn": " sudah login",
     "validation": {
+      "countryRequired": "Silakan pilih negara",
       "platformRequired": "Pilih saluran pada baris {row}",
       "skuRequired": "Masukkan SKU pada baris {row}",
       "quantityMustBePositive": "Qty pada baris {row} harus lebih dari 0",

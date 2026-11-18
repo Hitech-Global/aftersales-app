@@ -139,6 +139,7 @@ async function initDatabase() {
         submitter_id VARCHAR(64) REFERENCES users(id),
         submitter_name VARCHAR(128) DEFAULT '',
         aftersales_date DATE,
+        country VARCHAR(8) DEFAULT 'ID',
         status VARCHAR(32) DEFAULT 'draft',
         brand TEXT DEFAULT '',
         model VARCHAR(128) DEFAULT '',
@@ -271,6 +272,7 @@ async function initDatabase() {
     const migrationColumns = [
       { name: 'model', type: 'VARCHAR(128) DEFAULT \'\'' },
       { name: 'category', type: 'VARCHAR(64) DEFAULT \'\'' },
+      { name: 'country', type: 'VARCHAR(8) DEFAULT \'ID\'' },
       { name: 'total_quantity', type: 'INTEGER DEFAULT 0' },
       { name: 'current_approval_level', type: 'INTEGER DEFAULT 0' },
       { name: 'approver_level3_id', type: 'VARCHAR(64) DEFAULT \'\'' },
@@ -288,6 +290,11 @@ async function initDatabase() {
       await query(`ALTER TABLE aftersales_records ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`).catch(() => {});
     }
 
+    // 国家字段迁移：历史售后记录统一默认为印尼；未来允许 MY/TH/SG。
+    await query(`UPDATE aftersales_records SET country = 'ID' WHERE country IS NULL OR BTRIM(country) = ''`).catch(() => {});
+    await query(`ALTER TABLE aftersales_records ALTER COLUMN country SET DEFAULT 'ID'`).catch(() => {});
+    await query(`ALTER TABLE aftersales_records ALTER COLUMN country SET NOT NULL`).catch(() => {});
+
     // 迁移：为 dictionaries 表添加 parent_code 列（用于 shop_customer 与 platform 联动）
     await query(`ALTER TABLE dictionaries ADD COLUMN IF NOT EXISTS parent_code VARCHAR(128) DEFAULT ''`).catch(() => {});
     await query(`CREATE INDEX IF NOT EXISTS idx_dict_parent ON dictionaries(parent_code) WHERE parent_code <> ''`).catch(() => {});
@@ -301,6 +308,7 @@ async function initDatabase() {
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver1 ON aftersales_records(approver_level1_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_approver2 ON aftersales_records(approver_level2_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_records_flow ON aftersales_records(approval_flow_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_records_country ON aftersales_records(country)`);
 
     console.log('[DB] 数据库表初始化完成');
 

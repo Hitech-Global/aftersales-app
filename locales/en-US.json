@@ -86,12 +86,22 @@
     "customers": "Customers"
     }
   },
+  "country": {
+    "label": "Country",
+    "all": "All Countries",
+    "id": "Indonesia",
+    "my": "Malaysia",
+    "th": "Thailand",
+    "sg": "Singapore"
+  },
   "overview": {
     "filter": {
       "startDate": "Start Date",
       "endDate": "End Date",
       "brand": "Brand",
-      "allBrands": "All Brands"
+      "allBrands": "All Brands",
+      "country": "Country",
+      "allCountries": "All Countries"
     },
     "btnReset": "Reset",
     "btnDownloadTemplate": "Download Sales Template",
@@ -200,6 +210,8 @@
       "keywordPlaceholder": "Search ID, order no., SKU, brand, or model...",
       "brand": "Brand",
       "allBrands": "All Brands",
+      "country": "Country",
+      "allCountries": "All Countries",
       "channel": "Channel",
       "allChannels": "All Channels",
       "approvalStatus": "Approval Status",
@@ -242,6 +254,7 @@
       "processType": "Processing Type",
       "processProgress": "Processing Progress",
       "date": "RMA Date",
+      "country": "Country",
       "platform": "Channel",
       "shopCustomer": "Shop/Customer",
       "returnReason": "Return Reason",
@@ -383,6 +396,7 @@
     "btnAddRow": "+ Add Item",
     "totalQty": "Total Qty:",
     "label": {
+      "country": "Country",
       "date": "RMA Date",
       "approverL1": "Level 1 Approver",
       "approverL2": "Level 2 Approver",
@@ -1050,6 +1064,7 @@
     "approval": "Approval",
     "adminLoggedIn": " logged in",
     "validation": {
+      "countryRequired": "Please select a country",
       "platformRequired": "Select a channel on row {row}",
       "skuRequired": "Enter SKU on row {row}",
       "quantityMustBePositive": "Quantity on row {row} must be greater than 0",

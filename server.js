@@ -17,6 +17,13 @@ const multer = require('multer');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { query, getPool, initDatabase } = require('./db');
 
+const AFTERSALES_COUNTRIES = new Set(['ID', 'MY', 'TH', 'SG']);
+function normalizeAftersalesCountry(value) {
+  if (value === undefined || value === null || String(value).trim() === '') return 'ID';
+  const code = String(value).trim().toUpperCase();
+  return AFTERSALES_COUNTRIES.has(code) ? code : null;
+}
+
 // ==================== 加载环境变量 ====================
 let envLoaded = false;
 try {
@@ -1111,7 +1118,7 @@ async function notifyCompletionCc(recordId) {
 
 app.get('/api/records', requireApiPermission('record_view'), async (req, res) => {
   try {
-    const { status, submitter_id, page, pageSize } = req.query;
+    const { status, submitter_id, country, page, pageSize } = req.query;
     let sql = 'SELECT * FROM aftersales_records';
     const conditions = [];
     const values = [];
@@ -1119,6 +1126,12 @@ app.get('/api/records', requireApiPermission('record_view'), async (req, res) =>
 
     if (status) { conditions.push(`status = $${idx++}`); values.push(status); }
     if (submitter_id) { conditions.push(`submitter_id = $${idx++}`); values.push(submitter_id); }
+    if (country) {
+      const countryCode = normalizeAftersalesCountry(country);
+      if (!countryCode) return res.status(400).json({ error: '国家代码无效' });
+      conditions.push(`country = $${idx++}`);
+      values.push(countryCode);
+    }
 
     if (conditions.length > 0) sql += ' WHERE ' + conditions.join(' AND ');
     sql += ' ORDER BY created_at DESC';
@@ -1257,13 +1270,15 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
     // 忽略客户端传入的 id：最终主键由服务端统一生成（RMA-YYYYMMDD-NNNN），客户端不得决定编号。
     // temp_record_id 可选：客户端在“先上传附件后保存记录”场景下使用的临时 UUID；
     // 仅当其为合法 tmp_<UUID> 时，服务端才会把该临时 ID 下的附件迁移到正式 RMA ID（同一事务内）。
-    const { submitter_id, submitter_name, aftersales_date, status, brand, model, category, platforms, items,
+    const { submitter_id, submitter_name, aftersales_date, country, status, brand, model, category, platforms, items,
       total_quantity, current_approval_level,
       approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
       approver_level3_id, approver_level3_name, approval_history, tracking_number, temp_record_id } = req.body;
 
     if (!getPool()) return res.status(500).json({ error: '数据库未配置' });
+    const normalizedCountry = normalizeAftersalesCountry(country);
+    if (!normalizedCountry) return res.status(400).json({ error: '国家代码无效，仅支持 ID / MY / TH / SG' });
 
     // 如果指定了 approval_flow_id,优先用 flow 展开 level1/2/3
     let flowLevel1Id = approver_level1_id, flowLevel1Name = approver_level1_name;
@@ -1293,8 +1308,8 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
     // AFTERSALES-CC-COMPLETION-01：新逻辑下“提交（非草稿）且指定审批流”即启用结束后抄送；
     // 草稿或无需审批的流程不启用。提交时不再发送 CC（改由最终审批通过后由服务端触发）。
     const ccNotifyOnCompletion = (!isDraft && approval_flow_id) ? true : false;
-    const columns = ['submitter_id','submitter_name','aftersales_date','status','brand','model','category','platforms','items','total_quantity','current_approval_level','approval_flow_id','approval_flow_name','approver_level1_id','approver_level1_name','approver_level2_id','approver_level2_name','approver_level3_id','approver_level3_name','approval_history','tracking_number','cc_users','cc_notify_on_completion'];
-    const values = [submitter_id, submitter_name, aftersales_date, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []), total_quantity || 0, current_approval_level || 0, approval_flow_id || '', flowName, flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '', flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || '', JSON.stringify(flowCcUsers), ccNotifyOnCompletion];
+    const columns = ['submitter_id','submitter_name','aftersales_date','country','status','brand','model','category','platforms','items','total_quantity','current_approval_level','approval_flow_id','approval_flow_name','approver_level1_id','approver_level1_name','approver_level2_id','approver_level2_name','approver_level3_id','approver_level3_name','approval_history','tracking_number','cc_users','cc_notify_on_completion'];
+    const values = [submitter_id, submitter_name, aftersales_date, normalizedCountry, status || 'draft', brand || '', model || '', category || '', platforms || '', JSON.stringify(items || []), total_quantity || 0, current_approval_level || 0, approval_flow_id || '', flowName, flowLevel1Id || '', flowLevel1Name || '', flowLevel2Id || '', flowLevel2Name || '', flowLevel3Id || '', flowLevel3Name || '', JSON.stringify(approval_history || []), tracking_number || '', JSON.stringify(flowCcUsers), ccNotifyOnCompletion];
     const { record, migrated } = await createRecordTx(client, { columns, values, temp_record_id });
     // 注意：提交时不再触发 CC 通知（AFTERSALES-CC-COMPLETION-01）。结束后抄送由最终审批接口触发。
     res.json({ ...record, migrated });
@@ -1309,7 +1324,7 @@ app.post('/api/records', requireApiPermission('record_create'), async (req, res)
 
 app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res) => {
   try {
-    const { submitter_name, aftersales_date, status, brand, model, category, platforms, items,
+    const { submitter_name, aftersales_date, country, status, brand, model, category, platforms, items,
       total_quantity, current_approval_level,
       approval_flow_id,
       approver_level1_id, approver_level1_name, approver_level2_id, approver_level2_name,
@@ -1339,12 +1354,18 @@ app.put('/api/records/:id', requireApiPermission('record_edit'), async (req, res
     const fields = ['updated_at = NOW()'];
     const values = [];
     let idx = 1;
+    let normalizedCountry;
+    if (country !== undefined) {
+      normalizedCountry = normalizeAftersalesCountry(country);
+      if (!normalizedCountry) return res.status(400).json({ error: '国家代码无效，仅支持 ID / MY / TH / SG' });
+    }
 
     const add = (field, val) => {
       if (val !== undefined) { fields.push(`${field} = $${idx++}`); values.push(val); }
     };
     add('submitter_name', submitter_name);
     add('aftersales_date', aftersales_date);
+    add('country', normalizedCountry);
     add('status', status);
     add('brand', brand);
     add('model', model);
