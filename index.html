@@ -2130,6 +2130,9 @@ function getAftersalesCountryLabel(value){
   const label=t(key);
   return label===key?code:label;
 }
+function getAftersalesCountryDisplay(value){
+  return normalizeAftersalesCountry(value)||'-';
+}
 
 async function getRecords(){
   try{
@@ -4613,7 +4616,7 @@ async function renderList(){
           <td>${renderRiskBadge([it], r)}</td>
           <td>${renderNextAction(getNextActionForItem(r,it))}</td>
           <td class="cell-date">${formatDate(r.aftersales_date)}</td>
-          <td>${esc(getAftersalesCountryLabel(r.country))}</td>
+          <td>${esc(getAftersalesCountryDisplay(r.country))}</td>
           <td>${esc(getPlatformLabel(it.platform) || '-')}</td>
           <td>${esc(getShopCustomerLabel(it.shop_customer)||'-')}</td>
           <td>${esc(it.return_reason?displayReturnReason(it.return_reason):'-')}</td>
@@ -4679,7 +4682,7 @@ async function renderList(){
         <td>${renderRiskBadge(items, r)}</td>
         <td>${renderNextAction(nextAction)}</td>
         <td class="cell-date">${formatDate(r.aftersales_date)}</td>
-        <td>${esc(getAftersalesCountryLabel(r.country))}</td>
+        <td>${esc(getAftersalesCountryDisplay(r.country))}</td>
         <td>${esc(platforms.join(',')||getPlatformLabel(r.platform)||'-')}</td>
         <td>${esc(shopCustomers.join(',')||'-')}</td>
         <td>${returnReasons||'-'}</td>
@@ -7580,7 +7583,7 @@ async function exportAftersalesExcel(){
         rows.push([
           r.id,
           formatDate(r.aftersales_date),
-          getAftersalesCountryLabel(r.country),
+          getAftersalesCountryDisplay(r.country),
           (it.platform || platforms[0] || ''),
           (it.shop_customer || ''),
           r.brand || '',
@@ -7610,7 +7613,7 @@ async function exportAftersalesExcel(){
       rows.push([
         r.id,
         formatDate(r.aftersales_date),
-        getAftersalesCountryLabel(r.country),
+        getAftersalesCountryDisplay(r.country),
         platforms.join('、'),
         items.map(it => it.shop_customer||'').filter(Boolean).join('、'),
         r.brand || '',
